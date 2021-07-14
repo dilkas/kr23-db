@@ -5,12 +5,21 @@
 
 #include "hasse_diagram.h"
 
-HasseDiagram::HasseDiagram() {
-  tops_.insert(boost::add_vertex(diagram_));
+HasseDiagram::HasseDiagram(int num_position_sets) :
+  num_position_sets_(num_position_sets) {
+  bot_ = boost::add_vertex(diagram_);
+  tops_.insert(bot_);
 }
 
 std::set<int> HasseDiagram::Positions(HasseDiagram::Vertex vertex) {
   return diagram_[vertex].positions();
+}
+
+HasseDiagram::Vertex
+HasseDiagram::CorrespondingVertexClass(int position_set_index) {
+  assert(position_set_index >= 0 &&
+         position_set_index < corresponding_vertex_class_.size());
+  return corresponding_vertex_class_[position_set_index];
 }
 
 struct EndSearchException : public std::exception {};
@@ -53,6 +62,15 @@ private:
 HasseDiagram::Vertex HasseDiagram::AddVertexClass(std::set<int> position_set) {
   BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: adding a vertex class with "
                            << position_set.size() << " positions";
+
+  // Only add a position set to the Hasse diagram if it has at least two
+  // positions
+  if (position_set.size() <= 1) {
+    if (corresponding_vertex_class_.size() < num_position_sets_)
+      corresponding_vertex_class_.push_back(bot_);
+    return bot_;
+  }
+
   std::set<HasseDiagram::Vertex> excluded;
   std::vector<HasseDiagram::Vertex> parents;
   for (auto top : tops_) {
@@ -62,6 +80,8 @@ HasseDiagram::Vertex HasseDiagram::AddVertexClass(std::set<int> position_set) {
     } catch (EndSearchException& exception) {
       BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: this position set is already in"
                                << " the diagram";
+      if (corresponding_vertex_class_.size() < num_position_sets_)
+        corresponding_vertex_class_.push_back(parents[0]);
       return parents[0];
     }
   }
@@ -76,5 +96,6 @@ HasseDiagram::Vertex HasseDiagram::AddVertexClass(std::set<int> position_set) {
     tops_.erase(parent);
   }
   tops_.insert(new_vertex);
+  corresponding_vertex_class_.push_back(new_vertex);
   return new_vertex;
 }

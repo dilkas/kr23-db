@@ -1,17 +1,13 @@
 #include "constraint.h"
 
 HasseDiagram Constraint::UnionsOfPositions() {
-  HasseDiagram diagram;
+  HasseDiagram diagram(positions_.size());
   std::vector<std::set<int>> top_layer;
 
   // Add the sets themselves
   for (auto position_set : positions_) {
     top_layer.push_back(position_set);
-    // Only add a position set to the Hasse diagram if it has at least two
-    // positions
-    if (position_set.size() > 1) {
-      diagram.AddVertexClass(position_set);
-    }
+    diagram.AddVertexClass(position_set);
   }
 
   for (int i = 1; i < positions_.size(); ++i) {
