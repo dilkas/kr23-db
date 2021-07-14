@@ -9,8 +9,8 @@ class VertexClass {
   VertexClass(std::set<int> initial_positions) : positions_(initial_positions) {}
   std::set<int> positions() { return positions_; }
   void set_positions(std::set<int> positions) { positions_ = positions; }
-  bool IsSubsetOf(std::set<int> other_set);
-  int Size() { return positions_.size(); }
+  bool IsSubsetOf(std::set<int> other_set) const;
+  int Size() const { return positions_.size(); }
 
  private:
   std::set<int> positions_;

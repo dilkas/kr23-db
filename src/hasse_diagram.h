@@ -16,15 +16,19 @@ class HasseDiagram {
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
                                 VertexClass> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+
   HasseDiagram();
-  std::set<int> positions(Vertex vertex);
-  void set_tops(std::vector<Vertex> tops) { tops_ = tops; };
+  std::set<int> Positions(Vertex vertex);
   Vertex AddVertexClass(std::set<int> position_set);
+  void MapToPositionSet(); // TODO: implement
 
  private:
   Graph diagram_;
-  std::vector<Vertex> tops_; // For convenient construction
-  // TODO: maybe a linked list would be more suitable
+  // For convenient construction
+  std::set<Vertex> tops_;
+  // Keep track of the vertex class that directly corresponds to each position
+  // set in the constraint
+  std::vector<Vertex> correspondence_to_constraint_;
 };
 
 #endif

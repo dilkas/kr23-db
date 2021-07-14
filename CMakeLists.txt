@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(WFOMC)
 enable_testing()
 
-find_package(Boost COMPONENTS graph unit_test_framework REQUIRED)
+find_package(Boost COMPONENTS log graph unit_test_framework REQUIRED)
 include_directories(src)
 link_directories(src)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -16,6 +16,7 @@ foreach(testSrc ${TEST_SRCS})
         add_executable(${testName} ${testSrc} ${SRCS})
         #link to Boost libraries AND your targets and dependencies
         target_link_libraries(${testName}
+                              ${Boost_LOG_LIBRARY}
                               ${Boost_GRAPH_LIBRARY}
                               ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
                               )
