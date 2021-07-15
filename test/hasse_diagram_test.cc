@@ -22,3 +22,10 @@ BOOST_AUTO_TEST_CASE(test_adding_multiple_positions) {
                                 original_positions.begin(),
                                 original_positions.end());
 }
+
+// TODO: turn into a real test
+BOOST_AUTO_TEST_CASE(test_InstantiateSizes) {
+  HasseDiagram diagram(1);
+  auto vertex = diagram.AddVertexClass({0, 1});
+  diagram.InstantiateSizes(5, 3);
+}

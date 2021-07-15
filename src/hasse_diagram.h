@@ -9,8 +9,8 @@
 
 #include "vertex_class.h"
 
-// An edge from A to B means that A is a subset of B. Visually, arrows point
-// upwards.
+// An edge from A to B means that A is a SUPERSET of B. Visually, arrows point
+// downwards.
 class HasseDiagram {
  public:
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
@@ -19,9 +19,13 @@ class HasseDiagram {
 
   HasseDiagram() {}
   HasseDiagram(int num_position_sets);
-  std::set<int> Positions(Vertex vertex);
+  std::set<int> Positions(Vertex vertex) { return diagram_[vertex].positions(); }
   Vertex AddVertexClass(std::set<int> position_set);
+  std::vector<Vertex> corresponding_vertex_class() {
+    return corresponding_vertex_class_;
+  }
   Vertex CorrespondingVertexClass(int position_set_index);
+  void InstantiateSizes(int domain_size, int predicate_arity);
 
  private:
   Graph diagram_;

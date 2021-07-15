@@ -1,6 +1,10 @@
+#include <cmath>
+
 #include <exception>
+#include <map>
 
 #include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/topological_sort.hpp>
 #include <boost/log/trivial.hpp>
 
 #include "hasse_diagram.h"
@@ -9,10 +13,6 @@ HasseDiagram::HasseDiagram(int num_position_sets) :
   num_position_sets_(num_position_sets) {
   bot_ = boost::add_vertex(diagram_);
   tops_.insert(bot_);
-}
-
-std::set<int> HasseDiagram::Positions(HasseDiagram::Vertex vertex) {
-  return diagram_[vertex].positions();
 }
 
 HasseDiagram::Vertex
@@ -24,6 +24,7 @@ HasseDiagram::CorrespondingVertexClass(int position_set_index) {
 
 struct EndSearchException : public std::exception {};
 
+// TODO: These are successors now, not parents
 class ParentFinder : public boost::default_bfs_visitor {
 public:
   ParentFinder(std::set<HasseDiagram::Vertex> &excluded,
@@ -34,12 +35,15 @@ public:
   template<typename Vertex, typename Graph>
   void examine_vertex(Vertex vertex, const Graph &graph) const {
     BOOST_LOG_TRIVIAL(debug) << "ParentFinder: examining vertex " << vertex;
+
     if (excluded_.find(vertex) != excluded_.end() ||
         !graph[vertex].IsSubsetOf(position_set_)) {
       BOOST_LOG_TRIVIAL(debug) << "ParentFinder: skipping";
       return;
     }
-    if (graph[vertex].Size() == position_set_.size()) {
+    excluded_.insert(vertex);
+
+    if (graph[vertex].NumPositions() == position_set_.size()) {
       parents_ = {vertex};
       BOOST_LOG_TRIVIAL(debug) << "ParentFinder: ending the search early";
       throw EndSearchException();
@@ -92,10 +96,27 @@ HasseDiagram::Vertex HasseDiagram::AddVertexClass(std::set<int> position_set) {
   HasseDiagram::Vertex new_vertex = boost::add_vertex(diagram_);
   diagram_[new_vertex].set_positions(position_set);
   for (auto parent : parents) {
-    boost::add_edge(parent, new_vertex, diagram_);
+    boost::add_edge(new_vertex, parent, diagram_);
     tops_.erase(parent);
   }
   tops_.insert(new_vertex);
   corresponding_vertex_class_.push_back(new_vertex);
   return new_vertex;
+}
+
+void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
+  std::vector<HasseDiagram::Vertex> topological_ordering;
+  boost::topological_sort(diagram_, std::back_inserter(topological_ordering));
+  std::map<HasseDiagram::Vertex, int> full_size;
+  for (auto vertex : topological_ordering) {
+    int size = std::pow((double)domain_size, predicate_arity -
+                        diagram_[vertex].NumPositions());
+    full_size[vertex] = size;
+    for (auto successor :
+           boost::make_iterator_range(boost::adjacent_vertices(vertex,
+                                                               diagram_))) {
+      size -= full_size[successor];
+    }
+    diagram_[vertex].set_size(size);
+  }
 }

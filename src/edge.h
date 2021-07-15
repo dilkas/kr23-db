@@ -4,15 +4,12 @@
 #include <vector>
 
 class Edge {
- public:
-  Edge();
+public:
+  Edge(std::vector<HasseDiagram::Vertex> vertex_classes) :
+    vertex_classes_(vertex_classes) {}
 
 private:
-  int count_;
-  std::vector<int> vertex_classes_;
-  // Used to indicate if the edge is incident with the same vertex multiple
-  // times
-  std::vector<int> ids_;
+  std::vector<HasseDiagram::Vertex> vertex_classes_;
 };
 
 #endif
