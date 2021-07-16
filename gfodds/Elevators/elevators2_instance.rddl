@@ -1,0 +1,19 @@
+non-fluents elevators2_dom1 {
+	domain = elevators2_mdp ;
+	objects {
+		floor : { bottom,f1,f2,top }; 
+	};
+	non-fluents {
+	};
+}
+
+instance elevators2_inst1 {
+	domain = elevators2_mdp ;
+	non-fluents = elevators2_dom1 ;
+	init-state {
+		   elevator-at-floor(f1);
+	};
+max-nondef-actions = 1;
+horizon = 10;
+discount = 0.99;
+

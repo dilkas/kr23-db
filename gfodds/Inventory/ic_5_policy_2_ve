@@ -1,0 +1,15 @@
+%%% POLICY:
+
+
+actionDiag(load(_3964340,_3964346),[node(20,eq(a,v1),17,19),node(19,cust(b1,b2),18,8),node(18,empty(b2),0,8),node(17,tin(v2,_3964346),15,16),node(16,tfull(v2),11,12),node(15,tfull(v2),11,14),node(14,depot(_3964346),13,12),node(13,eq(v2,_3964340),11,12),node(12,cust(b1,b2),5,1),node(11,cust(b1,b2),7,10),node(10,tin(v2,b2),1,9),node(9,shop(b2),1,8),node(8,2.9701,-1,-1),node(7,tin(v2,b2),6,5),node(6,shop(b2),4,5),node(5,empty(b2),0,1),node(4,empty(b2),3,1),node(3,eq(b2,v3),2,0),node(2,0.9801,-1,-1),node(1,1.0,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(unload(_4001900,_4001906),[node(38,eq(a,v1),28,37),node(37,tfull(_4001900),35,36),node(36,cust(b1,b2),32,14),node(35,cust(b1,b2),34,14),node(34,tin(_4001900,b2),33,32),node(33,shop(b2),31,32),node(32,empty(b2),0,14),node(31,empty(b2),30,14),node(30,eq(b2,_4001906),29,0),node(29,1.9701,-1,-1),node(28,tin(v2,_4001906),25,27),node(27,tfull(v2),26,3),node(26,tfull(_4001900),17,21),node(25,tfull(v2),24,3),node(24,tfull(_4001900),19,23),node(23,shop(_4001906),22,21),node(22,eq(v2,_4001900),3,21),node(21,cust(b1,b2),20,16),node(20,tin(v2,b2),11,2),node(19,shop(_4001906),18,17),node(18,eq(v2,_4001900),3,17),node(17,cust(b1,b2),13,16),node(16,tin(v2,b2),1,15),node(15,shop(b2),1,14),node(14,2.9701,-1,-1),node(13,tin(v2,b2),12,2),node(12,tin(_4001900,b2),8,11),node(11,shop(b2),10,2),node(10,empty(b2),9,1),node(9,eq(b2,v3),4,0),node(8,shop(b2),7,2),node(7,empty(b2),6,1),node(6,eq(b2,v3),5,0),node(5,eq(b2,_4001906),0,4),node(4,0.9801,-1,-1),node(3,cust(b1,b2),2,1),node(2,empty(b2),0,1),node(1,1.0,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(drive(_4048069,_4048075,_4048081),[node(40,eq(a,v1),37,39),node(39,cust(b1,b2),38,14),node(38,empty(b2),0,14),node(37,tin(v2,_4048075),31,36),node(36,tfull(v2),35,30),node(35,eq(v2,_4048069),34,28),node(34,cust(b1,b2),32,33),node(33,tin(v2,b2),17,26),node(32,tin(v2,b2),8,7),node(31,tfull(v2),29,30),node(30,cust(b1,b2),7,1),node(29,eq(v2,_4048069),21,28),node(28,cust(b1,b2),25,27),node(27,tin(v2,b2),1,26),node(26,shop(b2),1,14),node(25,tin(v2,b2),24,7),node(24,shop(b2),23,7),node(23,empty(b2),22,1),node(22,eq(b2,v3),2,0),node(21,cust(b1,b2),13,20),node(20,tin(v2,b2),17,19),node(19,shop(b2),1,18),node(18,eq(b2,_4048075),14,15),node(17,shop(b2),1,16),node(16,eq(b2,_4048075),15,1),node(15,eq(b2,_4048081),1,14),node(14,2.9701,-1,-1),node(13,tin(v2,b2),8,12),node(12,shop(b2),11,7),node(11,empty(b2),10,1),node(10,eq(b2,v3),9,0),node(9,eq(b2,_4048075),0,3),node(8,shop(b2),6,7),node(7,empty(b2),0,1),node(6,empty(b2),5,1),node(5,eq(b2,v3),4,0),node(4,eq(b2,_4048075),3,2),node(3,eq(b2,_4048081),2,0),node(2,0.9801,-1,-1),node(1,1.0,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(noop,[node(14,eq(a,v1),11,13),node(13,cust(b1,b2),12,7),node(12,empty(b2),0,7),node(11,tfull(v2),10,0),node(10,cust(b1,b2),6,9),node(9,tin(v2,b2),0,8),node(8,shop(b2),0,7),node(7,1.9701,-1,-1),node(6,tin(v2,b2),5,0),node(5,shop(b2),4,0),node(4,empty(b2),3,0),node(3,eq(b2,v3),2,0),node(2,0.9801,-1,-1),node(0,0.0,-1,-1)]).
+
+

@@ -1,0 +1,116 @@
+domain inventory_advanced_mdp {
+
+	requirements = {
+		constrained-state,
+		reward-deterministic
+	};
+
+	types {
+ 	  	location : object;
+		truck    : object;
+	}; 
+	
+	pvariables { 
+		// Non-fluents
+		FREQUENT-RATE       : { non-fluent, real, default = 0.6 };
+		NON-FREQUENT-RATE   : { non-fluent, real, default = 0.3 };
+		SHOP(location)      : { non-fluent, bool, default = false };
+		DEPOT(location)     : { non-fluent, bool, default = false };
+		FREQ(location)      : { non-fluent, bool, default = false };
+		
+		// State-fluents
+		level0(location)     : { state-fluent, bool, default = false };
+		level1(location)     : { state-fluent, bool, default = false };
+		tin(truck,location) : { state-fluent, bool, default = false };
+		tfull(truck)        : { state-fluent, bool, default = false };
+
+		// Action-fluents
+		load(truck,location) : { action-fluent, bool, default = false };
+		unload(truck,location) : { action-fluent, bool, default = false };
+		drive(truck,location,location) : { action-fluent, bool, default = false };
+	};
+
+
+	cpfs {
+		level0'(?l) = 
+			if (DEPOT(?l))
+			then KronDelta(true)
+			else if ((level1(?l) ^ ~exists_{?t : truck} [tin(?t,?l) ^ tfull(?t) ^ SHOP(?l) ^ unload(?t,?l)]) 
+					| (level0(?l) ^ exists_{?t : truck} [tin(?t,?l) ^ tfull(?t) ^ SHOP(?l) ^ unload(?t,?l)]))
+			     then if (FREQ(?l))
+				  then Bernoulli(FREQUENT-RATE)
+				  else Bernoulli(NON-FREQUENT-RATE)
+			     else KronDelta(level0(?l));
+
+		level1'(?l) = 
+			if ((level1(?l) ^ ~exists_{?t : truck} [tin(?t,?l) ^ tfull(?t) ^ SHOP(?l) ^ unload(?t,?l)]) 
+					| (level0(?l) ^ exists_{?t : truck} [tin(?t,?l) ^ tfull(?t) ^ SHOP(?l) ^ unload(?t,?l)]))			
+			then if (FREQ(?l))
+			     then Bernoulli(1 - FREQUENT-RATE)
+			     else Bernoulli(1 - NON-FREQUENT-RATE)	
+			else if ((~level0(?l) ^ ~level1(?l)) | (level1(?l) ^ exists_{?t : truck} [tin(?t,?l) ^ tfull(?t) ^ SHOP(?l) ^ unload(?t,?l)]))
+				then if(FREQ(?l))
+				     then Bernoulli(FREQUENT-RATE)
+				     else Bernoulli(NON-FREQUENT-RATE)
+				else KronDelta(level1(?l));
+
+		tin'(?t,?l) = 
+			if (tin(?t,?l))
+			then KronDelta( ~exists_{?l1 : location} [~tin(?t,?l) ^ drive(?t,?l,?l1)])
+			else KronDelta( exists_{?l1 : location} [tin(?t,?l1) ^ drive(?t,?l1,?l)]);
+
+		tfull'(?t) = 
+			if(tfull(?t))
+			then KronDelta( ~exists_{?l : location} [tin(?t,?l) ^ SHOP(?l) ^ unload(?t,?l)] )
+			else KronDelta( exists_{?l : location} [tin(?t,?l) ^ DEPOT(?l) ^ load(?t,?l)] );
+	};
+	
+	reward = 
+		(([sum_{?l: location} [0 + ~level0(?l)]]) / [sum_{?l1 : location} [1]]);
+
+
+	state-action-constraints {
+		//A truck cannot be in more than one location at a time
+		forall_{?t : truck} ([sum_{?l : location} tin(?t, ?l)] == 1);
+
+		//A  location cannot be both SHOP and DEPOT
+		forall_{?l : location} (DEPOT(?l) <=> ~SHOP(?l));
+
+		forall_{?l : location} [DEPOT(?l) => level0(?l)];
+
+		forall_{?l : location, ?t : truck} [DEPOT(?l) => ~unload(?t, ?l)];
+	};
+}
+
+
+non-fluents dom1 {
+	domain = inventory_advanced_mdp ;
+
+	objects {
+		location : { l1, d };
+		truck : { t1 }; 
+	};
+
+	non-fluents {
+		DEPOT(d) ; SHOP(l1); FREQ(l1) ; 
+		//SHOP(l2) ; SHOP(l3) ; FREQ(l3) ; SHOP(l4);
+	};
+}
+
+instance inst1 {
+	domain = inventory_advanced_mdp ;
+	non-fluents = dom1 ;
+	init-state {
+		level0(l1) ; 
+//		level0(l2) ; 
+//		level0(l3) ; 
+//		level0(l4) ; 
+		level0(d) ; 
+		tin(t1,l1) ;
+	};
+
+max-nondef-actions = 1;
+horizon = 40;
+discount = 0.99;
+}
+

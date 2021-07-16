@@ -1,0 +1,88 @@
+Fri Apr 20 19:00:22 PDT 2012
+Fri Apr 20 19:00:23 PDT 2012
+Fri Apr 20 19:00:27 PDT 2012
+Fri Apr 20 19:00:41 PDT 2012
+Reward Function:
+level0(b) - [2]
+     0.0 - [0]
+     1.0 - [1]
+4 to go !!
+All Special :[level0(b)]
+3 to go !!
+All Special :[level0(b),level1(b)]
+2 to go !!
+All Special :[level0(b),level1(b)]
+1 to go !!
+All Special :[level0(b),level1(b)]
+Total Time Taken: 20618 milliseconds
+
+VARIABLE ELIMINATION ON
+
+Q Fn Size: 165
+Q Fn Size: 277
+Q Fn Size: 262
+p02
+State: [level0(s1),level0(s2),level0(s3),level0(s4),level0(s5),level0(s6),level0(d),tin(t1,s1)]
+All Actions: [act(0.0996005996001,drive(t1,s1,d)),act(0.0,drive(t1,s1,s6)),act(0.0,drive(t1,s1,s5)),act(0.0,drive(t1,s1,s4)),act(0.0,drive(t1,s1,s3)),act(0.0,drive(t1,s1,s2))]
+Optimal Actions: [drive(t1,s1,d)]
+Action: drive(t1,s1,d)
+Reward: 0.0
+
+State: [level0(s1),level0(s2),level0(s3),level0(s4),level0(s5),level0(s6),level0(d),tin(t1,d)]
+All Actions: [act(0.16942071962007,load(t1,d)),act(0.0,drive(t1,d,s6)),act(0.0,drive(t1,d,s5)),act(0.0,drive(t1,d,s4)),act(0.0,drive(t1,d,s3)),act(0.0,drive(t1,d,s2)),act(0.0,drive(t1,d,s1))]
+Optimal Actions: [load(t1,d)]
+Action: load(t1,d)
+Reward: 0.0
+
+State: [level0(s1),level0(s2),level0(s3),level0(s4),level0(s5),level0(s6),level0(d),tfull(t1),tin(t1,d)]
+All Actions: [act(0.218394603734049,drive(t1,d,s6)),act(0.218394603734049,drive(t1,d,s5)),act(0.218394603734049,drive(t1,d,s4)),act(0.218394603734049,drive(t1,d,s3)),act(0.16942071962007,drive(t1,d,s2)),act(0.16942071962007,drive(t1,d,s1))]
+Optimal Actions: [drive(t1,d,s3),drive(t1,d,s4),drive(t1,d,s5),drive(t1,d,s6)]
+Action: drive(t1,d,s4)
+Reward: 0.0
+
+State: [level0(s1),level0(s2),level0(s3),level0(s4),level0(s5),level0(s6),level0(d),tfull(t1),tin(t1,s4)]
+All Actions: [act(0.252776222613834,unload(t1,s4)),act(0.218394603734049,drive(t1,s4,s6)),act(0.218394603734049,drive(t1,s4,s5)),act(0.218394603734049,drive(t1,s4,s3)),act(0.16942071962007,drive(t1,s4,s2)),act(0.16942071962007,drive(t1,s4,s1)),act(0.16942071962007,drive(t1,s4,d))]
+Optimal Actions: [unload(t1,s4)]
+Action: unload(t1,s4)
+Reward: 0.0
+
+State: [level0(s1),level0(s2),level0(s3),level0(s5),level0(s6),level0(d),level1(s4),tin(t1,s4)]
+All Actions: [act(0.395633365470977,drive(t1,s4,s6)),act(0.395633365470977,drive(t1,s4,s5)),act(0.395633365470977,drive(t1,s4,s3)),act(0.395633365470977,drive(t1,s4,s2)),act(0.395633365470977,drive(t1,s4,s1)),act(0.495233965071077,drive(t1,s4,d))]
+Optimal Actions: [drive(t1,s4,d)]
+Action: drive(t1,s4,d)
+Reward: 0.142857142857143
+
+State: [level0(s1),level0(s2),level0(s3),level0(s5),level0(s6),level0(d),level1(s4),tin(t1,d)]
+All Actions: [act(0.565054085091047,load(t1,d)),act(0.395633365470977,drive(t1,d,s6)),act(0.395633365470977,drive(t1,d,s5)),act(0.395633365470977,drive(t1,d,s3)),act(0.395633365470977,drive(t1,d,s2)),act(0.395633365470977,drive(t1,d,s1)),act(0.395633365470977,drive(t1,d,s4))]
+Optimal Actions: [load(t1,d)]
+Action: load(t1,d)
+Reward: 0.142857142857143
+
+State: [level0(s1),level0(s2),level0(s3),level0(s5),level0(s6),level0(d),level1(s4),tfull(t1),tin(t1,d)]
+All Actions: [act(0.614027969205026,drive(t1,d,s6)),act(0.614027969205026,drive(t1,d,s5)),act(0.614027969205026,drive(t1,d,s3)),act(0.565054085091047,drive(t1,d,s2)),act(0.565054085091047,drive(t1,d,s1)),act(0.576889766972836,drive(t1,d,s4))]
+Optimal Actions: [drive(t1,d,s3),drive(t1,d,s5),drive(t1,d,s6)]
+Action: drive(t1,d,s6)
+Reward: 0.142857142857143
+
+State: [level0(s1),level0(s2),level0(s3),level0(s5),level0(s6),level0(d),level1(s4),tfull(t1),tin(t1,s6)]
+All Actions: [act(0.648409588084811,unload(t1,s6)),act(0.614027969205026,drive(t1,s6,s5)),act(0.614027969205026,drive(t1,s6,s3)),act(0.565054085091047,drive(t1,s6,s2)),act(0.565054085091047,drive(t1,s6,s1)),act(0.576889766972836,drive(t1,s6,s4)),act(0.565054085091047,drive(t1,s6,d))]
+Optimal Actions: [unload(t1,s6)]
+Action: unload(t1,s6)
+Reward: 0.142857142857143
+
+State: [level0(s1),level0(s2),level0(s3),level0(s5),level0(d),level1(s6),level1(s4),tin(t1,s6)]
+All Actions: [act(0.791266730941954,drive(t1,s6,s5)),act(0.791266730941954,drive(t1,s6,s3)),act(0.791266730941954,drive(t1,s6,s2)),act(0.791266730941954,drive(t1,s6,s1)),act(0.791266730941954,drive(t1,s6,s4)),act(0.890867330542054,drive(t1,s6,d))]
+Optimal Actions: [drive(t1,s6,d)]
+Action: drive(t1,s6,d)
+Reward: 0.285714285714286
+
+State: [level0(s1),level0(s2),level0(s3),level0(s5),level0(d),level1(s6),level1(s4),tin(t1,d)]
+All Actions: [act(0.960687450562024,load(t1,d)),act(0.791266730941954,drive(t1,d,s5)),act(0.791266730941954,drive(t1,d,s3)),act(0.791266730941954,drive(t1,d,s2)),act(0.791266730941954,drive(t1,d,s1)),act(0.791266730941954,drive(t1,d,s4)),act(0.791266730941954,drive(t1,d,s6))]
+Optimal Actions: [load(t1,d)]
+Action: load(t1,d)
+Reward: 0.285714285714286
+
+Total Reward over Horizon 10 is: 1.14285714285714
+
+Total Time Taken: 146609 milliseconds
+

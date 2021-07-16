@@ -1,0 +1,15 @@
+%%% POLICY:
+
+
+actionDiag(load(_460168,_460174),[node(4,cust(b1,b2),3,2),node(3,empty(b2),0,2),node(2,1.99,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(unload(_467706,_467712),[node(11,tfull(_467706),9,10),node(10,cust(b1,b2),6,4),node(9,cust(b1,b2),8,4),node(8,tin(_467706,b2),7,6),node(7,shop(b2),5,6),node(6,empty(b2),0,4),node(5,empty(b2),3,4),node(4,1.99,-1,-1),node(3,eq(b2,_467712),2,0),node(2,0.99,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(drive(_469637,_469643,_469649),[node(4,cust(b1,b2),3,2),node(3,empty(b2),0,2),node(2,1.99,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(noop,[node(4,cust(b1,b2),3,2),node(3,empty(b2),0,2),node(2,0.99,-1,-1),node(0,0.0,-1,-1)]).
+
+

@@ -1,0 +1,15 @@
+%%% POLICY:
+
+
+actionDiag(load(_218696,_218702),[node(13,eq(a,v1),12,5),node(12,tin(v2,_218702),10,11),node(11,tfull(v2),6,7),node(10,tfull(v2),6,9),node(9,depot(_218702),8,7),node(8,eq(v2,_218696),6,7),node(7,empty(b1),0,1),node(6,tin(v2,b1),3,5),node(5,empty(b1),0,4),node(4,2.173249,-1,-1),node(3,empty(b1),2,1),node(2,0.68607,-1,-1),node(1,1.0,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(unload(_231587),[node(18,eq(a,v1),16,17),node(17,tfull(_231587),10,9),node(16,tfull(v2),15,2),node(15,tfull(_231587),12,14),node(14,eq(v2,_231587),2,13),node(13,tin(v2,b1),4,9),node(12,eq(v2,_231587),2,11),node(11,tin(v2,b1),5,10),node(10,tin(_231587,b1),8,9),node(9,empty(b1),0,7),node(8,empty(b1),6,7),node(7,2.173249,-1,-1),node(6,1.173249,-1,-1),node(5,tin(_231587,b1),2,4),node(4,empty(b1),3,1),node(3,0.68607,-1,-1),node(2,empty(b1),0,1),node(1,1.0,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(drive(_242575,_242581),[node(13,eq(a,v1),12,8),node(12,tfull(v2),10,11),node(11,empty(b1),0,1),node(10,eq(v2,_242575),6,9),node(9,tin(v2,b1),7,8),node(8,empty(b1),0,4),node(7,empty(b1),2,1),node(6,empty(b1),3,5),node(5,eq(b1,_242581),1,4),node(4,2.173249,-1,-1),node(3,eq(b1,_242581),2,0),node(2,0.68607,-1,-1),node(1,1.0,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(noop,[node(8,eq(a,v1),7,5),node(7,tfull(v2),6,0),node(6,tin(v2,b1),3,5),node(5,empty(b1),0,4),node(4,1.173249,-1,-1),node(3,empty(b1),2,0),node(2,0.68607,-1,-1),node(0,0.0,-1,-1)]).
+
+

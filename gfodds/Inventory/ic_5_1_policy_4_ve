@@ -1,0 +1,15 @@
+%%% POLICY:
+
+
+actionDiag(load(_2861280,_2861286),[node(3,sc(b1),2,0),node(2,4.90099501,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(unload(_2862183),[node(3,sc(b1),2,0),node(2,4.90099501,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(drive(_2863075,_2863081),[node(3,sc(b1),2,0),node(2,4.90099501,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(noop,[node(3,sc(b1),2,0),node(2,3.90099501,-1,-1),node(0,0.0,-1,-1)]).
+
+

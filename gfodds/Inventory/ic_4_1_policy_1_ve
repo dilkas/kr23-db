@@ -1,0 +1,15 @@
+%%% POLICY:
+
+
+actionDiag(load(_157781,_157787),[node(3,empty(b1),0,2),node(2,1.693,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(unload(_160348),[node(7,tfull(_160348),6,5),node(6,tin(_160348,b1),4,5),node(5,empty(b1),0,3),node(4,empty(b1),2,3),node(3,1.693,-1,-1),node(2,0.693,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(drive(_161325,_161331),[node(3,empty(b1),0,2),node(2,1.693,-1,-1),node(0,0.0,-1,-1)]).
+
+
+actionDiag(noop,[node(3,empty(b1),0,2),node(2,0.693,-1,-1),node(0,0.0,-1,-1)]).
+
+

@@ -1,0 +1,60 @@
+domain elevators_mdp {
+	
+	requirements = { 
+		constrained-state,
+		reward-deterministic
+	};
+	
+	types {
+ 	  	floor    : object;
+	}; 
+	
+	pvariables { 
+	
+		// Probability someone arrives at the floor (up or down)
+		ARRIVE-PARAM(floor) : { non-fluent, real, default = 0.3 }; 		  		
+		
+		// Person waiting state
+		person-waiting(floor,floor)   : { state-fluent, bool, default = false };
+		person-in-elevator(floor)     : { state-fluent, bool, default = false };
+		
+		// Elevator state
+		elevator-at-floor(floor) : { state-fluent, bool, default = false };
+
+		move(floor,floor)     : { action-fluent, bool, default = false };
+	};
+  
+	cpfs {		
+		person-waiting'(?f1,?f2) = 
+			if (elevator-at-floor(?f1))
+			then KronDelta(false) 
+			else if (person-waiting(?f))
+			     then KronDelta(true) 
+			     else Bernoulli(ARRIVE-PARAM(?f));
+			
+
+  		person-in-elevator(?f)' = 
+  			if (elevator-at-floor(?f))
+  			then KronDelta(false)
+  			else if (person-in-elevator(?f))
+			     then KronDelta(true)
+			     else KronDelta(exists_{?f1 : floor} 
+  				       [elevator-at-floor(?f1) ^ person-waiting(?f,?f1)]);
+
+		elevator-at-floor'(?f) =
+			if(elevator-at-floor(?f))
+			then KronDelta(~exists_{?f1 : floor} [move(?f,?f1)])
+			else KronDelta(exists_{?f1 : floor} [elevator-at-floor(?f1) ^ move(?f1,?f)])	
+	};
+  
+  	// Reward is a sum of waiting penalties for those in elevators and at floor
+	reward = 
+		[sum_{?f1,?f2 : floor} [
+			 0 + person-in-elevator(?f1) + person-waiting-up(?f1,?f2)
+		]];
+
+	state-action-constraints {
+		forall_{?e : elevator} ([sum_{?f: floor} elevator-at-floor(?f)] == 1);
+	};
+}
+
