@@ -7,14 +7,20 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
+#include "gfodd.h"
 #include "vertex_class.h"
 
 // An edge from A to B means that A is a SUPERSET of B. Visually, arrows point
 // downwards.
 class HasseDiagram {
  public:
+  struct Edge {
+    int edge_of_gfodd;
+    int multiplicity;
+  };
+
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-                                VertexClass> Graph;
+                                VertexClass, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
   HasseDiagram() {}
@@ -26,6 +32,9 @@ class HasseDiagram {
   }
   Vertex CorrespondingVertexClass(int position_set_index);
   void InstantiateSizes(int domain_size, int predicate_arity);
+  void RemoveOneVertex(Vertex vertex_class);
+  void RemoveEdges(); // TODO: no longer necessary
+  // void InitialiseEdges(Gfodd gfodd);
 
  private:
   Graph diagram_;

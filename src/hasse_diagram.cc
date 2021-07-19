@@ -24,7 +24,6 @@ HasseDiagram::CorrespondingVertexClass(int position_set_index) {
 
 struct EndSearchException : public std::exception {};
 
-// TODO: These are successors now, not parents
 class ParentFinder : public boost::default_bfs_visitor {
 public:
   ParentFinder(std::set<HasseDiagram::Vertex> &excluded,
@@ -120,3 +119,25 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
     diagram_[vertex].set_size(size);
   }
 }
+
+// TODO: test this!
+void HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
+  int size = diagram_[vertex_class].size();
+  assert(size > 0);
+  diagram_[vertex_class].set_size(size - 1);
+}
+
+// TODO: test this!
+void HasseDiagram::RemoveEdges() {
+  auto edges = boost::edges(diagram_);
+  for (auto edge = edges.first; edge != edges.second; ++edge)
+    boost::remove_edge(*edge, diagram_);
+}
+
+// TODO: implement
+// void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
+  // 1. For each edge of the GFODD:
+  // a) from..?
+  // b) to..?
+  // c) how many?
+// }

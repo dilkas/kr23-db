@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "constraint.h"
-#include "edge.h"
 
 class StructuredGraph {
  public:
@@ -12,7 +11,6 @@ class StructuredGraph {
 
 private:
   HasseDiagram vertex_classes_;
-  std::vector<Edge> edges_;
 };
 
 #endif
