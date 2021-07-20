@@ -62,45 +62,44 @@ private:
   const std::set<int> &position_set_;
 };
 
-HasseDiagram::Vertex HasseDiagram::AddVertexClass(std::set<int> position_set) {
-  BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: adding a vertex class with "
-                           << position_set.size() << " positions";
-
+// TODO: finish updating this
+HasseDiagram::Vertex
+HasseDiagram::AddVertexClass(VariablePositions variable_positions) {
   // Only add a position set to the Hasse diagram if it has at least two
   // positions
-  if (position_set.size() <= 1) {
-    if (corresponding_vertex_class_.size() < num_position_sets_)
-      corresponding_vertex_class_.push_back(bot_);
-    return bot_;
-  }
+  // if (position_set.size() <= 1) {
+  //   if (corresponding_vertex_class_.size() < num_position_sets_)
+  //     corresponding_vertex_class_.push_back(bot_);
+  //   return bot_;
+  // }
 
-  std::set<HasseDiagram::Vertex> excluded;
-  std::vector<HasseDiagram::Vertex> parents;
-  for (auto top : tops_) {
-    ParentFinder parent_finder(excluded, parents, position_set);
-    try {
-      boost::breadth_first_search(diagram_, top, boost::visitor(parent_finder));
-    } catch (EndSearchException& exception) {
-      BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: this position set is already in"
-                               << " the diagram";
-      if (corresponding_vertex_class_.size() < num_position_sets_)
-        corresponding_vertex_class_.push_back(parents[0]);
-      return parents[0];
-    }
-  }
+  // std::set<HasseDiagram::Vertex> excluded;
+  // std::vector<HasseDiagram::Vertex> parents;
+  // for (auto top : tops_) {
+  //   ParentFinder parent_finder(excluded, parents, position_set);
+  //   try {
+  //     boost::breadth_first_search(diagram_, top, boost::visitor(parent_finder));
+  //   } catch (EndSearchException& exception) {
+  //     BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: this position set is already in"
+  //                              << " the diagram";
+  //     if (corresponding_vertex_class_.size() < num_position_sets_)
+  //       corresponding_vertex_class_.push_back(parents[0]);
+  //     return parents[0];
+  //   }
+  // }
 
-  BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: adding a new vertex class with "
-                           << parents.size() << " parents";
-  assert(!parents.empty());
-  HasseDiagram::Vertex new_vertex = boost::add_vertex(diagram_);
-  diagram_[new_vertex].set_positions(position_set);
-  for (auto parent : parents) {
-    boost::add_edge(new_vertex, parent, diagram_);
-    tops_.erase(parent);
-  }
-  tops_.insert(new_vertex);
-  corresponding_vertex_class_.push_back(new_vertex);
-  return new_vertex;
+  // BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: adding a new vertex class with "
+  //                          << parents.size() << " parents";
+  // assert(!parents.empty());
+  // HasseDiagram::Vertex new_vertex = boost::add_vertex(diagram_);
+  // diagram_[new_vertex].set_positions(variable_positions);
+  // for (auto parent : parents) {
+  //   boost::add_edge(new_vertex, parent, diagram_);
+  //   tops_.erase(parent);
+  // }
+  // tops_.insert(new_vertex);
+  // corresponding_vertex_class_.push_back(new_vertex);
+  // return new_vertex;
 }
 
 void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
@@ -108,8 +107,7 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   boost::topological_sort(diagram_, std::back_inserter(topological_ordering));
   std::map<HasseDiagram::Vertex, int> full_size;
   for (auto vertex : topological_ordering) {
-    int size = std::pow((double)domain_size, predicate_arity -
-                        diagram_[vertex].NumPositions());
+    int size = diagram_[vertex].FullSize(domain_size, predicate_arity);
     full_size[vertex] = size;
     for (auto successor :
            boost::make_iterator_range(boost::adjacent_vertices(vertex,

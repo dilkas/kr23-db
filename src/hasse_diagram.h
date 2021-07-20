@@ -8,6 +8,7 @@
 #include <boost/graph/adjacency_list.hpp>
 
 #include "gfodd.h"
+#include "variable_positions.h"
 #include "vertex_class.h"
 
 // An edge from A to B means that the position sets of A are less restrictive
@@ -25,8 +26,7 @@ class HasseDiagram {
 
   HasseDiagram() {}
   HasseDiagram(int num_position_sets);
-  std::set<int> Positions(Vertex vertex) { return diagram_[vertex].positions(); }
-  Vertex AddVertexClass(std::set<int> position_set);
+  Vertex AddVertexClass(VariablePositions variable_positions);
   std::vector<Vertex> corresponding_vertex_class() {
     return corresponding_vertex_class_;
   }

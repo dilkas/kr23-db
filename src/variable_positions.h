@@ -5,13 +5,15 @@
 #include <set>
 #include <string>
 
-// A map from variable names to sets of indices (for non-sink vertices)
+// A map from variable names to sets of indices
 class VariablePositions {
  public:
   VariablePositions() {}
   VariablePositions(std::string variables);
+  std::string string_representation() { return string_representation_; };
 
  private:
+  std::string string_representation_;
   std::map<std::string, std::set<int>> map_;
 };
 
