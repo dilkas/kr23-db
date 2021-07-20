@@ -9,6 +9,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 
+#include "variable_positions.h"
 #include "vertex.h"
 
 class Gfodd {
@@ -16,8 +17,9 @@ public:
   Gfodd();
   // double WeightOfInterpretation(HasseDiagram interpretation);
   int NumInternalEdges() { return internal_edges_.size(); }
-  std::pair<Vertex::VariablePositions,
-            Vertex::VariablePositions> IncidentAtomInfo(int internal_edge_index);
+  std::pair<VariablePositions,
+            VariablePositions> IncidentAtomInfo(int internal_edge_index);
+  // TODO: replace with incidentVertices() and update the test
 
 private:
   struct Edge {

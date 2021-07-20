@@ -3,6 +3,7 @@
 
 #include <set>
 
+// TODO: rework this to handle multiple variables
 class VertexClass {
  public:
   VertexClass() {}

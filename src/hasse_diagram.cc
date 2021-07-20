@@ -135,8 +135,40 @@ void HasseDiagram::RemoveEdges() {
 }
 
 // TODO: implement
+void HasseDiagram::InitialiseVertices(Gfodd gfodd) {
+  // HasseDiagram diagram(positions_.size());
+  // std::vector<std::set<int>> top_layer;
+
+  // // Add the sets themselves
+  // for (auto position_set : positions_) {
+  //   top_layer.push_back(position_set);
+  //   diagram.AddVertexClass(position_set);
+  // }
+
+  // for (int i = 1; i < positions_.size(); ++i) {
+  //   std::vector<std::set<int>> new_top_layer;
+  //   int j = i; // which position to add first
+  //   for (auto position_set : top_layer) {
+  //     for (int k = j; k < positions_.size(); ++k) {
+  //       std::set<int> new_set = position_set;
+  //       new_set.insert(positions_[k].begin(), positions_[k].end());
+  //       diagram.AddVertexClass(new_set);
+  //       new_top_layer.push_back(new_set);
+  //     }
+  //     ++j;
+  //   }
+  //   top_layer = new_top_layer;
+  // }
+  // return diagram;
+}
+
+// TODO: implement (later)
 // void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
-  // 1. For each edge of the GFODD:
+//   for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
+    // from: CorrespondingVertexClass(gfodd.incidentVertices(i)) (and descendants?)
+    // to: same and descendants?
+//  }
+  // 1. For each internal edge of the GFODD:
   // a) from..?
   // b) to..?
   // c) how many?

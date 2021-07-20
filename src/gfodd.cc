@@ -34,7 +34,7 @@ Gfodd::Gfodd() {
 //   // TODO: implement
 // }
 
-std::pair<Vertex::VariablePositions, Vertex::VariablePositions>
+std::pair<VariablePositions, VariablePositions>
 Gfodd::IncidentAtomInfo(int internal_edge_index) {
   assert(internal_edge_index >= 0 && internal_edge_index < NumInternalEdges());
   auto [source, target] = boost::incident(internal_edges_[internal_edge_index],

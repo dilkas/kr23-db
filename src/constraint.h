@@ -6,6 +6,8 @@
 
 #include "hasse_diagram.h"
 
+// TODO: this class should become redundant soon
+
 // NOTE: A constant constraint across n positions is equivalent to a variable
 // constraint across n+1 positions.
 class Constraint {

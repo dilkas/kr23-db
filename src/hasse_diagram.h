@@ -10,8 +10,8 @@
 #include "gfodd.h"
 #include "vertex_class.h"
 
-// An edge from A to B means that A is a SUPERSET of B. Visually, arrows point
-// downwards.
+// An edge from A to B means that the position sets of A are less restrictive
+// those of B
 class HasseDiagram {
  public:
   struct Edge {
@@ -30,10 +30,11 @@ class HasseDiagram {
   std::vector<Vertex> corresponding_vertex_class() {
     return corresponding_vertex_class_;
   }
-  Vertex CorrespondingVertexClass(int position_set_index);
+  Vertex CorrespondingVertexClass(int position_set_index); // TODO: rewrite
   void InstantiateSizes(int domain_size, int predicate_arity);
   void RemoveOneVertex(Vertex vertex_class);
   void RemoveEdges(); // TODO: no longer necessary
+  void InitialiseVertices(Gfodd gfodd);
   // void InitialiseEdges(Gfodd gfodd);
 
  private:
