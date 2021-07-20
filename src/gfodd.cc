@@ -30,10 +30,6 @@ Gfodd::Gfodd() {
   internal_edges_ = {i1};
 }
 
-// double Gfodd::WeightOfInterpretation(HasseDiagram interpretation) {
-//   // TODO: implement
-// }
-
 std::pair<VariablePositions, VariablePositions>
 Gfodd::IncidentAtomInfo(int internal_edge_index) {
   assert(internal_edge_index >= 0 && internal_edge_index < NumInternalEdges());

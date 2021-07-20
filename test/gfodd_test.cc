@@ -1,8 +1,9 @@
 #define BOOST_TEST_MODULE GfoddTest
 
+#include "gfodd.h"
+
 #include <boost/test/unit_test.hpp>
 
-#include "gfodd.h"
 #include "variable_positions.h"
 
 BOOST_AUTO_TEST_CASE(test_NumInternalEdges) {

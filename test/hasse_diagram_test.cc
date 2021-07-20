@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE HasseDiagramTest
 
-#include <boost/test/unit_test.hpp>
-
 #include "hasse_diagram.h"
+
+#include <boost/test/unit_test.hpp>
 
 // TODO: update
 BOOST_AUTO_TEST_CASE(test_adding_single_position) {

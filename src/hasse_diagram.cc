@@ -64,7 +64,6 @@ private:
   const VariablePositions& positions_;
 };
 
-// TODO: test
 HasseDiagram::Vertex
 HasseDiagram::AddVertexClass(VariablePositions variable_positions) {
   std::set<HasseDiagram::Vertex> excluded;
@@ -111,14 +110,14 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-// TODO: test this!
+// TODO: update
 void HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
   int size = diagram_[vertex_class].size();
   assert(size > 0);
   diagram_[vertex_class].set_size(size - 1);
 }
 
-// TODO: test this!
+// TODO: probably don't need this
 void HasseDiagram::RemoveEdges() {
   auto edges = boost::edges(diagram_);
   for (auto edge = edges.first; edge != edges.second; ++edge)

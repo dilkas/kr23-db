@@ -15,7 +15,6 @@
 class Gfodd {
 public:
   Gfodd();
-  // double WeightOfInterpretation(HasseDiagram interpretation);
   int NumInternalEdges() { return internal_edges_.size(); }
   std::pair<VariablePositions,
             VariablePositions> IncidentAtomInfo(int internal_edge_index);
