@@ -11,6 +11,9 @@ class VariablePositions {
   VariablePositions() {}
   VariablePositions(std::string variables);
   std::string string_representation() { return string_representation_; };
+  bool OccursOnlyOnce(std::string variable) {
+    return map_[variable].size() == 1;
+  }
 
  private:
   std::string string_representation_;

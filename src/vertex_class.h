@@ -3,10 +3,10 @@
 
 #include <set>
 
+#include "match_quality.h"
 #include "optimised_variable_positions.h"
 #include "variable_positions.h"
 
-// TODO: rework this to handle multiple variables
 class VertexClass {
  public:
   VertexClass() {}
@@ -15,12 +15,10 @@ class VertexClass {
   void set_size(int size) { size_ = size; }
 
   void set_positions(VariablePositions positions) { positions_.Set(positions); }
-  bool IsSubsetOf(std::set<int> other_set) const;
   int FullSize(int domain_size, int predicate_arrity);
+  MatchQuality IsSubsetOf(VariablePositions other) const;
 
  private:
-  // Standard representation of variable positions, discarding variable names
-  // and variables that occur only once
   OptimisedVariablePositions positions_;
   int size_;
 };
