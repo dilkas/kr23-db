@@ -1,4 +1,6 @@
-#include <cmath>
+#include "hasse_diagram.h"
+
+#include <math.h>
 
 #include <exception>
 #include <map>
@@ -6,8 +8,6 @@
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/log/trivial.hpp>
-
-#include "hasse_diagram.h"
 
 HasseDiagram::HasseDiagram(int num_position_sets) :
   num_position_sets_(num_position_sets) {
@@ -26,13 +26,13 @@ struct EndSearchException : public std::exception {};
 
 class ParentFinder : public boost::default_bfs_visitor {
 public:
-  ParentFinder(std::set<HasseDiagram::Vertex> &excluded,
-               std::vector<HasseDiagram::Vertex> &parents,
-               const VariablePositions &positions) :
+  ParentFinder(std::set<HasseDiagram::Vertex>& excluded,
+               std::vector<HasseDiagram::Vertex>& parents,
+               const VariablePositions& positions) :
     excluded_(excluded), parents_(parents), positions_(positions) {};
 
   template<typename Vertex, typename Graph>
-  void examine_vertex(Vertex vertex, const Graph &graph) const {
+  void examine_vertex(Vertex vertex, const Graph& graph) const {
     BOOST_LOG_TRIVIAL(debug) << "ParentFinder: examining vertex " << vertex;
 
     if (excluded_.find(vertex) != excluded_.end()) {
@@ -59,9 +59,9 @@ public:
   }
 
 private:
-  std::set<HasseDiagram::Vertex> &excluded_;
-  std::vector<HasseDiagram::Vertex> &parents_;
-  const VariablePositions &positions_;
+  std::set<HasseDiagram::Vertex>& excluded_;
+  std::vector<HasseDiagram::Vertex>& parents_;
+  const VariablePositions& positions_;
 };
 
 // TODO: test

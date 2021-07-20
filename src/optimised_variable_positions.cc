@@ -1,11 +1,11 @@
-#include <cassert>
+#include "optimised_variable_positions.h"
+
+#include <assert.h>
 
 #include <map>
 
-#include "optimised_variable_positions.h"
-
 // TODO: test (when the class gets some accessors)
-void OptimisedVariablePositions::Set(VariablePositions &positions) {
+void OptimisedVariablePositions::Set(VariablePositions& positions) {
   representation_.clear();
   std::map<char, int> variable_encodings;
   int next_int = 1;

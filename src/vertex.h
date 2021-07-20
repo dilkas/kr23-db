@@ -1,7 +1,7 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 
-#include <cassert>
+#include <assert.h>
 
 #include <string>
 

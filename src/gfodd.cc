@@ -1,8 +1,8 @@
-#include <cassert>
+#include "gfodd.h"
+
+#include <assert.h>
 
 #include <boost/graph/graph_utility.hpp>
-
-#include "gfodd.h"
 
 Gfodd::Gfodd() {
   auto v1 = boost::add_vertex(diagram_);

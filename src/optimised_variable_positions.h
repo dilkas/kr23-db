@@ -15,7 +15,7 @@
 class OptimisedVariablePositions {
  public:
   OptimisedVariablePositions() {}
-  void Set(VariablePositions &positions);
+  void Set(VariablePositions& positions);
   MatchQuality IsSubsetOf(OptimisedVariablePositions other) const;
  private:
   std::vector<int> representation_;
