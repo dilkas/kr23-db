@@ -7,12 +7,13 @@
 
 #include "variable_positions.h"
 
-class Vertex { // TODO: consider using a union type
+class Vertex {
  public:
   Vertex() {}
   Vertex(std::string variables) : sink_(false), positions_(variables) {}
   Vertex(double weight) : sink_(true), weight_(weight) {};
   VariablePositions positions();
+  bool sink() { return sink_; }
 
  private:
   bool sink_;

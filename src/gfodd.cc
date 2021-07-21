@@ -38,3 +38,11 @@ Gfodd::IncidentAtomInfo(int internal_edge_index) {
   return std::make_pair(diagram_[source].positions(),
                         diagram_[target].positions());
 }
+
+// TODO: test?
+std::vector<Gfodd::VertexDescriptor> Gfodd::Atoms() {
+  std::vector<Gfodd::VertexDescriptor> atoms;
+  for (auto [vi, vi_end] = boost::vertices(diagram_); vi != vi_end; ++vi)
+    if (!diagram_[*vi].sink()) atoms.push_back(*vi);
+  return atoms;
+}

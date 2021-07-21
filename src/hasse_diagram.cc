@@ -4,22 +4,15 @@
 
 #include <exception>
 #include <map>
+#include <vector>
 
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/log/trivial.hpp>
 
-HasseDiagram::HasseDiagram(int num_position_sets) :
-  num_position_sets_(num_position_sets) {
+HasseDiagram::HasseDiagram() {
   bot_ = boost::add_vertex(diagram_);
   tops_.insert(bot_);
-}
-
-HasseDiagram::Vertex
-HasseDiagram::CorrespondingVertexClass(int position_set_index) {
-  assert(position_set_index >= 0 &&
-         position_set_index < corresponding_vertex_class_.size());
-  return corresponding_vertex_class_[position_set_index];
 }
 
 struct EndSearchException : public std::exception {};
@@ -65,7 +58,9 @@ private:
 };
 
 HasseDiagram::Vertex
-HasseDiagram::AddVertexClass(VariablePositions variable_positions) {
+HasseDiagram::AddVertexClass(VariablePositions variable_positions,
+                             Gfodd::VertexDescriptor gfodd_vertex_id,
+                             Gfodd::VertexDescriptor null_vertex) {
   std::set<HasseDiagram::Vertex> excluded;
   std::vector<HasseDiagram::Vertex> parents;
   for (auto top : tops_) {
@@ -74,8 +69,8 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions) {
       boost::breadth_first_search(diagram_, top, boost::visitor(parent_finder));
     } catch (EndSearchException& exception) {
       BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: absorbed into another vertex";
-      if (corresponding_vertex_class_.size() < num_position_sets_)
-        corresponding_vertex_class_.push_back(parents[0]);
+      if (gfodd_vertex_id != null_vertex)
+        corresponding_vertex_class_[gfodd_vertex_id] = parents[0];
       return parents[0];
     }
   }
@@ -90,8 +85,36 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions) {
     tops_.erase(parent);
   }
   tops_.insert(new_vertex);
-  corresponding_vertex_class_.push_back(new_vertex);
+  if (gfodd_vertex_id != null_vertex)
+    corresponding_vertex_class_[gfodd_vertex_id] = new_vertex;
   return new_vertex;
+}
+
+void HasseDiagram::InitialiseVertices(Gfodd gfodd) {
+  std::vector<Gfodd::VertexDescriptor> atoms = gfodd.Atoms();
+  std::vector<VariablePositions> top_layer;
+
+  // First pass
+  for (auto atom : atoms) {
+    auto variable_positions = gfodd.Positions(atom);
+    top_layer.push_back(variable_positions);
+    AddVertexClass(variable_positions, atom, gfodd.NullVertex());
+  }
+
+  for (int i = 1; i < atoms.size(); ++i) {
+    std::vector<VariablePositions> new_top_layer;
+    int j = i; // which one to add first
+    for (auto positions : top_layer) {
+      for (int k = j; k < atoms.size(); ++k) {
+        VariablePositions new_set = positions;
+        new_set.Insert(gfodd.Positions(atoms[k]));
+        AddVertexClass(new_set, gfodd.NullVertex(), gfodd.NullVertex());
+        new_top_layer.push_back(new_set);
+      }
+      ++j;
+    }
+    top_layer = new_top_layer;
+  }
 }
 
 void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
@@ -110,46 +133,11 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-// TODO: update
+// TODO: update to update edges and perhaps create new vertex classes
 void HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
   int size = diagram_[vertex_class].size();
   assert(size > 0);
   diagram_[vertex_class].set_size(size - 1);
-}
-
-// TODO: probably don't need this
-void HasseDiagram::RemoveEdges() {
-  auto edges = boost::edges(diagram_);
-  for (auto edge = edges.first; edge != edges.second; ++edge)
-    boost::remove_edge(*edge, diagram_);
-}
-
-// TODO: implement
-void HasseDiagram::InitialiseVertices(Gfodd gfodd) {
-  // HasseDiagram diagram(positions_.size());
-  // std::vector<std::set<int>> top_layer;
-
-  // // Add the sets themselves
-  // for (auto position_set : positions_) {
-  //   top_layer.push_back(position_set);
-  //   diagram.AddVertexClass(position_set);
-  // }
-
-  // for (int i = 1; i < positions_.size(); ++i) {
-  //   std::vector<std::set<int>> new_top_layer;
-  //   int j = i; // which position to add first
-  //   for (auto position_set : top_layer) {
-  //     for (int k = j; k < positions_.size(); ++k) {
-  //       std::set<int> new_set = position_set;
-  //       new_set.insert(positions_[k].begin(), positions_[k].end());
-  //       diagram.AddVertexClass(new_set);
-  //       new_top_layer.push_back(new_set);
-  //     }
-  //     ++j;
-  //   }
-  //   top_layer = new_top_layer;
-  // }
-  // return diagram;
 }
 
 // TODO: implement (later)
