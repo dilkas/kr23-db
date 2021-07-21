@@ -10,9 +10,9 @@ class VariablePositions {
  public:
   VariablePositions() {}
   VariablePositions(std::string variables);
-  std::string string_representation() { return string_representation_; };
-  bool OccursOnlyOnce(std::string variable) {
-    return map_[variable].size() == 1;
+  std::string string_representation() const { return string_representation_; };
+  bool OccursOnlyOnce(std::string variable) const {
+    return map_.at(variable).size() == 1;
   }
 
  private:

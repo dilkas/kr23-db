@@ -4,8 +4,7 @@
 
 #include <map>
 
-// TODO: test (when the class gets some accessors)
-void OptimisedVariablePositions::Set(VariablePositions& positions) {
+void OptimisedVariablePositions::Set(const VariablePositions& positions) {
   representation_.clear();
   std::map<char, int> variable_encodings;
   int next_int = 1;
@@ -24,7 +23,6 @@ void OptimisedVariablePositions::Set(VariablePositions& positions) {
   }
 }
 
-// TODO: test?
 MatchQuality
 OptimisedVariablePositions::IsSubsetOf(OptimisedVariablePositions other) const {
   assert(representation_.size() == other.representation_.size());
