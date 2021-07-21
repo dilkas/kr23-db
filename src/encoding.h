@@ -17,6 +17,7 @@ class Encoding {
   Encoding() {}
   void Set(const VariablePositions& positions);
   MatchQuality IsSubsetOf(Encoding other) const;
+  int CountRedundantPositions();
  private:
   std::vector<int> representation_;
 };

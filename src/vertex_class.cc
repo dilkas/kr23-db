@@ -1,9 +1,10 @@
 #include "vertex_class.h"
 
-// TODO: implement
-int VertexClass::FullSize(int domain_size, int predicate_arrity) {
-  return 0;
-  //return std::pow((double)domain_size, predicate_arity - positions_.RedundantPositionCount());
+#include "math.h"
+
+int VertexClass::FullSize(int domain_size, int predicate_arity) {
+  return std::pow((double)domain_size,
+                  predicate_arity - positions_.CountRedundantPositions());
 }
 
 MatchQuality VertexClass::IsSubsetOf(VariablePositions other) const {

@@ -27,3 +27,9 @@ BOOST_AUTO_TEST_CASE(test_NotASubset) {
   e2.Set(VariablePositions("xxyz"));
   BOOST_CHECK(e1.IsSubsetOf(e2) == MatchQuality::kNotASubset);
 }
+
+BOOST_AUTO_TEST_CASE(test_CountRedundantPositions) {
+  Encoding e;
+  e.Set(VariablePositions("xyyzzz"));
+  BOOST_CHECK_EQUAL(e.CountRedundantPositions(), 3);
+}

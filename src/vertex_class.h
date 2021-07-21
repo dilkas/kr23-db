@@ -15,7 +15,7 @@ class VertexClass {
   void set_size(int size) { size_ = size; }
 
   void set_positions(VariablePositions positions) { positions_.Set(positions); }
-  int FullSize(int domain_size, int predicate_arrity);
+  int FullSize(int domain_size, int predicate_arity);
   MatchQuality IsSubsetOf(VariablePositions other) const;
 
  private:

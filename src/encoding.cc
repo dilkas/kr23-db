@@ -43,3 +43,13 @@ MatchQuality Encoding::IsSubsetOf(Encoding other) const {
   }
   return match;
 }
+
+int Encoding::CountRedundantPositions() {
+  std::set<int> seen;
+  int count = 0;
+  for (auto v : representation_) {
+    if (seen.find(v) != seen.end()) ++count;
+    seen.insert(v);
+  }
+  return count;
+}
