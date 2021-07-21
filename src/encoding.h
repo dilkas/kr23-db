@@ -1,5 +1,5 @@
-#ifndef OPTIMISED_VARIABLE_POSITIONS_H
-#define OPTIMISED_VARIABLE_POSITIONS_H
+#ifndef ENCODING_H
+#define ENCODING_H
 
 #include <vector>
 
@@ -12,11 +12,11 @@
 // Variables that occur only once are represented by a zero. All other variables
 // are mapped to positive integers in the order in which they occur in the
 // string.
-class OptimisedVariablePositions {
+class Encoding {
  public:
-  OptimisedVariablePositions() {}
+  Encoding() {}
   void Set(const VariablePositions& positions);
-  MatchQuality IsSubsetOf(OptimisedVariablePositions other) const;
+  MatchQuality IsSubsetOf(Encoding other) const;
  private:
   std::vector<int> representation_;
 };

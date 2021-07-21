@@ -1,10 +1,10 @@
-#include "optimised_variable_positions.h"
+#include "encoding.h"
 
 #include <assert.h>
 
 #include <map>
 
-void OptimisedVariablePositions::Set(const VariablePositions& positions) {
+void Encoding::Set(const VariablePositions& positions) {
   representation_.clear();
   std::map<char, int> variable_encodings;
   int next_int = 1;
@@ -23,8 +23,7 @@ void OptimisedVariablePositions::Set(const VariablePositions& positions) {
   }
 }
 
-MatchQuality
-OptimisedVariablePositions::IsSubsetOf(OptimisedVariablePositions other) const {
+MatchQuality Encoding::IsSubsetOf(Encoding other) const {
   assert(representation_.size() == other.representation_.size());
   std::map<int, int> translation;
   MatchQuality match = MatchQuality::kEqual;

@@ -4,7 +4,7 @@
 #include <set>
 
 #include "match_quality.h"
-#include "optimised_variable_positions.h"
+#include "encoding.h"
 #include "variable_positions.h"
 
 class VertexClass {
@@ -19,7 +19,7 @@ class VertexClass {
   MatchQuality IsSubsetOf(VariablePositions other) const;
 
  private:
-  OptimisedVariablePositions positions_;
+  Encoding positions_;
   int size_;
 };
 

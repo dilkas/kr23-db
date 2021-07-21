@@ -7,7 +7,7 @@ int VertexClass::FullSize(int domain_size, int predicate_arrity) {
 }
 
 MatchQuality VertexClass::IsSubsetOf(VariablePositions other) const {
-  OptimisedVariablePositions optimised;
-  optimised.Set(other);
-  return positions_.IsSubsetOf(optimised);
+  Encoding encoding;
+  encoding.Set(other);
+  return positions_.IsSubsetOf(encoding);
 }
