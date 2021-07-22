@@ -30,16 +30,6 @@ Gfodd::Gfodd() {
   internal_edges_ = {i1};
 }
 
-std::pair<VariablePositions, VariablePositions>
-Gfodd::IncidentAtomInfo(int internal_edge_index) {
-  assert(internal_edge_index >= 0 && internal_edge_index < NumInternalEdges());
-  auto [source, target] = boost::incident(internal_edges_[internal_edge_index],
-                                          diagram_);
-  return std::make_pair(diagram_[source].positions(),
-                        diagram_[target].positions());
-}
-
-// TODO: test?
 std::vector<Gfodd::VertexDescriptor> Gfodd::Atoms() {
   std::vector<Gfodd::VertexDescriptor> atoms;
   for (auto [vi, vi_end] = boost::vertices(diagram_); vi != vi_end; ++vi)

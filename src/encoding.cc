@@ -23,24 +23,30 @@ void Encoding::Set(const VariablePositions& positions) {
   }
 }
 
-MatchQuality Encoding::IsSubsetOf(Encoding other) const {
+Match Encoding::IsSubsetOf(Encoding other) const {
   assert(representation_.size() == other.representation_.size());
   std::map<int, int> translation;
-  MatchQuality match = MatchQuality::kEqual;
+  Match match = {Match::Quality::kEqual, 0};
+  int max_var_this = 0, max_var_other = 0;
   for (int i = 0; i < representation_.size(); ++i) {
+    if (representation_[i] > max_var_this) max_var_this = representation_[i];
+    if (other.representation_[i] > max_var_other)
+      max_var_other = other.representation_[i];
+
     if (representation_[i] == 0) {
-      if (other.representation_[i] != 0) match = MatchQuality::kSubset;
+      if (other.representation_[i] != 0) match.quality = Match::Quality::kSubset;
       continue;
     }
     auto it = translation.find(representation_[i]);
     if (it != translation.end()) {
       if (other.representation_[i] != it->second)
-        return MatchQuality::kNotASubset;
+        return {Match::Quality::kNotASubset, 0};
     } else {
-      if (other.representation_[i] == 0) return MatchQuality::kNotASubset;
+      if (other.representation_[i] == 0) return {Match::Quality::kNotASubset, 0};
       translation[representation_[i]] = other.representation_[i];
     }
   }
+  match.diff_in_variables = max_var_other - max_var_this;
   return match;
 }
 
@@ -52,4 +58,20 @@ int Encoding::CountRedundantPositions() {
     seen.insert(v);
   }
   return count;
+}
+
+// TODO: test?
+std::map<int, std::set<std::string>>
+Encoding::MatchAString(std::string variables) {
+  std::map<int, std::set<std::string>> decoding;
+  assert(variables.size() == representation_.size());
+  for (int i = 0; i < variables.size(); ++i) {
+    auto it = decoding.find(representation_[i]);
+    if (it == decoding.end()) {
+      decoding[representation_[i]] = {std::string(1, variables[i])};
+    } else {
+      it->second.insert(std::string(1, variables[i]));
+    }
+  }
+  return decoding;
 }

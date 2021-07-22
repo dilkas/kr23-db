@@ -10,10 +10,7 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/log/trivial.hpp>
 
-HasseDiagram::HasseDiagram() {
-  bot_ = boost::add_vertex(diagram_);
-  tops_.insert(bot_);
-}
+#include "match.h"
 
 struct EndSearchException : public std::exception {};
 
@@ -21,8 +18,10 @@ class ParentFinder : public boost::default_bfs_visitor {
 public:
   ParentFinder(std::set<HasseDiagram::Vertex>& excluded,
                std::vector<HasseDiagram::Vertex>& parents,
+               std::vector<int>& differences,
                const VariablePositions& positions) :
-    excluded_(excluded), parents_(parents), positions_(positions) {};
+    excluded_(excluded), parents_(parents), differences_(differences),
+    positions_(positions) {};
 
   template<typename Vertex, typename Graph>
   void examine_vertex(Vertex vertex, const Graph& graph) const {
@@ -35,14 +34,15 @@ public:
     excluded_.insert(vertex);
 
     auto match = graph[vertex].IsSubsetOf(positions_);
-    if (match == MatchQuality::kNotASubset) return;
-    if (match == MatchQuality::kEqual) {
+    if (match.quality == Match::Quality::kNotASubset) return;
+    if (match.quality == Match::Quality::kEqual) {
       parents_ = {vertex};
       BOOST_LOG_TRIVIAL(debug) << "ParentFinder: ending the search early";
       throw EndSearchException();
     }
 
     parents_.push_back(vertex);
+    differences_.push_back(match.diff_in_variables);
     for (auto successor :
            boost::make_iterator_range(boost::adjacent_vertices(vertex, graph))) {
       BOOST_LOG_TRIVIAL(debug) << "ParentFinder: marking successor "
@@ -54,6 +54,9 @@ public:
 private:
   std::set<HasseDiagram::Vertex>& excluded_;
   std::vector<HasseDiagram::Vertex>& parents_;
+  // The differences in the numbers of free variables between the vertex class
+  // to be inserted and all of its parents
+  std::vector<int>& differences_;
   const VariablePositions& positions_;
 };
 
@@ -63,8 +66,10 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
                              Gfodd::VertexDescriptor null_vertex) {
   std::set<HasseDiagram::Vertex> excluded;
   std::vector<HasseDiagram::Vertex> parents;
+  std::vector<int> differences;
   for (auto top : tops_) {
-    ParentFinder parent_finder(excluded, parents, variable_positions);
+    ParentFinder parent_finder(excluded, parents, differences,
+                               variable_positions);
     try {
       boost::breadth_first_search(diagram_, top, boost::visitor(parent_finder));
     } catch (EndSearchException& exception) {
@@ -80,9 +85,11 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   assert(!parents.empty());
   HasseDiagram::Vertex new_vertex = boost::add_vertex(diagram_);
   diagram_[new_vertex].set_positions(variable_positions);
-  for (auto parent : parents) {
-    boost::add_edge(new_vertex, parent, diagram_);
-    tops_.erase(parent);
+  for (int i = 0; i < parents.size(); i++) {
+    auto edge = boost::add_edge(new_vertex, parents[i], diagram_).first;
+    diagram_[edge].edge_of_gfodd = -1;
+    diagram_[edge].multiplicity = differences[i];
+    tops_.erase(parents[i]);
   }
   tops_.insert(new_vertex);
   if (gfodd_vertex_id != null_vertex)
@@ -133,21 +140,51 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-// TODO: update to update edges and perhaps create new vertex classes
+// TODO: implement
+void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
+  // for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
+  //   auto incident_vertices = gfodd.Incident(i);
+  //   auto source_variables = gfodd.Positions(incident_vertices.first).
+  //     string_representation();
+  //   auto target_variables = gfodd.Positions(incident_vertices.second);
+  //   auto parent = corresponding_vertex_class_[incident_vertices.second];
+  //   // For each possible source (i.e., all descendants of the first source),
+  //   // determine all possible targets
+  //   for (auto source = corresponding_vertex_class_[incident_vertices.first]; ???; ???) {
+  //     for (auto target = Target(source_variables, source, target_variables, parent); ???; ???) {
+  //       // does it matter in what order I visit the descendants?
+  //       // TODO: add 'multiplicities' to the non-GFODD edges (AddVertexClass? can I make it efficient?)
+  //       // TODO: check if this edge already exists
+  //       // don't create the edge if multiplicity = 0
+  //       auto edge = boost::add_edge(source, target, diagram_);
+  //       edge.edge_of_gfodd = i;
+  //       edge.multiplicity = ...;
+  //     }
+  //   }
+  // }
+}
+
+// Find equality constraints on variables that transfer from one GFODD vertex to
+// another. These constraints occur when considering descendants of from source
+// vertex.
+// TODO: implement
+// HasseDiagram::Vertex HasseDiagram::Target(std::string source_variables,
+//                                           HasseDiagram::Vertex source_vertex,
+//                                           VariablePositions target_variables,
+//                                           HasseDiagram::Vertex parent_of_target) {
+//   // Identify matching variables from source_variables and source_vertex
+//   auto decoding = source_vertex.MatchAString(source_variables);
+//   // Transform target_variables to match these constraints
+//   auto new_variables = target_variables.RespectTheMap(decoding);
+//   // Encode them
+//   Encoding encoding;
+//   encoding.Set(new_variables);
+//   // TODO: find the descendant of parent_of_target that matches the encoding
+// }
+
+// TODO (later): update to update edges and perhaps create new vertex classes
 void HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
   int size = diagram_[vertex_class].size();
   assert(size > 0);
   diagram_[vertex_class].set_size(size - 1);
 }
-
-// TODO: implement (later)
-// void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
-//   for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
-    // from: CorrespondingVertexClass(gfodd.incidentVertices(i)) (and descendants?)
-    // to: same and descendants?
-//  }
-  // 1. For each internal edge of the GFODD:
-  // a) from..?
-  // b) to..?
-  // c) how many?
-// }

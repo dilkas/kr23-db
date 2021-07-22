@@ -1,9 +1,11 @@
 #ifndef ENCODING_H
 #define ENCODING_H
 
+#include <map>
+#include <string>
 #include <vector>
 
-#include "match_quality.h"
+#include "match.h"
 #include "variable_positions.h"
 
 // Standardised representation of variable positions, discarding variable names
@@ -16,8 +18,9 @@ class Encoding {
  public:
   Encoding() {}
   void Set(const VariablePositions& positions);
-  MatchQuality IsSubsetOf(Encoding other) const;
+  Match IsSubsetOf(Encoding other) const;
   int CountRedundantPositions();
+  std::map<int, std::set<std::string>> MatchAString(std::string variables);
  private:
   std::vector<int> representation_;
 };

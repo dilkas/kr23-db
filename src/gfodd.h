@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graph_utility.hpp>
 
 #include "variable_positions.h"
 #include "vertex.h"
@@ -24,6 +25,7 @@ public:
   typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 
   Gfodd();
+
   int NumInternalEdges() { return internal_edges_.size(); }
   VariablePositions Positions(VertexDescriptor v) {
     return diagram_[v].positions();
@@ -32,9 +34,10 @@ public:
   VertexDescriptor NullVertex() {
     return boost::graph_traits<Graph>::null_vertex();
   }
-  std::pair<VariablePositions,
-            VariablePositions> IncidentAtomInfo(int internal_edge_index);
-  // TODO: replace with incidentVertices() and update the test
+  std::pair<VertexDescriptor, VertexDescriptor>
+  Incident(int internal_edge_index) {
+    return boost::incident(internal_edges_[internal_edge_index], diagram_);
+  }
 
 private:
   typedef boost::graph_traits<Graph>::edge_descriptor EdgeDescriptor;

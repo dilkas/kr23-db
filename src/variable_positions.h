@@ -16,6 +16,8 @@ class VariablePositions {
     return map_.at(variable).size() == 1;
   }
   void Insert(VariablePositions other);
+  // Merge variables that are associated with the same integer
+  VariablePositions RespectTheMap(std::map<int, std::set<std::string>> decoding);
 
  private:
   std::string string_representation_;

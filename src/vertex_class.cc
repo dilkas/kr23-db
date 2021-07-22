@@ -7,7 +7,7 @@ int VertexClass::FullSize(int domain_size, int predicate_arity) {
                   predicate_arity - positions_.CountRedundantPositions());
 }
 
-MatchQuality VertexClass::IsSubsetOf(VariablePositions other) const {
+Match VertexClass::IsSubsetOf(VariablePositions other) const {
   Encoding encoding;
   encoding.Set(other);
   return positions_.IsSubsetOf(encoding);

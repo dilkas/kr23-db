@@ -1,9 +1,11 @@
 #ifndef VERTEX_CLASS_H
 #define VERTEX_CLASS_H
 
+#include <map>
 #include <set>
+#include <string>
 
-#include "match_quality.h"
+#include "match.h"
 #include "encoding.h"
 #include "variable_positions.h"
 
@@ -16,7 +18,10 @@ class VertexClass {
 
   void set_positions(VariablePositions positions) { positions_.Set(positions); }
   int FullSize(int domain_size, int predicate_arity);
-  MatchQuality IsSubsetOf(VariablePositions other) const;
+  Match IsSubsetOf(VariablePositions other) const;
+  std::map<int, std::set<std::string>> MatchAString(std::string variables) {
+    return positions_.MatchAString(variables);
+  }
 
  private:
   Encoding positions_;

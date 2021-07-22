@@ -11,6 +11,14 @@ BOOST_AUTO_TEST_CASE(test_NumInternalEdges) {
   BOOST_CHECK_EQUAL(gfodd.NumInternalEdges(), 1);
 }
 
+BOOST_AUTO_TEST_CASE(test_AtomsAndPositions) {
+  Gfodd gfodd;
+  auto atoms = gfodd.Atoms();
+  BOOST_CHECK_EQUAL(atoms.size(), 2);
+  BOOST_CHECK_EQUAL(gfodd.Positions(atoms[0]).string_representation(), "xy");
+  BOOST_CHECK_EQUAL(gfodd.Positions(atoms[1]).string_representation(), "yz");
+}
+
 // BOOST_AUTO_TEST_CASE(test_IncidentAtomInfo) {
 //   Gfodd gfodd;
 //   auto [source, target] = gfodd.IncidentAtomInfo(0);
