@@ -60,7 +60,6 @@ int Encoding::CountRedundantPositions() {
   return count;
 }
 
-// TODO: test?
 std::map<int, std::set<std::string>>
 Encoding::MatchAString(std::string variables) {
   std::map<int, std::set<std::string>> decoding;

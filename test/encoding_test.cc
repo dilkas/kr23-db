@@ -35,3 +35,16 @@ BOOST_AUTO_TEST_CASE(test_CountRedundantPositions) {
   e.Set(VariablePositions("xyyzzz"));
   BOOST_CHECK_EQUAL(e.CountRedundantPositions(), 3);
 }
+
+BOOST_AUTO_TEST_CASE(test_MatchAString) {
+  Encoding e;
+  e.Set(VariablePositions("xxy")); // encoding: 110
+  auto match = e.MatchAString("abc");
+  BOOST_CHECK_EQUAL(match.size(), 2);
+  std::set<std::string> answer1 = {"c"};
+  BOOST_CHECK_EQUAL_COLLECTIONS(match[0].begin(), match[0].end(),
+                                answer1.begin(), answer1.end());
+  std::set<std::string> answer2 = {"a", "b"};
+  BOOST_CHECK_EQUAL_COLLECTIONS(match[1].begin(), match[1].end(),
+                                answer2.begin(), answer2.end());
+}

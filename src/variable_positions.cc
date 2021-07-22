@@ -18,11 +18,13 @@ void VariablePositions::Insert(VariablePositions other) {
   }
 }
 
-// TODO: test
 VariablePositions
 VariablePositions::RespectTheMap(std::map<int, std::set<std::string>> decoding) {
   VariablePositions new_version;
   for (auto& [cell_name, cell] : decoding) {
+    if (cell_name == 0)
+      for (auto variable : cell) new_version.map_[variable] = map_[variable];
+
     std::set<int> positions;
     std::string variable_name;
     for (auto variable : cell) {
