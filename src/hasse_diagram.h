@@ -45,8 +45,8 @@ class HasseDiagram {
   Vertex AddVertexClass(VariablePositions variable_positions,
                         Gfodd::VertexDescriptor gfodd_vertex_id,
                         Gfodd::VertexDescriptor null_vertex);
-  // Vertex Target(VariablePositions source_variables, Vertex source_vertex,
-  //               VariablePositions target_variables);
+  Vertex Target(std::string source_variables, Vertex source_vertex,
+                VariablePositions target_variables, Vertex parent_of_target);
 };
 
 #endif

@@ -10,5 +10,5 @@ int VertexClass::FullSize(int domain_size, int predicate_arity) {
 Match VertexClass::IsSubsetOf(VariablePositions other) const {
   Encoding encoding;
   encoding.Set(other);
-  return positions_.IsSubsetOf(encoding);
+  return IsSubsetOf(encoding);
 }

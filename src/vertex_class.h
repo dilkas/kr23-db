@@ -18,6 +18,7 @@ class VertexClass {
 
   void set_positions(VariablePositions positions) { positions_.Set(positions); }
   int FullSize(int domain_size, int predicate_arity);
+  Match IsSubsetOf(Encoding other) const { return positions_.IsSubsetOf(other); }
   Match IsSubsetOf(VariablePositions other) const;
   std::map<int, std::set<std::string>> MatchAString(std::string variables) {
     return positions_.MatchAString(variables);

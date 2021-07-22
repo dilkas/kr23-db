@@ -18,7 +18,7 @@ class Encoding {
  public:
   Encoding() {}
   void Set(const VariablePositions& positions);
-  Match IsSubsetOf(Encoding other) const;
+  Match IsSubsetOf(Encoding other) const; // i.e., is less restrictive than
   int CountRedundantPositions();
   std::map<int, std::set<std::string>> MatchAString(std::string variables);
  private:

@@ -1,5 +1,6 @@
 #include "hasse_diagram.h"
 
+#include <assert.h>
 #include <math.h>
 
 #include <exception>
@@ -21,7 +22,7 @@ public:
                std::vector<int>& differences,
                const VariablePositions& positions) :
     excluded_(excluded), parents_(parents), differences_(differences),
-    positions_(positions) {};
+    positions_(positions) {}
 
   template<typename Vertex, typename Graph>
   void examine_vertex(Vertex vertex, const Graph& graph) const {
@@ -164,23 +165,62 @@ void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
   // }
 }
 
+// First we discover a vertex and record its relationship to the encoding. If
+// they're equal, immediately exit the search. If they're unrelated, the
+// terminator skips all out-edges.
+class EncodingFinder : public boost::default_dfs_visitor {
+public:
+  EncodingFinder(Encoding& encoding, Match::Quality &match,
+                 HasseDiagram::Vertex& finding) :
+    encoding_(encoding), match_(match), finding_(finding) {}
+  template<typename Vertex, typename Graph>
+  void discover_vertex(Vertex vertex, const Graph& graph) const {
+    match_ = graph[vertex].IsSubsetOf(encoding_).quality;
+    if (match_ == Match::Quality::kEqual) {
+      finding_ = vertex;
+      throw EndSearchException();
+    }
+  }
+
+private:
+  Encoding& encoding_;
+  HasseDiagram::Vertex& finding_;
+  Match::Quality& match_;
+};
+
 // Find equality constraints on variables that transfer from one GFODD vertex to
 // another. These constraints occur when considering descendants of from source
 // vertex.
-// TODO: implement
-// HasseDiagram::Vertex HasseDiagram::Target(std::string source_variables,
-//                                           HasseDiagram::Vertex source_vertex,
-//                                           VariablePositions target_variables,
-//                                           HasseDiagram::Vertex parent_of_target) {
-//   // Identify matching variables from source_variables and source_vertex
-//   auto decoding = source_vertex.MatchAString(source_variables);
-//   // Transform target_variables to match these constraints
-//   auto new_variables = target_variables.RespectTheMap(decoding);
-//   // Encode them
-//   Encoding encoding;
-//   encoding.Set(new_variables);
-//   // TODO: find the descendant of parent_of_target that matches the encoding
-// }
+HasseDiagram::Vertex HasseDiagram::Target(std::string source_variables,
+                                          HasseDiagram::Vertex source_vertex,
+                                          VariablePositions target_variables,
+                                          HasseDiagram::Vertex parent_of_target) {
+  // Identify matching variables from source_variables and source_vertex
+  auto decoding = diagram_[source_vertex].MatchAString(source_variables);
+  // Transform target_variables to match these constraints
+  auto new_variables = target_variables.RespectTheMap(decoding);
+  // Encode them
+  Encoding encoding;
+  encoding.Set(new_variables);
+
+  // Find the descendant of parent_of_target that matches the encoding
+  Match::Quality last_match;
+  HasseDiagram::Vertex finding =
+    boost::graph_traits<HasseDiagram::Graph>::null_vertex();
+  EncodingFinder encoding_finder(encoding, last_match, finding);
+  std::vector<boost::default_color_type> colors(boost::num_vertices(diagram_));
+  const auto terminator = [last_match](HasseDiagram::Vertex vertex,
+                                       const Graph& graph) {
+    return last_match == Match::Quality::kNotASubset;
+  };
+  try {
+  boost::depth_first_visit(diagram_, parent_of_target,
+                           encoding_finder, colors.data(),
+                           terminator);
+  } catch (EndSearchException& exception) {}
+  assert(finding != boost::graph_traits<HasseDiagram::Graph>::null_vertex());
+  return finding;
+}
 
 // TODO (later): update to update edges and perhaps create new vertex classes
 void HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
