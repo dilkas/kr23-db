@@ -17,7 +17,8 @@ class VariablePositions {
   }
   void Insert(VariablePositions other);
   // Merge variables that are associated with the same integer
-  VariablePositions RespectTheMap(std::map<int, std::set<std::string>> decoding);
+  VariablePositions
+  RespectTheMap(std::map<int, std::set<std::string>> decoding) const;
 
  private:
   std::string string_representation_;

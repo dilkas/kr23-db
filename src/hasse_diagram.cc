@@ -141,30 +141,6 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-// TODO: implement
-void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
-  // for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
-  //   auto incident_vertices = gfodd.Incident(i);
-  //   auto source_variables = gfodd.Positions(incident_vertices.first).
-  //     string_representation();
-  //   auto target_variables = gfodd.Positions(incident_vertices.second);
-  //   auto parent = corresponding_vertex_class_[incident_vertices.second];
-  //   // For each possible source (i.e., all descendants of the first source),
-  //   // determine all possible targets
-  //   for (auto source = corresponding_vertex_class_[incident_vertices.first]; ???; ???) {
-  //     for (auto target = Target(source_variables, source, target_variables, parent); ???; ???) {
-  //       // does it matter in what order I visit the descendants?
-  //       // TODO: add 'multiplicities' to the non-GFODD edges (AddVertexClass? can I make it efficient?)
-  //       // TODO: check if this edge already exists
-  //       // don't create the edge if multiplicity = 0
-  //       auto edge = boost::add_edge(source, target, diagram_);
-  //       edge.edge_of_gfodd = i;
-  //       edge.multiplicity = ...;
-  //     }
-  //   }
-  // }
-}
-
 // First we discover a vertex and record its relationship to the encoding. If
 // they're equal, immediately exit the search. If they're unrelated, the
 // terminator skips all out-edges.
@@ -188,38 +164,90 @@ private:
   Match::Quality& match_;
 };
 
+class TargetVisitor : public boost::default_dfs_visitor {
+public:
+  TargetVisitor(HasseDiagram::Vertex source) : source_(source) {}
+  template<typename Vertex, typename Graph>
+  void discover_vertex(Vertex vertex, const Graph& graph) const {
+    // TODO: add 'multiplicities' to the non-GFODD edges (AddVertexClass? can I make it efficient?)
+    // TODO: check if this edge already exists
+    // don't create the edge if multiplicity = 0
+    // auto edge = boost::add_edge(source, target, diagram_);
+    // edge.edge_of_gfodd = i;
+    // edge.multiplicity = ...;
+  }
+
+private:
+  HasseDiagram::Vertex source_;
+};
+
+// For each possible source (i.e., all descendants of the first source),
+// determine all possible targets.
+//
 // Find equality constraints on variables that transfer from one GFODD vertex to
 // another. These constraints occur when considering descendants of from source
 // vertex.
-HasseDiagram::Vertex HasseDiagram::Target(std::string source_variables,
-                                          HasseDiagram::Vertex source_vertex,
-                                          VariablePositions target_variables,
-                                          HasseDiagram::Vertex parent_of_target) {
-  // Identify matching variables from source_variables and source_vertex
-  auto decoding = diagram_[source_vertex].MatchAString(source_variables);
-  // Transform target_variables to match these constraints
-  auto new_variables = target_variables.RespectTheMap(decoding);
-  // Encode them
-  Encoding encoding;
-  encoding.Set(new_variables);
+class SourceVisitor : public boost::default_dfs_visitor {
+public:
+  SourceVisitor(VariablePositions source_variables,
+                HasseDiagram::Vertex source_vertex,
+                VariablePositions target_variables,
+                HasseDiagram::Vertex parent_of_target) :
+    source_variables_(source_variables), source_vertex_(source_vertex),
+    target_variables_(target_variables), parent_of_target_(parent_of_target) {}
 
-  // Find the descendant of parent_of_target that matches the encoding
-  Match::Quality last_match;
-  HasseDiagram::Vertex finding =
-    boost::graph_traits<HasseDiagram::Graph>::null_vertex();
-  EncodingFinder encoding_finder(encoding, last_match, finding);
-  std::vector<boost::default_color_type> colors(boost::num_vertices(diagram_));
-  const auto terminator = [last_match](HasseDiagram::Vertex vertex,
-                                       const Graph& graph) {
-    return last_match == Match::Quality::kNotASubset;
-  };
-  try {
-  boost::depth_first_visit(diagram_, parent_of_target,
-                           encoding_finder, colors.data(),
-                           terminator);
-  } catch (EndSearchException& exception) {}
-  assert(finding != boost::graph_traits<HasseDiagram::Graph>::null_vertex());
-  return finding;
+  template<typename Vertex, typename Graph>
+  void discover_vertex(Vertex vertex, const Graph& graph) const {
+    // Identify matching variables from source_variables and source_vertex
+    auto decoding = graph[source_vertex_].
+      MatchAString(source_variables_.string_representation());
+    // Transform target_variables to match these constraints
+    auto new_variables = target_variables_.RespectTheMap(decoding);
+    // Encode them
+    Encoding encoding;
+    encoding.Set(new_variables);
+
+    // Find the descendant of parent_of_target_ that matches the encoding, i.e.,
+    // find the target
+    Match::Quality last_match;
+    HasseDiagram::Vertex target =
+      boost::graph_traits<HasseDiagram::Graph>::null_vertex();
+    EncodingFinder encoding_finder(encoding, last_match, target);
+    std::vector<boost::default_color_type> colors(boost::num_vertices(graph));
+    const auto terminator = [last_match](HasseDiagram::Vertex vertex,
+                                         const Graph& graph) {
+      return last_match == Match::Quality::kNotASubset;
+    };
+    try {
+      // TODO: can I avoid supplying a color map?
+      boost::depth_first_visit(graph, parent_of_target_,
+                               encoding_finder, colors.data(),
+                               terminator);
+    } catch (EndSearchException& exception) {}
+    assert(target != boost::graph_traits<HasseDiagram::Graph>::null_vertex());
+
+    TargetVisitor visitor(vertex);
+    boost::depth_first_search(graph,
+                              boost::visitor(visitor).root_vertex(target));
+  }
+
+private:
+  VariablePositions source_variables_;
+  HasseDiagram::Vertex source_vertex_;
+  VariablePositions target_variables_;
+  HasseDiagram::Vertex parent_of_target_;
+};
+
+void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
+  for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
+    auto incident_vertices = gfodd.Incident(i);
+    auto source = corresponding_vertex_class_[incident_vertices.first];
+    SourceVisitor visitor(gfodd.Positions(incident_vertices.first), source,
+                          gfodd.Positions(incident_vertices.second),
+                          corresponding_vertex_class_[incident_vertices.second]);
+    boost::depth_first_search(diagram_,
+                              boost::visitor(visitor).root_vertex(source));
+  }
 }
 
 // TODO (later): update to update edges and perhaps create new vertex classes
