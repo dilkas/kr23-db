@@ -1,65 +1,15 @@
 #include "hasse_diagram.h"
 
 #include <assert.h>
-#include <math.h>
 
-#include <exception>
 #include <map>
 #include <vector>
 
-#include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/topological_sort.hpp>
-#include <boost/log/trivial.hpp>
 
-#include "match.h"
-
-struct EndSearchException : public std::exception {};
-
-class ParentFinder : public boost::default_bfs_visitor {
-public:
-  ParentFinder(std::set<HasseDiagram::Vertex>& excluded,
-               std::vector<HasseDiagram::Vertex>& parents,
-               std::vector<int>& differences,
-               const VariablePositions& positions) :
-    excluded_(excluded), parents_(parents), differences_(differences),
-    positions_(positions) {}
-
-  template<typename Vertex, typename Graph>
-  void examine_vertex(Vertex vertex, const Graph& graph) const {
-    BOOST_LOG_TRIVIAL(debug) << "ParentFinder: examining vertex " << vertex;
-
-    if (excluded_.find(vertex) != excluded_.end()) {
-      BOOST_LOG_TRIVIAL(debug) << "ParentFinder: skipping";
-      return;
-    }
-    excluded_.insert(vertex);
-
-    auto match = graph[vertex].IsSubsetOf(positions_);
-    if (match.quality == Match::Quality::kNotASubset) return;
-    if (match.quality == Match::Quality::kEqual) {
-      parents_ = {vertex};
-      BOOST_LOG_TRIVIAL(debug) << "ParentFinder: ending the search early";
-      throw EndSearchException();
-    }
-
-    parents_.push_back(vertex);
-    differences_.push_back(match.diff_in_variables);
-    for (auto successor :
-           boost::make_iterator_range(boost::adjacent_vertices(vertex, graph))) {
-      BOOST_LOG_TRIVIAL(debug) << "ParentFinder: marking successor "
-                               << successor << " for exclusion";
-      excluded_.insert(successor);
-    }
-  }
-
-private:
-  std::set<HasseDiagram::Vertex>& excluded_;
-  std::vector<HasseDiagram::Vertex>& parents_;
-  // The differences in the numbers of free variables between the vertex class
-  // to be inserted and all of its parents
-  std::vector<int>& differences_;
-  const VariablePositions& positions_;
-};
+#include "misc.h"
+#include "visitors/parent_finder.h"
+#include "visitors/source_visitor.h"
 
 HasseDiagram::Vertex
 HasseDiagram::AddVertexClass(VariablePositions variable_positions,
@@ -69,8 +19,8 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   std::vector<HasseDiagram::Vertex> parents;
   std::vector<int> differences;
   for (auto top : tops_) {
-    ParentFinder parent_finder(excluded, parents, differences,
-                               variable_positions);
+    visitors::ParentFinder parent_finder(excluded, parents, differences,
+                                         variable_positions);
     try {
       boost::breadth_first_search(diagram_, top, boost::visitor(parent_finder));
     } catch (EndSearchException& exception) {
@@ -141,112 +91,23 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-// First we discover a vertex and record its relationship to the encoding. If
-// they're equal, immediately exit the search. If they're unrelated, the
-// terminator skips all out-edges.
-class EncodingFinder : public boost::default_dfs_visitor {
-public:
-  EncodingFinder(Encoding& encoding, Match::Quality &match,
-                 HasseDiagram::Vertex& finding) :
-    encoding_(encoding), match_(match), finding_(finding) {}
-  template<typename Vertex, typename Graph>
-  void discover_vertex(Vertex vertex, const Graph& graph) const {
-    match_ = graph[vertex].IsSubsetOf(encoding_).quality;
-    if (match_ == Match::Quality::kEqual) {
-      finding_ = vertex;
-      throw EndSearchException();
-    }
-  }
-
-private:
-  Encoding& encoding_;
-  HasseDiagram::Vertex& finding_;
-  Match::Quality& match_;
-};
-
-class TargetVisitor : public boost::default_dfs_visitor {
-public:
-  TargetVisitor(HasseDiagram::Vertex source) : source_(source) {}
-  template<typename Vertex, typename Graph>
-  void discover_vertex(Vertex vertex, const Graph& graph) const {
-    // TODO: add 'multiplicities' to the non-GFODD edges (AddVertexClass? can I make it efficient?)
-    // TODO: check if this edge already exists
-    // don't create the edge if multiplicity = 0
-    // auto edge = boost::add_edge(source, target, diagram_);
-    // edge.edge_of_gfodd = i;
-    // edge.multiplicity = ...;
-  }
-
-private:
-  HasseDiagram::Vertex source_;
-};
-
-// For each possible source (i.e., all descendants of the first source),
-// determine all possible targets.
-//
-// Find equality constraints on variables that transfer from one GFODD vertex to
-// another. These constraints occur when considering descendants of from source
-// vertex.
-class SourceVisitor : public boost::default_dfs_visitor {
-public:
-  SourceVisitor(VariablePositions source_variables,
-                HasseDiagram::Vertex source_vertex,
-                VariablePositions target_variables,
-                HasseDiagram::Vertex parent_of_target) :
-    source_variables_(source_variables), source_vertex_(source_vertex),
-    target_variables_(target_variables), parent_of_target_(parent_of_target) {}
-
-  template<typename Vertex, typename Graph>
-  void discover_vertex(Vertex vertex, const Graph& graph) const {
-    // Identify matching variables from source_variables and source_vertex
-    auto decoding = graph[source_vertex_].
-      MatchAString(source_variables_.string_representation());
-    // Transform target_variables to match these constraints
-    auto new_variables = target_variables_.RespectTheMap(decoding);
-    // Encode them
-    Encoding encoding;
-    encoding.Set(new_variables);
-
-    // Find the descendant of parent_of_target_ that matches the encoding, i.e.,
-    // find the target
-    Match::Quality last_match;
-    HasseDiagram::Vertex target =
-      boost::graph_traits<HasseDiagram::Graph>::null_vertex();
-    EncodingFinder encoding_finder(encoding, last_match, target);
-    std::vector<boost::default_color_type> colors(boost::num_vertices(graph));
-    const auto terminator = [last_match](HasseDiagram::Vertex vertex,
-                                         const Graph& graph) {
-      return last_match == Match::Quality::kNotASubset;
-    };
-    try {
-      // TODO: can I avoid supplying a color map?
-      boost::depth_first_visit(graph, parent_of_target_,
-                               encoding_finder, colors.data(),
-                               terminator);
-    } catch (EndSearchException& exception) {}
-    assert(target != boost::graph_traits<HasseDiagram::Graph>::null_vertex());
-
-    TargetVisitor visitor(vertex);
-    boost::depth_first_search(graph,
-                              boost::visitor(visitor).root_vertex(target));
-  }
-
-private:
-  VariablePositions source_variables_;
-  HasseDiagram::Vertex source_vertex_;
-  VariablePositions target_variables_;
-  HasseDiagram::Vertex parent_of_target_;
-};
-
 void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
+  std::vector<Change<HasseDiagram::Vertex>> changes;
   for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
     auto incident_vertices = gfodd.Incident(i);
     auto source = corresponding_vertex_class_[incident_vertices.first];
-    SourceVisitor visitor(gfodd.Positions(incident_vertices.first), source,
-                          gfodd.Positions(incident_vertices.second),
-                          corresponding_vertex_class_[incident_vertices.second]);
+    visitors::SourceVisitor
+      visitor(i, gfodd.Positions(incident_vertices.first), source,
+              gfodd.Positions(incident_vertices.second),
+              corresponding_vertex_class_[incident_vertices.second], changes);
     boost::depth_first_search(diagram_,
                               boost::visitor(visitor).root_vertex(source));
+  }
+
+  for (auto change : changes) {
+    auto edge = boost::add_edge(change.source, change.target, diagram_).first;
+    diagram_[edge].edge_of_gfodd = change.edge_of_gfodd;
+    diagram_[edge].multiplicity = change.multiplicity;
   }
 }
 

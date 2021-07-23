@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "match.h"
+#include "misc.h"
 #include "variable_positions.h"
 
 // Standardised representation of variable positions, discarding variable names

@@ -4,7 +4,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "match.h"
+#include "misc.h"
 #include "variable_positions.h"
 
 BOOST_AUTO_TEST_CASE(test_equal) {

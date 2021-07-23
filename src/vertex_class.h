@@ -5,8 +5,8 @@
 #include <set>
 #include <string>
 
-#include "match.h"
 #include "encoding.h"
+#include "misc.h"
 #include "variable_positions.h"
 
 class VertexClass {
