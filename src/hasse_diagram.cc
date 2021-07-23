@@ -6,10 +6,35 @@
 #include <vector>
 
 #include <boost/graph/topological_sort.hpp>
+#include <boost/log/trivial.hpp>
 
 #include "misc.h"
 #include "visitors/parent_finder.h"
 #include "visitors/source_visitor.h"
+
+void HasseDiagram::UpdatePathCounts(HasseDiagram::Vertex from,
+                                    HasseDiagram::Vertex to) {
+  for (auto from_edge :
+         boost::make_iterator_range(boost::out_edges(from, diagram_))) {
+    if (diagram_[from_edge].edge_of_gfodd == kPredecessor) {
+      HasseDiagram::Vertex predecessor = boost::target(from_edge, diagram_);
+      bool skip = false;
+      auto edges = boost::edge_range(to, predecessor, diagram_);
+      for (auto to_edge : boost::make_iterator_range(edges)) {
+        if (diagram_[to_edge].edge_of_gfodd == kPredecessor) {
+          diagram_[to_edge].multiplicity += diagram_[from_edge].multiplicity;
+          skip = true;
+          break;
+        }
+      }
+      if (!skip) {
+        auto edge = boost::add_edge(to, predecessor, diagram_).first;
+        diagram_[edge].edge_of_gfodd = kPredecessor;
+        diagram_[edge].multiplicity = diagram_[from_edge].multiplicity;
+      }
+    }
+  }
+}
 
 HasseDiagram::Vertex
 HasseDiagram::AddVertexClass(VariablePositions variable_positions,
@@ -36,9 +61,10 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   assert(!parents.empty());
   HasseDiagram::Vertex new_vertex = boost::add_vertex(diagram_);
   diagram_[new_vertex].set_positions(variable_positions);
-  for (int i = 0; i < parents.size(); i++) {
+  for (int i = 0; i < parents.size(); ++i) {
+    UpdatePathCounts(parents[i], new_vertex);
     auto edge = boost::add_edge(new_vertex, parents[i], diagram_).first;
-    diagram_[edge].edge_of_gfodd = -1;
+    diagram_[edge].edge_of_gfodd = kSubset;
     diagram_[edge].multiplicity = differences[i];
     tops_.erase(parents[i]);
   }

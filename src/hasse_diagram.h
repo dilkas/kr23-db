@@ -15,16 +15,16 @@
 class HasseDiagram {
  public:
   struct Edge {
-    // -1 for edges that denote subset relations. Otherwise, index to
-    // Gfodd::internal_edges_.
+    // -1 for edges that denote subset relations. -2 for edges that count paths.
+    // Non-negative integers index Gfodd::internal_edges_.
     int edge_of_gfodd;
     // For internal edges, how many identical copies of this edge there are.
     // For subset edges, the difference in free variables.
     int multiplicity;
   };
 
-  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-                                VertexClass, Edge> Graph;
+  typedef boost::adjacency_list<boost::hash_mapS, boost::vecS,
+                                boost::directedS, VertexClass, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
   HasseDiagram() { tops_.insert(boost::add_vertex(diagram_)); }
@@ -35,6 +35,8 @@ class HasseDiagram {
   void InitialiseEdges(Gfodd gfodd);
 
  private:
+  const int kSubset = -1, kPredecessor = -2;
+
   Graph diagram_;
   // For convenient construction
   Vertex bot_;
@@ -45,6 +47,7 @@ class HasseDiagram {
   Vertex AddVertexClass(VariablePositions variable_positions,
                         Gfodd::VertexDescriptor gfodd_vertex_id,
                         Gfodd::VertexDescriptor null_vertex);
+  void UpdatePathCounts(Vertex from, Vertex to);
 };
 
 #endif
