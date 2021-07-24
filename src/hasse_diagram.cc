@@ -1,6 +1,7 @@
 #include "hasse_diagram.h"
 
 #include <assert.h>
+#include <math.h>
 
 #include <map>
 #include <vector>
@@ -106,6 +107,7 @@ void HasseDiagram::InitialiseVertices(Gfodd gfodd) {
   }
 }
 
+// TODO: should this take into account path counts?
 void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   std::vector<HasseDiagram::Vertex> topological_ordering;
   boost::topological_sort(diagram_, std::back_inserter(topological_ordering));
@@ -122,13 +124,15 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
+void HasseDiagram::InitialiseEdges(int domain_size, Gfodd gfodd) {
   std::vector<Change<HasseDiagram::Vertex>> changes;
   for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
     auto incident_vertices = gfodd.Incident(i);
     auto source = corresponding_vertex_class_[incident_vertices.first];
     visitors::SourceVisitor<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
-      visitor(i, gfodd.Positions(incident_vertices.first), source,
+      visitor(i, std::pow(domain_size,
+                          gfodd.NumNewVariables(incident_vertices.second)),
+              gfodd.Positions(incident_vertices.first), source,
               gfodd.Positions(incident_vertices.second),
               corresponding_vertex_class_[incident_vertices.second], changes);
     boost::depth_first_search(skeleton_,

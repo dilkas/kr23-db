@@ -26,10 +26,14 @@ public:
 
   Gfodd();
 
-  int NumInternalEdges() { return internal_edges_.size(); }
   VariablePositions Positions(VertexDescriptor v) {
     return diagram_[v].positions();
   }
+  int NumNewVariables(VertexDescriptor v) { // TODO: test
+    return diagram_[v].new_variables();
+  }
+
+  int NumInternalEdges() { return internal_edges_.size(); }
   std::vector<VertexDescriptor> Atoms();
   VertexDescriptor NullVertex() {
     return boost::graph_traits<Graph>::null_vertex();

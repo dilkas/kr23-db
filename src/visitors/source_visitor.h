@@ -23,21 +23,22 @@ namespace visitors {
   template <typename Vertex, typename Graph>
   class SourceVisitor : public boost::default_dfs_visitor {
   public:
-    SourceVisitor(int edge_of_gfodd, VariablePositions source_variables,
-                  Vertex source_vertex, VariablePositions target_variables,
-                  Vertex parent_of_target,
+    SourceVisitor(int edge_of_gfodd, int total_multiplicity,
+                  VariablePositions source_variables, Vertex source_vertex,
+                  VariablePositions target_variables, Vertex parent_of_target,
                   std::vector<Change<Vertex>> &changes) :
-      edge_of_gfodd_(edge_of_gfodd), source_variables_(source_variables),
-      source_vertex_(source_vertex), target_variables_(target_variables),
-      parent_of_target_(parent_of_target), changes_(changes) {}
+      edge_of_gfodd_(edge_of_gfodd), total_multiplicity_(total_multiplicity),
+      source_variables_(source_variables), source_vertex_(source_vertex),
+      target_variables_(target_variables), parent_of_target_(parent_of_target),
+      changes_(changes) {}
 
     void discover_vertex(Vertex vertex, const Graph& graph) const;
 
   private:
-    std::vector<Change<Vertex>>& changes_;
-    int edge_of_gfodd_;
+    int edge_of_gfodd_, total_multiplicity_;
     VariablePositions source_variables_, target_variables_;
     Vertex source_vertex_, parent_of_target_;
+    std::vector<Change<Vertex>>& changes_;
   };
 
 } // namespace visitors

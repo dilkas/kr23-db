@@ -10,13 +10,17 @@
 class Vertex {
  public:
   Vertex() {}
-  Vertex(std::string variables) : sink_(false), positions_(variables) {}
+  Vertex(std::string variables, int new_variables) :
+    sink_(false), new_variables_(new_variables), positions_(variables) {}
   Vertex(double weight) : sink_(true), weight_(weight) {};
-  VariablePositions positions();
+
   bool sink() { return sink_; }
+  int new_variables();
+  VariablePositions positions();
 
  private:
   bool sink_;
+  int new_variables_;
   VariablePositions positions_;
   double weight_; // for sinks
 };

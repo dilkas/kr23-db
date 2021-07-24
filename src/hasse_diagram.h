@@ -32,7 +32,7 @@ class HasseDiagram {
   void InitialiseVertices(Gfodd gfodd);
   void InstantiateSizes(int domain_size, int predicate_arity);
   void RemoveOneVertex(Vertex vertex_class);
-  void InitialiseEdges(Gfodd gfodd);
+  void InitialiseEdges(int domain_size, Gfodd gfodd);
 
  private:
   struct SelectSubsetEdges {

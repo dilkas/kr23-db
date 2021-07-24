@@ -36,8 +36,8 @@ namespace visitors {
     } catch (EndSearchException& exception) {}
     assert(target != boost::graph_traits<Graph>::null_vertex());
 
-    visitors::TargetVisitor<Vertex, Graph> visitor(edge_of_gfodd_, vertex,
-                                                   changes_);
+    visitors::TargetVisitor<Vertex, Graph>
+      visitor(edge_of_gfodd_, total_multiplicity_, vertex, changes_);
     boost::depth_first_search(graph,
                               boost::visitor(visitor).root_vertex(target));
   }

@@ -6,9 +6,9 @@
 
 Gfodd::Gfodd() {
   auto v1 = boost::add_vertex(diagram_);
-  diagram_[v1] = Vertex("xy");
+  diagram_[v1] = Vertex("xy", 2);
   auto v2 = boost::add_vertex(diagram_);
-  diagram_[v2] = Vertex("yz");
+  diagram_[v2] = Vertex("yz", 1);
 
   auto w1 = boost::add_vertex(diagram_);
   diagram_[w1] = Vertex(0.1);
