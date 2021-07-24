@@ -5,24 +5,23 @@
 
 #include <boost/graph/depth_first_search.hpp>
 
-#include "hasse_diagram.h"
 #include "misc.h"
 
 namespace visitors {
 
+  template <typename Vertex, typename Graph>
   class TargetVisitor : public boost::default_dfs_visitor {
   public:
-  TargetVisitor(int edge_of_gfodd, HasseDiagram::Vertex source,
-                std::vector<Change<HasseDiagram::Vertex>>& changes) :
+  TargetVisitor(int edge_of_gfodd, Vertex source,
+                std::vector<Change<Vertex>>& changes) :
     edge_of_gfodd_(edge_of_gfodd), source_(source), changes_(changes) {}
 
-    void discover_vertex(HasseDiagram::Vertex target,
-                         const HasseDiagram::Graph& graph) const;
+    void discover_vertex(Vertex target, const Graph& graph) const;
 
   private:
     int edge_of_gfodd_;
-    HasseDiagram::Vertex source_;
-    std::vector<Change<HasseDiagram::Vertex>>& changes_;
+    Vertex source_;
+    std::vector<Change<Vertex>>& changes_;
   };
 
 } // namespace visitors

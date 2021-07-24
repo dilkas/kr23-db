@@ -1,13 +1,15 @@
 #include "source_visitor.h"
 
 #include "encoding.h"
+#include "hasse_diagram.h"
 #include "visitors/encoding_finder.h"
 #include "visitors/target_visitor.h"
 
 namespace visitors {
 
-  void SourceVisitor::discover_vertex(HasseDiagram::Vertex vertex,
-                                      const HasseDiagram::Graph& graph) const {
+  template <typename Vertex, typename Graph>
+  void SourceVisitor<Vertex, Graph>::discover_vertex(Vertex vertex,
+                                                     const Graph& graph) const {
     // Identify matching variables from source_variables and source_vertex
     auto decoding = graph[source_vertex_].
       MatchAString(source_variables_.string_representation());
@@ -20,12 +22,11 @@ namespace visitors {
     // Find the descendant of parent_of_target_ that matches the encoding, i.e.,
     // find the target
     Match::Quality last_match;
-    HasseDiagram::Vertex target =
-      boost::graph_traits<HasseDiagram::Graph>::null_vertex();
-    visitors::EncodingFinder encoding_finder(encoding, last_match, target);
+    Vertex target = boost::graph_traits<Graph>::null_vertex();
+    visitors::EncodingFinder<Vertex, Graph>
+      encoding_finder(encoding, last_match, target);
     std::vector<boost::default_color_type> colors(boost::num_vertices(graph));
-    const auto terminator = [last_match](HasseDiagram::Vertex vertex,
-                                         const HasseDiagram::Graph& graph) {
+    const auto terminator = [last_match](Vertex vertex, const Graph& graph) {
       return last_match == Match::Quality::kNotASubset;
     };
     try {
@@ -33,11 +34,15 @@ namespace visitors {
                                encoding_finder, colors.data(),
                                terminator);
     } catch (EndSearchException& exception) {}
-    assert(target != boost::graph_traits<HasseDiagram::Graph>::null_vertex());
+    assert(target != boost::graph_traits<Graph>::null_vertex());
 
-    visitors::TargetVisitor visitor(edge_of_gfodd_, vertex, changes_);
+    visitors::TargetVisitor<Vertex, Graph> visitor(edge_of_gfodd_, vertex,
+                                                   changes_);
     boost::depth_first_search(graph,
                               boost::visitor(visitor).root_vertex(target));
   }
 
-}
+  template class SourceVisitor<HasseDiagram::Vertex,
+                               HasseDiagram::FilteredGraph>;
+
+} // namespace visitors

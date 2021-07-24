@@ -12,6 +12,11 @@
 #include "visitors/parent_finder.h"
 #include "visitors/source_visitor.h"
 
+HasseDiagram::HasseDiagram() : predicate_(diagram_),
+                               skeleton_(diagram_, predicate_) {
+  tops_.insert(boost::add_vertex(diagram_));
+}
+
 void HasseDiagram::UpdatePathCounts(HasseDiagram::Vertex from,
                                     HasseDiagram::Vertex to) {
   for (auto from_edge :
@@ -44,10 +49,10 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   std::vector<HasseDiagram::Vertex> parents;
   std::vector<int> differences;
   for (auto top : tops_) {
-    visitors::ParentFinder parent_finder(excluded, parents, differences,
-                                         variable_positions);
+    visitors::ParentFinder<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
+      parent_finder(excluded, parents, differences, variable_positions);
     try {
-      boost::breadth_first_search(diagram_, top, boost::visitor(parent_finder));
+      boost::breadth_first_search(skeleton_, top, boost::visitor(parent_finder));
     } catch (EndSearchException& exception) {
       BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: absorbed into another vertex";
       if (gfodd_vertex_id != null_vertex)
@@ -122,11 +127,11 @@ void HasseDiagram::InitialiseEdges(Gfodd gfodd) {
   for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
     auto incident_vertices = gfodd.Incident(i);
     auto source = corresponding_vertex_class_[incident_vertices.first];
-    visitors::SourceVisitor
+    visitors::SourceVisitor<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
       visitor(i, gfodd.Positions(incident_vertices.first), source,
               gfodd.Positions(incident_vertices.second),
               corresponding_vertex_class_[incident_vertices.second], changes);
-    boost::depth_first_search(diagram_,
+    boost::depth_first_search(skeleton_,
                               boost::visitor(visitor).root_vertex(source));
   }
 

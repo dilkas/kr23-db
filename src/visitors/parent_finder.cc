@@ -2,12 +2,14 @@
 
 #include <boost/log/trivial.hpp>
 
+#include "hasse_diagram.h"
 #include "misc.h"
 
 namespace visitors {
 
-  void ParentFinder::examine_vertex(HasseDiagram::Vertex vertex,
-                                    const HasseDiagram::Graph& graph) const {
+  template <typename Vertex, typename Graph>
+  void ParentFinder<Vertex, Graph>::examine_vertex(Vertex vertex,
+                                                   const Graph& graph) const {
     BOOST_LOG_TRIVIAL(debug) << "ParentFinder: examining vertex " << vertex;
 
     if (excluded_.find(vertex) != excluded_.end()) {
@@ -33,5 +35,7 @@ namespace visitors {
       excluded_.insert(successor);
     }
   }
+
+  template class ParentFinder<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>;
 
 } // namespace visitors

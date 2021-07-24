@@ -7,7 +7,7 @@ include_directories(src)
 link_directories(src)
 include_directories(${Boost_INCLUDE_DIRS})
 file(GLOB_RECURSE SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cc)
-file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cc)
+file(GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cc)
 
 foreach(testSrc ${TEST_SRCS})
         #Extract the filename without an extension (NAME_WE)
