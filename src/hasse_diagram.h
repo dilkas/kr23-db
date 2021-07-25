@@ -28,7 +28,7 @@ class HasseDiagram {
                                 boost::directedS, VertexClass, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
-  HasseDiagram();
+  HasseDiagram(Gfodd gfodd);
   void InitialiseVertices(Gfodd gfodd);
   void InstantiateSizes(int domain_size, int predicate_arity);
   void RemoveOneVertex(Vertex vertex_class);
@@ -45,16 +45,17 @@ class HasseDiagram {
   } predicate_;
   typedef boost::filtered_graph<Graph, SelectSubsetEdges> FilteredGraph;
 
+  // TODO (later): kPredecessor type edges are no longer needed
   static const int kSubset = -1, kPredecessor = -2;
   Graph diagram_;
   FilteredGraph skeleton_;
-
   // For convenient construction
   Vertex bot_;
   std::set<Vertex> tops_;
-
   // The corresponding vertex class of each GFODD vertex
   std::map<Gfodd::VertexDescriptor, Vertex> corresponding_vertex_class_;
+  // for each non-negative edge type, i.e., each GFODD inner edge
+  std::vector<int> edge_counts_;
 
   Vertex AddVertexClass(VariablePositions variable_positions,
                         Gfodd::VertexDescriptor gfodd_vertex_id,

@@ -17,6 +17,7 @@ class Vertex {
   bool sink() { return sink_; }
   int new_variables();
   VariablePositions positions();
+  double weight();
 
  private:
   bool sink_;

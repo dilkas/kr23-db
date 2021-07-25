@@ -9,3 +9,8 @@ VariablePositions Vertex::positions() {
   assert(!sink_);
   return positions_;
 }
+
+double Vertex::weight() {
+  assert(sink_);
+  return weight_;
+}

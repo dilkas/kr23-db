@@ -36,6 +36,7 @@ namespace visitors {
     } catch (EndSearchException& exception) {}
     assert(target != boost::graph_traits<Graph>::null_vertex());
 
+    // Run the second half the edge construction algorithm
     visitors::TargetVisitor<Vertex, Graph>
       visitor(edge_of_gfodd_, total_multiplicity_, vertex, changes_);
     boost::depth_first_search(graph,

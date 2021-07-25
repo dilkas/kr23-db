@@ -22,32 +22,41 @@ public:
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
     Vertex, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor VertexDescriptor;
+  typedef boost::graph_traits<Graph>::edge_descriptor EdgeDescriptor;
   typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 
   Gfodd();
+  double Evaluate(std::map<Gfodd::EdgeDescriptor, int> edge_counts);
+  int NumInternalEdges() { return internal_edges_.size(); }
 
   VariablePositions Positions(VertexDescriptor v) {
     return diagram_[v].positions();
   }
+
   int NumNewVariables(VertexDescriptor v) { // TODO: test
     return diagram_[v].new_variables();
   }
 
-  int NumInternalEdges() { return internal_edges_.size(); }
   std::vector<VertexDescriptor> Atoms();
   VertexDescriptor NullVertex() {
     return boost::graph_traits<Graph>::null_vertex();
   }
+
   std::pair<VertexDescriptor, VertexDescriptor>
   Incident(int internal_edge_index) {
     return boost::incident(internal_edges_[internal_edge_index], diagram_);
   }
 
 private:
-  typedef boost::graph_traits<Graph>::edge_descriptor EdgeDescriptor;
-
   Graph diagram_;
+  VertexDescriptor source_;
   std::vector<EdgeDescriptor> internal_edges_;
+  std::vector<VertexDescriptor> sinks_;
+  std::vector<std::vector<std::vector<EdgeDescriptor>>> paths_; // for each sink
+
+  VertexDescriptor AddVertex(std::string variables, int new_variables);
+  VertexDescriptor AddVertex(double weight);
+  void FindPaths();
 };
 
 #endif

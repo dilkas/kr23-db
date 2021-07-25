@@ -13,9 +13,11 @@
 #include "visitors/parent_finder.h"
 #include "visitors/source_visitor.h"
 
-HasseDiagram::HasseDiagram() : predicate_(diagram_),
-                               skeleton_(diagram_, predicate_) {
+HasseDiagram::HasseDiagram(Gfodd gfodd) :
+  predicate_(diagram_), skeleton_(diagram_, predicate_),
+  edge_counts_(gfodd.NumInternalEdges()) {
   tops_.insert(boost::add_vertex(diagram_));
+  // TODO: gfodd should be a field
 }
 
 void HasseDiagram::UpdatePathCounts(HasseDiagram::Vertex from,
@@ -143,6 +145,8 @@ void HasseDiagram::InitialiseEdges(int domain_size, Gfodd gfodd) {
     auto edge = boost::add_edge(change.source, change.target, diagram_).first;
     diagram_[edge].edge_of_gfodd = change.edge_of_gfodd;
     diagram_[edge].multiplicity = change.multiplicity;
+    edge_counts_[change.edge_of_gfodd] += change.multiplicity;
+    // TODO: but these multiplicities are incorrect
   }
 }
 
