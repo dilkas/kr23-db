@@ -1,6 +1,7 @@
 #ifndef TARGET_VISITOR_H
 #define TARGET_VISITOR_H
 
+#include <map>
 #include <vector>
 
 #include <boost/graph/depth_first_search.hpp>
@@ -17,7 +18,7 @@ namespace visitors {
     typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
 
     TargetVisitor(int edge_of_gfodd, int multiplicity, Vertex source,
-                  std::vector<Change<Vertex>>& changes) :
+                  std::map<Vertex, std::map<Vertex, Change>>& changes) :
       edge_of_gfodd_(edge_of_gfodd), multiplicity_(multiplicity),
       source_(source), changes_(changes) {}
 
@@ -28,7 +29,7 @@ namespace visitors {
   private:
     int edge_of_gfodd_, multiplicity_;
     Vertex source_;
-    std::vector<Change<Vertex>>& changes_;
+    std::map<Vertex, std::map<Vertex, Change>>& changes_;
     std::vector<Edge> stack_;
   };
 

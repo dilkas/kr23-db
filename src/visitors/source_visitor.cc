@@ -13,8 +13,10 @@ namespace visitors {
     // Identify matching variables from source_variables and source_vertex
     auto decoding = graph[source_vertex_].
       MatchAString(source_variables_.string_representation());
+
     // Transform target_variables to match these constraints
     auto new_variables = target_variables_.RespectTheMap(decoding);
+
     // Encode them
     Encoding encoding;
     encoding.Set(new_variables);
@@ -26,15 +28,18 @@ namespace visitors {
     visitors::EncodingFinder<Vertex, Graph>
       encoding_finder(encoding, last_match, target);
     std::vector<boost::default_color_type> colors(boost::num_vertices(graph));
+
     const auto terminator = [last_match](Vertex vertex, const Graph& graph) {
       return last_match == Match::Quality::kNotASubset;
     };
+
     try {
       boost::depth_first_visit(graph, parent_of_target_,
                                encoding_finder, colors.data(),
                                terminator);
     } catch (EndSearchException& exception) {}
     assert(target != boost::graph_traits<Graph>::null_vertex());
+    top_target_[vertex] = target;
 
     // Run the second half the edge construction algorithm
     visitors::TargetVisitor<Vertex, Graph>

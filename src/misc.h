@@ -3,9 +3,7 @@
 
 #include <exception>
 
-template <typename Vertex>
 struct Change {
-  Vertex source, target;
   int multiplicity, edge_of_gfodd;
 };
 

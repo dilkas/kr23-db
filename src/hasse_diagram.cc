@@ -10,6 +10,7 @@
 #include <boost/log/trivial.hpp>
 
 #include "misc.h"
+#include "visitors/multiplicity_subtractor.h"
 #include "visitors/parent_finder.h"
 #include "visitors/source_visitor.h"
 
@@ -126,7 +127,10 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
 }
 
 void HasseDiagram::InitialiseEdges(int domain_size) {
-  std::vector<Change<HasseDiagram::Vertex>> changes;
+  // TODO (later): maybe merge them into one
+  // Construct initial multiplicities of the new edges
+  std::map<HasseDiagram::Vertex, std::map<HasseDiagram::Vertex, Change>> changes;
+  std::map<HasseDiagram::Vertex, HasseDiagram::Vertex> top_targets;
   for (int i = 0; i < gfodd_.NumInternalEdges(); ++i) {
     auto incident_vertices = gfodd_.Incident(i);
     auto source = corresponding_vertex_class_[incident_vertices.first];
@@ -135,17 +139,27 @@ void HasseDiagram::InitialiseEdges(int domain_size) {
                           gfodd_.NumNewVariables(incident_vertices.second)),
               gfodd_.Positions(incident_vertices.first), source,
               gfodd_.Positions(incident_vertices.second),
-              corresponding_vertex_class_[incident_vertices.second], changes);
+              corresponding_vertex_class_[incident_vertices.second], changes,
+              top_targets);
     boost::depth_first_search(skeleton_,
                               boost::visitor(visitor).root_vertex(source));
   }
 
-  for (auto change : changes) {
-    auto edge = boost::add_edge(change.source, change.target, diagram_).first;
-    diagram_[edge].edge_of_gfodd = change.edge_of_gfodd;
-    diagram_[edge].multiplicity = change.multiplicity;
-    edge_counts_[change.edge_of_gfodd] += change.multiplicity;
-    // TODO: but these multiplicities are incorrect
+  // Update the multiplicities and add them to the graph
+  for (auto [source, remaining_map] : changes) {
+    std::map<HasseDiagram::Vertex, int> to_subtract;
+    visitors::MultiplicitySubtractor<HasseDiagram::Vertex,
+                                     HasseDiagram::FilteredGraph>
+      subtractor(remaining_map, to_subtract);
+    boost::depth_first_search(skeleton_, boost::visitor(subtractor).
+                              root_vertex(top_targets[source]));
+    for (auto [target, delta] : to_subtract) {
+      assert(to_subtract.size() == remaining_map.size());
+      // TODO (later): I could do this in one line (here and elsewhere)
+      auto edge = boost::add_edge(source, target, diagram_).first;
+      diagram_[edge].edge_of_gfodd = remaining_map[target].edge_of_gfodd;
+      diagram_[edge].multiplicity = remaining_map[target].multiplicity - delta;
+    }
   }
 }
 

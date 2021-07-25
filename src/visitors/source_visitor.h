@@ -1,6 +1,7 @@
 #ifndef SOURCE_VISITOR_H
 #define SOURCE_VISITOR_H
 
+#include <map>
 #include <vector>
 
 #include <boost/graph/depth_first_search.hpp>
@@ -26,11 +27,12 @@ namespace visitors {
     SourceVisitor(int edge_of_gfodd, int total_multiplicity,
                   VariablePositions source_variables, Vertex source_vertex,
                   VariablePositions target_variables, Vertex parent_of_target,
-                  std::vector<Change<Vertex>> &changes) :
+                  std::map<Vertex, std::map<Vertex, Change>>& changes,
+                  std::map<Vertex, Vertex>& top_target) :
       edge_of_gfodd_(edge_of_gfodd), total_multiplicity_(total_multiplicity),
       source_variables_(source_variables), source_vertex_(source_vertex),
       target_variables_(target_variables), parent_of_target_(parent_of_target),
-      changes_(changes) {}
+      changes_(changes), top_target_(top_target) {}
 
     void discover_vertex(Vertex vertex, const Graph& graph) const;
 
@@ -38,7 +40,8 @@ namespace visitors {
     int edge_of_gfodd_, total_multiplicity_;
     VariablePositions source_variables_, target_variables_;
     Vertex source_vertex_, parent_of_target_;
-    std::vector<Change<Vertex>>& changes_;
+    std::map<Vertex, std::map<Vertex, Change>>& changes_;
+    std::map<Vertex, Vertex>& top_target_;
   };
 
 } // namespace visitors

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(WFOMC)
 enable_testing()
+#add_compile_options(-Wall -Wextra -pedantic)
 
 find_package(Boost COMPONENTS log graph unit_test_framework REQUIRED)
 include_directories(src)
