@@ -64,10 +64,14 @@ void Gfodd::FindPaths() {
 
 // The power of a weight is the sum across all paths in GFODD of the product
 // of all edges in the path
-// TODO: edge_counts will have to come from HasseDiagram, so it will need to
-// have access to internal_edge_index -> EdgeDescriptor
-double Gfodd::Evaluate(std::map<Gfodd::EdgeDescriptor, int> edge_counts) {
+double Gfodd::Evaluate(std::vector<int> internal_edge_counts) {
   assert(sinks_.size() == paths_.size());
+  assert(internal_edge_counts.size() == internal_edges_.size());
+
+  std::map<Gfodd::EdgeDescriptor, int> edge_counts;
+  for (int i = 0; i < internal_edge_counts.size(); ++i)
+    edge_counts[internal_edges_[i]] = internal_edge_counts[i];
+
   double answer = 1;
   for (int i = 0; i < sinks_.size(); ++i) {
     int power = 0;

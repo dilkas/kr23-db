@@ -7,6 +7,7 @@ include_directories(src)
 link_directories(src)
 include_directories(${Boost_INCLUDE_DIRS})
 file(GLOB_RECURSE SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.cc)
+list(REMOVE_ITEM SRCS "src/main.cc")
 file(GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cc)
 
 foreach(testSrc ${TEST_SRCS})

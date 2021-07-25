@@ -2,6 +2,7 @@
 #define HASSE_DIAGRAM_H
 
 #include <set>
+#include <vector>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
@@ -29,10 +30,11 @@ class HasseDiagram {
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
   HasseDiagram(Gfodd gfodd);
-  void InitialiseVertices(Gfodd gfodd);
+  void InitialiseVertices();
   void InstantiateSizes(int domain_size, int predicate_arity);
   void RemoveOneVertex(Vertex vertex_class);
-  void InitialiseEdges(int domain_size, Gfodd gfodd);
+  void InitialiseEdges(int domain_size);
+  std::vector<int> edge_counts() { return edge_counts_; }
 
  private:
   struct SelectSubsetEdges {
@@ -44,9 +46,10 @@ class HasseDiagram {
     Graph graph;
   } predicate_;
   typedef boost::filtered_graph<Graph, SelectSubsetEdges> FilteredGraph;
-
   // TODO (later): kPredecessor type edges are no longer needed
   static const int kSubset = -1, kPredecessor = -2;
+
+  Gfodd gfodd_;
   Graph diagram_;
   FilteredGraph skeleton_;
   // For convenient construction

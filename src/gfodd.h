@@ -26,14 +26,15 @@ public:
   typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 
   Gfodd();
-  double Evaluate(std::map<Gfodd::EdgeDescriptor, int> edge_counts);
+  double Evaluate(std::vector<int> edge_counts);
   int NumInternalEdges() { return internal_edges_.size(); }
+  EdgeDescriptor InternalEdge(int index) { return internal_edges_[index]; }
 
   VariablePositions Positions(VertexDescriptor v) {
     return diagram_[v].positions();
   }
 
-  int NumNewVariables(VertexDescriptor v) { // TODO: test
+  int NumNewVariables(VertexDescriptor v) {
     return diagram_[v].new_variables();
   }
 

@@ -14,10 +14,9 @@
 #include "visitors/source_visitor.h"
 
 HasseDiagram::HasseDiagram(Gfodd gfodd) :
-  predicate_(diagram_), skeleton_(diagram_, predicate_),
+  gfodd_(gfodd), predicate_(diagram_), skeleton_(diagram_, predicate_),
   edge_counts_(gfodd.NumInternalEdges()) {
   tops_.insert(boost::add_vertex(diagram_));
-  // TODO: gfodd should be a field
 }
 
 void HasseDiagram::UpdatePathCounts(HasseDiagram::Vertex from,
@@ -82,15 +81,15 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   return new_vertex;
 }
 
-void HasseDiagram::InitialiseVertices(Gfodd gfodd) {
-  std::vector<Gfodd::VertexDescriptor> atoms = gfodd.Atoms();
+void HasseDiagram::InitialiseVertices() {
+  std::vector<Gfodd::VertexDescriptor> atoms = gfodd_.Atoms();
   std::vector<VariablePositions> top_layer;
 
   // First pass
   for (auto atom : atoms) {
-    auto variable_positions = gfodd.Positions(atom);
+    auto variable_positions = gfodd_.Positions(atom);
     top_layer.push_back(variable_positions);
-    AddVertexClass(variable_positions, atom, gfodd.NullVertex());
+    AddVertexClass(variable_positions, atom, gfodd_.NullVertex());
   }
 
   for (int i = 1; i < atoms.size(); ++i) {
@@ -99,8 +98,8 @@ void HasseDiagram::InitialiseVertices(Gfodd gfodd) {
     for (auto positions : top_layer) {
       for (int k = j; k < atoms.size(); ++k) {
         VariablePositions new_set = positions;
-        new_set.Insert(gfodd.Positions(atoms[k]));
-        AddVertexClass(new_set, gfodd.NullVertex(), gfodd.NullVertex());
+        new_set.Insert(gfodd_.Positions(atoms[k]));
+        AddVertexClass(new_set, gfodd_.NullVertex(), gfodd_.NullVertex());
         new_top_layer.push_back(new_set);
       }
       ++j;
@@ -126,16 +125,16 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   }
 }
 
-void HasseDiagram::InitialiseEdges(int domain_size, Gfodd gfodd) {
+void HasseDiagram::InitialiseEdges(int domain_size) {
   std::vector<Change<HasseDiagram::Vertex>> changes;
-  for (int i = 0; i < gfodd.NumInternalEdges(); ++i) {
-    auto incident_vertices = gfodd.Incident(i);
+  for (int i = 0; i < gfodd_.NumInternalEdges(); ++i) {
+    auto incident_vertices = gfodd_.Incident(i);
     auto source = corresponding_vertex_class_[incident_vertices.first];
     visitors::SourceVisitor<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
       visitor(i, std::pow(domain_size,
-                          gfodd.NumNewVariables(incident_vertices.second)),
-              gfodd.Positions(incident_vertices.first), source,
-              gfodd.Positions(incident_vertices.second),
+                          gfodd_.NumNewVariables(incident_vertices.second)),
+              gfodd_.Positions(incident_vertices.first), source,
+              gfodd_.Positions(incident_vertices.second),
               corresponding_vertex_class_[incident_vertices.second], changes);
     boost::depth_first_search(skeleton_,
                               boost::visitor(visitor).root_vertex(source));
