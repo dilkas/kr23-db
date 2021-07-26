@@ -19,6 +19,6 @@ namespace visitors {
     std::map<Vertex, std::vector<std::vector<Edge>>>& paths_;
   };
 
-} // namespace visitors
+}  // namespace visitors
 
 #endif

@@ -5,8 +5,8 @@
 namespace visitors {
 
   template <typename Vertex, typename Graph>
-  void EncodingFinder<Vertex, Graph>::discover_vertex(Vertex vertex,
-                                                      const Graph& graph) const {
+  void EncodingFinder<Vertex, Graph>::
+  discover_vertex(Vertex vertex, const Graph& graph) const {
     match_ = graph[vertex].IsSubsetOf(encoding_).quality;
     if (match_ == Match::Quality::kEqual) {
       finding_ = vertex;
@@ -17,4 +17,4 @@ namespace visitors {
   template class EncodingFinder<HasseDiagram::Vertex,
                                 HasseDiagram::FilteredGraph>;
 
-} // namespace visitors
+}  // namespace visitors

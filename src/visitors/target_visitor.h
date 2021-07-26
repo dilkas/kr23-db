@@ -33,6 +33,6 @@ namespace visitors {
     std::vector<Edge> stack_;
   };
 
-} // namespace visitors
+}  // namespace visitors
 
 #endif

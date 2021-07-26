@@ -20,4 +20,4 @@ namespace visitors {
   template class MultiplicitySubtractor<HasseDiagram::Vertex,
                                         HasseDiagram::FilteredGraph>;
 
-} // namespace visitors
+}  // namespace visitors

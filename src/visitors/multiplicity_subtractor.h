@@ -22,6 +22,6 @@ namespace visitors {
     std::map<Vertex, int>& to_subtract_;
   };
 
-} // namespace visitors
+}  // namespace visitors
 
 #endif

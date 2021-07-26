@@ -34,7 +34,8 @@ Match Encoding::IsSubsetOf(Encoding other) const {
       max_var_other = other.representation_[i];
 
     if (representation_[i] == 0) {
-      if (other.representation_[i] != 0) match.quality = Match::Quality::kSubset;
+      if (other.representation_[i] != 0)
+        match.quality = Match::Quality::kSubset;
       continue;
     }
     auto it = translation.find(representation_[i]);
@@ -42,7 +43,8 @@ Match Encoding::IsSubsetOf(Encoding other) const {
       if (other.representation_[i] != it->second)
         return {Match::Quality::kNotASubset, 0};
     } else {
-      if (other.representation_[i] == 0) return {Match::Quality::kNotASubset, 0};
+      if (other.representation_[i] == 0)
+        return {Match::Quality::kNotASubset, 0};
       translation[representation_[i]] = other.representation_[i];
     }
   }

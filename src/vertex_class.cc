@@ -3,7 +3,7 @@
 #include "math.h"
 
 int VertexClass::FullSize(int domain_size, int predicate_arity) {
-  return std::pow((double)domain_size,
+  return std::pow(static_cast<double>(domain_size),
                   predicate_arity - positions_.CountRedundantPositions());
 }
 

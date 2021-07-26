@@ -20,13 +20,13 @@ namespace visitors {
     void discover_vertex(Vertex vertex, const Graph& graph) const;
 
   private:
-    Encoding& encoding_; // input
+    Encoding& encoding_;  // input
 
     // outputs
     Vertex& finding_;
     Match::Quality& match_;
   };
 
-} // namespace visitors
+}  // namespace visitors
 
 #endif

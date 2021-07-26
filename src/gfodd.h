@@ -53,7 +53,9 @@ private:
   VertexDescriptor source_;
   std::vector<EdgeDescriptor> internal_edges_;
   std::vector<VertexDescriptor> sinks_;
-  std::vector<std::vector<std::vector<EdgeDescriptor>>> paths_; // for each sink
+
+  // for each sink
+  std::vector<std::vector<std::vector<EdgeDescriptor>>> paths_;
 
   VertexDescriptor AddVertex(std::string variables, int new_variables);
   VertexDescriptor AddVertex(double weight);

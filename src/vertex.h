@@ -12,7 +12,7 @@ class Vertex {
   Vertex() {}
   Vertex(std::string variables, int new_variables) :
     sink_(false), new_variables_(new_variables), positions_(variables) {}
-  Vertex(double weight) : sink_(true), weight_(weight) {};
+  explicit Vertex(double weight) : sink_(true), weight_(weight) {}
 
   bool sink() { return sink_; }
   int new_variables();
@@ -23,7 +23,7 @@ class Vertex {
   bool sink_;
   int new_variables_;
   VariablePositions positions_;
-  double weight_; // for sinks
+  double weight_;  // for sinks
 };
 
 #endif

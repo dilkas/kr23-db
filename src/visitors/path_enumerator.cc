@@ -21,4 +21,4 @@ namespace visitors {
   template class PathEnumerator<Gfodd::VertexDescriptor, Gfodd::EdgeDescriptor,
                                 Gfodd::Graph>;
 
-} // namespace visitors
+}  // namespace visitors

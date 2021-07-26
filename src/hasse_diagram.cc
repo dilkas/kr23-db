@@ -15,7 +15,9 @@
 #include "visitors/source_visitor.h"
 
 HasseDiagram::HasseDiagram(Gfodd gfodd) :
-  predicate_(diagram_), skeleton_(diagram_, predicate_), gfodd_(gfodd),
+  predicate_(&diagram_),
+  skeleton_(diagram_, predicate_),
+  gfodd_(gfodd),
   edge_counts_(gfodd.NumInternalEdges()) {
   tops_.insert(boost::add_vertex(diagram_));
 }
@@ -55,7 +57,8 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
     visitors::ParentFinder<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
       parent_finder(excluded, parents, differences, variable_positions);
     try {
-      boost::breadth_first_search(skeleton_, top, boost::visitor(parent_finder));
+      boost::breadth_first_search(skeleton_, top,
+                                  boost::visitor(parent_finder));
     } catch (EndSearchException& exception) {
       BOOST_LOG_TRIVIAL(debug) << "HasseDiagram: absorbed into another vertex";
       if (gfodd_vertex_id != null_vertex)
@@ -97,7 +100,7 @@ void HasseDiagram::InitialiseVertices() {
   for (std::vector<Gfodd::VertexDescriptor>::size_type i = 1;
        i < atoms.size(); ++i) {
     std::vector<VariablePositions> new_top_layer;
-    auto j = i; // which one to add first
+    auto j = i;  // which one to add first
     for (auto positions : top_layer) {
       for (auto k = j; k < atoms.size(); ++k) {
         VariablePositions new_set = positions;
@@ -130,7 +133,8 @@ void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
 void HasseDiagram::InitialiseEdges(int domain_size) {
   // TODO (later): maybe merge them into one
   // Construct initial multiplicities of the new edges
-  std::map<HasseDiagram::Vertex, std::map<HasseDiagram::Vertex, Change>> changes;
+  std::map<HasseDiagram::Vertex,
+           std::map<HasseDiagram::Vertex, Change>> changes;
   std::map<HasseDiagram::Vertex, HasseDiagram::Vertex> top_targets;
   for (int i = 0; i < gfodd_.NumInternalEdges(); ++i) {
     auto incident_vertices = gfodd_.Incident(i);

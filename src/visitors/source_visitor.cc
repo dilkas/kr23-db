@@ -51,4 +51,4 @@ namespace visitors {
   template class SourceVisitor<HasseDiagram::Vertex,
                                HasseDiagram::FilteredGraph>;
 
-} // namespace visitors
+}  // namespace visitors

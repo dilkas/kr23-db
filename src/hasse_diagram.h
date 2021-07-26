@@ -1,6 +1,7 @@
 #ifndef HASSE_DIAGRAM_H
 #define HASSE_DIAGRAM_H
 
+#include <map>
 #include <set>
 #include <vector>
 
@@ -29,7 +30,7 @@ class HasseDiagram {
                                 boost::directedS, VertexClass, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
-  HasseDiagram(Gfodd gfodd);
+  explicit HasseDiagram(Gfodd gfodd);
   std::vector<int> edge_counts() { return edge_counts_; }
   void InitialiseVertices();
   void InstantiateSizes(int domain_size, int predicate_arity);
@@ -39,11 +40,11 @@ class HasseDiagram {
  private:
   struct SelectSubsetEdges {
     SelectSubsetEdges() {}
-    SelectSubsetEdges(Graph g) : graph(g) {}
+    explicit SelectSubsetEdges(Graph* g) : graph(g) {}
     bool operator()(Graph::edge_descriptor edge) const {
-      return graph[edge].edge_of_gfodd == kSubset;
+      return (*graph)[edge].edge_of_gfodd == kSubset;
     }
-    Graph graph;
+    Graph* graph;
   } predicate_;
   typedef boost::filtered_graph<Graph, SelectSubsetEdges> FilteredGraph;
   // TODO (later): kPredecessor type edges are no longer needed

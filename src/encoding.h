@@ -2,6 +2,7 @@
 #define ENCODING_H
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -15,13 +16,15 @@
 // are mapped to positive integers in the order in which they occur in the
 // string.
 class Encoding {
- public:
+public:
   Encoding() {}
   void Set(const VariablePositions& positions);
-  Match IsSubsetOf(Encoding other) const; // i.e., is less restrictive than
+  Match IsSubsetOf(Encoding other) const;  // i.e., is less restrictive than
   int CountRedundantPositions();
-  std::map<int, std::set<std::string>> MatchAString(std::string variables) const;
- private:
+
+  std::map<int, std::set<std::string>>
+  MatchAString(std::string variables) const;
+private:
   std::vector<int> representation_;
 };
 

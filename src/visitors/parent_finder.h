@@ -31,6 +31,6 @@ namespace visitors {
     const VariablePositions& positions_;
   };
 
-} // namespace visitors
+}  // namespace visitors
 
 #endif

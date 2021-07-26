@@ -48,6 +48,6 @@ namespace visitors {
     std::map<Vertex, Vertex>& top_target_;
   };
 
-} // namespace visitors
+}  // namespace visitors
 
 #endif

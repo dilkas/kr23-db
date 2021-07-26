@@ -9,9 +9,9 @@
 class VariablePositions {
  public:
   VariablePositions() {}
-  VariablePositions(std::string variables);
+  explicit VariablePositions(std::string variables);
   // NOTE: can be outdated if Insert() is called
-  std::string string_representation() const { return string_representation_; };
+  std::string string_representation() const { return string_representation_; }
   bool OccursOnlyOnce(std::string variable) const {
     return map_.at(variable).size() == 1;
   }

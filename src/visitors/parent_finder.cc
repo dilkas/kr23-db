@@ -38,4 +38,4 @@ namespace visitors {
 
   template class ParentFinder<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>;
 
-} // namespace visitors
+}  // namespace visitors
