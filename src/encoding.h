@@ -16,15 +16,21 @@
 // are mapped to positive integers in the order in which they occur in the
 // string.
 class Encoding {
-public:
+ public:
   Encoding() {}
-  void Set(const VariablePositions& positions);
   Match IsSubsetOf(Encoding other) const;  // i.e., is less restrictive than
   int CountRedundantPositions();
+  std::string AsString() const;  // only for logging/testing
+
+  void Set(const VariablePositions& positions);
+  void Set(int num_vars) {
+    for (int i = 1; i <= num_vars; ++i) representation_.push_back(0);
+  }
 
   std::map<int, std::set<std::string>>
   MatchAString(std::string variables) const;
-private:
+
+ private:
   std::vector<int> representation_;
 };
 

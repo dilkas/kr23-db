@@ -11,7 +11,7 @@ class Vertex {
  public:
   Vertex() {}
   Vertex(std::string variables, int new_variables) :
-    sink_(false), new_variables_(new_variables), positions_(variables) {}
+      sink_(false), new_variables_(new_variables), positions_(variables) {}
   explicit Vertex(double weight) : sink_(true), weight_(weight) {}
 
   bool sink() { return sink_; }

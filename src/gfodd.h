@@ -14,13 +14,13 @@
 #include "vertex.h"
 
 class Gfodd {
-public:
+ public:
   struct Edge {
     bool positive;
   };
 
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-    Vertex, Edge> Graph;
+                                Vertex, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor VertexDescriptor;
   typedef boost::graph_traits<Graph>::edge_descriptor EdgeDescriptor;
   typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
@@ -48,7 +48,7 @@ public:
     return boost::incident(internal_edges_[internal_edge_index], diagram_);
   }
 
-private:
+ private:
   Graph diagram_;
   VertexDescriptor source_;
   std::vector<EdgeDescriptor> internal_edges_;

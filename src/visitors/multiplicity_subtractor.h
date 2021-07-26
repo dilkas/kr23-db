@@ -9,18 +9,18 @@
 
 namespace visitors {
 
-  template <typename Vertex, typename Graph>
-    class MultiplicitySubtractor : public boost::default_dfs_visitor {
-  public:
+template <typename Vertex, typename Graph>
+class MultiplicitySubtractor : public boost::default_dfs_visitor {
+ public:
   MultiplicitySubtractor(std::map<Vertex, Change>& changes,
                          std::map<Vertex, int>& to_subtract) :
-    changes_(changes), to_subtract_(to_subtract) {}
-    void finish_vertex(Vertex vertex, const Graph& graph) const;
+      changes_(changes), to_subtract_(to_subtract) {}
+  void finish_vertex(Vertex vertex, const Graph& graph) const;
 
-  private:
-    std::map<Vertex, Change>& changes_;
-    std::map<Vertex, int>& to_subtract_;
-  };
+ private:
+  std::map<Vertex, Change>& changes_;
+  std::map<Vertex, int>& to_subtract_;
+};
 
 }  // namespace visitors
 

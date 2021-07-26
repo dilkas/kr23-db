@@ -10,12 +10,16 @@ class VariablePositions {
  public:
   VariablePositions() {}
   explicit VariablePositions(std::string variables);
+
   // NOTE: can be outdated if Insert() is called
   std::string string_representation() const { return string_representation_; }
+
+  void Insert(VariablePositions other);
+
   bool OccursOnlyOnce(std::string variable) const {
     return map_.at(variable).size() == 1;
   }
-  void Insert(VariablePositions other);
+
   // Merge variables that are associated with the same integer
   VariablePositions
   RespectTheMap(std::map<int, std::set<std::string>> decoding) const;

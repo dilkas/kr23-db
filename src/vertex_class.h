@@ -16,10 +16,14 @@ class VertexClass {
   int size() { return size_; }
   void set_size(int size) { size_ = size; }
 
+  void set_positions(int num_vars) { positions_.Set(num_vars); }
   void set_positions(VariablePositions positions) { positions_.Set(positions); }
   int FullSize(int domain_size, int predicate_arity);
-  Match IsSubsetOf(Encoding other) const { return positions_.IsSubsetOf(other); }
+
   Match IsSubsetOf(VariablePositions other) const;
+  Match IsSubsetOf(Encoding other) const {
+    return positions_.IsSubsetOf(other);
+  }
 
   std::map<int, std::set<std::string>>
   MatchAString(std::string variables) const {

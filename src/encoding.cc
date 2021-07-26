@@ -3,6 +3,9 @@
 #include <assert.h>
 
 #include <map>
+#include <sstream>
+
+#include <boost/log/trivial.hpp>
 
 void Encoding::Set(const VariablePositions& positions) {
   representation_.clear();
@@ -24,7 +27,10 @@ void Encoding::Set(const VariablePositions& positions) {
 }
 
 Match Encoding::IsSubsetOf(Encoding other) const {
+  BOOST_LOG_TRIVIAL(debug) << "Encoding::IsSubsetOf: this = " << AsString()
+                           << ", other = " << other.AsString();
   assert(representation_.size() == other.representation_.size());
+
   std::map<int, int> translation;
   Match match = {Match::Quality::kEqual, 0};
   int max_var_this = 0, max_var_other = 0;
@@ -75,4 +81,12 @@ Encoding::MatchAString(std::string variables) const {
     }
   }
   return decoding;
+}
+
+std::string Encoding::AsString() const {
+  std::stringstream ss;
+  ss << "[";
+  for (auto i : representation_) ss << " " << i;
+  ss << " ]";
+  return ss.str();
 }

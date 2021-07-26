@@ -14,18 +14,19 @@
 #include "visitors/parent_finder.h"
 #include "visitors/source_visitor.h"
 
-HasseDiagram::HasseDiagram(Gfodd gfodd) :
-  predicate_(&diagram_),
-  skeleton_(diagram_, predicate_),
-  gfodd_(gfodd),
-  edge_counts_(gfodd.NumInternalEdges()) {
-  tops_.insert(boost::add_vertex(diagram_));
+HasseDiagram::HasseDiagram(Gfodd gfodd, int predicate_arity) :
+    predicate_(&diagram_), predicate_arity_(predicate_arity),
+    skeleton_(diagram_, predicate_), gfodd_(gfodd),
+    edge_counts_(gfodd.NumInternalEdges()) {
+  auto vertex = boost::add_vertex(diagram_);
+  diagram_[vertex].set_positions(predicate_arity);
+  tops_.insert(vertex);
 }
 
 void HasseDiagram::UpdatePathCounts(HasseDiagram::Vertex from,
                                     HasseDiagram::Vertex to) {
   for (auto from_edge :
-         boost::make_iterator_range(boost::out_edges(from, diagram_))) {
+           boost::make_iterator_range(boost::out_edges(from, diagram_))) {
     if (diagram_[from_edge].edge_of_gfodd == kPredecessor) {
       HasseDiagram::Vertex predecessor = boost::target(from_edge, diagram_);
       bool skip = false;
@@ -55,7 +56,7 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   std::vector<int> differences;
   for (auto top : tops_) {
     visitors::ParentFinder<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
-      parent_finder(excluded, parents, differences, variable_positions);
+        parent_finder(excluded, parents, differences, variable_positions);
     try {
       boost::breadth_first_search(skeleton_, top,
                                   boost::visitor(parent_finder));
@@ -114,16 +115,16 @@ void HasseDiagram::InitialiseVertices() {
   }
 }
 
-void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
+void HasseDiagram::InstantiateSizes(int domain_size) {
   std::vector<HasseDiagram::Vertex> topological_ordering;
   boost::topological_sort(diagram_, std::back_inserter(topological_ordering));
   std::map<HasseDiagram::Vertex, int> full_size;
   for (auto vertex : topological_ordering) {
-    int size = diagram_[vertex].FullSize(domain_size, predicate_arity);
+    int size = diagram_[vertex].FullSize(domain_size, predicate_arity_);
     full_size[vertex] = size;
     for (auto successor :
-           boost::make_iterator_range(boost::adjacent_vertices(vertex,
-                                                               diagram_))) {
+             boost::make_iterator_range(boost::adjacent_vertices(vertex,
+                                                                 diagram_))) {
       size -= full_size[successor];
     }
     diagram_[vertex].set_size(size);
@@ -139,13 +140,18 @@ void HasseDiagram::InitialiseEdges(int domain_size) {
   for (int i = 0; i < gfodd_.NumInternalEdges(); ++i) {
     auto incident_vertices = gfodd_.Incident(i);
     auto source = corresponding_vertex_class_[incident_vertices.first];
+    auto source_variables = gfodd_.Positions(incident_vertices.first);
+    auto target_variables = gfodd_.Positions(incident_vertices.second);
+    BOOST_LOG_TRIVIAL(debug) << "HasseDiagram::InitialiseEdges: source = "
+                             << source_variables.string_representation()
+                             << ", target = "
+                             << target_variables.string_representation();
     visitors::SourceVisitor<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
-      visitor(i, std::pow(domain_size,
-                          gfodd_.NumNewVariables(incident_vertices.second)),
-              gfodd_.Positions(incident_vertices.first),
-              gfodd_.Positions(incident_vertices.second), source,
-              corresponding_vertex_class_[incident_vertices.second], changes,
-              top_targets);
+        visitor(i, std::pow(domain_size,
+                            gfodd_.NumNewVariables(incident_vertices.second)),
+                source_variables, target_variables, source,
+                corresponding_vertex_class_[incident_vertices.second], changes,
+                top_targets);
     boost::depth_first_search(skeleton_,
                               boost::visitor(visitor).root_vertex(source));
   }
@@ -155,7 +161,7 @@ void HasseDiagram::InitialiseEdges(int domain_size) {
     std::map<HasseDiagram::Vertex, int> to_subtract;
     visitors::MultiplicitySubtractor<HasseDiagram::Vertex,
                                      HasseDiagram::FilteredGraph>
-      subtractor(remaining_map, to_subtract);
+        subtractor(remaining_map, to_subtract);
     boost::depth_first_search(skeleton_, boost::visitor(subtractor).
                               root_vertex(top_targets[source]));
     for (auto [target, delta] : to_subtract) {

@@ -12,7 +12,8 @@ BOOST_AUTO_TEST_CASE(test_OccursOnlyOnce) {
 
 BOOST_AUTO_TEST_CASE(test_RespectTheMap) {
   VariablePositions positions("xyz");
-  VariablePositions updated = positions.RespectTheMap({{0, {"y"}}, {1, {"x", "z"}}});
+  VariablePositions updated = positions.RespectTheMap({{0, {"a", "y"}},
+                                                       {1, {"x", "z"}}});
   BOOST_CHECK(updated.OccursOnlyOnce("y"));
   BOOST_CHECK(!updated.OccursOnlyOnce("z"));
 }

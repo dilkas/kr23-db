@@ -30,10 +30,10 @@ class HasseDiagram {
                                 boost::directedS, VertexClass, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 
-  explicit HasseDiagram(Gfodd gfodd);
+  HasseDiagram(Gfodd gfodd, int predicate_arity);
   std::vector<int> edge_counts() { return edge_counts_; }
   void InitialiseVertices();
-  void InstantiateSizes(int domain_size, int predicate_arity);
+  void InstantiateSizes(int domain_size);
   void InitialiseEdges(int domain_size);
   void RemoveOneVertex(Vertex vertex_class);
 
@@ -50,6 +50,7 @@ class HasseDiagram {
   // TODO (later): kPredecessor type edges are no longer needed
   static const int kSubset = -1, kPredecessor = -2;
 
+  int predicate_arity_;
   Graph diagram_;
   FilteredGraph skeleton_;
   Gfodd gfodd_;
