@@ -15,7 +15,7 @@
 #include "visitors/source_visitor.h"
 
 HasseDiagram::HasseDiagram(Gfodd gfodd) :
-  gfodd_(gfodd), predicate_(diagram_), skeleton_(diagram_, predicate_),
+  predicate_(diagram_), skeleton_(diagram_, predicate_), gfodd_(gfodd),
   edge_counts_(gfodd.NumInternalEdges()) {
   tops_.insert(boost::add_vertex(diagram_));
 }
@@ -69,7 +69,8 @@ HasseDiagram::AddVertexClass(VariablePositions variable_positions,
   assert(!parents.empty());
   HasseDiagram::Vertex new_vertex = boost::add_vertex(diagram_);
   diagram_[new_vertex].set_positions(variable_positions);
-  for (int i = 0; i < parents.size(); ++i) {
+  for (std::vector<HasseDiagram::Vertex>::size_type i = 0;
+       i < parents.size(); ++i) {
     UpdatePathCounts(parents[i], new_vertex);
     auto edge = boost::add_edge(new_vertex, parents[i], diagram_).first;
     diagram_[edge].edge_of_gfodd = kSubset;
@@ -93,11 +94,12 @@ void HasseDiagram::InitialiseVertices() {
     AddVertexClass(variable_positions, atom, gfodd_.NullVertex());
   }
 
-  for (int i = 1; i < atoms.size(); ++i) {
+  for (std::vector<Gfodd::VertexDescriptor>::size_type i = 1;
+       i < atoms.size(); ++i) {
     std::vector<VariablePositions> new_top_layer;
-    int j = i; // which one to add first
+    auto j = i; // which one to add first
     for (auto positions : top_layer) {
-      for (int k = j; k < atoms.size(); ++k) {
+      for (auto k = j; k < atoms.size(); ++k) {
         VariablePositions new_set = positions;
         new_set.Insert(gfodd_.Positions(atoms[k]));
         AddVertexClass(new_set, gfodd_.NullVertex(), gfodd_.NullVertex());
@@ -109,7 +111,6 @@ void HasseDiagram::InitialiseVertices() {
   }
 }
 
-// TODO: should this take into account path counts?
 void HasseDiagram::InstantiateSizes(int domain_size, int predicate_arity) {
   std::vector<HasseDiagram::Vertex> topological_ordering;
   boost::topological_sort(diagram_, std::back_inserter(topological_ordering));
@@ -137,8 +138,8 @@ void HasseDiagram::InitialiseEdges(int domain_size) {
     visitors::SourceVisitor<HasseDiagram::Vertex, HasseDiagram::FilteredGraph>
       visitor(i, std::pow(domain_size,
                           gfodd_.NumNewVariables(incident_vertices.second)),
-              gfodd_.Positions(incident_vertices.first), source,
-              gfodd_.Positions(incident_vertices.second),
+              gfodd_.Positions(incident_vertices.first),
+              gfodd_.Positions(incident_vertices.second), source,
               corresponding_vertex_class_[incident_vertices.second], changes,
               top_targets);
     boost::depth_first_search(skeleton_,

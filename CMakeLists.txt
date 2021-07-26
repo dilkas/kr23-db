@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(WFOMC)
 enable_testing()
-#add_compile_options(-Wall -Wextra -pedantic)
+add_compile_options(-Wall -Wextra -pedantic)
 
 find_package(Boost COMPONENTS log graph unit_test_framework REQUIRED)
 include_directories(src)
@@ -23,10 +23,19 @@ foreach(testSrc ${TEST_SRCS})
                               ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
                               )
         set_target_properties(${testName} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/bin/test)
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/test)
         #Finally add it to test execution -
         #Notice the WORKING_DIRECTORY and COMMAND
         add_test(NAME ${testName}
                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/test
                  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/test/${testName} )
 endforeach(testSrc)
+
+add_executable(wfomc src/main.cc ${SRCS})
+target_link_libraries(wfomc
+                      ${Boost_LOG_LIBRARY}
+                      ${Boost_GRAPH_LIBRARY}
+                      ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+                      )
+set_target_properties(wfomc PROPERTIES
+                      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)

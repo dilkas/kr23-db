@@ -6,7 +6,7 @@ namespace visitors {
 
   template <typename Vertex, typename Graph>
   void TargetVisitor<Vertex, Graph>::discover_vertex(Vertex target,
-                                                     const Graph& graph) {
+                                                     const Graph&) {
     auto it = changes_.find(source_);
     if (it != changes_.end()) {
       it->second[target] = {multiplicity_, edge_of_gfodd_};

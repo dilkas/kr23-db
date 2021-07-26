@@ -3,7 +3,7 @@
 #include "gfodd.h"
 #include "hasse_diagram.h"
 
-int main(int argc, char *argv[]) {
+int main() {
   int domain_size = 10;
   int predicate_arity = 2;
   Gfodd gfodd;

@@ -28,7 +28,7 @@ Match Encoding::IsSubsetOf(Encoding other) const {
   std::map<int, int> translation;
   Match match = {Match::Quality::kEqual, 0};
   int max_var_this = 0, max_var_other = 0;
-  for (int i = 0; i < representation_.size(); ++i) {
+  for (std::vector<int>::size_type i = 0; i < representation_.size(); ++i) {
     if (representation_[i] > max_var_this) max_var_this = representation_[i];
     if (other.representation_[i] > max_var_other)
       max_var_other = other.representation_[i];
@@ -64,7 +64,7 @@ std::map<int, std::set<std::string>>
 Encoding::MatchAString(std::string variables) const {
   std::map<int, std::set<std::string>> decoding;
   assert(variables.size() == representation_.size());
-  for (int i = 0; i < variables.size(); ++i) {
+  for (std::vector<int>::size_type i = 0; i < variables.size(); ++i) {
     auto it = decoding.find(representation_[i]);
     if (it == decoding.end()) {
       decoding[representation_[i]] = {std::string(1, variables[i])};

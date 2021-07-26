@@ -69,11 +69,12 @@ double Gfodd::Evaluate(std::vector<int> internal_edge_counts) {
   assert(internal_edge_counts.size() == internal_edges_.size());
 
   std::map<Gfodd::EdgeDescriptor, int> edge_counts;
-  for (int i = 0; i < internal_edge_counts.size(); ++i)
+  for (std::vector<int>::size_type i = 0; i < internal_edge_counts.size(); ++i)
     edge_counts[internal_edges_[i]] = internal_edge_counts[i];
 
   double answer = 1;
-  for (int i = 0; i < sinks_.size(); ++i) {
+  for (std::vector<Gfodd::VertexDescriptor>::size_type i = 0;
+       i < sinks_.size(); ++i) {
     int power = 0;
     for (auto path : paths_[i]) {
       int path_contribution = 1;

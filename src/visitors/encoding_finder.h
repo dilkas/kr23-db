@@ -14,14 +14,15 @@ namespace visitors {
   template <typename Vertex, typename Graph>
   class EncodingFinder : public boost::default_dfs_visitor {
   public:
-  EncodingFinder(Encoding& encoding, Match::Quality &match,
-                 Vertex& finding) :
-    encoding_(encoding), match_(match), finding_(finding) {}
+    EncodingFinder(Encoding& encoding, Vertex& finding, Match::Quality &match) :
+      encoding_(encoding), finding_(finding), match_(match) {}
 
     void discover_vertex(Vertex vertex, const Graph& graph) const;
 
   private:
-    Encoding& encoding_;
+    Encoding& encoding_; // input
+
+    // outputs
     Vertex& finding_;
     Match::Quality& match_;
   };

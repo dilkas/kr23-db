@@ -25,21 +25,25 @@ namespace visitors {
   class SourceVisitor : public boost::default_dfs_visitor {
   public:
     SourceVisitor(int edge_of_gfodd, int total_multiplicity,
-                  VariablePositions source_variables, Vertex source_vertex,
-                  VariablePositions target_variables, Vertex parent_of_target,
+                  VariablePositions source_variables,
+                  VariablePositions target_variables, Vertex source_vertex,
+                  Vertex parent_of_target,
                   std::map<Vertex, std::map<Vertex, Change>>& changes,
                   std::map<Vertex, Vertex>& top_target) :
       edge_of_gfodd_(edge_of_gfodd), total_multiplicity_(total_multiplicity),
-      source_variables_(source_variables), source_vertex_(source_vertex),
-      target_variables_(target_variables), parent_of_target_(parent_of_target),
+      source_variables_(source_variables), target_variables_(target_variables),
+      source_vertex_(source_vertex), parent_of_target_(parent_of_target),
       changes_(changes), top_target_(top_target) {}
 
     void discover_vertex(Vertex vertex, const Graph& graph) const;
 
   private:
+    // inputs
     int edge_of_gfodd_, total_multiplicity_;
     VariablePositions source_variables_, target_variables_;
     Vertex source_vertex_, parent_of_target_;
+
+    // outputs
     std::map<Vertex, std::map<Vertex, Change>>& changes_;
     std::map<Vertex, Vertex>& top_target_;
   };

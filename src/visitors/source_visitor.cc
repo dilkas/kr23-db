@@ -26,10 +26,10 @@ namespace visitors {
     Match::Quality last_match;
     Vertex target = boost::graph_traits<Graph>::null_vertex();
     visitors::EncodingFinder<Vertex, Graph>
-      encoding_finder(encoding, last_match, target);
+      encoding_finder(encoding, target, last_match);
     std::vector<boost::default_color_type> colors(boost::num_vertices(graph));
 
-    const auto terminator = [last_match](Vertex vertex, const Graph& graph) {
+    const auto terminator = [last_match](Vertex, const Graph&) {
       return last_match == Match::Quality::kNotASubset;
     };
 
