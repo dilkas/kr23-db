@@ -10,8 +10,11 @@ class VariablePositions {
  public:
   VariablePositions() {}
   explicit VariablePositions(std::string variables);
+  VariablePositions(const VariablePositions &other);
+  VariablePositions& operator=(const VariablePositions&) = default;
 
-  // NOTE: can be outdated if Insert() is called
+  // NOTE: This representation is never updated, so it may be uninitialised or
+  // outdated (e.g., if Insert() is called)
   std::string string_representation() const { return string_representation_; }
 
   void Insert(VariablePositions other);

@@ -70,9 +70,14 @@ int Encoding::CountRedundantPositions() {
 
 std::map<int, std::set<std::string>>
 Encoding::MatchAString(std::string variables) const {
+  BOOST_LOG_TRIVIAL(debug) << "Encoding::MatchAString: this = "
+                           << AsString() << ", variables = " << variables;
   std::map<int, std::set<std::string>> decoding;
   assert(variables.size() == representation_.size());
+
   for (std::vector<int>::size_type i = 0; i < variables.size(); ++i) {
+    BOOST_LOG_TRIVIAL(debug) << "Encoding::MatchAString: "
+                             << representation_[i] << " -> " << variables[i];
     auto it = decoding.find(representation_[i]);
     if (it == decoding.end()) {
       decoding[representation_[i]] = {std::string(1, variables[i])};

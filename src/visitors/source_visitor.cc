@@ -1,5 +1,7 @@
 #include "source_visitor.h"
 
+#include <boost/log/trivial.hpp>
+
 #include "encoding.h"
 #include "hasse_diagram.h"
 #include "visitors/encoding_finder.h"
@@ -11,7 +13,7 @@ template <typename Vertex, typename Graph>
 void SourceVisitor<Vertex, Graph>::discover_vertex(Vertex vertex,
                                                    const Graph& graph) const {
   // Identify matching variables from source_variables and source_vertex
-  auto decoding = graph[source_vertex_].
+  auto decoding = graph[vertex].
                   MatchAString(source_variables_.string_representation());
 
   // Transform target_variables to match these constraints
@@ -20,6 +22,8 @@ void SourceVisitor<Vertex, Graph>::discover_vertex(Vertex vertex,
   // Encode them
   Encoding encoding;
   encoding.Set(new_variables);
+  BOOST_LOG_TRIVIAL(debug) << "SourceVisitor: encoding = "
+                           << encoding.AsString();
 
   // Find the descendant of parent_of_target_ that matches the encoding, i.e.,
   // find the target
