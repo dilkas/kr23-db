@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 
+#include <boost/graph/copy.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/log/trivial.hpp>
 
@@ -174,9 +175,74 @@ void HasseDiagram::InitialiseEdges(int domain_size) {
   }
 }
 
-// TODO (later): update to update edges and perhaps create new vertex classes
-void HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
+// TODO: maybe create some private methods that simplify all that
+// make_iterator_range boilerplate
+
+void HasseDiagram::SplitVertexClass(HasseDiagram::Vertex vertex_class,
+                                    HasseDiagram::EdgeDescriptor edge_to_remove,
+                                    int new_size) {
+  // Update the size of the old vertex
+  int old_size = diagram_[vertex_class].size();
+  assert(old_size > new_size);
+  diagram_[vertex_class].set_size(old_size - new_size);
+
+  // Add a new vertex
+  auto new_vertex = boost::add_vertex(diagram_);
+  diagram_[new_vertex].set_size(new_size);
+
+  // Copy outgoing edges
+  for (auto edge :
+           boost::make_iterator_range(boost::out_edges(vertex_class,
+                                                       diagram_))) {
+    if (edge != edge_to_remove) {
+      auto new_edge = boost::add_edge(new_vertex,
+                                      boost::target(edge, diagram_),
+                                      diagram_).first;
+      diagram_[new_edge].edge_of_gfodd = diagram_[edge].edge_of_gfodd;
+      diagram_[new_edge].multiplicity = diagram_[edge].multiplicity;
+    }
+  }
+
+  // Incoming edges split their multiplicities
+  for (auto edge :
+           boost::make_iterator_range(boost::in_edges(vertex_class,
+                                                      diagram_))) {
+    assert((diagram_[edge].multiplicity * new_size) % old_size == 0);
+    int new_edge_size = diagram_[edge].multiplicity * new_size / old_size;
+    diagram_[edge].multiplicity -= new_edge_size;
+    auto new_edge = boost::add_edge(boost::source(edge, diagram_), new_vertex,
+                                    diagram_).first;
+    diagram_[new_edge].edge_of_gfodd = diagram_[edge].edge_of_gfodd;
+    diagram_[new_edge].multiplicity = new_edge_size;
+  }
+}
+
+HasseDiagram HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
   int size = diagram_[vertex_class].size();
   assert(size > 0);
-  diagram_[vertex_class].set_size(size - 1);
+  HasseDiagram copy(gfodd_, predicate_arity_);
+  boost::copy_graph(diagram_, copy.diagram_);
+  if (size == 1) {
+    boost::clear_vertex(vertex_class, copy.diagram_);
+    boost::remove_vertex(vertex_class, copy.diagram_);
+  } else {
+    copy.diagram_[vertex_class].set_size(size - 1);
+    // TODO: this could be buggy if the set of in-edges is modified inside the
+    // for-loop
+    for (auto edge :
+             boost::make_iterator_range(boost::in_edges(vertex_class,
+                                                        copy.diagram_))) {
+      auto source = boost::source(edge, copy.diagram_);
+      assert((copy.diagram_[source].size() *
+              copy.diagram_[edge].multiplicity) % size);
+      SplitVertexClass(source, edge, copy.diagram_[source].size() *
+                       copy.diagram_[edge].multiplicity / size);
+    }
+  }
+  return copy;
+}
+
+bool operator==(const HasseDiagram& a, const HasseDiagram& b) {
+  // TODO: check for equality of diagram_
+  return false;
 }

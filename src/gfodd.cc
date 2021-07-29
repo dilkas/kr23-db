@@ -65,6 +65,7 @@ void Gfodd::FindPaths() {
 // The power of a weight is the sum across all paths in GFODD of the product
 // of all edges in the path
 double Gfodd::Evaluate(std::vector<int> internal_edge_counts) {
+  FindPaths();
   assert(sinks_.size() == paths_.size());
   assert(internal_edge_counts.size() == internal_edges_.size());
 

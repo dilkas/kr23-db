@@ -10,10 +10,10 @@
 namespace visitors {
 
 template <typename Vertex, typename Graph>
-void SourceVisitor<Vertex, Graph>::discover_vertex(Vertex vertex,
+void SourceVisitor<Vertex, Graph>::discover_vertex(Vertex source,
                                                    const Graph& graph) const {
   // Identify matching variables from source_variables and source_vertex
-  auto decoding = graph[vertex].
+  auto decoding = graph[source].
                   MatchAString(source_variables_.string_representation());
 
   // Transform target_variables to match these constraints
@@ -43,11 +43,12 @@ void SourceVisitor<Vertex, Graph>::discover_vertex(Vertex vertex,
                              terminator);
   } catch (EndSearchException& exception) {}
   assert(target != boost::graph_traits<Graph>::null_vertex());
-  top_target_[vertex] = target;
+  top_target_[source] = target;
+  changes_[source] = {};
 
   // Run the second half the edge construction algorithm
   visitors::TargetVisitor<Vertex, Graph>
-      visitor(edge_of_gfodd_, total_multiplicity_, vertex, changes_);
+      visitor(edge_of_gfodd_, total_multiplicity_, changes_[source]);
   boost::depth_first_search(graph,
                             boost::visitor(visitor).root_vertex(target));
 }

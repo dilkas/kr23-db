@@ -17,10 +17,10 @@ class TargetVisitor : public boost::default_dfs_visitor {
  public:
   typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
 
-  TargetVisitor(int edge_of_gfodd, int multiplicity, Vertex source,
-                std::map<Vertex, std::map<Vertex, Change>>& changes) :
+  TargetVisitor(int edge_of_gfodd, int multiplicity,
+                std::map<Vertex, Change>& changes) :
       edge_of_gfodd_(edge_of_gfodd), multiplicity_(multiplicity),
-      source_(source), changes_(changes) {}
+      changes_(changes) {}
 
   void discover_vertex(Vertex target, const Graph& graph);
   void tree_edge(Edge edge, const Graph& graph);
@@ -28,9 +28,8 @@ class TargetVisitor : public boost::default_dfs_visitor {
 
  private:
   int edge_of_gfodd_, multiplicity_;
-  Vertex source_;
-  std::map<Vertex, std::map<Vertex, Change>>& changes_;
-  std::vector<Edge> stack_;
+  std::vector<Edge> stack_;  // internal TODO: make it into an actual stack
+  std::map<Vertex, Change>& changes_;  // output
 };
 
 }  // namespace visitors

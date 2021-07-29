@@ -7,12 +7,7 @@ namespace visitors {
 template <typename Vertex, typename Graph>
 void TargetVisitor<Vertex, Graph>::discover_vertex(Vertex target,
                                                    const Graph&) {
-  auto it = changes_.find(source_);
-  if (it != changes_.end()) {
-    it->second[target] = {multiplicity_, edge_of_gfodd_};
-  } else {
-    changes_[source_] = {{target, {multiplicity_, edge_of_gfodd_}}};
-  }
+  changes_[target] = {multiplicity_, edge_of_gfodd_};
 }
 
 template <typename Vertex, typename Graph>
@@ -25,7 +20,7 @@ void TargetVisitor<Vertex, Graph>::tree_edge(Edge edge,
 
 template <typename Vertex, typename Graph>
 void TargetVisitor<Vertex, Graph>::finish_edge(Edge edge, const Graph& graph) {
-  if (stack_.back() == edge) {
+  if (!stack_.empty() && stack_.back() == edge) {
     multiplicity_ *= graph[edge].multiplicity;
     stack_.pop_back();
   }

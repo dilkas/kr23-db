@@ -27,17 +27,28 @@ class HasseDiagram {
   };
 
   typedef boost::adjacency_list<boost::hash_mapS, boost::vecS,
-                                boost::directedS, VertexClass, Edge> Graph;
+                                boost::bidirectionalS, VertexClass, Edge> Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef boost::graph_traits<Graph>::edge_descriptor EdgeDescriptor;
+  typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 
   HasseDiagram(Gfodd gfodd, int predicate_arity);
-  std::vector<int> edge_counts() { return edge_counts_; }
+
+  // Initialisation
   void InitialiseVertices();
   void InstantiateSizes(int domain_size);
   void InitialiseEdges(int domain_size);
-  void RemoveOneVertex(Vertex vertex_class);
+
+  // Iteration and Evaluation
+  HasseDiagram RemoveOneVertex(Vertex vertex_class);
+  std::vector<int> edge_counts() { return edge_counts_; }
+  int Size(Vertex vertex_class) { return diagram_[vertex_class].size(); }
+  std::pair<VertexIterator, VertexIterator> VertexClassIterator() {
+    return boost::vertices(diagram_);
+  }
 
  private:
+  // TODO (later): will need to make this class a lot more compact
   struct SelectSubsetEdges {
     SelectSubsetEdges() {}
     explicit SelectSubsetEdges(Graph* g) : graph(g) {}
@@ -66,6 +77,14 @@ class HasseDiagram {
                         Gfodd::VertexDescriptor gfodd_vertex_id,
                         Gfodd::VertexDescriptor null_vertex);
   void UpdatePathCounts(Vertex from, Vertex to);
+
+  // * new_size refers to the size of the sub-vertex class without the edge.
+  // * edge_to_remove is an out-edge that should be removed in one version of
+  //   the vertex class but remain in the other.
+  void SplitVertexClass(Vertex vertex_class, EdgeDescriptor edge_to_remove,
+                        int new_size);
 };
+
+bool operator==(const HasseDiagram& a, const HasseDiagram& b);
 
 #endif
