@@ -14,34 +14,27 @@
  * limitations under the License.
  */
 
-import sbt._
-import Keys._
-
 import java.util.jar.{Attributes, Manifest}
 import Path.makeString
 import System._
 import java.util.Date
 
-import sbtassembly.Plugin._
-import AssemblyKeys._
-import scoverage.ScoverageSbtPlugin._
+//import scoverage.ScoverageSbtPlugin._
   
-import com.typesafe.sbt.SbtProguard
-import com.typesafe.sbt.SbtProguard._
-import ProguardKeys.{ mergeStrategies, merge, options, proguard }
-import ProguardOptions.keepMain
-import ProguardMerge.append
+//import com.lightbend.sbt.SbtProguard
+//import com.lightbend.sbt.SbtProguard._
+//import ProguardKeys.{ mergeStrategies, merge, options, proguard }
+//import ProguardOptions.keepMain
+//import ProguardMerge.append
 
-import de.heikoseeberger.sbtheader.HeaderPlugin
-import de.heikoseeberger.sbtheader.license.Apache2_0
-import de.heikoseeberger.sbtheader.HeaderPattern
+//import de.heikoseeberger.sbtheader.HeaderPlugin
+//import de.heikoseeberger.sbtheader.license.Apache2_0
+//import de.heikoseeberger.sbtheader.HeaderPattern
 
-import com.typesafe.sbteclipse.plugin.EclipsePlugin._
-import laika.sbt.LaikaSbtPlugin.LaikaPlugin
+//import com.typesafe.sbteclipse.plugin.EclipsePlugin._
+//import laika.sbt.LaikaSbtPlugin.LaikaPlugin
 
 
-object BuildSettings {
-  
   val buildName         = "forclift"
   val buildOrganization = "edu.ucla.cs.starai"
   val buildScalaVersion = "2.11.8"
@@ -92,16 +85,16 @@ object BuildSettings {
       parallelExecution in Test := false
   )
     
-  lazy val sCoverageSettings = instrumentSettings ++ Seq(
+/*  lazy val sCoverageSettings = Seq(
     ScoverageKeys.excludedPackages in ScoverageCompile := "udy.ucla.cs.starai.forclift.examples.*;",
     // re-enable highlighting when running scala > 2.11.0 (was disabled because of bug)
     ScoverageKeys.highlighting := true,
     // here, add flags (++=) because otherwise instrumentation fails?
     scalacOptions in ScoverageCompile ++= testScalacFlags
-  )
+  )*/
 
   // Settings for Assembly plugin (https://github.com/eed3si9n/sbt-assembly)
-  lazy val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq (
+/*  lazy val assemblySettings = sbtassembly.Plugin.assemblySettings ++ Seq (
     jarName in assembly := buildJarName,
     assembleArtifact in packageBin := true, // if false: Exclude source files
     test in assembly := {}, // Skip the test during assembly
@@ -109,51 +102,45 @@ object BuildSettings {
     cp.filter{el => el.data.getName.toLowerCase.indexOf("junit") != -1 ||
                     el.data.getName.toLowerCase.indexOf("scalatest") != -1 }
     }
-  )
+  )*/
 
-  lazy val proguardSettings =  SbtProguard.proguardSettings ++ Seq(
-      ProguardKeys.proguardVersion in Proguard := "5.3.1",
-      options in Proguard += keepMain(buildMainClass),
-      options in Proguard += "-dontnote",
-      options in Proguard += "-dontwarn",
-      options in Proguard += "-ignorewarnings",
-      options in Proguard += "-dontoptimize",
-      options in Proguard += "-dontobfuscate",
-      options in Proguard += "-keepattributes *Annotation*",
-      options in Proguard += "-keepattributes Signature",
-      options in Proguard += "-keepattributes InnerClasses",
-      options in Proguard += "-keepattributes EnclosingMethod",
-      ProguardKeys.inputFilter in Proguard := { file =>
-        // remove embedded documentation and manifests
-        Some("!**.html,!**.css,!**.gif,!META-INF/**")
-      },
-      // Make the jar first such that a manifest is generated
-      exportJars := true,
-       // Explicitely include generated jar file
-      ProguardKeys.inputs in Proguard := (dependencyClasspath in Compile).value.files,
-      ProguardKeys.filteredInputs in Proguard ++= ProguardOptions.noFilter((packageBin in Compile).value),
-      javaOptions in (Proguard, proguard) := Seq("-Xmx2G")
-  )
+//  lazy val proguardSettings =  proguardSettings ++ Seq(
+//      ProguardKeys.proguardVersion in Proguard := "5.3.1",
+//      options in Proguard += keepMain(buildMainClass),
+//      options in Proguard += "-dontnote",
+//      options in Proguard += "-dontwarn",
+//      options in Proguard += "-ignorewarnings",
+//      options in Proguard += "-dontoptimize",
+//      options in Proguard += "-dontobfuscate",
+//      options in Proguard += "-keepattributes *Annotation*",
+//      options in Proguard += "-keepattributes Signature",
+//      options in Proguard += "-keepattributes InnerClasses",
+//      options in Proguard += "-keepattributes EnclosingMethod",
+//      ProguardKeys.inputFilter in Proguard := { file =>
+//        // remove embedded documentation and manifests
+//        Some("!**.html,!**.css,!**.gif,!META-INF/**")
+//      },
+//      // Make the jar first such that a manifest is generated
+//      exportJars := true,
+//       // Explicitely include generated jar file
+//      ProguardKeys.inputs in Proguard := (dependencyClasspath in Compile).value.files,
+//      ProguardKeys.filteredInputs in Proguard ++= ProguardOptions.noFilter((packageBin in Compile).value),
+//      javaOptions in (Proguard, proguard) := Seq("-Xmx2G")
+//  )
 
-  lazy val headerSettings = List(
+/*  lazy val headerSettings = List(
       HeaderPlugin.autoImport.headers := Map(
         "scala" -> Apache2_0("2016", "Guy Van den Broeck and Wannes Meert (UCLA and KU Leuven)"),
         "java" -> Apache2_0("2016", "Jan Van Haaren (KU Leuven)")
       )
-    )
+    )*/
 
-  lazy val docSettings = LaikaPlugin.defaults ++ Seq()
+//  lazy val docSettings = LaikaPlugin.defaults ++ Seq()
    
-  import ExtraCommands._
-  lazy val customCommands = Seq(dist,stats)
+//  import ExtraCommands._
+//  lazy val customCommands = Seq(dist,stats)
 
   lazy val createAllHeaders = addCommandAlias("createAllHeaders",       ";compile:createHeaders;test:createHeaders")
-
-}
-
-object ForcliftBuild extends Build {
-
-  import BuildSettings._
 
   val dependencies = Seq (
 	  // Scalatest for testing
@@ -175,74 +162,73 @@ object ForcliftBuild extends Build {
 	  // val scalaEquals =  "org.scalaequals" %% "scalaequals-core" % "1.2.0"
   )
 
-  lazy val main = Project("main", file("."))
-    .settings(Defaults.defaultSettings:_*)
+  lazy val main = (project in file("."))
+//    .settings(commonSettings:_*)
     .settings(libraryDependencies := dependencies)
-    .settings(commands ++= customCommands)
+//    .settings(commands ++= customCommands)
     .settings(appSettings:_*)
     .settings(compileSettings:_*)
     .settings(testSettings:_*)
-    .settings(sCoverageSettings: _*)
-    .settings(proguardSettings: _*)
-    .settings(assemblySettings: _*)
-    .settings(headerSettings: _*)
-    .settings(headerSettings: _*)
+//    .settings(sCoverageSettings: _*)
+//    .settings(proguardSettings: _*)
+//    .settings(assemblySettings: _*)
+//    .settings(headerSettings: _*)
+//    .settings(headerSettings: _*)
     .settings(createAllHeaders: _*)
-    .settings(docSettings: _*)
+//    .settings(docSettings: _*)
     
-}
 
+// object ExtraCommands {
 
-object ExtraCommands {
+//   /** Print the active project and current Git branch **/
+// /*  def stats = Command.command("stats") { state =>
+//     object devnull extends ProcessLogger {
+//       def info (s: => String) {}
+//       def error (s: => String) { }
+//       def buffer[T] (f: => T): T = f
+//     }
 
-  /** Print the active project and current Git branch **/
-  def stats = Command.command("stats") { state =>
-    object devnull extends ProcessLogger {
-      def info (s: => String) {}
-      def error (s: => String) { }
-      def buffer[T] (f: => T): T = f
-    }
+//     val current = """\*\s+(\w+)""".r
+//     def gitBranches = ("git branch --no-color" lines_! devnull mkString)
+//     val currBranch = current findFirstMatchIn gitBranches map (_ group(1)) getOrElse "-"
 
-    val current = """\*\s+(\w+)""".r
-    def gitBranches = ("git branch --no-color" lines_! devnull mkString)
-    val currBranch = current findFirstMatchIn gitBranches map (_ group(1)) getOrElse "-"
+//     val currProject = Project.extract (state).currentProject.id
 
-    val currProject = Project.extract (state).currentProject.id
+//     println("Project: %s\nBranch: %s".format(currProject,currBranch))
 
-    println("Project: %s\nBranch: %s".format(currProject,currBranch))
+//     state
+//   }*/
 
-    state
-  }
+//   /** Package the jar-files, documentation and examples in a Zip-file that
+//     * can be uploaded to the website.
+//    **/
+//   def dist = Command.command("dist") { state =>
+//     val distdir = BuildSettings.buildName+"-"+BuildSettings.buildVersion
+//     //val curDir = System.getProperty("user.dir")
+//     val curdir:String = ("""pwd""")
+//     println(curdir)
+//     println("Deleting "+distdir+". " + ("rm -rf "+distdir))
+//     println("Creating "+distdir+". " + ("mkdir -p "+distdir+"/models"))
+//     println("Copying sbt. " + ("mkdir -p "+distdir+"/project"))
+//     println("Copying sbt. " + ("cp project/Build.scala "+distdir+"/project/"))
+//     println("Copying sbt. " + ("cp project/plugin.sbt " +distdir+"/project/"))
+//     println("Copying jar. " + ("cp target/scala-"+BuildSettings.buildScalaVersionMajor+"/proguard/"+BuildSettings.buildName+"_"+BuildSettings.buildScalaVersionMajor+"-"+BuildSettings.buildVersion+".jar "+distdir+"/"+BuildSettings.buildJarName))
+//     println("Copying README.md. "  + ("cp README.md " +distdir+"/"))
+//     println("Copying README_dev.md. "  + ("cp README_dev.md " +distdir+"/"))
+//     println("Copying LICENSE. " + ("cp LICENSE "+distdir+"/"))
+//     println("Copying models. " + ("cp -R models  "+distdir+"/"))
+//     println("Copying source code. " + ("cp -R src  "+distdir+"/"))
+//     println("Making zip. " + ("zip -r "+distdir+".zip "+distdir))
+//     println("Created "+distdir+".zip")
+//     state
+//   }
 
-  /** Package the jar-files, documentation and examples in a Zip-file that
-    * can be uploaded to the website.
-   **/
-  def dist = Command.command("dist") { state =>
-    val distdir = BuildSettings.buildName+"-"+BuildSettings.buildVersion
-    //val curDir = System.getProperty("user.dir")
-    val curdir:String = ("""pwd""" !!)
-    println(curdir)
-    println("Deleting "+distdir+". " + ("rm -rf "+distdir !!))
-    println("Creating "+distdir+". " + ("mkdir -p "+distdir+"/models" !!))
-    println("Copying sbt. " + ("mkdir -p "+distdir+"/project" !!))
-    println("Copying sbt. " + ("cp project/Build.scala "+distdir+"/project/" !!))
-    println("Copying sbt. " + ("cp project/plugin.sbt " +distdir+"/project/" !!))
-    println("Copying jar. " + ("cp target/scala-"+BuildSettings.buildScalaVersionMajor+"/proguard/"+BuildSettings.buildName+"_"+BuildSettings.buildScalaVersionMajor+"-"+BuildSettings.buildVersion+".jar "+distdir+"/"+BuildSettings.buildJarName !!))
-    println("Copying README.md. "  + ("cp README.md " +distdir+"/" !!))
-    println("Copying README_dev.md. "  + ("cp README_dev.md " +distdir+"/" !!))
-    println("Copying LICENSE. " + ("cp LICENSE "+distdir+"/" !!))
-    println("Copying models. " + ("cp -R models  "+distdir+"/" !!))
-    println("Copying source code. " + ("cp -R src  "+distdir+"/" !!))
-    println("Making zip. " + ("zip -r "+distdir+".zip "+distdir !!))
-    println("Created "+distdir+".zip")
-    state
-  }
+//   /* is this still used? */
+//   def dist_debug = Command.command("dist") { state =>
+//     println("Distribution is not allowed in debug mode. Switch to the main project ('project main')")
+//     state
+//   }
 
-  /* is this still used? */
-  def dist_debug = Command.command("dist") { state =>
-    println("Distribution is not allowed in debug mode. Switch to the main project ('project main')")
-    state
-  }
+// }
 
-}
-
+trapExit := false
