@@ -38,7 +38,7 @@ class CPPHandler
 
 	def execute(filename, max_pop_size)
 		logs_loop = "double logs[MAX+1]; for(int i = 0; i <= MAX; i++) logs[i] = log(i);\n"
-		File.open(filename + ".cpp", 'w') { |file| file.write("#include <iostream>\n#include <string>\n#include <queue>\n#include <cmath>\n#define MAX #{max_pop_size+1}\nusing namespace std;double sum(double a, double b){return max(a,b)+log1p(exp(-abs(a-b)));}#{@new_line}double sum_arr(double array[], int n){double max = *std::max_element(array, array + n + 1);double sum = 0;for(int i = 0; i <= n; i++)sum += exp(array[i] - max);return max + log(sum);}#{@new_line}#{@doubles};\n#{queues}\nint main(){\n" + logs_loop + @core + "#{Helper.indent(1)}cout << \"exp(\" << v1 << \") = \" << exp(v1) << endl;\n#{Helper.indent(1)}return 0;\n}") }
+		File.open(filename + ".cpp", 'w') { |file| file.write("#include <algorithm>\n#include <iostream>\n#include <string>\n#include <queue>\n#include <cmath>\n#define MAX #{max_pop_size+1}\nusing namespace std;double sum(double a, double b){return max(a,b)+log1p(exp(-abs(a-b)));}#{@new_line}double sum_arr(double array[], int n){double max = *std::max_element(array, array + n + 1);double sum = 0;for(int i = 0; i <= n; i++)sum += exp(array[i] - max);return max + log(sum);}#{@new_line}#{@doubles};\n#{queues}\nint main(){\n" + logs_loop + @core + "#{Helper.indent(1)}cout << \"exp(\" << v1 << \") = \" << exp(v1) << endl;\n#{Helper.indent(1)}return 0;\n}") }
 		%x( g++ -O3 #{filename}.cpp -o #{filename} )
 		puts "Z(Theory) = " + %x( ./#{filename} )
 	end
