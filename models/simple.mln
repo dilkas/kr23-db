@@ -1,0 +1,5 @@
+person = {1, ..., 4}
+
+p(person,person)
+
+p(x,y).

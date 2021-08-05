@@ -1,0 +1,8 @@
+person = {1,2,3}
+
+q(person)
+r(person,person)
+s(person,person)
+t(person)
+
+forall x forall m (q(x) v r(x, m) v s(x, m)) ^ (s(x, m) v t(x)).

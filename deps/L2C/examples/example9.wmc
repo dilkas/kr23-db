@@ -1,0 +1,23 @@
+//An example with more predicates and relations
+
+domain people 6 {Mehran, David, Alex, Alice, Angelina, Brad}
+domain movies 5 {Titanic, Her, Zootopia, Hangover, GodFather}
+
+predicate Old(people)
+predicate Female(people)
+predicate Friend(people, people)
+predicate Comedy(movies)
+predicate Romance(movies)
+predicate Likes(people, movies)
+predicate AUX1(people, people) 1.71828182 1
+predicate AUX2(people, movies) 2.32011692 1
+predicate AUX3(people, movies) 2.32011692 1
+
+// Old(x) ^ Friend(x, y) => Old(y)
+!AUX1(x, y) v !Old(x) v !Friend(x, y) v Old(y)
+
+// Old(x) ^ Likes(x, m) => Comedy(m)
+!AUX2(x, m) v !Old(x) v !Likes(x, m) v Comedy(m)
+
+// Female(x) ^ Likes(x, m) => Romance(m)
+!AUX3(x, m) v !Female(x) v !Likes(x, m) v Romance(m)

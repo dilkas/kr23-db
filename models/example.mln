@@ -1,0 +1,7 @@
+person = {1,2,3}
+
+r(person,person)
+s(person,person)
+t(person,person,person)
+
+forall x forall y forall z r(x, y) v s(y, z) v t(x, y, z).
