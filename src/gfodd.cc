@@ -62,17 +62,18 @@ void Gfodd::FindPaths() {
   for (auto sink : sinks_) paths_.push_back(path_map[sink]);
 }
 
+// TODO (later): do I need to do this as a separate step?
+void ComputeEdgeWeights(std::vector<int> internal_edge_counts) {
+  // TODO: DFS starting from the source
+}
+
 // The power of a weight is the sum across all paths in GFODD of the product
 // of all edges in the path
 double Gfodd::Evaluate(std::vector<int> internal_edge_counts) {
   FindPaths();
   assert(sinks_.size() == paths_.size());
   assert(internal_edge_counts.size() == internal_edges_.size());
-
-  std::map<Gfodd::EdgeDescriptor, int> edge_counts;
-  for (std::vector<int>::size_type i = 0; i < internal_edge_counts.size(); ++i)
-    edge_counts[internal_edges_[i]] = internal_edge_counts[i];
-
+  ComputeEdgeWeights(internal_edge_counts);
   double answer = 1;
   for (std::vector<Gfodd::VertexDescriptor>::size_type i = 0;
        i < sinks_.size(); ++i) {

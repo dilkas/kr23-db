@@ -1,0 +1,5 @@
+people = {1,2,3,4}
+
+f(people, people)
+
+forall x forall y forall z !f(x, y) v !f(y, z) v f(x, z).

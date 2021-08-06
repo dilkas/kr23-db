@@ -1,0 +1,7 @@
+pidgeons = {1,...,100}
+holes = {1,...,99}
+
+p(pidgeons, holes)
+
+forall x exist y p(x, y).
+forall x forall y forall z x=y v !p(x, z) v !p(y, z).

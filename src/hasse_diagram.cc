@@ -134,7 +134,7 @@ void HasseDiagram::InstantiateSizes(int domain_size) {
 
 void HasseDiagram::InitialiseEdges(int domain_size) {
   // TODO (later): maybe merge them into one
-  // Construct initial multiplicities of the new edges
+  // TODO: Construct initial multiplicities of the new edges
   std::map<HasseDiagram::Vertex,
            std::map<HasseDiagram::Vertex, Change>> changes;
   std::map<HasseDiagram::Vertex, HasseDiagram::Vertex> top_targets;
@@ -174,6 +174,8 @@ void HasseDiagram::InitialiseEdges(int domain_size) {
     }
   }
 }
+
+// TODO: remove subset edges after initialisation
 
 // TODO: maybe create some private methods that simplify all that
 // make_iterator_range boilerplate
@@ -217,6 +219,7 @@ void HasseDiagram::SplitVertexClass(HasseDiagram::Vertex vertex_class,
   }
 }
 
+// TODO: update edge_counts for both graphs
 HasseDiagram HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
   int size = diagram_[vertex_class].size();
   assert(size > 0);
@@ -233,8 +236,12 @@ HasseDiagram HasseDiagram::RemoveOneVertex(HasseDiagram::Vertex vertex_class) {
              boost::make_iterator_range(boost::in_edges(vertex_class,
                                                         copy.diagram_))) {
       auto source = boost::source(edge, copy.diagram_);
+      BOOST_LOG_TRIVIAL(debug)
+          << "HasseDiagram::RemoveOneVertex: source size = "
+          << copy.diagram_[source].size() << ", edge multiplicity = "
+          << copy.diagram_[edge].multiplicity << ", target size = " << size;
       assert((copy.diagram_[source].size() *
-              copy.diagram_[edge].multiplicity) % size);
+              copy.diagram_[edge].multiplicity) % size == 0);
       SplitVertexClass(source, edge, copy.diagram_[source].size() *
                        copy.diagram_[edge].multiplicity / size);
     }

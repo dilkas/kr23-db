@@ -1,0 +1,6 @@
+people = {1,2,3,4}
+
+r(people, people)
+s(people, people)
+
+forall x forall y forall z r(x, y) ^ s(x, z) => r(z, y).

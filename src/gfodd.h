@@ -17,6 +17,7 @@ class Gfodd {
  public:
   struct Edge {
     bool positive;
+    int weight;
   };
 
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
@@ -26,19 +27,19 @@ class Gfodd {
   typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
 
   Gfodd();
-  double Evaluate(std::vector<int> edge_counts);
+
   int NumInternalEdges() { return internal_edges_.size(); }
   EdgeDescriptor InternalEdge(int index) { return internal_edges_[index]; }
-
-  VariablePositions Positions(VertexDescriptor v) {
-    return diagram_[v].positions();
-  }
 
   int NumNewVariables(VertexDescriptor v) {
     return diagram_[v].new_variables();
   }
 
-  std::vector<VertexDescriptor> Atoms();
+  VariablePositions Positions(VertexDescriptor v) {
+    return diagram_[v].positions();
+  }
+
+  std::vector<VertexDescriptor> Atoms();  // called only once
   VertexDescriptor NullVertex() {
     return boost::graph_traits<Graph>::null_vertex();
   }
@@ -47,6 +48,9 @@ class Gfodd {
   Incident(int internal_edge_index) {
     return boost::incident(internal_edges_[internal_edge_index], diagram_);
   }
+
+  // Computes the weight of an interpretation
+  double Evaluate(std::vector<int> internal_edge_counts);
 
  private:
   Graph diagram_;
@@ -60,6 +64,7 @@ class Gfodd {
   VertexDescriptor AddVertex(std::string variables, int new_variables);
   VertexDescriptor AddVertex(double weight);
   void FindPaths();
+  void ComputeEdgeWeights(std::vector<int> internal_edge_counts);
 };
 
 #endif

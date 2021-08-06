@@ -65,12 +65,16 @@ class HasseDiagram {
   Graph diagram_;
   FilteredGraph skeleton_;
   Gfodd gfodd_;
+
   // For convenient construction
   Vertex bot_;
   std::set<Vertex> tops_;
+
   // The corresponding vertex class of each GFODD vertex
   std::map<Gfodd::VertexDescriptor, Vertex> corresponding_vertex_class_;
-  // for each non-negative edge type, i.e., each GFODD inner edge
+
+  // For each non-negative edge type, i.e., each GFODD inner edge, the sum of
+  // multiplicities of all edges in the diagram that are of that type
   std::vector<int> edge_counts_;
 
   Vertex AddVertexClass(VariablePositions variable_positions,
