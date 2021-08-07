@@ -82,10 +82,10 @@ class TrueFalseGroundingsStore;
 class MLN;
 
 
-typedef hash_map<const char*, const PredicateTemplate*, hash<const char*>,
+typedef hash_map<const char*, const PredicateTemplate*, std::hash<const char*>,
                  EqualStr>  StrToPredTemplateMap;
 
-typedef hash_map<const char*, const FunctionTemplate*, hash<const char*>,
+typedef hash_map<const char*, const FunctionTemplate*, std::hash<const char*>,
                  EqualStr>  StrToFuncTemplateMap;
 
 
@@ -167,7 +167,7 @@ class Domain
   {
     if (strToPredTemplateMap_)
     {
-      StrToPredTemplateMap::iterator it = strToPredTemplateMap_->begin(); 
+      StrToPredTemplateMap::iterator it = strToPredTemplateMap_->begin();
       for (; it != strToPredTemplateMap_->end(); it++)
         delete (*it).second; //delete PredTemplate*;
       delete strToPredTemplateMap_;

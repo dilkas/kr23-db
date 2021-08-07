@@ -174,7 +174,7 @@ class HashFormulaAndClauses
 {
  public:
   size_t operator()(const FormulaAndClauses* const& f) const
-  { return hash<char const *>()(f->formula.c_str()); }
+  { return std::hash<char const *>()(f->formula.c_str()); }
 };
 
 class EqualHashFormulaAndClauses

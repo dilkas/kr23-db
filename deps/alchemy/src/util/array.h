@@ -363,12 +363,13 @@ class Array
 
 
     // reorder randomly
-  void shuffle() 
+  void shuffle()
   {
-    for (int i = 0; i < numItems_; i++) 
+    Random random;
+    for (int i = 0; i < numItems_; i++)
     {
-        // swap item i with a random item
-      int swapwith = Random::randomOneOf(numItems_);
+      // swap item i with a random item
+      int swapwith = random.randomOneOf(numItems_);
       Type tmp;
       tmp = items_[i];
       items_[i] = items_[swapwith];

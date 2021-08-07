@@ -109,7 +109,7 @@ class HashStrInt
  public:
   size_t operator()(const StrInt* const & s) const
   {
-    return hash<char const *>()(s->str_);
+    return std::hash<char const *>()(s->str_);
   }
 };
 
