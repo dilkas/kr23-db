@@ -82,10 +82,10 @@ class TrueFalseGroundingsStore;
 class MLN;
 
 
-typedef hash_map<const char*, const PredicateTemplate*, std::hash<const char*>,
+typedef hash_map<const char*, const PredicateTemplate*, CStringHash,
                  EqualStr>  StrToPredTemplateMap;
 
-typedef hash_map<const char*, const FunctionTemplate*, std::hash<const char*>,
+typedef hash_map<const char*, const FunctionTemplate*, CStringHash,
                  EqualStr>  StrToFuncTemplateMap;
 
 

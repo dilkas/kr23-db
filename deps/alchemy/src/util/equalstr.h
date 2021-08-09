@@ -78,4 +78,15 @@ class EqualStr
 };
 
 
+struct CStringHash
+{
+  unsigned long operator()(const char* str) const
+  {
+    unsigned long hash = 5381;
+    int c;
+    while (c = *str++) hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    return hash;
+  }
+};
+
 #endif

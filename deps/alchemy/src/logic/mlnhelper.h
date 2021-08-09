@@ -67,6 +67,8 @@
 #ifndef MLNHELPER_H_NOV_4_2005
 #define MLNHELPER_H_NOV_4_2005
 
+#include "equalstr.h"
+
 //auxiliary data structures used by MLN
 
 
@@ -174,7 +176,7 @@ class HashFormulaAndClauses
 {
  public:
   size_t operator()(const FormulaAndClauses* const& f) const
-  { return std::hash<char const *>()(f->formula.c_str()); }
+  { return CStringHash()(f->formula.c_str()); }
 };
 
 class EqualHashFormulaAndClauses

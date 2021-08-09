@@ -74,7 +74,7 @@ using namespace __gnu_cxx;
 #include "equalstr.h"
 
 
-typedef hash_map<const char*, int, std::hash<const char*>, EqualStr> StrToIntMap;
+typedef hash_map<const char*, int, CStringHash, EqualStr> StrToIntMap;
 
 
   // Maps int to const char* and vice versa.

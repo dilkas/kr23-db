@@ -69,6 +69,7 @@
 
 #include <cstdlib>
 #include <ext/hash_map>
+#include "equalstr.h"
 using namespace __gnu_cxx;
 
 
@@ -109,7 +110,7 @@ class HashStrInt
  public:
   size_t operator()(const StrInt* const & s) const
   {
-    return std::hash<char const *>()(s->str_);
+    return CStringHash()(s->str_);
   }
 };
 

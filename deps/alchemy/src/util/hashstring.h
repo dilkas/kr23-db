@@ -71,13 +71,14 @@
 #include <ext/hash_map>
 using namespace __gnu_cxx;
 #include "hasharray.h"
+#include "equalstr.h"
 
 class HashString
 {
  public:
   size_t operator()(string const& str) const
   {
-    return std::hash<char const *>()(str.c_str());
+    return CStringHash()(str.c_str());
   }
 };
 
