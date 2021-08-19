@@ -24,13 +24,16 @@ import edu.ucla.cs.starai.forclift._
 object Compiler {
 
   object Builder {
-    val default: Builder = V1_1Compiler.builder
-    val defaultWithGrounding: Builder = V1_1Compiler.builderWithGrounding
+    // val default: Builder = V1_1Compiler.builder
+    // val defaultWithGrounding: Builder = V1_1Compiler.builderWithGrounding
+    val default: Builder = MyCompiler.builder
+    val defaultWithGrounding: Builder = MyCompiler.builderWithGrounding
   }
 
   type Builder = ((Domain => Int) => Compiler)
 
-  def default: Compiler = new V1_1Compiler() with LiftedCompiler
+  //def default: Compiler = new V1_1Compiler() with LiftedCompiler
+  def default: Compiler = new MyCompiler() with LiftedCompiler
 
   object SizeHints {
     def unknown(d: Domain) = 1

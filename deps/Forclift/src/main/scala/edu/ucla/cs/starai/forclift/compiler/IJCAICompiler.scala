@@ -34,6 +34,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 
   def tryTautology(cnf: CNF) = {
     if (cnf.isTautology) {
+      println("tautology")
       Some(TrueNode)
     } else None
   }
@@ -43,6 +44,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     // otherwise do shannon decomposition to separate the conditions from the literals, to help with smoothing
     val isPositiveUnit = cnf.isSingleton && cnf.clauses.head.isPositiveUnitClause && cnf.clauses.head.isUnconditional
     if (isPositiveUnit) {
+      println("positive unit clause")
+      println(cnf.toString)
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, true)
       Some(unitLeaf)
@@ -52,6 +55,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryNegativeUnitClause(cnf: CNF) = {
     val isPositiveUnit = cnf.isSingleton && cnf.clauses.head.isNegativeUnitClause && cnf.clauses.head.isUnconditional
     if (isPositiveUnit) {
+      println("negative unit clause")
+      println(cnf.toString)
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, false)
       Some(unitLeaf)
@@ -61,6 +66,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryContradictionClause(cnf: CNF) = {
     val isConditionalContradiction = cnf.clauses.size == 1 && cnf.clauses.head.isConditionalContradiction
     if (isConditionalContradiction) {
+      println("contradiction clause")
+      println(cnf.toString)
       val contradiction = cnf.clauses.head
       val contradictionLeaf = new ContradictionLeaf(cnf, contradiction.toContradictionClause, true)
       Some(contradictionLeaf)
@@ -70,6 +77,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryPositiveUnitPropagation(cnf: CNF) = {
     val unitClauseOption = cnf.clauses.find { c => c.isPositiveUnitClause && c.isUnconditional }
     if (unitClauseOption.nonEmpty) {
+      println("positive unit propagation")
+      println(cnf.toString)
       val unitClause = unitClauseOption.get
       val unitLiteral = unitClause.atoms.head
       val otherClauses: List[Clause] = cnf.clauses filterNot (_ == unitClause)
@@ -84,6 +93,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryNegativeUnitPropagation(cnf: CNF) = {
     val unitClauseOption = cnf.clauses.find { c => c.isNegativeUnitClause && c.isUnconditional }
     if (unitClauseOption.nonEmpty) {
+      println("negative unit propagation")
+      println(cnf.toString)
       val unitClause = unitClauseOption.get
       val unitLiteral = unitClause.atoms.head
       val otherClauses: List[Clause] = cnf.clauses filterNot (_ == unitClause)
@@ -98,6 +109,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryRemoveDoubleClauses(cnf: CNF): Option[NNFNode] = {
     val newClauses = cnf.clauses.toSet.toList
     if (newClauses.size < cnf.clauses.size) {
+      println("remove double clauses")
+      println(cnf.toString)
       Some(compile(new CNF(newClauses)))
     } else None
   }
@@ -122,6 +135,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     val (dep, indep) = partition(List(cnf.clauses.head), cnf.clauses.tail)
     if (indep.isEmpty) None
     else {
+      println("independent subtheories")
+      println(cnf.toString)
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
       Some(new And(cnf, compile(new CNF(dep)), compile(new CNF(indep)), msg))
     }
@@ -134,6 +149,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     val shatteredCnf = shatter(cnf)
     if (cnf eq shatteredCnf) None
     else {
+      println("independent subtheories after shattering")
+      println(cnf.toString)
       tryIndependentSubtheories(shatteredCnf, true)
     }
   }
@@ -158,6 +175,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     val countingCnf = if (countShatteredLiterals) shatter(cnf) else cnf
     val groundLiterals = countingCnf.clauses.flatMap { _.groundLiterals }
     if (groundLiterals.nonEmpty) {
+      println("ground decomposition")
+      println(cnf.toString)
       val groupedAtoms = groundLiterals.groupBy(a => a)
       val atomCounts = groupedAtoms.mapValues(list => list.size)
       val ordering = new Ordering[(Atom, Int)] {
@@ -176,6 +195,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryInclusionExclusion(cnf: CNF) = {
     val decomposableClauseOption = cnf.clauses.find { _.independentLiterals.nonEmpty }
     if (decomposableClauseOption.nonEmpty) {
+      println("inclusion-exclusion")
+      println(cnf.toString)
       val Some(clause) = decomposableClauseOption
       val otherClauses = cnf.clauses filterNot (_ == clause)
       val Some((cl1, cl2)) = clause.independentLiterals
@@ -214,6 +235,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     // in the future, this should be implemented  by finding all binding classes and then checking size and root
     if(cnf.clauses.exists(_.rootVars.isEmpty)) return None
     else {
+      println("tryIndependentPartialGrounding: all clauses have root variables")
       // every clause has a root variable -- we can try
       val chosenVariables = collection.mutable.Map.empty[Clause, Var]
       val (unaryClauses, multiClauses) = cnf.clauses.partition { _.literalVariables.size == 1 }
@@ -223,9 +245,11 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       // one by one add all variables that are the only roots in their clause
       val (singletonRoots, multiRoots) = multiClauses.partition { _.rootVars.size == 1 }
       for (c <- singletonRoots)  {
+        println("tryIndependentPartialGrounding: trying to add " + c)
         if(!tryAddingVariable(chosenVariables, chosenClauses, c, c.rootVars.head)) return None
         chosenClauses = c :: chosenClauses
       }
+      println("tryIndependentPartialGrounding: successfully added all singleton roots")
       // now do search for the remainder
       val finalChoice = searchChoices(chosenVariables,chosenClauses,multiRoots.sortBy(_.rootVars.size))
       if(finalChoice.isEmpty) return None
@@ -254,6 +278,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 	        (if (rootVarIneqs.isEmpty) "." else """, $ """ + rootVarIneqs.map { """X \neq """ + _.toString }.mkString(" , ") + " $."))
 	      val inversionNode = new IndependentPartialGroundingNode(cnf, compile(invertedCNF),
 	        constant, rootVarIneqs, rootVarDomain, msg)
+        println("independent partial grounding")
+        println(cnf.toString)
 	      Some(inversionNode)
       }
     }
@@ -386,6 +412,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val trueUnitClause = Clause(List(bestLit), List(), unitConstrs.setDomain(logVar, subdomain)).standardizeApart
       val falseUnitClause = Clause(List(), List(bestLit), unitConstrs.setDomain(logVar, subdomain.complement)).standardizeApart
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
+      println("counting")
+      println(cnf.toString)
       Some(new CountingNode(cnf, compile(childCNF), domain, subdomain, msg))
     } else None
   }

@@ -65,7 +65,26 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
       val groundChildWmc = visit(dr.groundChild, params)
       var logWeight = groundChildWmc.pow(maxSize)
       val childchildWmc = visit(dr.mixedChild.child, params)
-      groundChildWmc.pow(maxSize) * childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
+      val power = (maxSize * (maxSize - 1)) / 2
+      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
+      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer")
+      answer
+    }
+  }
+
+  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
+                                             params: (DomainSizes, PredicateWeights)): LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val groundChildWmc = visit(idr.groundChild, params)
+      var logWeight = groundChildWmc.pow(maxSize)
+      val childchildWmc = visit(idr.mixedChild, params)
+      val power = (maxSize * (maxSize - 1)) / 2
+      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
+      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer")
+      answer
     }
   }
 
@@ -73,6 +92,7 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     val (domainSizes, predicateWeights) = params
     val maxSize = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero
+    println("exists sum:")
     for (nbTrue <- 0 to maxSize) {
       val newDomainSizes = (domainSizes
         + (exists.subdomain, nbTrue)
@@ -81,7 +101,9 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
       val childWeight = visit(exists.child, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue)
       logWeight += binomialCoeff * childWeight
+      println(s" + $maxSize C $nbTrue * $childWeight")
     }
+    println(s"= $logWeight")
     logWeight
   }
 
@@ -92,7 +114,9 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     if (nbGroundings == 0) {
       one
     } else {
-      childlwmc.pow(nbGroundings)
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer")
+      answer
     }
   }
 
@@ -100,13 +124,17 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     val plus1lwmc = visit(ie.plus1, params)
     val plus2lwmc = visit(ie.plus2, params)
     val minlwmc = visit(ie.min, params)
-    plus1lwmc + plus2lwmc - minlwmc
+    val answer = plus1lwmc + plus2lwmc - minlwmc
+    println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer")
+    answer
   }
 
   protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights)): LogDouble = {
     val llwmcc = visit(or.l, params)
     val rlwmcc = visit(or.r, params)
-    llwmcc + rlwmcc
+    val answer = llwmcc + rlwmcc
+    println(s"$llwmcc + $rlwmcc = $answer")
+    answer
   }
 
   protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
@@ -114,7 +142,9 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     if (llwmcc.isZero) zero
     else {
       val rlwmcc = visit(and.r, params)
-      llwmcc * rlwmcc
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer")
+      answer
     }
   }
 
@@ -126,7 +156,10 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     val (domainSizes, predicateWeights) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
-    weights.negWPlusPosWLogDouble.pow(nbGroundings)
+    val weight = weights.negWPlusPosWLogDouble
+    val answer = weight.pow(nbGroundings)
+    println(s"$weight ^ $nbGroundings = $answer")
+    answer
   }
 
   protected def visitContradictionLeaf(leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights)): LogDouble = {
@@ -141,9 +174,19 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     //if the unit clause has no groundings, it resolves to true
-    if (nbGroundings == 0) one
-    else if (leaf.positive) weights.posWLogDouble.pow(nbGroundings)
-    else weights.negWLogDouble.pow(nbGroundings)
+    if (nbGroundings == 0) {
+      one
+    } else if (leaf.positive) {
+      val weight = weights.posWLogDouble
+      val answer = weight.pow(nbGroundings)
+      println(s"$weight ^ $nbGroundings = $answer")
+      answer
+    } else {
+      val weight = weights.negWLogDouble
+      val answer = weight.pow(nbGroundings)
+      println(s"$weight ^ $nbGroundings = $answer")
+      answer
+    }
   }
 
   protected def visitGroundingNode(leaf: GroundingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
@@ -212,7 +255,9 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
     if (llwmcc.isZero) zero
     else {
       val rlwmcc = retrieveWmc(and.r, params)
-      llwmcc * rlwmcc
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer")
+      answer
     }
   }
 
@@ -223,7 +268,9 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
     if (nbGroundings == 0) {
       one
     } else {
-      childlwmc.pow(nbGroundings)
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer")
+      answer
     }
   }
 
@@ -274,7 +321,27 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
       // old inference, linear
       var logWeight = groundChildWmc.pow(maxSize)
       val childchildWmc = visit(dr.mixedChild.child, params)
-      groundChildWmc.pow(maxSize) * childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
+      val power = (maxSize * (maxSize - 1)) / 2
+      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
+      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer")
+      answer
+    }
+  }
+
+  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
+                                             params: (DomainSizes, PredicateWeights)): SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val groundChildWmc = visit(idr.groundChild, params)
+      // old inference, linear
+      var logWeight = groundChildWmc.pow(maxSize)
+      val childchildWmc = visit(idr.mixedChild, params)
+      val power = (maxSize * (maxSize - 1)) / 2
+      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
+      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer")
+      answer
     }
   }
 
@@ -282,6 +349,7 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     val (domainSizes, predicateWeights) = params
     val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero;
+    println("exists sum:")
     for (nbTrue <- 0 to maxSize) {
       val newDomainSizes = (domainSizes
         + (exists.subdomain, nbTrue)
@@ -290,7 +358,9 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
       val childWeight = visit(exists.child, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue).toSignDouble
       logWeight += binomialCoeff * childWeight
+      println(s" + $maxSize C $nbTrue * $childWeight")
     }
+    println(s"= $logWeight")
     logWeight
   }
 
@@ -301,7 +371,9 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     if (nbGroundings == 0) {
       one
     } else {
-      childlwmc.pow(nbGroundings)
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer")
+      answer
     }
   }
 
@@ -309,13 +381,17 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     val plus1lwmc = visit(ie.plus1, params)
     val plus2lwmc = visit(ie.plus2, params)
     val minlwmc = visit(ie.min, params)
-    plus1lwmc + plus2lwmc - minlwmc
+    val answer = plus1lwmc + plus2lwmc - minlwmc
+    println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer")
+    answer
   }
 
   protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
     val llwmcc = visit(or.l, params)
     val rlwmcc = visit(or.r, params)
-    llwmcc + rlwmcc
+    val answer = llwmcc + rlwmcc
+    println(s"$llwmcc + $rlwmcc = $answer")
+    answer
   }
 
   protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
@@ -323,7 +399,9 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     if (llwmcc.isZero) zero
     else {
       val rlwmcc = visit(and.r, params)
-      llwmcc * rlwmcc
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer")
+      answer
     }
   }
 
@@ -335,7 +413,10 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     val (domainSizes, predicateWeights) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
-    weights.negWPlusPosW.pow(nbGroundings)
+    val weight = weights.negWPlusPosW
+    val answer = weight.pow(nbGroundings)
+    println(s"$weight ^ $nbGroundings = $answer")
+    answer
   }
 
   protected def visitContradictionLeaf(leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
@@ -350,9 +431,19 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     //if the unit clause has no groundings, it resolves to true
-    if (nbGroundings == 0) one
-    else if (leaf.positive) weights.posW.pow(nbGroundings)
-    else weights.negW.pow(nbGroundings)
+    if (nbGroundings == 0) {
+      one
+    } else if (leaf.positive) {
+      val weight = weights.posW
+      val answer = weight.pow(nbGroundings)
+      println(s"$weight ^ $nbGroundings = $answer")
+      answer
+    } else {
+      val weight = weights.negW
+      val answer = weight.pow(nbGroundings)
+      println(s"$weight ^ $nbGroundings = $answer")
+      answer
+    }
   }
 
   protected def visitGroundingNode(leaf: GroundingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
@@ -388,7 +479,9 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
     if (llwmcc.isZero) zero
     else {
       val rlwmcc = retrieveWmc(and.r, params)
-      llwmcc * rlwmcc
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer")
+      answer
     }
   }
 
@@ -400,7 +493,9 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
     if (nbGroundings == 0) {
       one
     } else {
-      childlwmc.pow(nbGroundings)
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer")
+      answer
     }
   }
 
@@ -449,6 +544,14 @@ class SafeSignLogDoubleWmc extends SignLogDoubleWmc {
     val (domainSizes, predicateWeights) = params
     if (domainSizes.contains(dr.domain)) {
       super.visitDomainRecursion(dr, params)
+    } else NaN
+  }
+
+  override protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
+                                                      params: (DomainSizes, PredicateWeights)) = {
+    val (domainSizes, predicateWeights) = params
+    if (domainSizes.contains(idr.domain)) {
+      super.visitImprovedDomainRecursion(idr, params)
     } else NaN
   }
 
@@ -599,6 +702,20 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
       // old inference, linear
       var logWeight = groundChildWmc.pow(maxSize)
       val childchildWmc = visit(dr.mixedChild.child, params)
+      groundChildWmc.pow(maxSize) * childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
+    }
+  }
+
+  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
+                                             params: (DomainSizes, PredicateWeights)): BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val groundChildWmc = visit(idr.groundChild, params)
+      // old inference, linear
+      var logWeight = groundChildWmc.pow(maxSize)
+      val childchildWmc = visit(idr.mixedChild, params)
       groundChildWmc.pow(maxSize) * childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
     }
   }

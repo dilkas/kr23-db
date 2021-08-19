@@ -1,0 +1,12 @@
+a = {1,2,3,4,5}
+
+p(a, a)
+
+p(x, y) ^ p(x, z) => y=z.
+//forall x exist y p(x, y).
+
+// injectivity
+p(w, y) ^ p(x, y) => w=x.
+
+// surjectivity
+//forall y exist x p(x, y).

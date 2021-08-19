@@ -32,20 +32,26 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
 
   def tryDomainRecursion(cnf: CNF) = {
     assume(cnf.clauses.forall { _.singletonLiterals.isEmpty })
+    println("No clause has singleton literals")
     assume(cnf.clauses.forall { _.groundLiterals.isEmpty })
+    println("No clause has ground literals")
     if (cnf.clauses.forall { clause =>
       val clauseVars = clause.literalVariables
       clause.atoms.forall { _.variables == clauseVars }
     }) {
+      println("All atoms have the same variables")
       assume(cnf.clauses.forall {
         _.literalVariables.size == cnf.clauses.head.literalVariables.size
       }, "All clauses have the same number of logical variables")
+      println("All clauses have the same number of logical variables")
       // I think this code otherwise ignores the case when there are two root binding classes of size > 1!!)
       assume(2 == cnf.clauses.head.literalVariables.size, "All clauses have 2 logical variables")
+      println("All clauses have 2 logical variables")
       val domain = cnf.clauses.head.constrs.domainFor(cnf.clauses.head.literalVariables.head)
       assume(cnf.clauses.forall { clause =>
         clause.literalVariables.forall { clause.constrs.domainFor(_) == domain }
       }, "There is only one domain for all logical variables, if IPG failed.")
+      println("There is only one domain for all logical variables, if IPG failed.")
       val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
       val constant = groundingConstantFor(cnf, domain)
       val mixedClauses = cnf.clauses.flatMap { clause =>
@@ -68,6 +74,7 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
           val headVar2 = (clause.literalVariables - headVar1).head
           clause.constrs.ineqConstrs(headVar1).contains(headVar2)
         }, "All clauses have the same inequality constraints")
+        println("All clauses have the same inequality constraints")
         // the ground clauses are empty!
         Nil
       } else {
@@ -77,6 +84,8 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
       val msg = "Domain recursion on $" + domain + "$"
       val mixedNnf = tryIndependentPartialGrounding(mixedCNF)
       assume(mixedNnf.nonEmpty) // property of DR?
+      println("domain recursion")
+      println(cnf.toString)
       Some(new DomainRecursionNode(cnf, mixedNnf.get, compile(groundCNF), constant, ineqs, domain, msg))
     } else None
   }

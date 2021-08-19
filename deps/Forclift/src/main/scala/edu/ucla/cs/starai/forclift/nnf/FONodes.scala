@@ -208,3 +208,116 @@ class DomainRecursionNode(val cnf: CNF, val mixedChild: IndependentPartialGround
   }
 
 }
+
+class ImprovedDomainRecursionNode(val cnf: CNF, val mixedChild: NNFNode,
+                                  val groundChild: NNFNode, val c: Constant,
+                                  val ineqs: Set[Constant], val domain: Domain,
+                                  val explanation: String = "") extends NNFNode {
+
+  def size = mixedChild.size + groundChild.size + 1
+
+  lazy val domains = mixedChild.domains union groundChild.domains + domain
+
+  lazy val evalOrder = mixedChild.evalOrder // assume constant eval
+
+  def smooth = {
+    val (mixedChildSmoothed, mixedChildVars) = mixedChild.smooth
+    val (groundChildSmoothed, groundChildVars) = groundChild.smooth
+    val ungroundedMixedChildvars = mixedChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
+    val ungroundedGroundChildVars = groundChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
+    val allVars = ungroundedMixedChildvars ++ ungroundedGroundChildVars
+    (new ImprovedDomainRecursionNode(cnf, mixedChildSmoothed,
+                                     groundChildSmoothed, c, ineqs, domain,
+                                     explanation), allVars)
+  }
+
+  def condition(pos: Set[Atom], neg: Set[Atom]) = new ImprovedDomainRecursionNode(
+    cnf,
+    mixedChild.condition(pos, neg),
+    groundChild.condition(pos, neg),
+    c, ineqs, domain, explanation)
+
+  override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
+    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+    if (depth >= maxDepth) cutoff(nameSpace, compact)
+    else {
+      val (n1, e1) = mixedChild.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
+      val (n2, e2) = groundChild.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
+      val myNodes = if (compact) {
+        "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
+      } else {
+        "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ """ + cnf.toLatex() + """"];""" + "\n" +
+          "  " + "domainrec" + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
+      }
+      val myEdges = if (compact) {
+        "  " + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + ";\n" +
+          "  " + getName(nameSpace) + " -> " + groundChild.getName(nameSpace) + ";\n" +
+          "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
+      } else {
+        val wmcVisitor = new SafeSignLogDoubleWmc
+        val groundChildWmc = wmcVisitor.visit(groundChild.smooth._1,(domainSizes, predicateWeights))
+        val mixedChildWmc = wmcVisitor.visit(mixedChild.smooth._1,(domainSizes - domain, predicateWeights))
+        "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
+          "  " + "domainrec" + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
+          "  " + "domainrec" + getName(nameSpace) + " -> " + groundChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + groundChildWmc.exp + " $ ") + """];""" + "\n" +
+          "  " + "domainrec" + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
+      }
+      val nodes = (myNodes + n1 + n2)
+      val edges = (myEdges + e1 + e2)
+      (nodes, edges)
+    }
+  }
+
+  override def toString(nameSpace: NameSpace[NNFNode, String]): String = {
+    (super.toString(nameSpace) +
+      getName(nameSpace) + " = domainrec " + c + " from " + domain + " " + mixedChild.getName(nameSpace) + " " + groundChild.getName(nameSpace) + "\n" +
+      "\n" +
+      mixedChild.toString(nameSpace) +
+      "\n" +
+      groundChild.toString(nameSpace))
+  }
+
+}
+
+// class LinearInclusionExclusionNode(val cnf: CNF, val child: NNFNode,
+//                                    val domains: Set[Domain]) extends NNFNode {
+
+//   def size = child.size + 1
+
+//   // larger than the domain of the child by one value
+//   lazy val domains = domains
+
+//   lazy val evalOrder = child.evalOrder + 1
+
+//   def smooth = {
+//     val (childSmooth, childVars) = child.smooth
+//     // this is fine, but does not mean the result will be non-overlapping
+//     // two catoms might overlap but not one subsumes the other
+//     val countedSubdomainParents = removeSubsumed(childVars.map { _.reverseDomainSplitting(domain, subdomain) })
+//     val disjCounted = makeDisjoint(countedSubdomainParents.toList)
+//     val childMissing = disjCounted.flatMap { _.minus(childVars) }
+//     val childSmoothAll = childSmooth.smoothWith(childMissing.toSet)
+//     val thisSmoothed = new LinearInclusionExclusionNode(cnf, childSmoothAll,
+//                                                         domains)
+//     (thisSmoothed, countedSubdomainParents)
+//   }
+
+//   def condition(pos: Set[Atom], neg: Set[Atom]) =
+//     new LinearInclusionExclusionNode(cnf, child.condition(pos, neg), domains)
+
+//   override def toDotNode(domainSizes: DomainSizes,
+//                          predicateWeights: PredicateWeights,
+//                          nameSpace: NameSpace[NNFNode, String],
+//                          compact: Boolean = false, depth: Int,
+//                          maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+//     ("", "")
+//   }
+
+//   override def toString(nameSpace: NameSpace[NNFNode, String]): String = {
+//     (super.toString(nameSpace) +
+//        getName(nameSpace) + " = LIE " + domain + " " +
+//        child.getName(nameSpace) + "\n" +
+//        "\n" +
+//        child.toString(nameSpace))
+//   }
+// }

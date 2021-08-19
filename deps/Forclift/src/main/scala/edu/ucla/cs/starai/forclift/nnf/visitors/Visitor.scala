@@ -41,11 +41,13 @@ abstract class NnfVisitor[I,O] {
       case forall: IndependentPartialGroundingNode => visitForallNode(forall, input)
       case exists: CountingNode => visitExists(exists, input)
       case dr: DomainRecursionNode => visitDomainRecursion(dr, input)
+      case idr: ImprovedDomainRecursionNode => visitImprovedDomainRecursion(idr, input)
 
       case _ => throw new IllegalArgumentException
     }
 
   protected def visitDomainRecursion(dr: DomainRecursionNode, input: I): O
+  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode, input: I): O
   protected def visitExists(exists: CountingNode, input: I): O
   protected def visitForallNode(forall: IndependentPartialGroundingNode, input: I): O
   protected def visitInclusionExclusionNode(ie: InclusionExclusion, input: I): O
