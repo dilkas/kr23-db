@@ -16,29 +16,36 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unkn
     val domain = cnf.clauses.head.constrs.domainFor(cnf.clauses.head.literalVariables.head)
     val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
     val constant = groundingConstantFor(cnf, domain)
-    // TODO: only consider the subset of variables that come from the same domain
+    // only consider the subset of variables that come from the same domain
     val mixedClauses = cnf.clauses.flatMap { clause =>
-      clause.literalVariables.subsets.flatMap { equalVariables =>
+      clause.literalVariables.filter {
+        clause.constrs.domainFor(_).equals(domain) }.subsets.flatMap { equalVariables =>
         if (equalVariables.isEmpty || equalVariables.size == clause.literalVariables.size) List()
         else {
-          val substitutedClause = clause.substitute((variable: Var) =>
+          val substitutedClause = clause.substituteOption((variable: Var) =>
             if (equalVariables.contains(variable)) constant else variable)
-          val ineqVars = clause.literalVariables -- equalVariables
-          List(ineqVars.foldLeft(substitutedClause) { _.addInequality(_, constant) })
+          substitutedClause match {
+            case Some(s) => {
+              val ineqVars = clause.literalVariables -- equalVariables
+              List(ineqVars.foldLeft(s) { _.addInequality(_, constant) })
+            }
+            case None => List()
+          }
         }
       }
     }
     val mixedCNF = new CNF(mixedClauses)
     val headVar1 = cnf.clauses.head.literalVariables.head
     val headVar2 = (cnf.clauses.head.literalVariables - headVar1).head
-    val groundClauses = cnf.clauses.map { _.substitute { v => constant } }
+    // same here: limit what variables are being considered
+    val groundClauses = cnf.clauses.map {
+      clause => clause.substituteOption {
+        v => if (clause.constrs.domainFor(v).equals(domain)) constant
+             else v } }.flatten
     val groundCNF = new CNF(groundClauses)
     val msg = "Domain recursion on $" + domain + "$"
-    val mixedNnf = tryIndependentPartialGrounding(mixedCNF)
     println("mixed CNF:")
     println(mixedCNF)
-    println("mixed NNF:")
-    println(mixedNnf.toString)
     println("ground CNF:")
     println(groundCNF.toString)
     Some(new ImprovedDomainRecursionNode(cnf, compile(mixedCNF), compile(groundCNF), constant, ineqs, domain, msg))

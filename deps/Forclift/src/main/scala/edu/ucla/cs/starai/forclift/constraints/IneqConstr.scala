@@ -161,7 +161,8 @@ final class IneqConstr(
             val tuple = (subsVar, joinedSets)
             clone += tuple
           }
-          case subsConstant: Constant => //no op
+          case subsConstant: Constant =>
+            require(clone(variable).forall { !_.equals(subsConstant) } )
         }
         clone -= variable
       }

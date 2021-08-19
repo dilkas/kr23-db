@@ -354,6 +354,17 @@ class Clause(
     substitute(substitution)
   }
 
+  def substituteOption(substitution: Var => Term): Option[Clause] = {
+    try {
+      Some(Clause(
+             posLits.map { _.substitute(substitution) },
+             negLits.map { _.substitute(substitution) },
+             constrs.substitute(substitution)))
+    } catch {
+      case e: IllegalArgumentException => None
+    }
+  }
+
   def substitute(substitution: Var => Term): Clause = {
     Clause(
       posLits.map { _.substitute(substitution) },
