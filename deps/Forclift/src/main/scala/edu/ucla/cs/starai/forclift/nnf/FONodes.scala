@@ -210,31 +210,26 @@ class DomainRecursionNode(val cnf: CNF, val mixedChild: IndependentPartialGround
 }
 
 class ImprovedDomainRecursionNode(val cnf: CNF, val mixedChild: NNFNode,
-                                  val groundChild: NNFNode, val c: Constant,
-                                  val ineqs: Set[Constant], val domain: Domain,
+                                  val c: Constant, val ineqs: Set[Constant],
+                                  val domain: Domain,
                                   val explanation: String = "") extends NNFNode {
 
-  def size = mixedChild.size + groundChild.size + 1
+  def size = mixedChild.size + 1
 
-  lazy val domains = mixedChild.domains union groundChild.domains + domain
+  lazy val domains = mixedChild.domains + domain
 
   lazy val evalOrder = mixedChild.evalOrder // assume constant eval
 
   def smooth = {
     val (mixedChildSmoothed, mixedChildVars) = mixedChild.smooth
-    val (groundChildSmoothed, groundChildVars) = groundChild.smooth
     val ungroundedMixedChildvars = mixedChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
-    val ungroundedGroundChildVars = groundChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
-    val allVars = ungroundedMixedChildvars ++ ungroundedGroundChildVars
-    (new ImprovedDomainRecursionNode(cnf, mixedChildSmoothed,
-                                     groundChildSmoothed, c, ineqs, domain,
-                                     explanation), allVars)
+    val allVars = ungroundedMixedChildvars
+    (new ImprovedDomainRecursionNode(cnf, mixedChildSmoothed, c, ineqs, domain, explanation), allVars)
   }
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = new ImprovedDomainRecursionNode(
     cnf,
     mixedChild.condition(pos, neg),
-    groundChild.condition(pos, neg),
     c, ineqs, domain, explanation)
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
@@ -242,7 +237,6 @@ class ImprovedDomainRecursionNode(val cnf: CNF, val mixedChild: NNFNode,
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
       val (n1, e1) = mixedChild.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
-      val (n2, e2) = groundChild.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val myNodes = if (compact) {
         "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
       } else {
@@ -251,30 +245,25 @@ class ImprovedDomainRecursionNode(val cnf: CNF, val mixedChild: NNFNode,
       }
       val myEdges = if (compact) {
         "  " + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + ";\n" +
-          "  " + getName(nameSpace) + " -> " + groundChild.getName(nameSpace) + ";\n" +
           "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
       } else {
         val wmcVisitor = new SafeSignLogDoubleWmc
-        val groundChildWmc = wmcVisitor.visit(groundChild.smooth._1,(domainSizes, predicateWeights))
         val mixedChildWmc = wmcVisitor.visit(mixedChild.smooth._1,(domainSizes - domain, predicateWeights))
         "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
           "  " + "domainrec" + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
-          "  " + "domainrec" + getName(nameSpace) + " -> " + groundChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + groundChildWmc.exp + " $ ") + """];""" + "\n" +
           "  " + "domainrec" + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
       }
-      val nodes = (myNodes + n1 + n2)
-      val edges = (myEdges + e1 + e2)
+      val nodes = (myNodes + n1)
+      val edges = (myEdges + e1)
       (nodes, edges)
     }
   }
 
   override def toString(nameSpace: NameSpace[NNFNode, String]): String = {
     (super.toString(nameSpace) +
-      getName(nameSpace) + " = domainrec " + c + " from " + domain + " " + mixedChild.getName(nameSpace) + " " + groundChild.getName(nameSpace) + "\n" +
+      getName(nameSpace) + " = domainrec " + c + " from " + domain + " " + mixedChild.getName(nameSpace) + "\n" +
       "\n" +
-      mixedChild.toString(nameSpace) +
-      "\n" +
-      groundChild.toString(nameSpace))
+      mixedChild.toString(nameSpace))
   }
 
 }

@@ -78,12 +78,9 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) one
     else {
-      val groundChildWmc = visit(idr.groundChild, params)
-      var logWeight = groundChildWmc.pow(maxSize)
       val childchildWmc = visit(idr.mixedChild, params)
-      val power = (maxSize * (maxSize - 1)) / 2
-      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
-      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer")
+      val answer = maxSize * childchildWmc
+      println(s"$maxSize * $childchildWmc = $answer")
       answer
     }
   }
@@ -334,13 +331,9 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) one
     else {
-      val groundChildWmc = visit(idr.groundChild, params)
-      // old inference, linear
-      var logWeight = groundChildWmc.pow(maxSize)
       val childchildWmc = visit(idr.mixedChild, params)
-      val power = (maxSize * (maxSize - 1)) / 2
-      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
-      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer")
+      val answer = maxSize * childchildWmc
+      println(s"$maxSize * $childchildWmc = $answer")
       answer
     }
   }
@@ -712,11 +705,8 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) one
     else {
-      val groundChildWmc = visit(idr.groundChild, params)
-      // old inference, linear
-      var logWeight = groundChildWmc.pow(maxSize)
       val childchildWmc = visit(idr.mixedChild, params)
-      groundChildWmc.pow(maxSize) * childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
+      maxSize * childchildWmc
     }
   }
 
