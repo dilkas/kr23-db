@@ -86,7 +86,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val branchCnf = new CNF(propagatedClauses)
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
-      Some(new And(cnf, compile(unitCNF), compile(branchCnf), msg))
+      Some(new And(cnf, Some(compile(unitCNF)), Some(compile(branchCnf)), msg))
     } else None
   }
 
@@ -102,7 +102,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val branchCnf = new CNF(propagatedClauses)
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
-      Some(new And(cnf, compile(unitCNF), compile(branchCnf), msg))
+      Some(new And(cnf, Some(compile(unitCNF)), Some(compile(branchCnf)), msg))
     } else None
   }
 
@@ -138,7 +138,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println("independent subtheories")
       println(cnf.toString)
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
-      Some(new And(cnf, compile(new CNF(dep)), compile(new CNF(indep)), msg))
+      Some(new And(cnf, Some(compile(new CNF(dep))), Some(compile(new CNF(indep))), msg))
     }
   }
 
@@ -188,7 +188,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val trueBranch = cnf + Clause(List(literal), List())
       val falseBranch = cnf + Clause(List(), List(literal))
       val msg = "Shannon decomposition on $" + literal.toLatex(new VarNameSpace) + "$."
-      Some(new Or(cnf, compile(trueBranch), compile(falseBranch), msg))
+      Some(new Or(cnf, Some(compile(trueBranch)), Some(compile(falseBranch)), msg))
     } else None
   }
 
@@ -204,7 +204,9 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val plus2Branch = new CNF(cl2 :: otherClauses)
       val minBranch = new CNF(cl1 :: cl2 :: otherClauses)
       val msg = "Inclusion-exclusion on $" + clause.toLatex() + "$."
-      Some(new InclusionExclusion(cnf, compile(plus1Branch), compile(plus2Branch), compile(minBranch), msg))
+      Some(new InclusionExclusion(cnf, Some(compile(plus1Branch)),
+                                  Some(compile(plus2Branch)),
+                                  Some(compile(minBranch)), msg))
     } else None
   }
 
@@ -276,7 +278,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 	      }.toSet
 	      val msg = ("""Independent partial grounding of $ X \in """ + rootVarDomain + """ $""" +
 	        (if (rootVarIneqs.isEmpty) "." else """, $ """ + rootVarIneqs.map { """X \neq """ + _.toString }.mkString(" , ") + " $."))
-	      val inversionNode = new IndependentPartialGroundingNode(cnf, compile(invertedCNF),
+	      val inversionNode = new IndependentPartialGroundingNode(cnf, Some(compile(invertedCNF)),
 	        constant, rootVarIneqs, rootVarDomain, msg)
         println("independent partial grounding")
         println(cnf.toString)
@@ -414,7 +416,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
       println("counting")
       println(cnf.toString)
-      Some(new CountingNode(cnf, compile(childCNF), domain, subdomain, msg))
+      Some(new CountingNode(cnf, Some(compile(childCNF)), domain, subdomain, msg))
     } else None
   }
 

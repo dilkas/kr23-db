@@ -85,7 +85,7 @@ abstract class AbstractCompiler extends Compiler {
 
   def tryCache(cnf: CNF) = {
     println("The cache has " + nnfCache.size + " elements.");
-    nnfCache.get(cnf).map { new Ref(cnf, _, "Cache hit.") }
+    nnfCache.get(cnf).map { n: NNFNode => new Ref(cnf, Some(n), "Cache hit.") }
   }
 
   type InferenceRule = CNF => Option[NNFNode]

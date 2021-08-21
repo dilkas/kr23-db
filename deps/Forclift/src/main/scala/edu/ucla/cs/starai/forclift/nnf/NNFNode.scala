@@ -88,7 +88,7 @@ abstract class NNFNode {
   // assumes atoms are disjoint
   def smoothWith(atoms: Set[PositiveUnitClause]): NNFNode = atoms.foldLeft(this) { (branch, clause) =>
     assume(atoms.forall { atom1 => atoms.forall { atom2 => (atom1 eq atom2) || atom1.independent(atom2) } })
-    new And(branch.cnf, new SmoothingNode(clause), branch, "Smoothing of $" + clause.toLatex() + "$.")
+    new And(branch.cnf, Some(new SmoothingNode(clause)), Some(branch), "Smoothing of $" + clause.toLatex() + "$.")
   }
 
   def condition(pos: Set[Atom], neg: Set[Atom]): NNFNode

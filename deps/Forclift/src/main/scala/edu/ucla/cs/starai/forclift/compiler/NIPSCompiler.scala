@@ -86,7 +86,9 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
       assume(mixedNnf.nonEmpty) // property of DR?
       println("domain recursion")
       println(cnf.toString)
-      Some(new DomainRecursionNode(cnf, mixedNnf.get, compile(groundCNF), constant, ineqs, domain, msg))
+      Some(new DomainRecursionNode(cnf, Some(mixedNnf.get),
+                                   Some(compile(groundCNF)), constant, ineqs,
+                                   domain, msg))
     } else None
   }
 
