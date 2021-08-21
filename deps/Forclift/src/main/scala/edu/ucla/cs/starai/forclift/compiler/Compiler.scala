@@ -84,6 +84,7 @@ abstract class AbstractCompiler extends Compiler {
   }
 
   def tryCache(cnf: CNF) = {
+    println("The cache has " + nnfCache.size + " elements.");
     nnfCache.get(cnf).map { new Ref(cnf, _, "Cache hit.") }
   }
 

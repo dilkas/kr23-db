@@ -64,6 +64,8 @@ abstract class NNFNode {
 
   def explanation: String
 
+  def update(children: List[NNFNode]) = ()
+
   def size: Int
 
   def smoothRoot: NNFNode = smooth._1
@@ -73,7 +75,8 @@ abstract class NNFNode {
     case catom :: rest => catom :: makeDisjoint(rest.flatMap { _.minus(catom) })
   }
 
-  def smoothWithPredicates(predicates: Set[Predicate], excluded: Set[PositiveUnitClause] = Set.empty): NNFNode = {
+  def smoothWithPredicates(predicates: Set[Predicate],
+                           excluded: Set[PositiveUnitClause] = Set.empty): NNFNode = {
     val (thisSmoothed, thisVars) = smooth
     val allVars = predicates.map { _.toAtom }
     val missing = allVars.flatMap { _.minus(thisVars union excluded) }

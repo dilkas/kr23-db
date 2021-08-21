@@ -74,14 +74,19 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
 
   protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
                                              params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
-    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-    if (maxSize < 1) one
-    else {
-      val childchildWmc = visit(idr.mixedChild, params)
-      val answer = maxSize * childchildWmc
-      println(s"$maxSize * $childchildWmc = $answer")
-      answer
+    idr.mixedChild match {
+      case Some(mc) => {
+        val (domainSizes, predicateWeights) = params
+        val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+        if (maxSize < 1) one
+        else {
+          val childchildWmc = visit(mc, params)
+          val answer = maxSize * childchildWmc
+          println(s"$maxSize * $childchildWmc = $answer")
+          answer
+        }
+      }
+      case None => throw new Exception("you forgot to call update()")
     }
   }
 
@@ -327,14 +332,19 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
 
   protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
                                              params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
-    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-    if (maxSize < 1) one
-    else {
-      val childchildWmc = visit(idr.mixedChild, params)
-      val answer = maxSize * childchildWmc
-      println(s"$maxSize * $childchildWmc = $answer")
-      answer
+    idr.mixedChild match {
+      case Some(mc) => {
+        val (domainSizes, predicateWeights) = params
+        val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+        if (maxSize < 1) one
+        else {
+          val childchildWmc = visit(mc, params)
+          val answer = maxSize * childchildWmc
+          println(s"$maxSize * $childchildWmc = $answer")
+          answer
+        }
+      }
+      case None => throw new Exception("you forgot to call update()")
     }
   }
 
@@ -701,12 +711,17 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
 
   protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
                                              params: (DomainSizes, PredicateWeights)): BigInt = {
-    val (domainSizes, predicateWeights) = params
-    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-    if (maxSize < 1) one
-    else {
-      val childchildWmc = visit(idr.mixedChild, params)
-      maxSize * childchildWmc
+    idr.mixedChild match {
+      case Some(mc) => {
+        val (domainSizes, predicateWeights) = params
+        val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+        if (maxSize < 1) one
+        else {
+          val childchildWmc = visit(mc, params)
+          maxSize * childchildWmc
+        }
+      }
+      case None => throw new Exception("you forgot to call update()")
     }
   }
 

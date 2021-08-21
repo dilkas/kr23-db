@@ -20,9 +20,8 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unkn
       clause => {
         // only consider the subset of variables that come from the same domain
         val vars = clause.literalVariables.filter { clause.constrs.domainFor(_).equals(domain) }
-        vars.subsets.flatMap { equalVariables =>
-          if (equalVariables.isEmpty || equalVariables.size == clause.literalVariables.size) List()
-          else {
+        vars.subsets.flatMap {
+          equalVariables => {
             val substitutedClause = clause.substituteOption((variable: Var) =>
               if (equalVariables.contains(variable)) constant else variable)
             substitutedClause match {
@@ -42,7 +41,10 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unkn
     val msg = "Domain recursion on $" + domain + "$"
     println("mixed CNF:")
     println(mixedCNF)
-    Some(new ImprovedDomainRecursionNode(cnf, compile(mixedCNF), constant, ineqs, domain, msg))
+    val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs, domain, msg)
+    updateCache(cnf, node)
+    node.update(List(compile(mixedCNF)))
+    Some(node)
   }
 
   override def inferenceRules: List[InferenceRule] = List(
@@ -61,7 +63,7 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unkn
     tryShatter,
     tryIndependentPartialGrounding, // O(log(n))
     tryCounting, // O(n)
-    tryImprovedDomainRecursion, // new
-    tryDomainRecursion // is O(log(n)) now! But assumes no unary predicates
+    tryDomainRecursion, // is O(log(n)) now! But assumes no unary predicates
+    tryImprovedDomainRecursion // new
   )
 }

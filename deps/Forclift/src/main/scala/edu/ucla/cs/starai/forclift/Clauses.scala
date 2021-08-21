@@ -48,6 +48,27 @@ class Clause(
   val negLits: List[Atom],
   initialConstrs: Constraints = Constraints.empty) {
 
+  def canEqual(a: Any) = a.isInstanceOf[Clause]
+
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: Clause => {
+        that.canEqual(this) && this.posLits == that.posLits &&
+          this.negLits == that.negLits &&
+          this.constrs == that.constrs
+      }
+      case _ => false
+    }
+
+  override def hashCode: Int = {
+    val prime = 31
+    var result = 1
+    result = prime * result + posLits.hashCode
+    result = prime * result + negLits.hashCode
+    result = prime * result + constrs.hashCode
+    result
+  }
+
   //	def subsumes(other: Clause) = {
   //		//TODO check domains/variables
   //		posLits.subsetOf(other.posLits) && negLits.subsetOf(other.negLits)

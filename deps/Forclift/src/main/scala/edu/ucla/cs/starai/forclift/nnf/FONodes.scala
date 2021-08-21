@@ -209,104 +209,83 @@ class DomainRecursionNode(val cnf: CNF, val mixedChild: IndependentPartialGround
 
 }
 
-class ImprovedDomainRecursionNode(val cnf: CNF, val mixedChild: NNFNode,
+class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
                                   val c: Constant, val ineqs: Set[Constant],
                                   val domain: Domain,
                                   val explanation: String = "") extends NNFNode {
 
-  def size = mixedChild.size + 1
-
-  lazy val domains = mixedChild.domains + domain
-
-  lazy val evalOrder = mixedChild.evalOrder // assume constant eval
-
-  def smooth = {
-    val (mixedChildSmoothed, mixedChildVars) = mixedChild.smooth
-    val ungroundedMixedChildvars = mixedChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
-    val allVars = ungroundedMixedChildvars
-    (new ImprovedDomainRecursionNode(cnf, mixedChildSmoothed, c, ineqs, domain, explanation), allVars)
+  override def update(children : List[NNFNode]) = {
+    require(children.length == 1)
+    mixedChild = Some(children.head)
   }
 
-  def condition(pos: Set[Atom], neg: Set[Atom]) = new ImprovedDomainRecursionNode(
-    cnf,
-    mixedChild.condition(pos, neg),
-    c, ineqs, domain, explanation)
+  def size = mixedChild.size + 1
+
+  lazy val domains = mixedChild match {
+    case Some(mc) => mc.domains + domain
+    case None => Set(domain)
+  }
+
+  lazy val evalOrder = mixedChild match {
+    case Some(c) => c.evalOrder // assume constant eval
+    case None => throw new Exception("you forgot to call update()")
+  }
+
+  lazy val smooth = {
+    mixedChild match {
+      case Some(mc) => {
+        val (mixedChildSmoothed, mixedChildVars) = mc.smooth
+        val ungroundedMixedChildvars = mixedChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
+        val allVars = ungroundedMixedChildvars
+        (new ImprovedDomainRecursionNode(cnf, Some(mixedChildSmoothed), c, ineqs, domain, explanation), allVars)
+      }
+      case None => throw new Exception("you forgot to call update()")
+    }
+  }
+
+  def condition(pos: Set[Atom], neg: Set[Atom]) =
+    mixedChild match {
+      case Some(mc) => new ImprovedDomainRecursionNode(cnf, Some(mc.condition(pos, neg)), c, ineqs, domain, explanation)
+      case None => throw new Exception("you forgot to call update()")
+    }
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    if (depth >= maxDepth) cutoff(nameSpace, compact)
-    else {
-      val (n1, e1) = mixedChild.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
-      val myNodes = if (compact) {
-        "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
-      } else {
-        "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ """ + cnf.toLatex() + """"];""" + "\n" +
-          "  " + "domainrec" + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
+                         nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+    mixedChild match {
+      case Some(mc) => {
+        if (depth >= maxDepth) cutoff(nameSpace, compact)
+        else {
+          val (n1, e1) = mc.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
+          val myNodes = if (compact) {
+            "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
+          } else {
+            "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ """ + cnf.toLatex() + """"];""" + "\n" +
+              "  " + "domainrec" + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"
+          }
+          val myEdges = if (compact) {
+            "  " + getName(nameSpace) + " -> " + mc.getName(nameSpace) + ";\n" +
+              "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
+          } else {
+            val wmcVisitor = new SafeSignLogDoubleWmc
+            val mixedChildWmc = wmcVisitor.visit(mc.smooth._1,(domainSizes - domain, predicateWeights))
+            "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
+              "  " + "domainrec" + getName(nameSpace) + " -> " + mc.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
+              "  " + "domainrec" + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
+          }
+          val nodes = (myNodes + n1)
+          val edges = (myEdges + e1)
+          (nodes, edges)
+        }
       }
-      val myEdges = if (compact) {
-        "  " + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + ";\n" +
-          "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
-      } else {
-        val wmcVisitor = new SafeSignLogDoubleWmc
-        val mixedChildWmc = wmcVisitor.visit(mixedChild.smooth._1,(domainSizes - domain, predicateWeights))
-        "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
-          "  " + "domainrec" + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
-          "  " + "domainrec" + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
-      }
-      val nodes = (myNodes + n1)
-      val edges = (myEdges + e1)
-      (nodes, edges)
+      case None => throw new Exception("you forgot to call update()")
     }
   }
 
   override def toString(nameSpace: NameSpace[NNFNode, String]): String = {
-    (super.toString(nameSpace) +
-      getName(nameSpace) + " = domainrec " + c + " from " + domain + " " + mixedChild.getName(nameSpace) + "\n" +
-      "\n" +
-      mixedChild.toString(nameSpace))
+    mixedChild match {
+      case Some(mc) => (super.toString(nameSpace) + getName(nameSpace) + " = domainrec " + c + " from " + domain + " " + mc.getName(nameSpace) + "\n" + "\n" + mc.toString(nameSpace))
+      case None => throw new Exception("you forgot to call update()")
+    }
   }
 
 }
-
-// class LinearInclusionExclusionNode(val cnf: CNF, val child: NNFNode,
-//                                    val domains: Set[Domain]) extends NNFNode {
-
-//   def size = child.size + 1
-
-//   // larger than the domain of the child by one value
-//   lazy val domains = domains
-
-//   lazy val evalOrder = child.evalOrder + 1
-
-//   def smooth = {
-//     val (childSmooth, childVars) = child.smooth
-//     // this is fine, but does not mean the result will be non-overlapping
-//     // two catoms might overlap but not one subsumes the other
-//     val countedSubdomainParents = removeSubsumed(childVars.map { _.reverseDomainSplitting(domain, subdomain) })
-//     val disjCounted = makeDisjoint(countedSubdomainParents.toList)
-//     val childMissing = disjCounted.flatMap { _.minus(childVars) }
-//     val childSmoothAll = childSmooth.smoothWith(childMissing.toSet)
-//     val thisSmoothed = new LinearInclusionExclusionNode(cnf, childSmoothAll,
-//                                                         domains)
-//     (thisSmoothed, countedSubdomainParents)
-//   }
-
-//   def condition(pos: Set[Atom], neg: Set[Atom]) =
-//     new LinearInclusionExclusionNode(cnf, child.condition(pos, neg), domains)
-
-//   override def toDotNode(domainSizes: DomainSizes,
-//                          predicateWeights: PredicateWeights,
-//                          nameSpace: NameSpace[NNFNode, String],
-//                          compact: Boolean = false, depth: Int,
-//                          maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-//     ("", "")
-//   }
-
-//   override def toString(nameSpace: NameSpace[NNFNode, String]): String = {
-//     (super.toString(nameSpace) +
-//        getName(nameSpace) + " = LIE " + domain + " " +
-//        child.getName(nameSpace) + "\n" +
-//        "\n" +
-//        child.toString(nameSpace))
-//   }
-// }
