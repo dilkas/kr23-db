@@ -58,6 +58,15 @@ object Cachestats {
 
 }
 
+// TODO (Paulius): check if these caches are still necessary
+object NNFNode {
+
+  val conditionCache = new mutable.HashMap[(NNFNode, Set[Atom], Set[Atom]), NNFNode]
+  val smoothingCache = new mutable.HashMap[NNFNode,
+                                           (NNFNode, Set[PositiveUnitClause])]
+
+}
+
 abstract class NNFNode {
 
   def cnf: CNF
@@ -107,7 +116,13 @@ abstract class NNFNode {
   }
 
   def domains: Set[Domain]
-  
+
+  // TODO (Paulius): no longer necessary
+  // Did the value of 'domains' change?
+  def updateDomains: Boolean = false
+
+  // Keeping this as 'lazy var' should still work because by the time
+  // orderedDomains is called, domains will have stabilized to the final value
   lazy val orderedDomains: IndexedSeq[Domain] = domains.toIndexedSeq
 
   def evalOrder: Int
@@ -131,13 +146,13 @@ abstract class NNFNode {
       compact: Boolean = false, maxDepth: Int = Integer.MAX_VALUE,
       dir: String = "nnfs", file: String = "liftedinference.nnf",
       verbose: Boolean = false) = {
-   
-    
+
+
     ExternalBinaries.checkPdfLatexAvailable
-    ExternalBinaries.checkDotAvailable 
-    ExternalBinaries.checkDot2TexAvailable 
-    ExternalBinaries.checkDot2TexiAvailable 
-      
+    ExternalBinaries.checkDotAvailable
+    ExternalBinaries.checkDot2TexAvailable
+    ExternalBinaries.checkDot2TexiAvailable
+
     if (!(new File(dir)).exists) (new File(dir)).mkdir
     val out = new FileWriter(dir + "/" + file + ".tex")
     out.write(toLatex(domainSizes, predicateWeights, compact, maxDepth))

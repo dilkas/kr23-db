@@ -42,30 +42,43 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode], val explanation: String = 
   lazy val smooth = {
     nnfNode match {
       case Some(nnfNode) => {
+        // NNFNode.smoothingCache(this) = (new Ref(cnf, None, explanation), Set())
         val (n, v) = nnfNode.smooth
+        // NNFNode.smoothingCache(this)._1.update(List(n))
+        // NNFNode.smoothingCache(this)._2 = v
+        // TODO: problem: ref should get the last/stabilized values
         (new Ref(cnf, Some(n), explanation), v)
       }
       case None => throw new Exception("you forgot to call update()")
     }
   }
 
-  lazy val domains = {
+  var domains: Set[Domain] = Set()
+
+  override def updateDomains = {
     nnfNode match {
-      case Some(nnfNode) => nnfNode.domains
+      case Some(nnfNode) => {
+        val returnValue = domains != nnfNode.domains
+        domains = nnfNode.domains
+        returnValue
+      }
       case None => throw new Exception("you forgot to call update()")
     }
   }
 
-  lazy val evalOrder = {
-    nnfNode match {
-      case Some(nnfNode) => nnfNode.evalOrder
-      case None => throw new Exception("you forgot to call update()")
-    }
-  }
+  // Cycles created by Ref nodes can complicate the order of the circuit in
+  // various ways. Since evalOrder is not used for anything important, let's
+  // not bother computing the exact order.
+  lazy val evalOrder = 0
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     nnfNode match {
-      case Some(nnfNode) => new Ref(cnf, Some(nnfNode.condition(pos, neg)), explanation)
+      case Some(nnfNode) => {
+        val returnValue = new Ref(
+          cnf, Some(NNFNode.conditionCache((nnfNode, pos, neg))), explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
+      }
       case None => throw new Exception("you forgot to call update()")
     }
   }
@@ -114,9 +127,16 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
     }
   }
 
-  lazy val domains = {
+  var domains: Set[Domain] = Set()
+
+  override def updateDomains = {
     (l, r) match {
-      case (Some(l), Some(r)) => l.domains union r.domains
+      case (Some(l), Some(r)) => {
+        val newDomains = l.domains union r.domains
+        val returnValue = domains != newDomains
+        domains = newDomains
+        returnValue
+      }
       case _ => throw new Exception("you forgot to call update()")
     }
   }
@@ -148,7 +168,12 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     (l, r) match {
-      case (Some(l), Some(r)) => new And(cnf, Some(l.condition(pos, neg)), Some(r.condition(pos, neg)), explanation)
+      case (Some(l), Some(r)) => {
+        val returnValue = new And(cnf, Some(l.condition(pos, neg)),
+                                  Some(r.condition(pos, neg)), explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
+      }
       case _ => throw new Exception("you forgot to call update()")
     }
   }
@@ -219,9 +244,16 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
     }
   }
 
-  lazy val domains = {
+  var domains: Set[Domain] = Set()
+
+  override def updateDomains = {
     (l, r) match {
-      case (Some(l), Some(r)) => l.domains union r.domains
+      case (Some(l), Some(r)) => {
+        val newDomains = l.domains union r.domains
+        val returnValue = domains != newDomains
+        domains = newDomains
+        returnValue
+      }
       case _ => throw new Exception("you forgot to call update()")
     }
   }
@@ -258,7 +290,12 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     (l, r) match {
-      case (Some(l), Some(r)) => new Or(cnf, Some(l.condition(pos, neg)), Some(r.condition(pos, neg)), explanation)
+      case (Some(l), Some(r)) => {
+        val returnValue = new Or(cnf, Some(l.condition(pos, neg)),
+                                 Some(r.condition(pos, neg)), explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
+      }
       case _ => throw new Exception("you forgot to call update()")
     }
   }
@@ -339,10 +376,16 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
   //        logminusexp(logsum, minlwmc)
   //    }
 
+  var domains: Set[Domain] = Set()
 
-  lazy val domains = {
+  override def updateDomains = {
     (plus1, plus2, min) match {
-      case (Some(plus1), Some(plus2), Some(min)) => plus1.domains union plus2.domains union min.domains
+      case (Some(plus1), Some(plus2), Some(min)) => {
+        val newDomains = plus1.domains union plus2.domains union min.domains
+        val returnValue = domains != newDomains
+        domains = newDomains
+        returnValue
+      }
       case _ => throw new Exception("you forgot to call update()")
     }
   }
@@ -388,9 +431,12 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     (plus1, plus2, min) match {
       case (Some(plus1), Some(plus2), Some(min)) => {
-        new InclusionExclusion(cnf, Some(plus1.condition(pos, neg)),
-                               Some(plus2.condition(pos, neg)),
-                               Some(min.condition(pos, neg)), explanation)
+        val returnValue = new InclusionExclusion(
+          cnf, Some(plus1.condition(pos, neg)),
+          Some(plus2.condition(pos, neg)), Some(min.condition(pos, neg)),
+          explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
       }
       case _ => throw new Exception("you forgot to call update()")
     }

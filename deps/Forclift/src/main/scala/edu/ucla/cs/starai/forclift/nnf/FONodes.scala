@@ -52,8 +52,10 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     child match {
       case Some(child) => {
-        new IndependentPartialGroundingNode(
+        val returnValue = new IndependentPartialGroundingNode(
           cnf, Some(child.condition(pos, neg)), c, ineqs, d, explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
       }
       case None => throw new Exception("you forgot to call update()")
     }
@@ -66,9 +68,16 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
     }
   }
 
-  lazy val domains = {
+  var domains = Set(d)
+
+  override def updateDomains = {
     child match {
-      case Some(child) => child.domains + d
+      case Some(child) => {
+        val newDomains = child.domains + d
+        val returnValue = domains != newDomains
+        domains = child.domains + d
+        returnValue
+      }
       case None => throw new Exception("you forgot to call update()")
     }
   }
@@ -144,9 +153,16 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
 
   def excludedConstants = subdomain.excludedConstants
 
-  lazy val domains = {
+  var domains = Set(domain)
+
+  override def updateDomains = {
     child match {
-      case Some(child) => (child.domains - subdomain - subdomain.complement) + domain
+      case Some(child) => {
+        val newDomains = (child.domains - subdomain - subdomain.complement) + domain
+        val returnValue = domains != newDomains
+        domains = newDomains
+        returnValue
+      }
       case None => throw new Exception("you forgot to call update()")
     }
   }
@@ -177,7 +193,12 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     child match {
-      case Some(child) => new CountingNode(cnf, Some(child.condition(pos, neg)), domain, subdomain, explanation)
+      case Some(child) => {
+        val returnValue = new CountingNode(cnf, Some(child.condition(pos, neg)), domain,
+                                           subdomain, explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
+      }
       case None => throw new Exception("you forgot to call update()")
     }
   }
@@ -249,9 +270,16 @@ class DomainRecursionNode(
   // assumptions to speed up inference
   // require(mixedChild.child.cnf.isGround)
 
-  lazy val domains = {
+  var domains = Set(domain)
+
+  override def updateDomains = {
     (mixedChild, groundChild) match {
-      case (Some(mixedChild), Some(groundChild)) => mixedChild.domains union groundChild.domains + domain
+      case (Some(mixedChild), Some(groundChild)) => {
+        val newDomains = mixedChild.domains union groundChild.domains + domain
+        val returnValue = domains != newDomains
+        domains = newDomains
+        returnValue
+      }
       case _ => throw new Exception("you forgot to call update()")
     }
   }
@@ -281,11 +309,13 @@ class DomainRecursionNode(
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     (mixedChild, groundChild) match {
       case (Some(mixedChild), Some(groundChild)) => {
-        new DomainRecursionNode(
+        val returnValue = new DomainRecursionNode(
           cnf,
           Some(mixedChild.condition(pos, neg).asInstanceOf[IndependentPartialGroundingNode]),
           Some(groundChild.condition(pos, neg)),
           c, ineqs, domain, explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
       }
       case _ => throw new Exception("you forgot to call update()")
     }
@@ -355,9 +385,16 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
 
   def size = mixedChild.size + 1
 
-  lazy val domains = mixedChild match {
-    case Some(mc) => mc.domains + domain
-    case None => Set(domain)
+  var domains = Set(domain)
+
+  override def updateDomains = mixedChild match {
+    case Some(mixedChild) => {
+      val newDomains = mixedChild.domains + domain
+      val returnValue = domains != newDomains
+      domains = newDomains
+      returnValue
+    }
+    case None => throw new Exception("you forgot to call update()")
   }
 
   lazy val evalOrder = mixedChild match {
@@ -379,7 +416,12 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
 
   def condition(pos: Set[Atom], neg: Set[Atom]) =
     mixedChild match {
-      case Some(mc) => new ImprovedDomainRecursionNode(cnf, Some(mc.condition(pos, neg)), c, ineqs, domain, explanation)
+      case Some(mc) => {
+        val returnValue = new ImprovedDomainRecursionNode(
+          cnf, Some(mc.condition(pos, neg)), c, ineqs, domain, explanation)
+        NNFNode.conditionCache((this, pos, neg)) = returnValue
+        returnValue
+      }
       case None => throw new Exception("you forgot to call update()")
     }
 

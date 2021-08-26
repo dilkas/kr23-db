@@ -22,7 +22,7 @@ import edu.ucla.cs.starai.forclift.nnf._
 abstract class NnfVisitor[I,O] {
 
   def visit(node: NNFNode, input: I): O = node match{
-      
+
       // Leaf Nodes
       case leaf: UnitLeaf => visitUnitLeaf(leaf, input)
       case leaf: SmoothingNode => visitSmoothingNode(leaf, input)
@@ -30,7 +30,7 @@ abstract class NnfVisitor[I,O] {
       case TrueNode => visitTrue(input)
       case FalseNode => visitFalse(input)
       case leaf: GroundingNode => visitGroundingNode(leaf, input)
-      
+
       // Complex Nodes
       case and: And => visitAndNode(and, input)
       case or: Or => visitOrNode(or, input)
@@ -59,6 +59,6 @@ abstract class NnfVisitor[I,O] {
   protected def visitUnitLeaf(leaf: UnitLeaf, input: I): O
   protected def visitGroundingNode(leaf: GroundingNode, input: I): O
   protected def visitFalse(input: I): O
-  protected def visitTrue(input: I): O 
-  
+  protected def visitTrue(input: I): O
+
 }

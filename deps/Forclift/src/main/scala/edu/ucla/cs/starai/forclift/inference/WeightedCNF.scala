@@ -139,7 +139,7 @@ case class WeightedCNF(
 
   lazy val toSmoothDimacsCNF: DimacsCNF = toSmoothDimacsCNFBuilder.toDimacsCNF
 
-  lazy val smoothNnf = nnf.smoothWithPredicates(vocabularyPredicates, conditionedAtoms.toSet)
+  lazy val smoothNnf = nnf // TODO (Paulius): this is just temporary nnf.smoothWithPredicates(vocabularyPredicates, conditionedAtoms.toSet)
 
   def sizeHint(d: Domain) = domainSizes(d.root).size
 

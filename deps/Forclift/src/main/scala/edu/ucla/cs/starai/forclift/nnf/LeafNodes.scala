@@ -60,7 +60,10 @@ object TrueNode extends NNFNode {
 
   val smooth = (this, Set[PositiveUnitClause]())
 
-  def condition(pos: Set[Atom], neg: Set[Atom]) = this
+  def condition(pos: Set[Atom], neg: Set[Atom]) = {
+    NNFNode.conditionCache((this, pos, neg)) = this
+    this
+  }
 
   val cnf = CNF()
 
@@ -82,7 +85,10 @@ object FalseNode extends NNFNode {
 
   val smooth = (this, Set[PositiveUnitClause]())
 
-  def condition(pos: Set[Atom], neg: Set[Atom]) = this
+  def condition(pos: Set[Atom], neg: Set[Atom]) = {
+    NNFNode.conditionCache((this, pos, neg)) = this
+    this
+  }
 
   val cnf = CNF()
 
@@ -99,12 +105,15 @@ class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val posit
   def size = 1
 
   def evalOrder = 0
-  
+
   lazy val domains = clause.domains
 
   val smooth = (this, Set.empty[PositiveUnitClause])
 
-  def condition(pos: Set[Atom], neg: Set[Atom]) = this
+  def condition(pos: Set[Atom], neg: Set[Atom]) = {
+    NNFNode.conditionCache((this, pos, neg)) = this
+    this
+  }
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
@@ -116,7 +125,7 @@ class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val posit
 class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean, val explanation: String = "") extends NNFNode {
 
   require(clause.isUnconditional, "Unit leafs have to be unconditional for smoothing to be correct: "+clause)
-  
+
   def size = 1
 
   def evalOrder = 0
@@ -124,11 +133,13 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean, val 
   lazy val domains = clause.domains
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
-    if (clause.atom.isGround) {
+    val returnValue = if (clause.atom.isGround) {
       if (pos.contains(clause.atom)) TrueNode
       else if (neg.contains(clause.atom)) FalseNode
       else this
     } else this
+    NNFNode.conditionCache((this, pos, neg)) = returnValue
+    returnValue
   }
 
   val smooth = (this, Set(clause.toPositiveUnitClause))
@@ -156,10 +167,12 @@ class SmoothingNode(val clause: PositiveUnitClause) extends NNFNode {
   val smooth = (this, Set(clause.toPositiveUnitClause))
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
-    if (clause.atom.isGround) {
+    val returnValue = if (clause.atom.isGround) {
       if (pos.contains(clause.atom) || neg.contains(clause.atom)) TrueNode
       else this
     } else this
+    NNFNode.conditionCache((this, pos, neg)) = returnValue
+    returnValue
   }
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
