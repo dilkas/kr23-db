@@ -374,7 +374,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     }
     equivalences.filter { eq => eq(c1Var) }.foldLeft(Set[Var]()) { _ union _.variables } - c1Var
   }
-  
+
   def tryCounting(cnf: CNF) = {
     val singletons = cnf.clauses.flatMap { clause =>
       clause.singletonLiterals.map { literal =>

@@ -28,7 +28,8 @@ import collection.mutable.ListBuffer
 
 import breeze.math._
 
-class GroundingNode(val cnf: CNF, val explanation: String = "") extends NNFNode {
+class GroundingNode(val cnf: CNF, val explanation: String = "")
+    extends NNFNode(NNFNode.removeSubsumed(cnf.toPositiveUnitClauses)) {
 
   def size = 1
 
@@ -36,10 +37,7 @@ class GroundingNode(val cnf: CNF, val explanation: String = "") extends NNFNode 
 
   def evalOrder = throw new UnsupportedOperationException
 
-  def smooth = {
-    val counted = removeSubsumed(cnf.toPositiveUnitClauses)
-    (this, counted)
-  }
+  def smooth = this
 
   def condition(pos: Set[Atom], neg: Set[Atom]): NNFNode = throw new UnsupportedOperationException
 
@@ -58,7 +56,7 @@ object TrueNode extends NNFNode {
 
   def evalOrder = 0
 
-  val smooth = (this, Set[PositiveUnitClause]())
+  val smooth = this
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     NNFNode.conditionCache((this, pos, neg)) = this
@@ -83,7 +81,7 @@ object FalseNode extends NNFNode {
 
   def evalOrder = 0
 
-  val smooth = (this, Set[PositiveUnitClause]())
+  val smooth = this
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     NNFNode.conditionCache((this, pos, neg)) = this
@@ -108,7 +106,7 @@ class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val posit
 
   lazy val domains = clause.domains
 
-  val smooth = (this, Set.empty[PositiveUnitClause])
+  val smooth = this
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     NNFNode.conditionCache((this, pos, neg)) = this
@@ -122,7 +120,9 @@ class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val posit
 
 }
 
-class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean, val explanation: String = "") extends NNFNode {
+class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
+               val explanation: String = "")
+    extends NNFNode(Set(clause.toPositiveUnitClause)) {
 
   require(clause.isUnconditional, "Unit leafs have to be unconditional for smoothing to be correct: "+clause)
 
@@ -142,7 +142,7 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean, val 
     returnValue
   }
 
-  val smooth = (this, Set(clause.toPositiveUnitClause))
+  val smooth = this
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false,
@@ -152,7 +152,8 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean, val 
 
 }
 
-class SmoothingNode(val clause: PositiveUnitClause) extends NNFNode {
+class SmoothingNode(val clause: PositiveUnitClause)
+    extends NNFNode(Set(clause.toPositiveUnitClause)) {
 
   def size = 1
 
@@ -164,7 +165,7 @@ class SmoothingNode(val clause: PositiveUnitClause) extends NNFNode {
 
   def explanation = ""
 
-  val smooth = (this, Set(clause.toPositiveUnitClause))
+  val smooth = this
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     val returnValue = if (clause.atom.isGround) {

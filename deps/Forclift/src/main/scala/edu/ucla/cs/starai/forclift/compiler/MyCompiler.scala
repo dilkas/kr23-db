@@ -9,7 +9,9 @@ object MyCompiler {
   val builderWithGrounding: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new MyCompiler(sizeHint) with GroundingCompiler
 }
 
-abstract class MyCompiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_)) extends V1_1Compiler(sizeHint) {
+abstract class MyCompiler(sizeHint: Compiler.SizeHints =
+                            Compiler.SizeHints.unknown(_))
+    extends V1_1Compiler(sizeHint) {
   def tryImprovedDomainRecursion(cnf: CNF) = {
     println("improved domain recursion")
     println(cnf.toString)

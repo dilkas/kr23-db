@@ -39,32 +39,21 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode], val explanation: String = 
 
   //assume(nnfNode != null)
 
-  lazy val smooth = {
-    nnfNode match {
-      case Some(nnfNode) => {
-        // NNFNode.smoothingCache(this) = (new Ref(cnf, None, explanation), Set())
-        val (n, v) = nnfNode.smooth
-        // NNFNode.smoothingCache(this)._1.update(List(n))
-        // NNFNode.smoothingCache(this)._2 = v
-        // TODO: problem: ref should get the last/stabilized values
-        (new Ref(cnf, Some(n), explanation), v)
+  lazy val smooth = nnfNode match {
+    case Some(nnfNode) => {
+      if (NNFNode.smoothingCache.contains(this)) {
+        NNFNode.smoothingCache(this)
+      } else {
+        val newNode = new Ref(cnf, None, explanation)
+        NNFNode.smoothingCache(this) = newNode
+        newNode.update(List(nnfNode.smooth))
+        newNode
       }
-      case None => throw new Exception("you forgot to call update()")
     }
+    case None => throw new Exception("you forgot to call update()")
   }
 
   var domains: Set[Domain] = Set()
-
-  override def updateDomains = {
-    nnfNode match {
-      case Some(nnfNode) => {
-        val returnValue = domains != nnfNode.domains
-        domains = nnfNode.domains
-        returnValue
-      }
-      case None => throw new Exception("you forgot to call update()")
-    }
-  }
 
   // Cycles created by Ref nodes can complicate the order of the circuit in
   // various ways. Since evalOrder is not used for anything important, let's
@@ -129,18 +118,6 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 
   var domains: Set[Domain] = Set()
 
-  override def updateDomains = {
-    (l, r) match {
-      case (Some(l), Some(r)) => {
-        val newDomains = l.domains union r.domains
-        val returnValue = domains != newDomains
-        domains = newDomains
-        returnValue
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
-  }
-
   lazy val evalOrder = {
     (l, r) match {
       case (Some(l), Some(r)) => {
@@ -155,12 +132,14 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
   lazy val smooth = {
     (l, r) match {
       case (Some(l), Some(r)) => {
-        val (lSmooth, lVars) = l.smooth
-        val (rSmooth, rVars) = r.smooth
-        val thisSmooth = new And(cnf, Some(lSmooth), Some(rSmooth), explanation)
-        val thisVars = lVars union rVars
-        val thisNotSubsumedVars = thisVars //removeSubsumed(thisVars) -- should be independent
-        (thisSmooth, thisNotSubsumedVars)
+        if (NNFNode.smoothingCache.contains(this)) {
+          NNFNode.smoothingCache(this)
+        } else {
+          val newNode = new And(cnf, None, None, explanation)
+          NNFNode.smoothingCache(this) = newNode
+          newNode.update(List(l.smooth, r.smooth))
+          newNode
+        }
       }
       case _ => throw new Exception("you forgot to call update()")
     }
@@ -197,8 +176,8 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
               "  " + getName(nameSpace) + " -> " + r.getName(nameSpace) + ";\n"
           } else {
             val wmcVisitor = new SafeSignLogDoubleWmc
-            val llwmc = try { wmcVisitor.visit(l.smooth._1, (domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
-            val rlwmc = try { wmcVisitor.visit(r.smooth._1, (domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
+            val llwmc = try { wmcVisitor.visit(l.smooth, (domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
+            val rlwmc = try { wmcVisitor.visit(r.smooth, (domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
             "  " + getName(nameSpace) + " -> " + "and" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
               "  " + "and" + getName(nameSpace) + " -> " + l.getName(nameSpace) + """ [""" + edgeLabel(" $ " + llwmc + " $ ") + """];""" + "\n" +
               "  " + "and" + getName(nameSpace) + " -> " + r.getName(nameSpace) + """ [""" + edgeLabel(" $ " + rlwmc + " $ ") + """];""" + "\n"
@@ -246,18 +225,6 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 
   var domains: Set[Domain] = Set()
 
-  override def updateDomains = {
-    (l, r) match {
-      case (Some(l), Some(r)) => {
-        val newDomains = l.domains union r.domains
-        val returnValue = domains != newDomains
-        domains = newDomains
-        returnValue
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
-  }
-
   lazy val evalOrder = {
     (l, r) match {
       case (Some(l), Some(r)) => {
@@ -272,17 +239,20 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
   lazy val smooth = {
     (l, r) match {
       case (Some(l), Some(r)) => {
-        val (lSmooth, lVars) = l.smooth
-        val (rSmooth, rVars) = r.smooth
-        val lMissing = rVars.flatMap { _.minus(lVars) }
-        val rMissing = lVars.flatMap { _.minus(rVars) }
-        val lSmoothAll = lSmooth.smoothWith(lMissing)
-        val rSmoothAll = rSmooth.smoothWith(rMissing)
-        val thisSmooth = new Or(cnf, Some(lSmoothAll), Some(rSmoothAll), explanation)
-        val lVarsAll = lVars union lMissing
-        val rVarsAll = rVars union rMissing
-        val thisVars = if (lVarsAll.size < rVarsAll.size) lVarsAll else rVarsAll
-        (thisSmooth, thisVars)
+        if (NNFNode.smoothingCache.contains(this)) {
+          NNFNode.smoothingCache(this)
+        } else {
+          val newNode = new Or(cnf, None, None, explanation)
+          NNFNode.smoothingCache(this) = newNode
+          val lMissing = r.variablesForSmoothing.flatMap {
+            _.minus(l.variablesForSmoothing) }
+          val rMissing = l.variablesForSmoothing.flatMap {
+            _.minus(r.variablesForSmoothing) }
+          val lSmoothAll = l.smooth.smoothWith(lMissing)
+          val rSmoothAll = r.smooth.smoothWith(rMissing)
+          newNode.update(List(lSmoothAll, rSmoothAll))
+          newNode
+        }
       }
       case _ => throw new Exception("you forgot to call update()")
     }
@@ -319,8 +289,8 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
               "  " + getName(nameSpace) + " -> " + r.getName(nameSpace) + ";\n"
           } else {
             val wmcVisitor = new SafeSignLogDoubleWmc
-            val llwmc = try { wmcVisitor.visit(l.smooth._1,(domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
-            val rlwmc = try { wmcVisitor.visit(r.smooth._1,(domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
+            val llwmc = try { wmcVisitor.visit(l.smooth,(domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
+            val rlwmc = try { wmcVisitor.visit(r.smooth,(domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
             "  " + getName(nameSpace) + " -> " + "or" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
               "  " + "or" + getName(nameSpace) + " -> " + l.getName(nameSpace) + """ [""" + edgeLabel(" $ " + llwmc + " $ ") + """];""" + "\n" +
               "  " + "or" + getName(nameSpace) + " -> " + r.getName(nameSpace) + """ [""" + edgeLabel(" $ " + rlwmc + " $ ") + """];""" + "\n"
@@ -368,27 +338,7 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
     }
   }
 
-  //    def logwmcc(domainSizes: DomainSizes, predicateWeights: PredicateWeights): Double = {
-  //        val plus1lwmc = plus1.logwmcc(domainSizes, predicateWeights)
-  //        val plus2lwmc = plus2.logwmcc(domainSizes, predicateWeights)
-  //        val minlwmc = min.logwmcc(domainSizes, predicateWeights)
-  //        val logsum = logsumexp(plus1lwmc, plus2lwmc)
-  //        logminusexp(logsum, minlwmc)
-  //    }
-
   var domains: Set[Domain] = Set()
-
-  override def updateDomains = {
-    (plus1, plus2, min) match {
-      case (Some(plus1), Some(plus2), Some(min)) => {
-        val newDomains = plus1.domains union plus2.domains union min.domains
-        val returnValue = domains != newDomains
-        domains = newDomains
-        returnValue
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
-  }
 
   lazy val evalOrder = {
     (plus1, plus2, min) match {
@@ -405,24 +355,27 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
   lazy val smooth = {
     (plus1, plus2, min) match {
       case (Some(plus1), Some(plus2), Some(min)) => {
-        val (plus1Smooth, plus1Vars) = plus1.smooth
-        val (plus2Smooth, plus2Vars) = plus2.smooth
-        val (minSmooth, minVars) = min.smooth
-        val plus1Missing = removeSubsumed(plus2Vars union minVars).flatMap { _.minus(plus1Vars) }
-        val plus2Missing = removeSubsumed(plus1Vars union minVars).flatMap { _.minus(plus2Vars) }
-        val minMissing = removeSubsumed(plus1Vars union plus2Vars).flatMap { _.minus(minVars) }
-        val plus1SmoothAll = plus1Smooth.smoothWith(plus1Missing)
-        val plus2SmoothAll = plus2Smooth.smoothWith(plus2Missing)
-        val minSmoothAll = minSmooth.smoothWith(minMissing)
-        val thisSmooth = new InclusionExclusion(cnf, Some(plus1SmoothAll),
-                                                Some(plus2SmoothAll),
-                                                Some(minSmoothAll), explanation)
-        val plus1VarsAll = plus1Vars union plus1Missing
-        val plus2VarsAll = plus2Vars union plus2Missing
-        val minVarsAll = minVars union minMissing
-        val bestOf2 = if (plus1VarsAll.size < plus2VarsAll.size) plus1VarsAll else plus2VarsAll
-        val bestOf3 = if (minVarsAll.size < bestOf2.size) minVarsAll else bestOf2
-        (thisSmooth, bestOf3)
+        if (NNFNode.smoothingCache.contains(this)) {
+          NNFNode.smoothingCache(this)
+        } else {
+          val newNode = new InclusionExclusion(cnf, None, None, None,
+                                               explanation)
+          NNFNode.smoothingCache(this) = newNode
+          val plus1Missing = NNFNode.removeSubsumed(
+            plus2.variablesForSmoothing union min.variablesForSmoothing).
+            flatMap { _.minus(plus1.variablesForSmoothing) }
+          val plus2Missing = NNFNode.removeSubsumed(
+            plus1.variablesForSmoothing union min.variablesForSmoothing).
+            flatMap { _.minus(plus2.variablesForSmoothing) }
+          val minMissing = NNFNode.removeSubsumed(
+            plus1.variablesForSmoothing union plus2.variablesForSmoothing).
+            flatMap { _.minus(min.variablesForSmoothing) }
+          val plus1SmoothAll = plus1.smooth.smoothWith(plus1Missing)
+          val plus2SmoothAll = plus2.smooth.smoothWith(plus2Missing)
+          val minSmoothAll = min.smooth.smoothWith(minMissing)
+          newNode.update(List(plus1SmoothAll, plus2SmoothAll, minSmoothAll))
+          newNode
+        }
       }
       case _ => throw new Exception("you forgot to call update()")
     }

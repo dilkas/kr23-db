@@ -36,17 +36,19 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
     child = Some(children.head)
   }
 
-  lazy val smooth = {
-    child match {
-      case Some(child) => {
-        val (childSmoothed, childvars) = child.smooth
-        val ungroundedChildVars = childvars.map { _.inverseSubstitution(c, ineqs, d) }
-        (new IndependentPartialGroundingNode(cnf, Some(childSmoothed), c,
-                                             ineqs, d, explanation),
-         ungroundedChildVars)
+  lazy val smooth = child match {
+    case Some(child) => {
+      if (NNFNode.smoothingCache.contains(this)) {
+        NNFNode.smoothingCache(this)
+      } else {
+        val newNode = new IndependentPartialGroundingNode(cnf, None, c, ineqs,
+                                                          d, explanation)
+        NNFNode.smoothingCache(this) = newNode
+        newNode.update(List(child.smooth))
+        newNode
       }
-      case None => throw new Exception("you forgot to call update()")
     }
+    case None => throw new Exception("you forgot to call update()")
   }
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
@@ -69,18 +71,6 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
   }
 
   var domains = Set(d)
-
-  override def updateDomains = {
-    child match {
-      case Some(child) => {
-        val newDomains = child.domains + d
-        val returnValue = domains != newDomains
-        domains = child.domains + d
-        returnValue
-      }
-      case None => throw new Exception("you forgot to call update()")
-    }
-  }
 
   lazy val evalOrder = {
     child match {
@@ -108,7 +98,7 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
             "  " + getName(nameSpace) + " -> " + child.getName(nameSpace) + ";\n"
           } else {
             val wmcVisitor = new SafeSignLogDoubleWmc
-            val childlwmc = wmcVisitor.visit(child.smooth._1, (domainSizes, predicateWeights))
+            val childlwmc = wmcVisitor.visit(child.smooth, (domainSizes, predicateWeights))
             "  " + getName(nameSpace) + " -> " + "exp" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
               "  " + "exp" + getName(nameSpace) + " -> " + child.getName(nameSpace) + """ [""" + edgeLabel(" $ " + childlwmc.exp + " $ ") + """];""" + "\n"
           }
@@ -155,18 +145,6 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
 
   var domains = Set(domain)
 
-  override def updateDomains = {
-    child match {
-      case Some(child) => {
-        val newDomains = (child.domains - subdomain - subdomain.complement) + domain
-        val returnValue = domains != newDomains
-        domains = newDomains
-        returnValue
-      }
-      case None => throw new Exception("you forgot to call update()")
-    }
-  }
-
   lazy val evalOrder = {
     child match {
       case Some(child) => child.evalOrder + 1
@@ -174,21 +152,25 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
     }
   }
 
-  def smooth = {
-    child match {
-      case Some(child) => {
-        val (childSmooth, childVars) = child.smooth
+  def smooth = child match {
+    case Some(child) => {
+      if (NNFNode.smoothingCache.contains(this)) {
+        NNFNode.smoothingCache(this)
+      } else {
+        val newNode = new CountingNode(cnf, None, domain, subdomain, explanation)
+        NNFNode.smoothingCache(this) = newNode
         // this is fine, but does not mean the result will be non-overlapping
         // two catoms might overlap but not one subsumes the other
-        val countedSubdomainParents = removeSubsumed(childVars.map { _.reverseDomainSplitting(domain, subdomain) })
+        val countedSubdomainParents = NNFNode.removeSubsumed(
+          child.variablesForSmoothing.map { _.reverseDomainSplitting(domain, subdomain) })
         val disjCounted = makeDisjoint(countedSubdomainParents.toList)
-        val childMissing = disjCounted.flatMap { _.minus(childVars) }
-        val childSmoothAll = childSmooth.smoothWith(childMissing.toSet)
-        val thisSmoothed = new CountingNode(cnf, Some(childSmoothAll), domain, subdomain, explanation)
-        (thisSmoothed, countedSubdomainParents)
+        val childMissing = disjCounted.flatMap { _.minus(child.variablesForSmoothing) }
+        val childSmoothAll = child.smooth.smoothWith(childMissing.toSet)
+        newNode.update(List(childSmoothAll))
+        newNode
       }
-      case None => throw new Exception("you forgot to call update()")
     }
+    case None => throw new Exception("you forgot to call update()")
   }
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
@@ -272,18 +254,6 @@ class DomainRecursionNode(
 
   var domains = Set(domain)
 
-  override def updateDomains = {
-    (mixedChild, groundChild) match {
-      case (Some(mixedChild), Some(groundChild)) => {
-        val newDomains = mixedChild.domains union groundChild.domains + domain
-        val returnValue = domains != newDomains
-        domains = newDomains
-        returnValue
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
-  }
-
   lazy val evalOrder = {
     mixedChild match {
       case Some(mixedChild) => mixedChild.evalOrder // assume constant eval
@@ -291,19 +261,19 @@ class DomainRecursionNode(
     }
   }
 
-  def smooth = {
-    (mixedChild, groundChild) match {
-      case (Some(mixedChild), Some(groundChild)) => {
-        val (mixedChildSmoothed, mixedChildVars) = mixedChild.smooth
-        val (groundChildSmoothed, groundChildVars) = groundChild.smooth
-        val ungroundedMixedChildvars = mixedChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
-        val ungroundedGroundChildVars = groundChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
-        val allVars = ungroundedMixedChildvars ++ ungroundedGroundChildVars
-        (new DomainRecursionNode(cnf, Some(mixedChildSmoothed), Some(groundChildSmoothed),
-                                 c, ineqs, domain, explanation), allVars)
+  def smooth = (mixedChild, groundChild) match {
+    case (Some(mixedChild), Some(groundChild)) => {
+      if (NNFNode.smoothingCache.contains(this)) {
+        NNFNode.smoothingCache(this)
+      } else {
+        val newNode = new DomainRecursionNode(cnf, None, None, c, ineqs,
+                                              domain, explanation)
+        NNFNode.smoothingCache(this) = newNode
+        newNode.update(List(mixedChild.smooth, groundChild.smooth))
+        newNode
       }
-      case _ => throw new Exception("you forgot to call update()")
     }
+    case _ => throw new Exception("you forgot to call update()")
   }
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
@@ -341,8 +311,8 @@ class DomainRecursionNode(
               "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
           } else {
             val wmcVisitor = new SafeSignLogDoubleWmc
-            val groundChildWmc = wmcVisitor.visit(groundChild.smooth._1,(domainSizes, predicateWeights))
-            val mixedChildWmc = wmcVisitor.visit(mixedChild.smooth._1,(domainSizes - domain, predicateWeights))
+            val groundChildWmc = wmcVisitor.visit(groundChild.smooth,(domainSizes, predicateWeights))
+            val mixedChildWmc = wmcVisitor.visit(mixedChild.smooth,(domainSizes - domain, predicateWeights))
             "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
               "  " + "domainrec" + getName(nameSpace) + " -> " + mixedChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
               "  " + "domainrec" + getName(nameSpace) + " -> " + groundChild.getName(nameSpace) + """ [""" + edgeLabel(" $ " + groundChildWmc.exp + " $ ") + """];""" + "\n" +
@@ -387,31 +357,24 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
 
   var domains = Set(domain)
 
-  override def updateDomains = mixedChild match {
-    case Some(mixedChild) => {
-      val newDomains = mixedChild.domains + domain
-      val returnValue = domains != newDomains
-      domains = newDomains
-      returnValue
-    }
-    case None => throw new Exception("you forgot to call update()")
-  }
-
   lazy val evalOrder = mixedChild match {
     case Some(c) => c.evalOrder // assume constant eval
     case None => throw new Exception("you forgot to call update()")
   }
 
-  lazy val smooth = {
-    mixedChild match {
-      case Some(mc) => {
-        val (mixedChildSmoothed, mixedChildVars) = mc.smooth
-        val ungroundedMixedChildvars = mixedChildVars.map { _.inverseSubstitution(c, ineqs, domain) }
-        val allVars = ungroundedMixedChildvars
-        (new ImprovedDomainRecursionNode(cnf, Some(mixedChildSmoothed), c, ineqs, domain, explanation), allVars)
+  lazy val smooth = mixedChild match {
+    case Some(mixedChild) => {
+      if (NNFNode.smoothingCache.contains(this)) {
+        NNFNode.smoothingCache(this)
+      } else {
+        val newNode = new ImprovedDomainRecursionNode(cnf, None, c, ineqs,
+                                                      domain, explanation)
+        NNFNode.smoothingCache(this) = newNode
+        newNode.update(List(mixedChild.smooth))
+        newNode
       }
-      case None => throw new Exception("you forgot to call update()")
     }
+    case None => throw new Exception("you forgot to call update()")
   }
 
   def condition(pos: Set[Atom], neg: Set[Atom]) =
@@ -443,7 +406,7 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
               "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
           } else {
             val wmcVisitor = new SafeSignLogDoubleWmc
-            val mixedChildWmc = wmcVisitor.visit(mc.smooth._1,(domainSizes - domain, predicateWeights))
+            val mixedChildWmc = wmcVisitor.visit(mc.smooth,(domainSizes - domain, predicateWeights))
             "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
               "  " + "domainrec" + getName(nameSpace) + " -> " + mc.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
               "  " + "domainrec" + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"

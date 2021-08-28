@@ -18,6 +18,8 @@ package edu.ucla.cs.starai.forclift.compiler
 
 import collection._
 
+import edu.ucla.cs.starai.forclift.nnf.visitors.DomainsVisitor
+import edu.ucla.cs.starai.forclift.nnf.visitors.PostOrderVisitor
 import edu.ucla.cs.starai.forclift.nnf._
 import edu.ucla.cs.starai.forclift._
 
@@ -40,6 +42,8 @@ object Compiler {
   }
 
   type SizeHints = (Domain => Int)
+
+  var neverRun: Boolean = true
 
 }
 
@@ -93,13 +97,13 @@ abstract class AbstractCompiler extends Compiler {
   def inferenceRules: List[InferenceRule]
 
   var nbCompilationSteps = 0;
-  
+
   def checkCnfInput(cnf: CNF) {
     require(!cnf.domains.contains(Universe), s"Cannot compile CNFs containing the universe domain: $cnf")
     require(!cnf.domains.contains(EmptyDomain), s"Cannot compile CNFs containing the empty domain: $cnf")
   }
 
-  def compile(cnf: CNF): NNFNode = {
+  def compile2(cnf: CNF): NNFNode = {
     //    nbCompilationSteps += 1
     //    println("COMPILING CNF:\n"+cnf)
     //    println("COMPILATION STEP"+nbCompilationSteps)
@@ -121,6 +125,20 @@ abstract class AbstractCompiler extends Compiler {
     }
     updateCache(cnf, nnf)
     nnf
+  }
+
+  def compile(cnf: CNF): NNFNode = {
+    if (Compiler.neverRun) {
+      Compiler.neverRun = false
+      val nnf = compile2(cnf)
+      val postOrderVisitor = new PostOrderVisitor
+      postOrderVisitor.visit(nnf)
+      val domainsVisitor = new DomainsVisitor(postOrderVisitor.nodeOrder)
+      domainsVisitor.updateDomains
+      nnf
+    } else {
+      compile2(cnf)
+    }
   }
 
   def cannotCompile(cnf: CNF): NNFNode

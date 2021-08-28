@@ -18,6 +18,7 @@ package edu.ucla.cs.starai.forclift.nnf
 
 import collection._
 import edu.ucla.cs.starai.forclift._
+import edu.ucla.cs.starai.forclift.nnf.visitors._
 import edu.ucla.cs.starai.forclift.util._
 import edu.ucla.cs.starai.forclift.inference._
 import edu.ucla.cs.starai.forclift.util.Binomial._
@@ -58,49 +59,7 @@ object Cachestats {
 
 }
 
-// TODO (Paulius): check if these caches are still necessary
 object NNFNode {
-
-  val conditionCache = new mutable.HashMap[(NNFNode, Set[Atom], Set[Atom]), NNFNode]
-  val smoothingCache = new mutable.HashMap[NNFNode,
-                                           (NNFNode, Set[PositiveUnitClause])]
-
-}
-
-abstract class NNFNode {
-
-  def cnf: CNF
-
-  def explanation: String
-
-  def update(children: List[NNFNode]) = ()
-
-  def size: Int
-
-  def smoothRoot: NNFNode = smooth._1
-
-  def makeDisjoint(catoms: List[PositiveUnitClause]): List[PositiveUnitClause] = catoms match {
-    case Nil => Nil
-    case catom :: rest => catom :: makeDisjoint(rest.flatMap { _.minus(catom) })
-  }
-
-  def smoothWithPredicates(predicates: Set[Predicate],
-                           excluded: Set[PositiveUnitClause] = Set.empty): NNFNode = {
-    val (thisSmoothed, thisVars) = smooth
-    val allVars = predicates.map { _.toAtom }
-    val missing = allVars.flatMap { _.minus(thisVars union excluded) }
-    thisSmoothed.smoothWith(makeDisjoint(missing.toList).toSet)
-  }
-
-  def smooth: (NNFNode, Set[PositiveUnitClause])
-
-  // assumes atoms are disjoint
-  def smoothWith(atoms: Set[PositiveUnitClause]): NNFNode = atoms.foldLeft(this) { (branch, clause) =>
-    assume(atoms.forall { atom1 => atoms.forall { atom2 => (atom1 eq atom2) || atom1.independent(atom2) } })
-    new And(branch.cnf, Some(new SmoothingNode(clause)), Some(branch), "Smoothing of $" + clause.toLatex() + "$.")
-  }
-
-  def condition(pos: Set[Atom], neg: Set[Atom]): NNFNode
 
   def removeSubsumed(clauses: Set[PositiveUnitClause]) = {
     val clauses2 = clauses.toList.filter { clause1 =>
@@ -115,11 +74,53 @@ abstract class NNFNode {
     removeDoubles(clauses2).toSet
   }
 
-  def domains: Set[Domain]
+  val conditionCache = new mutable.HashMap[(NNFNode, Set[Atom], Set[Atom]), NNFNode]
+  val smoothingCache = new mutable.HashMap[NNFNode, NNFNode]
 
-  // TODO (Paulius): no longer necessary
-  // Did the value of 'domains' change?
-  def updateDomains: Boolean = false
+}
+
+abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
+                         Set[PositiveUnitClause]()) {
+
+  def cnf: CNF
+
+  def explanation: String
+
+  def update(children: List[NNFNode]) = ()
+
+  def size: Int
+
+  def makeDisjoint(catoms: List[PositiveUnitClause]): List[PositiveUnitClause] = catoms match {
+    case Nil => Nil
+    case catom :: rest => catom :: makeDisjoint(rest.flatMap { _.minus(catom) })
+  }
+
+  def smoothWithPredicates(predicates: Set[Predicate],
+                           excluded: Set[PositiveUnitClause] = Set.empty): NNFNode = {
+    // initialise variables for smoothing
+    val postOrderVisitor = new PostOrderVisitor
+    postOrderVisitor.visit(this)
+    val smoothingVariablesVisitor = new SmoothingVariablesVisitor(
+      postOrderVisitor.nodeOrder)
+    smoothingVariablesVisitor.updateVariables
+
+    val thisSmoothed = smooth
+    val allVars = predicates.map { _.toAtom }
+    val missing = allVars.flatMap { _.minus(variablesForSmoothing union excluded) }
+    thisSmoothed.smoothWith(makeDisjoint(missing.toList).toSet)
+  }
+
+  def smooth: NNFNode
+
+  // assumes atoms are disjoint
+  def smoothWith(atoms: Set[PositiveUnitClause]): NNFNode = atoms.foldLeft(this) { (branch, clause) =>
+    assume(atoms.forall { atom1 => atoms.forall { atom2 => (atom1 eq atom2) || atom1.independent(atom2) } })
+    new And(branch.cnf, Some(new SmoothingNode(clause)), Some(branch), "Smoothing of $" + clause.toLatex() + "$.")
+  }
+
+  def condition(pos: Set[Atom], neg: Set[Atom]): NNFNode
+
+  def domains: Set[Domain]
 
   // Keeping this as 'lazy var' should still work because by the time
   // orderedDomains is called, domains will have stabilized to the final value

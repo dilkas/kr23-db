@@ -713,11 +713,12 @@ protected class VerifyWmcVisitor extends SignLogDoubleWmc {
       val groundCNF = cnf.ground(domainSizes)
       // smooth with everything appearing in the ground cnf, not with every predicate grounding!!
       val atomsInPropWmc = groundCNF.atoms.map { new PositiveUnitClause(_, Constraints.empty) }
-      val (thisSmooth, countedAtoms) = nnfNode.smooth
+      val thisSmooth = nnfNode.smooth
       // not used -- debugging purposes only
       val onceSmoothedLiftedLogWmc = nonVerifyingWmcVisitor.visit(thisSmooth, params)
       // must also ground before subtracting, otherwise constants will unify with empty domain variables
-      val atomsInLiftedWmc = countedAtoms.flatMap { _.ground(domainSizes).map { _.toPositiveUnitClause } }
+      val atomsInLiftedWmc = nnfNode.variablesForSmoothing.flatMap {
+        _.ground(domainSizes).map { _.toPositiveUnitClause } }
       val atomsMissingFromLiftedWmc = atomsInPropWmc.flatMap { _.minus(atomsInLiftedWmc) }
       val atomsMissingFromPropWmc = atomsInLiftedWmc.flatMap { _.minus(atomsInPropWmc) }
 
