@@ -37,6 +37,12 @@ final class IneqConstr(
 
   override val hashCode = super.hashCode
 
+  lazy val constants: Set[Constant] = flatMap { case (_, args) =>
+    args.flatMap {
+      case c: Constant => List(c)
+      case _ => List()
+    } }.toSet
+
   def conflictsWith(eqClasses: List[EquivalenceClass]): Boolean = {
     // OLD IMPLEMENTATION - sound incomplete fast way to detect conflict
     for (eqClass <- eqClasses) {

@@ -44,7 +44,7 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
   lazy val atoms = clauses.flatMap { _.atoms }.toSet
 
   def isSingleton = clauses.nonEmpty && clauses.tail.isEmpty
-  
+
   def toLatex(showRootDomains: Boolean = false): String = {
     if (clauses.isEmpty) """$\top$"""
     else {

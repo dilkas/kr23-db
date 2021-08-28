@@ -227,12 +227,14 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 
   def groundingConstantFor(cnf: CNF, domain: Domain) = {
     val existingIndices = cnf.constants.collect { case Constant(IndexedConstant(i)) => i }
+    println("groundingConstantsFor: found " + cnf.constants.size +
+              " constants, " + existingIndices.size + " of which are indexed")
     val newIndex = Stream.from(0).find { index => !existingIndices(index) }.get
     groundingConstant(newIndex, domain)
   }
 
   type ChoiceMap = collection.mutable.Map[Clause, Var]
-  
+
   def tryIndependentPartialGrounding(cnf: CNF): Option[IndependentPartialGroundingNode] = {
     // in the future, this should be implemented  by finding all binding classes and then checking size and root
     if(cnf.clauses.exists(_.rootVars.isEmpty)) return None

@@ -32,6 +32,8 @@ final case class Constraints(
   ineqConstrs: IneqConstr = IneqConstr.empty,
   elemConstrs: ElemConstr = ElemConstr.empty) {
 
+  def constants = ineqConstrs.constants
+
   def domains = elemConstrs.domains
   def domainsFor(variables: Set[Var]) = variables.map(elemConstrs(_))
   def domainFor(variable: Var) = elemConstrs(variable)

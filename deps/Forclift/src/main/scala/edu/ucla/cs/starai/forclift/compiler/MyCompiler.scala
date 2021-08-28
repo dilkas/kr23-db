@@ -18,10 +18,12 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     val domain = cnf.clauses.head.constrs.domainFor(cnf.clauses.head.literalVariables.head)
     val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
     val constant = groundingConstantFor(cnf, domain)
+    println("tryImprovedDomainRecursion: selected constant " + constant)
     val mixedClauses = cnf.clauses.flatMap {
       clause => {
         // only consider the subset of variables that come from the same domain
         val vars = clause.literalVariables.filter { clause.constrs.domainFor(_).equals(domain) }
+        println("tryImprovedDomainRecursion: identified " + vars.size + " viable variables")
         vars.subsets.flatMap {
           equalVariables => {
             val substitutedClause = clause.substituteOption((variable: Var) =>

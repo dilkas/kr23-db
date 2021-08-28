@@ -17,7 +17,7 @@
 package edu.ucla.cs.starai.forclift.constraints
 
 import collection._
-import scala.language.implicitConversions 
+import scala.language.implicitConversions
 
 import edu.ucla.cs.starai.forclift._
 import util._

@@ -78,7 +78,8 @@ class Clause(
 
   val literalVariables: Set[Var] = atoms.flatMap { _.variables }.toSet
 
-  lazy val constants: Set[Constant] = atoms.flatMap { _.constants }.toSet
+  lazy val constants: Set[Constant] = atoms.flatMap { _.constants }.toSet ++
+    constrs.constants
 
   lazy val predicates = atoms.map { _.predicate }.toSet
 
@@ -87,7 +88,7 @@ class Clause(
   //	}
 
   final val constrs: Constraints = initialConstrs.addMissingConstraints(literalVariables, atoms)
-  
+
   def constrVariables: Set[Var] = constrs.variables
   def allVariables = constrVariables union literalVariables
 
