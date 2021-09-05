@@ -32,6 +32,14 @@ final case class Constraints(
   ineqConstrs: IneqConstr = IneqConstr.empty,
   elemConstrs: ElemConstr = ElemConstr.empty) {
 
+  override def hashCode: Int = {
+    val prime = 31
+    var result = 1
+    result = prime * result + ineqConstrs.size
+    result = prime * result + elemConstrs.size
+    result
+  }
+
   def constants = ineqConstrs.constants
 
   def domains = elemConstrs.domains

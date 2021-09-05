@@ -48,6 +48,22 @@ class Clause(
   val negLits: List[Atom],
   initialConstrs: Constraints = Constraints.empty) {
 
+  def removeConstraints(domain: Domain, constant: Constant): Clause =
+    Clause(posLits, negLits,
+           Constraints(IneqConstr(constrs.ineqConstrs.flatMap {
+                                    case (variable, terms) => terms.flatMap {
+                                      term: Term => if (term != constant)
+                                                      List((variable, term))
+                                                    else List() } }.toList: _*),
+                       constrs.elemConstrs))
+
+  def replaceDomains(domain1: Domain, domain2: Domain): Clause =
+    Clause(posLits, negLits,
+           Constraints(constrs.ineqConstrs, constrs.elemConstrs.map {
+                         case (variable, domain) =>
+                           (variable, if (domain == domain1) domain2
+                                      else domain) }))
+
   def canEqual(a: Any) = a.isInstanceOf[Clause]
 
   override def equals(that: Any): Boolean =
@@ -69,12 +85,11 @@ class Clause(
     posLits.toSet == that.posLits.toSet &&
       negLits.toSet == that.negLits.toSet && constrs == that.constrs
 
-  // TODO (Paulius): need to avoid using altogether
   override def hashCode: Int = {
     val prime = 31
     var result = 1
-    result = prime * result + posLits.hashCode
-    result = prime * result + negLits.hashCode
+    result = prime * result + posLits.size
+    result = prime * result + negLits.size
     result = prime * result + constrs.hashCode
     result
   }

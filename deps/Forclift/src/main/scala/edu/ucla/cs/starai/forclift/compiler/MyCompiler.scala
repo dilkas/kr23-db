@@ -14,7 +14,7 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     extends V1_1Compiler(sizeHint) {
   def tryImprovedDomainRecursion(cnf: CNF) = {
     println("improved domain recursion")
-    println(cnf.toString)
+    println(cnf)
     val domain = cnf.clauses.head.constrs.domainFor(cnf.clauses.head.literalVariables.head)
     val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
     val constant = groundingConstantFor(cnf, domain)
@@ -49,6 +49,45 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     updateCache(cnf, node)
     node.update(List(compile(mixedCNF)))
     Some(node)
+  }
+
+  def tryConstraintRemoval(cnf: CNF): CNF = {
+    for (originalClause <- cnf) {
+      for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
+        val originalDomain = originalClause.constrs.domainFor(variable)
+        for (term <- terms) {
+          term match {
+            case constant: Constant => {
+              // We have a "v != c" constraint. Does it apply to all variables
+              // from the same domain across all clauses? And does c occur in atoms?
+              // I.e., for each clause, for each variable, either domain is
+              // different or there is the same inequality constraint.
+              if (cnf.forall { clause => clause.atoms.forall { atom: Atom =>
+                                !atom.constants.contains(constant) } } &&
+                    cnf.forall { clause => clause.allVariables.forall {
+                                  variable: Var =>
+                                  clause.constrs.domainFor(variable) !=
+                                    originalDomain ||
+                                    clause.constrs.ineqConstrs(variable).
+                                    contains(constant) } }) {
+                val newDomain = originalDomain.subdomain(excludedConstants =
+                                                           Set(constant))
+                val newCnf = CNF(cnf.map { clause =>
+                                   clause.removeConstraints(originalDomain,
+                                                            constant).
+                                     replaceDomains(originalDomain,
+                                                    newDomain) }.toList: _*)
+                println("constraint removal succeeded")
+                println(newCnf)
+                return newCnf
+              }
+            }
+            case _ => {}
+          }
+        }
+      }
+    }
+    cnf
   }
 
   override def inferenceRules: List[InferenceRule] = List(
