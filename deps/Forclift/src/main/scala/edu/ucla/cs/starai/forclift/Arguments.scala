@@ -53,7 +53,7 @@ case class Constant(val value: Any) extends Term {
     this._domain = Some(domain)
     this
   }
-  
+
   override val hashCode = value.hashCode
 
   def domain = _domain

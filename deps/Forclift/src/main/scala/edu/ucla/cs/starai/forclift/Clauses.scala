@@ -52,14 +52,24 @@ class Clause(
 
   override def equals(that: Any): Boolean =
     that match {
-      case that: Clause => {
-        that.canEqual(this) && this.posLits == that.posLits &&
-          this.negLits == that.negLits &&
-          this.constrs == that.constrs
-      }
+      case that: Clause =>
+        allVariables.size == that.allVariables.size &&
+          variableBijections(that).exists { substitute(_).exactlyEquals(that) }
       case _ => false
     }
 
+  def variableBijections(that: Clause): Iterator[Var => Var] =
+    that.allVariables.toList.permutations.map {
+      permutation => {
+        val bijection = (allVariables.toList zip permutation).toMap
+        variable: Var => bijection(variable)
+      } }
+
+  def exactlyEquals(that: Clause): Boolean =
+    posLits.toSet == that.posLits.toSet &&
+      negLits.toSet == that.negLits.toSet && constrs == that.constrs
+
+  // TODO (Paulius): need to avoid using altogether
   override def hashCode: Int = {
     val prime = 31
     var result = 1
@@ -181,11 +191,11 @@ class Clause(
               }
             }
             case Nil => {
-              // substitute and project the atom inequalities to shatter them as well	
+              // substitute and project the atom inequalities to shatter them as well
               // update: do not project!
               // update2: do project?!?!? confused!
               val relevantAtomIneqs = atomConstrs.ineqConstrs.project(atom.variables).substitute(substituteByRes)
-              // remove inequalities already present in this clause	
+              // remove inequalities already present in this clause
               val newIneqs = relevantAtomIneqs -- clause.constrs.ineqConstrs
               shatterIneqConstraints(clause, newIneqs)
             }

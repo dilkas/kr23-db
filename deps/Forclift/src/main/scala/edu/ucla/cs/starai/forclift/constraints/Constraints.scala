@@ -180,7 +180,7 @@ final case class Constraints(
     copy(ineqConstrs = newIneqConstrs, elemConstrs = newElemConstrs)
   }
 
-  // split because the handling of inequality constraints between variables only works when they have the same domain 
+  // split because the handling of inequality constraints between variables only works when they have the same domain
   // method critical for performance
   def hasSolutionAssumingShatteredDomains(domainSizes: DomainSizes): Boolean = {
     assume(!needsIneqDomainShattering)
@@ -193,8 +193,8 @@ final case class Constraints(
     }
     return true
   }
-  
-  // split because the handling of inequality constraints between variables only works when they have the same domain 
+
+  // split because the handling of inequality constraints between variables only works when they have the same domain
   // method critical for performance
   def nbGroundingsAssumingShatteredDomains(domainSizes: DomainSizes): GInt = {
     assume(!needsIneqDomainShattering)
