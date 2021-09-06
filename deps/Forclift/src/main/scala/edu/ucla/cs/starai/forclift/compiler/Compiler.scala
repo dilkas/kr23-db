@@ -142,10 +142,53 @@ abstract class AbstractCompiler extends Compiler {
       domainsVisitor.updateDomains
       nnf
     } else {
-      compile2(cnf)
+      compile2(tryConstraintRemoval(cnf))
     }
   }
 
   def cannotCompile(cnf: CNF): NNFNode
+
+  def tryConstraintRemoval(cnf: CNF): CNF = {
+    for (originalClause <- cnf) {
+      for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
+        println("tryConstraintRemoval: inequality constraints for variable " +
+                  variable)
+        val originalDomain = originalClause.constrs.domainFor(variable)
+        for (term <- terms) {
+          term match {
+            case constant: Constant => {
+              // We have a "v != c" constraint. Does it apply to all variables
+              // from the same domain across all clauses? And does c occur in atoms?
+              // I.e., for each clause, for each variable, either domain is
+              // different or there is the same inequality constraint.
+              println("tryConstraintRemoval: can " + constant +
+                        " be that lucky constant?")
+              if (cnf.forall { clause => clause.atoms.forall { atom: Atom =>
+                                !atom.constants.contains(constant) } } &&
+                    cnf.forall { clause => clause.allVariables.forall {
+                                  variable: Var =>
+                                  clause.constrs.domainFor(variable) !=
+                                    originalDomain ||
+                                    clause.constrs.ineqConstrs(variable).
+                                    contains(constant) } }) {
+                val newDomain = originalDomain.subdomain(excludedConstants =
+                                                           Set(constant))
+                val newCnf = CNF(cnf.map { clause =>
+                                   clause.removeConstraints(originalDomain,
+                                                            constant).
+                                     replaceDomains(originalDomain,
+                                                    newDomain) }.toList: _*)
+                println("constraint removal succeeded")
+                println(newCnf)
+                return newCnf
+              }
+            }
+            case _ => {}
+          }
+        }
+      }
+    }
+    cnf
+  }
 
 }

@@ -32,6 +32,14 @@ final case class Constraints(
   ineqConstrs: IneqConstr = IneqConstr.empty,
   elemConstrs: ElemConstr = ElemConstr.empty) {
 
+  def canEqual(a: Any) = a.isInstanceOf[Constraints]
+
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: Constraints => ineqConstrs == that.ineqConstrs
+      case _ => false
+    }
+
   override def hashCode: Int = {
     val prime = 31
     var result = 1

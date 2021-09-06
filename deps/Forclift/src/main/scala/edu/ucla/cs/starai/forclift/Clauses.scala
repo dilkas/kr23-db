@@ -68,9 +68,12 @@ class Clause(
 
   override def equals(that: Any): Boolean =
     that match {
-      case that: Clause =>
-        allVariables.size == that.allVariables.size &&
+      case that: Clause => {
+        val answer = allVariables.size == that.allVariables.size &&
           variableBijections(that).exists { substitute(_).exactlyEquals(that) }
+        println("Comparing clauses: " + this + " and " + that + ": " + answer)
+        answer
+      }
       case _ => false
     }
 
