@@ -26,15 +26,12 @@ import edu.ucla.cs.starai.forclift._
 object Compiler {
 
   object Builder {
-    // val default: Builder = V1_1Compiler.builder
-    // val defaultWithGrounding: Builder = V1_1Compiler.builderWithGrounding
     val default: Builder = MyCompiler.builder
     val defaultWithGrounding: Builder = MyCompiler.builderWithGrounding
   }
 
   type Builder = ((Domain => Int) => Compiler)
 
-  //def default: Compiler = new V1_1Compiler() with LiftedCompiler
   def default: Compiler = new MyCompiler() with LiftedCompiler
 
   object SizeHints {
@@ -92,7 +89,7 @@ abstract class AbstractCompiler extends Compiler {
     nnfCache.get(cnf).map {
       n: NNFNode => {
         println("Cache hit.")
-        new Ref(cnf, Some(n), "Cache hit.")
+        new Ref(cnf, Some(n), createDomainMap(cnf, n.cnf), "Cache hit.")
       }
     }
   }
@@ -109,14 +106,6 @@ abstract class AbstractCompiler extends Compiler {
   }
 
   def compile2(cnf: CNF): NNFNode = {
-    //    nbCompilationSteps += 1
-    //    println("COMPILING CNF:\n"+cnf)
-    //    println("COMPILATION STEP"+nbCompilationSteps)
-    //    println("CNF SIZE: "+cnf.size)
-    //    if(nbCompilationSteps>2000){
-    //        println("DEBUG")
-    //    }
-    // avoid stack overflow by reducing recursion in compile function
     checkCnfInput(cnf)
     var rules = inferenceRules
     var nnf: NNFNode = null
@@ -171,6 +160,7 @@ abstract class AbstractCompiler extends Compiler {
                                     originalDomain ||
                                     clause.constrs.ineqConstrs(variable).
                                     contains(constant) } }) {
+                // TODO (Paulius): I think this needs to hold more information, e.g., the decrement
                 val newDomain = originalDomain.subdomain(excludedConstants =
                                                            Set(constant))
                 val newCnf = CNF(cnf.map { clause =>
@@ -189,6 +179,14 @@ abstract class AbstractCompiler extends Compiler {
       }
     }
     cnf
+  }
+
+  // TODO (Paulius): rework this.
+  def createDomainMap(cnf1: CNF, cnf2: CNF): Map[Domain, Either[Domain, Int]] = {
+    val variableMap = cnf1.variableBijections(cnf2).find(cnf1.substitute(_).
+                                                           exactlyEquals(cnf2))
+    variableMap.map { case (v1, v2) => (cnf1.constrs.domainFor(v1),
+                                        cnf2.constrs.domainFor(v2)) }
   }
 
 }

@@ -28,7 +28,9 @@ import collection.mutable.ListBuffer
 import breeze.math._
 import edu.ucla.cs.starai.forclift.nnf.visitors.SafeSignLogDoubleWmc
 
-class Ref(val cnf: CNF, var nnfNode: Option[NNFNode], val explanation: String = "") extends NNFNode {
+class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
+          val domainMap: Map[Domain, Either[Domain, Int]],
+          val explanation: String = "") extends NNFNode {
 
   override def update(children : List[NNFNode]) = {
     require(children.length == 1)

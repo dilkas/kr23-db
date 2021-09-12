@@ -17,15 +17,10 @@
 package edu.ucla.cs.starai.forclift
 
 import collection._
+import scala.collection.immutable.Stream
 import edu.ucla.cs.starai.forclift.inference._
 
 final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
-
-  //    assume(!clauses.exists { clause1 =>
-  //        clauses.exists { clause2 =>
-  //            !(clause1 eq clause2) && (clause1.variables intersect clause2.variables).nonEmpty
-  //        }
-  //    })
 
   lazy val self = clauses.toSet
 
@@ -48,10 +43,7 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
   def toLatex(showRootDomains: Boolean = false): String = {
     if (clauses.isEmpty) """$\top$"""
     else {
-      //			if(clauses.size>10) (new CNF(clauses.take(10))).toLatex(showRootDomains)
-      //			else {
       clauses.map { _.toLatex(showRootDomains) }.mkString("""$\begin{array}{c} """, """ \\ """, """ \end{array}$""")
-      //			}
     }
   }
 
@@ -70,7 +62,6 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
   lazy val distinctPositiveUnitClauses = {
     val allCAtoms = clauses.flatMap { _.toPositiveUnitClauses }
     val distinctCAtoms = disjoin(allCAtoms)
-    //	    println("Reduced catoms from "+allCAtoms.size+" to "+distinctCAtoms.size)
     distinctCAtoms
   }
 
@@ -186,45 +177,6 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
     }
   }
 
-  //	def parallel[T](s: Seq[T]) = s.par
-  //	def parallel[T](s: Seq[T]) = s
-
-  //	def separator: Option[Set[Var]] = {
-  //		val allRootVars = clauses.forall{_.rootVars.nonEmpty}
-  //		if(allRootVars){
-  //			val clauseRootVars = clauses.map{_.rootVars.toList}
-  //			def pickSeperator(candidates: List[List[Var]], clauses: List[Clause]) = {
-  //				candidates match{
-  //					case (s :: rest1) :: rest2 => {
-  //						clauses.head.literals
-  //					}
-  //					case Nil :: rest =>
-  //					case Nil => //ready
-  //				}
-  //				
-  //			}
-  //		}else None
-  //	}
-
-  //	def shatterDomain(from: Domain, to1: Domain, to2: Domain) = {
-  //		val splitClauses = clauses.flatMap{_.shatterDomain(from, to1, to2)}
-  //		new CNF(splitClauses)
-  //	}
-
-  //	def shatterLiteralsInternally: CNF = {
-  //	    val literalOption = clauses.view.flatMap{_.toPositiveUnitClauses}.map{_.internalEqualitySplit}.find{_.size > 1}.map{_.first}
-  //	    if(literalOption.isEmpty) this
-  //	    else{
-  //	        val literal = literalOption.get
-  //	        val shLiteral = literal.atom 
-  //		    val shIneqConstr = literal.ineqConstrs
-  //	    	val shElemConstr = literal.elemConstrs
-  //			val shatteredClauses1 = clauses.flatMap{_.shatter(shLiteral, shIneqConstr, shElemConstr)}
-  //			val shatteredClauses2 = shatteredClauses1.flatMap{_.shatterDomains(shLiteral, shIneqConstr, shElemConstr)}
-  //			(new CNF(shatteredClauses2)).shatterLiteralsInternally
-  //        }
-  //	}
-
   def ++(other: CNF) = {
     new CNF(clauses ++ other.clauses)
   }
@@ -245,8 +197,6 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
   }
 
   def simplify(ignoredClauses: Set[Clause] = Set.empty): CNF = {
-    //	    println
-    //	    println("Simplifying "+this)
     val propagatableUnitClauses = clauses.filter { propClause =>
       !ignoredClauses(propClause) && propClause.isUnitClause && clauses.exists { clause =>
         !(clause eq propClause) && !propClause.independent(clause)
@@ -256,16 +206,12 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       def propagate(unitClauses: List[Clause], theory: List[Clause]): (List[Clause], List[Clause]) = unitClauses match {
         case Nil => (Nil, theory)
         case unitClause :: otherUnitClauses => {
-          //                	println("Propagating "+unitClause)
           val unitLiteral = unitClause.atoms.head
           val otherClauses: List[Clause] = theory filterNot (_ == unitClause)
           val propagatedClauses = otherClauses.flatMap { clause =>
             val conditionedClause = clause.condition(unitClause.isPositiveUnitClause, unitLiteral, unitClause.constrs)
-            //                        if(conditionedClause.size <= 1) conditionedClause
-            //                        else List(clause)
             conditionedClause
           }.toList
-          //                    assume(propagatedClauses.forall{unitClause.independent(_)})
           val propagatedOtherUnitClauses = otherUnitClauses.flatMap { _.condition(unitClause.isPositiveUnitClause, unitLiteral, unitClause.constrs) }
           val (propagatedUnitClauses, simplifiedRest) = propagate(propagatedOtherUnitClauses, propagatedClauses)
           (unitClause :: propagatedUnitClauses, simplifiedRest)
@@ -273,28 +219,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       }
       val (propagated, simplifiedRest) = propagate(propagatableUnitClauses, clauses)
       val newCnf = (new CNF(propagated ++ simplifiedRest)).simplify(ignoredClauses ++ propagated)
-      //	        println("SIMPLIFIED")
-      //	        println(this)
-      //	        println("TO")
-      //	        println(newCnf)
-      //	        println
       newCnf
     } else this
   }
-
-  //	def tryNegativeUnitPropagation(cnf: CNF) = {
-  //		val unitClauseOption = cnf.clauses.find{_.isNegativeUnitClause}
-  //		if(unitClauseOption.nonEmpty){
-  //			val unitClause = unitClauseOption.get
-  //			val unitLiteral = unitClause.literals.head
-  //			val otherClauses: List[Clause] = cnf.clauses - unitClause
-  //			val propagatedClauses = otherClauses.flatMap{_.condition(false,unitLiteral, unitClause.ineqConstrs, unitClause.elemConstrs)}
-  //			val branchCnf = new CNF(propagatedClauses)
-  //			val unitCNF = CNF(unitClause)
-  //			val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
-  //			Some(new And(cnf,compile(unitCNF), compile(branchCnf), msg))
-  //		}else None
-  //	}
 
   def independent(other: Clause) = clauses.forall(_.independent(other))
   def dependent(other: Clause) = !independent(other)
@@ -330,5 +257,80 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 object CNF {
 
   def apply(clauses: Clause*) = new CNF(clauses.toList)
+
+  // The first element of each pair is the domain to be compared,
+  // and the second element is its 'origin' domain.
+  type State = (Int, Iterable[(Domain, Domain)])
+
+  final case class DomainNotMatchedException(
+    private val message: String = "",
+    private val cause: Throwable = None.orNull) extends
+      Exception(message, cause)
+
+  def update(state: State): State = (
+    state._1 + 1,
+    state._2.flatMap { candidate => candidate._1.parents.headOption match {
+                        case Some(p)  => Some((p, candidate._2))
+                        case None => None
+                      } }
+  )
+
+  def findDomain(domain: Domain)(state: State): Option[(Domain, Int)] =
+    state._2.find { _._1 == domain } match {
+      case Some(candidate) => Some((candidate._2, state._1))
+      case None => None
+    }
+
+  def postprocess(domainMap: Map[Domain, Domain])
+      : Map[Domain, (Domain, Int)] = {
+    domainMap.map
+    { case (d1, d2) => {
+       val stateStream: Stream[State] = (0, domainMap.keys.map {
+                                           d: Domain => (d, d) } ) #::
+         stateStream.map(update)
+       stateStream.flatMap(findDomain(d2)).headOption match {
+         case Some(d) => (d1, d)
+         case None => throw DomainNotMatchedException()
+       }
+     } }.toMap
+  }
+
+  def identifyRecursion(from: CNF, to: CNF, partialMap: Map[Domain, Domain]):
+      Option[Map[Domain, (Domain, Int)]] = {
+    if (from.hashCode != to.hashCode) {
+      None
+    } else if (from.isEmpty) {
+      try {
+        Some(postprocess(partialMap))
+      } catch {
+        case c: DomainNotMatchedException => None
+      }
+    } else {
+      for (clause1 <- from) {
+        val newFrom = new CNF((from - clause1).toList)
+        for (clause2 <- to.filter { _.hashCode == clause1.hashCode } ) {
+          val newTo = new CNF((to - clause2).toList)
+
+          def myFilter(bijection: Map[Var, Var]): Boolean = bijection.forall {
+            case (v1, v2) => {
+              val d1 = clause1.constrs.domainFor(v1)
+                !partialMap.contains(d1) ||
+                partialMap(d1) == clause2.constrs.domainFor(v2)
+            }
+          }
+
+          for (bijection <- clause1.variableBijections(clause2, myFilter)) {
+            val updatedMap = partialMap ++ clause1.allVariables.map { v =>
+              (clause1.constrs.domainFor(v),
+               clause2.constrs.domainFor(bijection(v))) }
+            identifyRecursion(newFrom, newTo, updatedMap) match {
+              case Some(newMap) => return Some(newMap)
+            }
+          }
+        }
+      }
+      None
+    }
+  }
 
 }

@@ -47,8 +47,6 @@ sealed abstract class Domain {
     subScript: String = "a",
     complementSubScript: String = "b",
     excludedConstants: Set[Constant] = Set.empty): SubDomain = {
-    // bad test, because IPG might introduce a constant not known to the domain
-    //        assume(excludedConstants.forall { knownConstants.contains(_) })
     nbSplitsVar += 1
     new SubDomain(superScript, subScript, this, excludedConstants) {
       override lazy val complement = new ComplementDomain(complementSuperScript, complementSubScript, Domain.this, this, excludedConstants)
@@ -167,17 +165,10 @@ class RootDomain(val name: String, val staticConstants: List[Constant] = List.em
    * Assumes that all constants in excluded are part of the domain.
    */
   def size(domainSizes: DomainSizes, excluded: Set[Constant]): Int = {
-    //assume(excluded.forall{knownConstants.contains(_)}) not true per se, see unit tests
-    //assume(domainSizes(this)>=excluded.size)  not true per se, if domain size is 0
-    //		assume((knownConstants.toSet--excluded).size <= domainSizes(this) - excluded.size)  not true per se, if domain size is 0
     math.max(domainSizes(this).size - excluded.size, 0)
   }
 
   def constants(domainSizes: DomainSizes): List[Constant] = {
-    //val domainSize = domainSizes(this).size
-    //require(!knownConstants.exists(_.toString.startsWith("anon")),
-    //"Cannot ground theory with constants starting with anon")
-    //Stream.concat(knownConstants, Stream.from(1).map { i => Constant("anon" + i) }).take(domainSize).toList
     domainSizes.constants(this)
   }
 
@@ -187,7 +178,6 @@ class RootDomain(val name: String, val staticConstants: List[Constant] = List.em
    */
   def constants(domainSizes: DomainSizes, excluded: Set[Constant]): List[Constant] = {
     val allConstants = constants(domainSizes)
-    // assume(excluded.forall{allConstants.contains(_)}) invalid because of placeholder constants
     val allNonExplicitlyExcludedConstants = allConstants filterNot (excluded.toList.contains(_))
     // drop some elements for placeholder constant
     allNonExplicitlyExcludedConstants.drop((excluded filterNot (allConstants.contains(_))).size)
@@ -223,14 +213,6 @@ object EmptyDomain extends RootDomain("Empty") {
     excludedConstants: Set[Constant]): SubDomain = throw new IllegalStateException
 
 }
-//
-//class ComplexIntersection extends Domain("ComplexIntersection"){
-//	
-//	val name = "Empty"
-//	
-//	override def subdomain(name: String, complementName: String) = throw new IllegalStateException
-//	
-//}
 
 object Universe extends RootDomain("U") {
 
@@ -242,7 +224,7 @@ object Universe extends RootDomain("U") {
 
 }
 
-abstract class SubDomain(val superScript: String, val subScript: String, 
+abstract class SubDomain(val superScript: String, val subScript: String,
     parent: Domain, val excludedConstants: collection.Set[Constant]) extends Domain {
 
   def complement: SubDomain
@@ -264,7 +246,6 @@ abstract class SubDomain(val superScript: String, val subScript: String,
   def size(domainSizes: DomainSizes, excluded: Set[Constant]): Int = {
     assume(excludedConstants.subsetOf(excluded), "Subdomains always have the same minimal set of excluded constants")
     val nbExtraExcluded = excluded.size - excludedConstants.size
-    //assume(domainSizes(this)>=nbExtraExcluded) not true because domainSizes(this) might be 0 after atom counting
     math.max(0, domainSizes(this).size - nbExtraExcluded)
   }
 
