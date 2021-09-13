@@ -285,8 +285,8 @@ object CNF {
       : Map[Domain, (Domain, Int)] = {
     domainMap.map
     { case (d1, d2) => {
-       val stateStream: Stream[State] = (0, domainMap.keys.map {
-                                           d: Domain => (d, d) } ) #::
+       lazy val stateStream: Stream[State] = (0, domainMap.keys.map {
+                                                d: Domain => (d, d) } ) #::
          stateStream.map(update)
        stateStream.flatMap(findDomain(d2)).headOption match {
          case Some(d) => (d1, d)
@@ -295,8 +295,8 @@ object CNF {
      } }.toMap
   }
 
-  def identifyRecursion(from: CNF, to: CNF, partialMap: Map[Domain, Domain]):
-      Option[Map[Domain, (Domain, Int)]] = {
+  def identifyRecursion(from: CNF, to: CNF, partialMap: Map[Domain, Domain] =
+                          Map.empty): Option[Map[Domain, (Domain, Int)]] = {
     if (from.hashCode != to.hashCode) {
       None
     } else if (from.isEmpty) {

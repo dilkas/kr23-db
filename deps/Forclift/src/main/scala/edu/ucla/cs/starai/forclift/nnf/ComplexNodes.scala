@@ -29,7 +29,7 @@ import breeze.math._
 import edu.ucla.cs.starai.forclift.nnf.visitors.SafeSignLogDoubleWmc
 
 class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
-          val domainMap: Map[Domain, Either[Domain, Int]],
+          val domainMap: Map[Domain, (Domain, Int)],
           val explanation: String = "") extends NNFNode {
 
   override def update(children : List[NNFNode]) = {
@@ -46,7 +46,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
       if (NNFNode.smoothingCache.contains(this)) {
         NNFNode.smoothingCache(this)
       } else {
-        val newNode = new Ref(cnf, None, explanation)
+        val newNode = new Ref(cnf, None, domainMap, explanation)
         NNFNode.smoothingCache(this) = newNode
         newNode.update(List(nnfNode.smooth))
         newNode
@@ -66,7 +66,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
     nnfNode match {
       case Some(nnfNode) => {
         val returnValue = new Ref(
-          cnf, Some(NNFNode.conditionCache((nnfNode, pos, neg))), explanation)
+          cnf, Some(NNFNode.conditionCache((nnfNode, pos, neg))), domainMap, explanation)
         NNFNode.conditionCache((this, pos, neg)) = returnValue
         returnValue
       }

@@ -31,10 +31,10 @@ object MljSmokersExperiment extends App {
   dir.mkdirs()
 
   val data = new PrintWriter(new File(dir, "timings.dat"))
-  data.printf("%10s %10s %10s %10s %10s %10s\n", "DomSize", "GradCalls", 
+  data.printf("%10s %10s %10s %10s %10s %10s\n", "DomSize", "GradCalls",
       "CountTime", "CompTime", "InfTime", "LearnTime")
 
-  
+
   for (size <- List(30000,2,2,2,2, 3, 4, 10, 20, 50, 100, 500, 1000, 5000, 10000, 15000, 20000, 25000, 30000)) {
     println(s"Domain size is $size")
 
@@ -46,7 +46,7 @@ Friends(person,person)
 
 !Friends(x,y) v !Smokes(x) v Smokes(y)
 """
-  
+
     val structFile = new PrintWriter(new File(dir, s"struct-$size.mln"))
     structFile.println(structStr)
     structFile.close
@@ -60,7 +60,7 @@ Friends(person,person)
       val smokesDb = smokers.map(s => {s"Smokes(P$s)"}).toSet
       // generate friends
       val friendsOfSmokersDb = smokers.flatMap{s =>
-        // create sparse database 
+        // create sparse database
       	val nbFriends = 1+r.nextInt(3)
       	for(i <- 1 to nbFriends) yield {
       	  if(smokers.nonEmpty && r.nextDouble<0.6 || nonsmokers.isEmpty ){
@@ -87,12 +87,8 @@ Friends(person,person)
       smokesDb.mkString("\n") + friendsOfSmokersDb.mkString("\n") + friendsOfNonSmokersDb.mkString("\n")
     }
 
-    println(s"Database has ${trainingDBStr.lines.size} facts")
-//    val dbFile = new PrintWriter(new File(dir, s"db-$size.db"))
-//    dbFile.println(trainingDBStr)
-//    dbFile.close
-    
-    
+    println(s"Database has ${trainingDBStr.linesIterator.size} facts")
+
     val parser = new MLNParser
     parser.isLearnModus = true
     val structure = parser.parseMLN(structStr)
@@ -106,25 +102,13 @@ Friends(person,person)
     val countTime = learner.countTime
     val inferenceTime = learningTime-learner.countTime
     val numGradientComputations = learner.numGradientComputations
-    
+
     data.println(f"$size%10s $numGradientComputations%10s $countTime%10s $compileTime%10s $inferenceTime%10s $learningTime%10s")
     data.flush
     println(f"$size%10s $numGradientComputations%10s $countTime%10s $compileTime%10s $inferenceTime%10s $learningTime%10s")
-    
+
   }
 
   data.close
   println("done")
 }
-
-//private class NullOutputStream extends OutputStream {
-//    override def write(b: Int){
-//         return;
-//    }
-//    override def write(b: Array[Byte]){
-//         return;
-//    }
-//    override def write(b: Array[Byte], off: Int, len: Int){
-//         return;
-//    }
-//}

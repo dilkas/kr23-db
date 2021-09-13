@@ -24,27 +24,27 @@ import edu.ucla.cs.starai.forclift.languages.ModelParser
 
 
 class FOCNFParser extends ModelParser {
-    
+
   val domainMap = new mutable.HashMap[String, (RootDomain, mutable.HashSet[Constant], Int)]
   // One entry per predicate name because in FOCNF we do not allow predicate overloading
   val predicateMap = new mutable.HashMap[String, Predicate]
   val weightMap = new mutable.HashMap[Predicate, Weights]
   val varMap = new mutable.HashMap[String, Var]
   val atomWeights = new mutable.ListBuffer[(Atom,Weights)]
-  
-  def domainSizes: DomainSizes = { 
+
+  def domainSizes: DomainSizes = {
     val roots = domainMap.values.map {
       case (k, v, s) =>
         (k.asInstanceOf[Domain], DomainSize(s, k.asInstanceOf[Domain], v.toSet))
     }
     roots.toMap
   }
-  
+
   def parseModel(theoryString: String): FOCNF = parse(theoryString)
-  
+
   def predicateWeights: PredicateWeights = weightMap.toMap
   def predicateSet: Set[Predicate] = predicateMap.values.toSet.filterNot(_ == Predicate.eq)
-  
+
   def parseDomain(tokens:List[String], line_nbr:Int): List[Formula] = {
     tokens match {
       case "d" :: r_domain(name) :: r_int(size_str) :: constants_str => {
@@ -71,8 +71,8 @@ class FOCNFParser extends ModelParser {
       }
     }
     Nil
-  } 
-  
+  }
+
   def parseRelation(tokens:List[String], line_nbr:Int): List[Formula] = {
     tokens match {
       case "r" :: entry :: Nil => {
@@ -108,12 +108,12 @@ class FOCNFParser extends ModelParser {
     }
     Nil
   }
-  
+
   def parseWeight(tokens:List[String], line_nbr: Int): List[Formula] = {
     tokens match {
       case "w" :: r_pred(pred_name) :: r_fp(wt) :: r_fp(wf) :: Nil => {
-        val predicate = predicateMap.getOrElse(pred_name, 
-         throw new IllegalStateException(s"ERROR: Unknown predicate: $pred_name (line $line_nbr)")   
+        val predicate = predicateMap.getOrElse(pred_name,
+         throw new IllegalStateException(s"ERROR: Unknown predicate: $pred_name (line $line_nbr)")
         )
         val weights = Weights(wt.toDouble, wf.toDouble)
         weightMap.put(predicate, weights)
@@ -132,8 +132,8 @@ class FOCNFParser extends ModelParser {
               }
               Constant(term_str)
             }
-            val predicate = predicateMap.getOrElse(pred_name, 
-             throw new IllegalStateException(s"ERROR: Unknown predicate: $pred_name (line $line_nbr)")   
+            val predicate = predicateMap.getOrElse(pred_name,
+             throw new IllegalStateException(s"ERROR: Unknown predicate: $pred_name (line $line_nbr)")
             )
             val ws = Weights(wt.toDouble,wf.toDouble)
             val atom = predicate(terms:_*)
@@ -150,7 +150,7 @@ class FOCNFParser extends ModelParser {
     }
     Nil
   }
-  
+
   def parseFormula(tokens:List[String], line_nbr:Int): List[Formula] = {
     //println("parseFormula: "+tokens.mkString(","))
     val (quants_str, lits_str) = tokens.partition{entity => entity(0) == '?' || entity(0) == '!'}
@@ -163,7 +163,7 @@ class FOCNFParser extends ModelParser {
     }
     val rlits_formula = lits_formula.reverse
     val lit_formula = rlits_formula.tail.foldLeft(rlits_formula.head){(r,c) => new DisjFormula(c,r)}
-    
+
     val quant_formula = quants_str.foldRight(lit_formula){(c,r) =>
       val quant = c.head
       val var_str = c.tail
@@ -175,13 +175,13 @@ class FOCNFParser extends ModelParser {
         case '!' => {
           new ForallFormula(variable :: Nil, r)
         }
-      }  
+      }
     }
     quant_formula :: Nil
   }
-  
+
   def parseAtom(atomString:String): Atom = parseAtom(atomString,0)
-  
+
   def parseAtom(atom_str:String, line_nbr:Int): Atom = {
     //println(s"Parsing atom: $atom_str")
     val tokens = tokenizeEntry(atom_str, line_nbr, 0)
@@ -216,7 +216,7 @@ class FOCNFParser extends ModelParser {
       }
     }
   }
-  
+
   val r_whitespace = """[ \t]""".r
   val r_quote = """["']""".r
   val r_symbol = """([-?!])""".r
@@ -226,7 +226,7 @@ class FOCNFParser extends ModelParser {
   val r_var = """([a-z][a-zA-Z0-9_-]*)""".r
   val r_int = """([0-9][0-9]*)""".r
   val r_fp = """([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)""".r
-  
+
   def tokenizeLine(line:String, line_nbr:Int): List[String] = {
     val (tokens,token,quote,paren) = line.zipWithIndex.foldLeft((List[String](),"",0,0)){(r,c) =>
       (r,c) match {
@@ -238,7 +238,7 @@ class FOCNFParser extends ModelParser {
         case ((l,t ,0,0),(r_whitespace(),_)) => (t::l,""    ,0,0)
         case ((l,t ,q,p),(c  ,_))            => (l   ,t+c   ,q,p)
         case (_,(_,n)) => {
-          throw new IllegalStateException(s"ERROR: Illegal symbol: $c ($line_nbr:$n)") 
+          throw new IllegalStateException(s"ERROR: Illegal symbol: $c ($line_nbr:$n)")
         }
       }
     }
@@ -248,7 +248,7 @@ class FOCNFParser extends ModelParser {
     val alltokens = token::tokens
     alltokens.reverse
   }
-  
+
   def tokenizeEntry(line:String, line_nbr:Int, line_offset:Int): List[String] = {
     val (tokens,token,quote,paren) = line.zipWithIndex.foldLeft((List[String](),"",0,0)){(r,c) =>
       (r,c) match {
@@ -263,7 +263,7 @@ class FOCNFParser extends ModelParser {
         case ((l,t ,0,p),(r_whitespace(),_)) => (t::l       ,""    ,0,p)
         case ((l,t ,q,p),(c  ,_))            => (l          ,t+c   ,q,p)
         case (_,(_,n)) => {
-          throw new IllegalStateException(s"ERROR: Illegal symbol: $c ($line_nbr:${line_offset+n}") 
+          throw new IllegalStateException(s"ERROR: Illegal symbol: $c ($line_nbr:${line_offset+n}")
         }
       }
     }
@@ -276,7 +276,7 @@ class FOCNFParser extends ModelParser {
     }
     alltokens.reverse
   }
-  
+
   def parseLine(line: String, line_nbr: Int): List[Formula] = {
     val tokens = tokenizeLine(line, line_nbr)
     tokens match {
@@ -288,10 +288,10 @@ class FOCNFParser extends ModelParser {
       case _   => {parseFormula(tokens, line_nbr)}          // Formula
     }
   }
-  
+
 
   def parse(theoryStr: String): FOCNF = {
-    val lines = theoryStr.lines.map{_.trim}.zipWithIndex.filter{case (line,nbr) => line.nonEmpty}
+    val lines = theoryStr.linesIterator.map{_.trim}.zipWithIndex.filter{case (line,nbr) => line.nonEmpty}
     val formulas = lines.flatMap{case (line,nbr) => parseLine(line, nbr+1)}.toList
     val formulas2 = formulas.map(_.standardizeApart)
     FOCNF(formulas2,

@@ -77,20 +77,27 @@ trait LiftedCompiler extends AbstractCompiler {
 
 abstract class AbstractCompiler extends Compiler {
 
-  val nnfCache = new mutable.HashMap[CNF, NNFNode]
+  // Partition CNFs w.r.t. hash codes
+  val nnfCache = new mutable.HashMap[Int, List[(CNF, NNFNode)]]
 
   def updateCache(cnf: CNF, nnf: NNFNode) {
     assume(nnf != null)
-    if (!nnfCache.contains(cnf)) nnfCache(cnf) = nnf
+    if (!nnfCache(cnf.hashCode).exists { case (theory, _) => theory == cnf } )
+      nnfCache(cnf.hashCode) = (cnf, nnf) :: nnfCache(cnf.hashCode)
   }
 
-  def tryCache(cnf: CNF) = {
-    println("The cache has " + nnfCache.size + " elements.");
-    nnfCache.get(cnf).map {
-      n: NNFNode => {
+  def tryCache(cnf: CNF): Option[NNFNode] = {
+    println("The cache has " + nnfCache.size + " buckets.");
+    nnfCache(cnf.hashCode).flatMap { case (theory, circuit) =>
+      CNF.identifyRecursion(cnf, theory) match {
+        case Some(recursion) => Some((circuit, recursion))
+        case None => None
+      } }.headOption match {
+      case Some(results) => {
         println("Cache hit.")
-        new Ref(cnf, Some(n), createDomainMap(cnf, n.cnf), "Cache hit.")
+        Some(new Ref(cnf, Some(results._1), results._2, "Cache hit."))
       }
+      case None => None
     }
   }
 
@@ -179,14 +186,6 @@ abstract class AbstractCompiler extends Compiler {
       }
     }
     cnf
-  }
-
-  // TODO (Paulius): rework this.
-  def createDomainMap(cnf1: CNF, cnf2: CNF): Map[Domain, Either[Domain, Int]] = {
-    val variableMap = cnf1.variableBijections(cnf2).find(cnf1.substitute(_).
-                                                           exactlyEquals(cnf2))
-    variableMap.map { case (v1, v2) => (cnf1.constrs.domainFor(v1),
-                                        cnf2.constrs.domainFor(v2)) }
   }
 
 }
