@@ -43,8 +43,12 @@ import util._
 class DomainSize(
   val size: Int,
   val constants: Set[Constant] = Set()) {
+  def reduceSize(n: Int) = if (n <= size) {
+    new DomainSize(size - n, constants)
+  } else {
+    throw new DomainSize.CantShrinkDomainException()
+  }
   def +(s: DomainSize) = {
-    //require(domain == s.domain)
     new DomainSize(size + s.size, constants ++ s.constants)
   }
   def isEmpty = (size == 0)
@@ -52,6 +56,10 @@ class DomainSize(
 }
 
 object DomainSize {
+  final case class CantShrinkDomainException(private val message: String = "",
+                                             private val cause: Throwable =
+                                               None.orNull)
+      extends Exception(message, cause)
   def apply(
     givenSize: Int,
     domain: Domain,
@@ -77,17 +85,6 @@ class DomainSizes(
   val useExplicitConstants: Boolean = false) extends MapProxy[Domain, DomainSize] {
 
   // Check invariants
-  // TODO what are the invariants for non-rootdomains?
-
-  // don't require, enforce!
-  //require(this.forall{
-  //case (domain:RootDomain, domainSize) =>
-  //domain.staticConstants.forall{ constant =>
-  //domainSize.constants.contains(constant)
-  //}
-  //case _ => true
-  //}, "Invariant failed:\n"+
-  //"Domain.staticConstants is not a subset of explicit constants")
 
   require(this.forall {
     case (domain: RootDomain, domainSize) =>
@@ -99,13 +96,12 @@ class DomainSizes(
   }, "Invariant failed:\n" +
     "Domain.dynamicConstants overlaps with explicit constants in domain size")
 
-  // HACK: allow for fewer domain elements than there are dynamic constants, 
+  // HACK: allow for fewer domain elements than there are dynamic constants,
   // but then assume the dynamic constants are not in the domain somehow.
   assume(this.forall {
     case (domain: RootDomain, domainSize) => {
       // only for root domains!
-      //	    val invsat = domainSize.size >= domain.staticConstants.size+domain.dynamicConstants.size
-      val invsat = domainSize.size >= domain.staticConstants.size //+domain.dynamicConstants.size
+      val invsat = domainSize.size >= domain.staticConstants.size
       if (!invsat) {
         println(domainSize.size + " < " + domain.staticConstants.mkString("[", ",", "]") + " union " + domain.dynamicConstants.mkString("[", ",", "]"))
       }
@@ -124,11 +120,11 @@ class DomainSizes(
   def asExplicitConstants = copy(useExplicitConstants = true)
   def asStaticConstants = copy(useExplicitConstants = false)
 
-  
+
   def +(d: Domain, s: Int) = {
     copy(self = self + (d -> DomainSize(s,d)))
   }
-  
+
   def +(kv: (Domain, Int)) = {
     val kvd: (Domain, DomainSize) = (kv._1, DomainSize(kv._2, kv._1))
     copy(self = self + kvd)
@@ -140,7 +136,6 @@ class DomainSizes(
 
   override def toString = self.iterator.map {
     case (d, s) =>
-      //"domain "+d+" "+s +" "+ d.knownConstants.mkString("{",",","}")
       "domain " + d + " " + s
   }.mkString("\n")
 
@@ -227,6 +222,11 @@ class DomainSizes(
       Some(empty)
     }
   }
+
+  def shrink(domainMap: Map[Domain, (Domain, Int)]): DomainSizes =
+    new DomainSizes(map { case (domain, size) =>
+                      (domain, self(domainMap(domain)._1).
+                         reduceSize(domainMap(domain)._2)) }.toMap)
 }
 
 object DomainSizes {

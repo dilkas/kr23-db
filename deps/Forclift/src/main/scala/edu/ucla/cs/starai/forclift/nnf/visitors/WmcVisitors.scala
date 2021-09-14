@@ -17,6 +17,7 @@
 package edu.ucla.cs.starai.forclift.nnf.visitors
 
 import scala.language.implicitConversions
+import edu.ucla.cs.starai.forclift.inference.DomainSize
 import edu.ucla.cs.starai.forclift.inference.DomainSizes
 import edu.ucla.cs.starai.forclift.inference.PredicateWeights
 import edu.ucla.cs.starai.forclift.nnf._
@@ -183,11 +184,13 @@ protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights),
     }
   }
 
-  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    ref.nnfNode match {
-      case Some(nnfNode) => visit(nnfNode, params)
-      case None => throw new Exception("you forgot to call update()")
-    }
+  protected def visitRefNode(ref: Ref,
+                             params: (DomainSizes, PredicateWeights))
+      : LogDouble = try {
+    val newDomainSizes = params._1.shrink(ref.domainMap)
+    visit(ref.nnfNode.get, (newDomainSizes, params._2))
+  } catch {
+    case e: DomainSize.CantShrinkDomainException => 0
   }
 
   protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
@@ -487,11 +490,12 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
     }
   }
 
-  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    ref.nnfNode match {
-      case Some(nnfNode) => visit(nnfNode, params)
-      case None => throw new Exception("you forgot to call update()")
-    }
+  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = try {
+    val newDomainSizes = params._1.shrink(ref.domainMap)
+    visit(ref.nnfNode.get, (newDomainSizes, params._2))
+  } catch {
+    case e: DomainSize.CantShrinkDomainException => 0
   }
 
   protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
@@ -915,11 +919,12 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
     }
   }
 
-  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights)): BigInt = {
-    ref.nnfNode match {
-      case Some(nnfNode) => visit(nnfNode, params)
-      case None => throw new Exception("you forgot to call update()")
-    }
+  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights))
+      : BigInt = try {
+    val newDomainSizes = params._1.shrink(ref.domainMap)
+    visit(ref.nnfNode.get, (newDomainSizes, params._2))
+  } catch {
+    case e: DomainSize.CantShrinkDomainException => 0
   }
 
   protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
