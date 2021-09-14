@@ -66,16 +66,23 @@ class Clause(
 
   def canEqual(a: Any) = a.isInstanceOf[Clause]
 
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: Clause => {
-        val answer = allVariables.size == that.allVariables.size &&
-          variableBijections(that).exists { substitute(_).exactlyEquals(that) }
-        println("Comparing clauses: " + this + " and " + that + ": " + answer)
-        answer
-      }
-      case _ => false
-    }
+  // override def equals(that: Any): Boolean =
+  //   that match {
+  //     case that: Clause => {
+  //       val answer = allVariables.size == that.allVariables.size &&
+  //         variableBijections(that).exists { substitute(_).exactlyEquals(that) }
+
+  //       println("Comparing clauses: " + this + " and " + that + ": " + answer)
+  //       try {
+  //       throw new Exception()
+  //       } catch {
+  //         case e: Exception => e.printStackTrace();
+  //       }
+
+  //       answer
+  //     }
+  //     case _ => false
+  //   }
 
   def variableBijections(that: Clause,
                          condition: Map[Var, Var] => Boolean = (_ => true))
@@ -88,9 +95,11 @@ class Clause(
       }
     }
 
-  def exactlyEquals(that: Clause): Boolean =
-    posLits.toSet == that.posLits.toSet &&
-      negLits.toSet == that.negLits.toSet && constrs == that.constrs
+  override def equals(that: Any): Boolean = that match {
+    case that: Clause => posLits.toSet == that.posLits.toSet &&
+        negLits.toSet == that.negLits.toSet && constrs == that.constrs
+    case _ => false
+  }
 
   override def hashCode: Int = {
     val prime = 31

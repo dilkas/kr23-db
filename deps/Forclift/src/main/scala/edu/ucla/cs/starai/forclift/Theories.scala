@@ -276,31 +276,36 @@ object CNF {
   )
 
   def findDomain(domain: Domain)(state: State): Option[(Domain, Int)] =
-    state._2.find { _._1 == domain } match {
-      case Some(candidate) => Some((candidate._2, state._1))
-      case None => None
+    if (state._2.isEmpty) {
+      throw DomainNotMatchedException()
+    } else {
+      state._2.find { _._1 == domain } match {
+        case Some(candidate) => Some((candidate._2, state._1))
+        case None => None
+      }
     }
 
   def postprocess(domainMap: Map[Domain, Domain])
-      : Map[Domain, (Domain, Int)] = {
-    domainMap.map
-    { case (d1, d2) => {
-       lazy val stateStream: Stream[State] = (0, domainMap.keys.map {
-                                                d: Domain => (d, d) } ) #::
-         stateStream.map(update)
-       stateStream.flatMap(findDomain(d2)).headOption match {
-         case Some(d) => (d1, d)
-         case None => throw DomainNotMatchedException()
-       }
-     } }.toMap
-  }
+      : Map[Domain, (Domain, Int)] = domainMap.map
+  { case (d1, d2) => {
+     lazy val stateStream: Stream[State] = (0, domainMap.keys.map {
+                                              d: Domain => (d, d) } ) #::
+       stateStream.map(update)
+     stateStream.flatMap(findDomain(d2)).headOption match {
+       case Some(d) => (d1, d)
+       case None => throw DomainNotMatchedException()
+     }
+   } }.toMap
 
   def identifyRecursion(from: CNF, to: CNF, partialMap: Map[Domain, Domain] =
                           Map.empty): Option[Map[Domain, (Domain, Int)]] = {
+    println("Comparing " + from + " to " + to)
     if (from.hashCode != to.hashCode) {
+      println("...different")
       None
     } else if (from.isEmpty) {
       try {
+        println("Postprocessing " + partialMap)
         Some(postprocess(partialMap))
       } catch {
         case c: DomainNotMatchedException => None
@@ -323,12 +328,15 @@ object CNF {
             val updatedMap = partialMap ++ clause1.allVariables.map { v =>
               (clause1.constrs.domainFor(v),
                clause2.constrs.domainFor(bijection(v))) }
-            identifyRecursion(newFrom, newTo, updatedMap) match {
-              case Some(newMap) => return Some(newMap)
+            val recursion = identifyRecursion(newFrom, newTo, updatedMap)
+            if (recursion.isDefined) {
+              println("...compatible!")
+              return recursion
             }
           }
         }
       }
+      println("...different")
       None
     }
   }

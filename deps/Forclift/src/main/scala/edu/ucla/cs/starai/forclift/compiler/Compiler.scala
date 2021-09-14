@@ -82,22 +82,28 @@ abstract class AbstractCompiler extends Compiler {
 
   def updateCache(cnf: CNF, nnf: NNFNode) {
     assume(nnf != null)
-    if (!nnfCache(cnf.hashCode).exists { case (theory, _) => theory == cnf } )
-      nnfCache(cnf.hashCode) = (cnf, nnf) :: nnfCache(cnf.hashCode)
+    if (!nnfCache.contains(cnf.hashCode) || !nnfCache(cnf.hashCode).exists {
+          case (theory, _) => theory == cnf } )
+      nnfCache(cnf.hashCode) = (cnf, nnf) ::
+        nnfCache.getOrElse(cnf.hashCode, List[(CNF, NNFNode)]())
   }
 
   def tryCache(cnf: CNF): Option[NNFNode] = {
     println("The cache has " + nnfCache.size + " buckets.");
-    nnfCache(cnf.hashCode).flatMap { case (theory, circuit) =>
-      CNF.identifyRecursion(cnf, theory) match {
-        case Some(recursion) => Some((circuit, recursion))
+    if (!nnfCache.contains(cnf.hashCode)) {
+      None
+    } else {
+      nnfCache(cnf.hashCode).flatMap { case (theory, circuit) =>
+        CNF.identifyRecursion(cnf, theory) match {
+          case Some(recursion) => Some((circuit, recursion))
+          case None => None
+        } }.headOption match {
+        case Some(results) => {
+          println("Cache hit.")
+          Some(new Ref(cnf, Some(results._1), results._2, "Cache hit."))
+        }
         case None => None
-      } }.headOption match {
-      case Some(results) => {
-        println("Cache hit.")
-        Some(new Ref(cnf, Some(results._1), results._2, "Cache hit."))
       }
-      case None => None
     }
   }
 
