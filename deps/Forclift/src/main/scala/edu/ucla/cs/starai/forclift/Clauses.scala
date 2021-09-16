@@ -66,24 +66,6 @@ class Clause(
 
   def canEqual(a: Any) = a.isInstanceOf[Clause]
 
-  // override def equals(that: Any): Boolean =
-  //   that match {
-  //     case that: Clause => {
-  //       val answer = allVariables.size == that.allVariables.size &&
-  //         variableBijections(that).exists { substitute(_).exactlyEquals(that) }
-
-  //       println("Comparing clauses: " + this + " and " + that + ": " + answer)
-  //       try {
-  //       throw new Exception()
-  //       } catch {
-  //         case e: Exception => e.printStackTrace();
-  //       }
-
-  //       answer
-  //     }
-  //     case _ => false
-  //   }
-
   def variableBijections(that: Clause,
                          condition: Map[Var, Var] => Boolean = (_ => true))
       : Iterator[Var => Var] =
@@ -711,7 +693,16 @@ class PositiveUnitClause(
     this.needsShattering(other.atom, other.constrs)
     && !other.needsShattering(this.atom, this.constrs))
 
-  // equals requires corresponding hashCode! cannot do that easily
+  override def canEqual(a: Any) = a.isInstanceOf[PositiveUnitClause]
+
+  override def equals(that: Any): Boolean = that match {
+    case that: PositiveUnitClause => atom == that.atom &&
+        constrs == that.constrs
+    case _ => false
+  }
+
+  override def hashCode: Int = (atom, constrs).hashCode
+
   def equivalent(other: PositiveUnitClause) = {
     val equivalent = ((this eq other) || (!this.independent(other) &&
       !this.needsShattering(other.atom, other.constrs) &&

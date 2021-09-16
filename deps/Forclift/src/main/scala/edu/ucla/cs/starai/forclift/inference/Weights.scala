@@ -30,19 +30,19 @@ import util._
  * Keep track of weights, both natural and log space.
  */
 abstract class Weights {
-  
+
   def posW: SignLogDouble
   def negW: SignLogDouble
   def negWPlusPosW: SignLogDouble
-  
+
   def posWDouble: Double
   def negWDouble: Double
   def negWPlusPosWDouble: Double
-  
+
   def posWLogDouble: LogDouble
   def negWLogDouble: LogDouble
   def negWPlusPosWLogDouble: LogDouble
-  
+
   override def toString = "[" + posWDouble + "," + negWDouble + "]"
 }
 
@@ -76,6 +76,8 @@ final case class WeightsFromLog(val posW: SignLogDouble, val negW: SignLogDouble
 
 class PredicateWeights(val self: Map[Predicate, Weights] = Map.empty) extends MapProxy[Predicate, Weights] {
 
+  println("Initializing a predicate weight map: " + toString)
+
   override def toString = self.iterator.map {
     case (p, w) =>
       val domains = if (p.domains.nonEmpty) p.domains.mkString("(", ",", ")") else ""
@@ -85,7 +87,6 @@ class PredicateWeights(val self: Map[Predicate, Weights] = Map.empty) extends Ma
   def predicates = keySet
 
   def logInterpretationWeight(literals: Set[UnitClause]): SignLogDouble = {
-    //println("weight of "+literals.mkString(" & ")+ " for "+this)
     literals.foldLeft(SignLogDouble.one) { (weight, literal) =>
       literal match {
         case _: PositiveUnitClause => weight * self(literal.atom.predicate).posW

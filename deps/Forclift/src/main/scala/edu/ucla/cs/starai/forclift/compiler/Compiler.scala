@@ -89,7 +89,6 @@ abstract class AbstractCompiler extends Compiler {
   }
 
   def tryCache(cnf: CNF): Option[NNFNode] = {
-    println("The cache has " + nnfCache.size + " buckets.");
     if (!nnfCache.contains(cnf.hashCode)) {
       None
     } else {
@@ -99,7 +98,11 @@ abstract class AbstractCompiler extends Compiler {
           case None => None
         } }.headOption match {
         case Some(results) => {
-          println("Cache hit.")
+          println("\nCache hit: " + results._2)
+          println("Before:")
+          println(cnf)
+          println("After:")
+          println(results._1.cnf + "\n")
           Some(new Ref(cnf, Some(results._1), results._2, "Cache hit."))
         }
         case None => None
@@ -153,8 +156,6 @@ abstract class AbstractCompiler extends Compiler {
   def tryConstraintRemoval(cnf: CNF): CNF = {
     for (originalClause <- cnf) {
       for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
-        println("tryConstraintRemoval: inequality constraints for variable " +
-                  variable)
         val originalDomain = originalClause.constrs.domainFor(variable)
         for (term <- terms) {
           term match {
@@ -163,8 +164,6 @@ abstract class AbstractCompiler extends Compiler {
               // from the same domain across all clauses? And does c occur in atoms?
               // I.e., for each clause, for each variable, either domain is
               // different or there is the same inequality constraint.
-              println("tryConstraintRemoval: can " + constant +
-                        " be that lucky constant?")
               if (cnf.forall { clause => clause.atoms.forall { atom: Atom =>
                                 !atom.constants.contains(constant) } } &&
                     cnf.forall { clause => clause.allVariables.forall {
@@ -181,8 +180,8 @@ abstract class AbstractCompiler extends Compiler {
                                                             constant).
                                      replaceDomains(originalDomain,
                                                     newDomain) }.toList: _*)
-                println("constraint removal succeeded")
-                println(newCnf)
+                println("\nconstraint removal succeeded")
+                println(newCnf + "\n")
                 return newCnf
               }
             }

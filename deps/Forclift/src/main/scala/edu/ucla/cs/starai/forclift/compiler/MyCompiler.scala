@@ -13,8 +13,6 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
                             Compiler.SizeHints.unknown(_))
     extends V1_1Compiler(sizeHint) {
   def tryImprovedDomainRecursion(cnf: CNF) = {
-    println("improved domain recursion")
-    println(cnf)
     val domain = cnf.clauses.head.constrs.domainFor(cnf.clauses.head.literalVariables.head)
     val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
     val constant = groundingConstantFor(cnf, domain)
@@ -43,8 +41,8 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     val headVar1 = cnf.clauses.head.literalVariables.head
     val headVar2 = (cnf.clauses.head.literalVariables - headVar1).head
     val msg = "Domain recursion on $" + domain + "$"
-    println("mixed CNF:")
-    println(mixedCNF)
+    println("\nimproved domain recursion")
+    println(mixedCNF + "\n")
     val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs, domain, msg)
     updateCache(cnf, node)
     node.update(List(compile(mixedCNF)))

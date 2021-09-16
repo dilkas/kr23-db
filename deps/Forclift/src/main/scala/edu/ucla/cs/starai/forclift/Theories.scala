@@ -297,15 +297,14 @@ object CNF {
      }
    } }.toMap
 
+  // TODO (Paulius): may need some additional common-sense checks
   def identifyRecursion(from: CNF, to: CNF, partialMap: Map[Domain, Domain] =
                           Map.empty): Option[Map[Domain, (Domain, Int)]] = {
-    println("Comparing " + from + " to " + to)
     if (from.hashCode != to.hashCode) {
-      println("...different")
+      println("different: " + from + " AND " + to)
       None
     } else if (from.isEmpty) {
       try {
-        println("Postprocessing " + partialMap)
         Some(postprocess(partialMap))
       } catch {
         case c: DomainNotMatchedException => None
@@ -324,19 +323,22 @@ object CNF {
             }
           }
 
-          for (bijection <- clause1.variableBijections(clause2, myFilter)) {
+          for {
+            bijection <- clause1.variableBijections(clause2, myFilter)
+            if clause1.substitute(bijection) == clause2
+          } {
             val updatedMap = partialMap ++ clause1.allVariables.map { v =>
               (clause1.constrs.domainFor(v),
                clause2.constrs.domainFor(bijection(v))) }
             val recursion = identifyRecursion(newFrom, newTo, updatedMap)
             if (recursion.isDefined) {
-              println("...compatible!")
+              println("compatible: " + from + " AND " + to)
               return recursion
             }
           }
         }
       }
-      println("...different")
+      println("different: " + from + " AND " + to)
       None
     }
   }

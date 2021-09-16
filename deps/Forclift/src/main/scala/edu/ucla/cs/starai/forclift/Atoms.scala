@@ -24,11 +24,17 @@ import constraints._
 final case class Predicate(
   val name: Symbol,
   val arity: Int,
-  //TODO omit from equality???
   val domains: Seq[RootDomain]) {
 
   def this(name: Symbol, arity: Int) = {
     this(name, arity, Array.fill(arity)(Universe))
+  }
+
+  def canEqual(a: Any) = a.isInstanceOf[Predicate]
+
+  override def equals(that: Any): Boolean = that match {
+    case that: Predicate => name == that.name && arity == that.arity
+    case _ => false
   }
 
   override val hashCode = name.hashCode * 41 + arity.hashCode
@@ -70,6 +76,16 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
     else predicate.domains(args.indexOf(v))
   }
 
+  def canEqual(a: Any) = a.isInstanceOf[Atom]
+
+  override def equals(that: Any): Boolean = that match {
+    case that: Atom => {
+      println("Comparing " + this + " and " + that + ". Predicates equal: " + (predicate == that.predicate) + ", args equal: " + (args == that.args))
+      predicate == that.predicate && args == that.args
+    }
+    case _ => false
+  }
+
   def objectHashCode = super.hashCode
 
   override val hashCode = (predicate, args).hashCode
@@ -82,22 +98,6 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
 
   def unify(other: Atom): Option[List[EquivalenceClass]] = {
     unifyInternal(other)
-    //		val result = getCachedUnificationResult(other)
-    //		if(result != null){
-    ////			CacheStats.hit
-    //			result
-    //		}else {
-    //			val result2 = other.getCachedUnificationResult(this)
-    //			if(result2 != null){
-    ////				CacheStats.hit
-    //				result2
-    //			}else {
-    ////				CacheStats.miss
-    //				val newResult = unifyInternal(other)
-    //				unificationCache.put(other, newResult)
-    //				newResult
-    //			}
-    //		}
   }
 
   /**
@@ -182,17 +182,6 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
               ||
               (thisConstrs.differentConstants(eqClass)
                 == atomConstrs.differentConstants(eqClass)))
-            //                        if (!correct) {
-            //                            // find out what's wrong
-            //                            val badDomain = allDomains.find { domain =>
-            //                                !(
-            //                                    domain.isInstanceOf[RootDomain] ||
-            //                                    otherConstants.forall(domain.asInstanceOf[SubDomain].excludedConstants.contains(_)))
-            //                            }
-            //                            println(badDomain);
-            //                            println(thisConstrs.differentConstants(eqClass) +" == "+atomConstrs.differentConstants(eqClass));
-            //                            println("BUG")
-            //                        }
             correct
           }, "If an equality class.contains(_) a inequality constraint on a constant, " +
             "1) the domains of the other variables should be root or exclude the constant" +
@@ -270,9 +259,7 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
                       }
                     })
                 }
-              } //not possible?
-              //						 				&& !((new EquivalenceClass(eqClass1)).project(atom.variables).sharedDomain(atomElems) 
-              //						 					disjoint (new EquivalenceClass(eqClass2)).project(atom.variables).sharedDomain(atomElems))
+              }
               )
           } else false
         }
@@ -288,41 +275,6 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
       case Some(eqClasses) =>
         val shattering = needsNormalShattering(atom, eqClasses, atomConstrs, thisConstrs)
         if (shattering) {
-          // assumption incorrect, because during smoothing, one might subtract f(X,Y),X!=Y,X\inD_1 from f(X,Y)
-          //						assume(!eqClasses.exists{ eqClass => 
-          //							val eqClassVarsAtom = eqClass.variables intersect atom.variables
-          //							val eqClassVarsThis = eqClass.variables intersect this.variables
-          //							if(eqClassVarsAtom.isEmpty || eqClassVarsThis.isEmpty) {
-          //							    false
-          //							}else{
-          //							 	val atomSubDomain = eqClass.project(atom.variables).sharedDomain(atomElems)
-          //							 	val thisDomains = thisElems.domains(eqClassVarsThis)
-          //							 	if(thisDomains.exists{_.superDomain(atomSubDomain)}){
-          //							 	    println("DEBUG")
-          //							 	}
-          //							 	thisDomains.exists{_.superDomain(atomSubDomain)}
-          //							}
-          //						})
-          // assumption incorrect, because during smoothing, one might subtract f(X,Y),X!=Y,X\inD_1 from f(X,Y)
-          //						assume(eqClasses.forall{eqClass => 
-          //							val allElemConstrs = atomElems join thisElems
-          //							val allDomains = eqClass.variables.map(allElemConstrs(_))
-          //							if(!allDomains.forall{_.isInstanceOf[RootDomain]}){
-          //							    println("DEBUG")
-          //							}
-          //							allDomains.forall{_.isInstanceOf[RootDomain]}
-          //						}, "If inequality shattering is needed, the domains of the variables should be root.")
-
-          // next assumption is removed because now domains are intersected when variables are unified
-          //					    // assume domains are equal
-          //					    assume(eqClasses.forall{eqClass => 
-          //							val allElemConstrs = atomElems join thisElems
-          //							val allDomains = eqClass.variables.map(allElemConstrs(_))
-          //							if(allDomains.toSet.size != 1){
-          //							    println("DEBUG")
-          //							}
-          //							allDomains.toSet.size == 1
-          //						}, "If inequality shattering is needed, the domains of the variables should be identical. This is required because users of this method assume that. They don't merge different domains.")
           Some(eqClasses)
         } else None
       case None => None
@@ -349,8 +301,6 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
           }
         })
         if (shattering) {
-          // this assumption no longer holds, because you can do domain shattering for f(X,X) w.r.t. f(Z,Y), when Z and Y are in a subdomain
-          //assume(eqClasses.forall { _.size == 2 }, "After inequality shattering, equivalence classes should always be over 2 variables. Because inequality shattering introduces inequality constraints to enforce this.")
           Some(eqClasses)
         } else None
       case None => None
