@@ -60,6 +60,8 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
 
   assume(predicate.arity == args.length)
 
+  def samePredicates(that: Atom): Boolean = (predicate == that.predicate)
+
   val variables = args.collect { case v: Var => v }.toSet
 
   val constants = args.collect { case c: Constant => c }.toSet
@@ -76,13 +78,18 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
     else predicate.domains(args.indexOf(v))
   }
 
+  /** Returns a kind of signature of the atom that is used for equality testing
+    up to variable names. None means that the position is occupied by a
+    constant. */
+  def domains(constraints: Constraints): Seq[Option[Domain]] = args.map {
+    case v: Var => Some(constraints.domainFor(v))
+    case _ => None
+  }
+
   def canEqual(a: Any) = a.isInstanceOf[Atom]
 
   override def equals(that: Any): Boolean = that match {
-    case that: Atom => {
-      println("Comparing " + this + " and " + that + ". Predicates equal: " + (predicate == that.predicate) + ", args equal: " + (args == that.args))
-      predicate == that.predicate && args == that.args
-    }
+    case that: Atom => predicate == that.predicate && args == that.args
     case _ => false
   }
 

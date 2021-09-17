@@ -325,7 +325,7 @@ object CNF {
 
           for {
             bijection <- clause1.variableBijections(clause2, myFilter)
-            if clause1.substitute(bijection) == clause2
+            if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
             val updatedMap = partialMap ++ clause1.allVariables.map { v =>
               (clause1.constrs.domainFor(v),

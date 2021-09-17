@@ -77,7 +77,9 @@ class Clause(
       }
     }
 
-  override def equals(that: Any): Boolean = that match {
+  override def equals(that: Any): Boolean = exactlyEquals(that)
+
+  def exactlyEquals(that: Any): Boolean = that match {
     case that: Clause => posLits.toSet == that.posLits.toSet &&
         negLits.toSet == that.negLits.toSet && constrs == that.constrs
     case _ => false
@@ -695,9 +697,12 @@ class PositiveUnitClause(
 
   override def canEqual(a: Any) = a.isInstanceOf[PositiveUnitClause]
 
+  /** Check if the predicates match, and each position is mapped to the same
+    domain. In particular, we do not check if variables are the same. */
   override def equals(that: Any): Boolean = that match {
-    case that: PositiveUnitClause => atom == that.atom &&
-        constrs == that.constrs
+    case that: PositiveUnitClause => atom.samePredicates(that.atom) &&
+        constrs == that.constrs &&
+        atom.domains(constrs) == that.atom.domains(that.constrs)
     case _ => false
   }
 
