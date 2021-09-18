@@ -36,6 +36,7 @@ abstract class NnfVisitor[I,O] {
       case or: Or => visitOrNode(or, input)
       case ref: Ref => visitRefNode(ref, input)
       case ie: InclusionExclusion => visitInclusionExclusionNode(ie, input)
+      case cr: ConstraintRemovalNode => visitConstraintRemovalNode(cr, input)
 
       // First-Order Nodes
       case forall: IndependentPartialGroundingNode => visitForallNode(forall, input)
@@ -46,6 +47,7 @@ abstract class NnfVisitor[I,O] {
       case _ => throw new IllegalArgumentException
     }
 
+  protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, input: I): O
   protected def visitDomainRecursion(dr: DomainRecursionNode, input: I): O
   protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode, input: I): O
   protected def visitExists(exists: CountingNode, input: I): O

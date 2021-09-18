@@ -51,137 +51,117 @@ object WmcVisitor {
 
 }
 
-protected class LogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights), LogDouble] with WmcVisitor {
+protected class LogDoubleWmc
+    extends NnfVisitor[(DomainSizes, PredicateWeights), LogDouble]
+    with WmcVisitor {
 
   import edu.ucla.cs.starai.forclift.util.LogDouble._
 
-  def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble = {
+  def wmc(nnf: NNFNode, domainSizes: DomainSizes,
+          predicateWeights: PredicateWeights): SignLogDouble =
     visit(nnf, (domainSizes, predicateWeights))
-  }
 
-  protected def visitDomainRecursion(dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    (dr.mixedChild, dr.groundChild) match {
-      case (Some(mixedChild), Some(groundChild)) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = dr.domain.size(domainSizes, dr.ineqs)
-        if (maxSize < 1) one
-        else {
-          val groundChildWmc = visit(groundChild, params)
-          var logWeight = groundChildWmc.pow(maxSize)
-          val childchildWmc = mixedChild.child match {
-            case Some(child) => visit(child, params)
-            case None => throw new Exception("you forgot to call update()")
-          }
-          val power = (maxSize * (maxSize - 1)) / 2
-          val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
-          println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
-          answer
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  protected def visitDomainRecursion(dr: DomainRecursionNode,
+                                     params: (DomainSizes, PredicateWeights))
+      : LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = dr.domain.size(domainSizes, dr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val groundChildWmc = visit(dr.groundChild.get, params)
+      var logWeight = groundChildWmc.pow(maxSize)
+      val childchildWmc = visit(dr.mixedChild.get.child.get, params)
+      val power = (maxSize * (maxSize - 1)) / 2
+      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
+      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
+      answer
     }
   }
 
-  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
-                                             params: (DomainSizes, PredicateWeights)): LogDouble = {
-    idr.mixedChild match {
-      case Some(mc) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-        if (maxSize < 1) one
-        else {
-          val childchildWmc = visit(mc, params)
-          val answer = maxSize * childchildWmc
-          println(s"$maxSize * $childchildWmc = $answer (improved domain recursion)")
-          answer
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
+  protected def visitImprovedDomainRecursion(
+    idr: ImprovedDomainRecursionNode,
+    params: (DomainSizes, PredicateWeights)): LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val childchildWmc = visit(idr.mixedChild.get, params)
+      val answer = maxSize * childchildWmc
+      println(s"$maxSize * $childchildWmc = $answer (improved domain recursion)")
+      answer
     }
   }
 
-  protected def visitExists(exists: CountingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    exists.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = exists.domain.size(domainSizes, exists.excludedConstants)
-        var logWeight = zero
-        println("exists/counting:")
-        for (nbTrue <- 0 to maxSize) {
-          val newDomainSizes = (domainSizes
-                                  + (exists.subdomain, nbTrue)
-                                  + (exists.subdomain.complement, (maxSize - nbTrue)))
-          val newParams = (newDomainSizes, predicateWeights)
-          val childWeight = visit(child, newParams)
-          val binomialCoeff = Binomial.coeff(maxSize, nbTrue)
-          logWeight += binomialCoeff * childWeight
-          println(s" + $maxSize C $nbTrue * $childWeight")
-        }
-        println(s"= $logWeight")
-        logWeight
-      }
-      case None => throw new Exception("you forgot to call update()")
+  protected def visitExists(exists: CountingNode,
+                            params: (DomainSizes, PredicateWeights))
+      : LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = exists.domain.size(domainSizes, exists.excludedConstants)
+    var logWeight = zero
+    println("exists/counting:")
+    for (nbTrue <- 0 to maxSize) {
+      val newDomainSizes = (domainSizes
+                              + (exists.subdomain, nbTrue)
+                              + (exists.subdomain.complement,
+                                 (maxSize - nbTrue)))
+      val newParams = (newDomainSizes, predicateWeights)
+      val childWeight = visit(exists.child.get, newParams)
+      val binomialCoeff = Binomial.coeff(maxSize, nbTrue)
+      logWeight += binomialCoeff * childWeight
+      println(s" + $maxSize C $nbTrue * $childWeight")
+    }
+    println(s"= $logWeight")
+    logWeight
+  }
+
+  protected def visitConstraintRemovalNode(
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
+      : LogDouble = visit(cr.child.get, params)
+
+  protected def visitForallNode(forall: IndependentPartialGroundingNode,
+                                params: (DomainSizes, PredicateWeights))
+      : LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val childlwmc = visit(forall.child.get, params)
+    val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
+    if (nbGroundings == 0) {
+      one
+    } else {
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      answer
     }
   }
 
-  protected def visitForallNode(forall: IndependentPartialGroundingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    forall.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val childlwmc = visit(child, params)
-        val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
-        if (nbGroundings == 0) {
-          one
-        } else {
-          val answer = childlwmc.pow(nbGroundings)
-          println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
-          answer
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
-    }
+  protected def visitInclusionExclusionNode(
+    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights))
+      : LogDouble = {
+    val plus1lwmc = visit(ie.plus1.get, params)
+    val plus2lwmc = visit(ie.plus2.get, params)
+    val minlwmc = visit(ie.min.get, params)
+    val answer = plus1lwmc + plus2lwmc - minlwmc
+    println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
+    answer
   }
 
-  protected def visitInclusionExclusionNode(ie: InclusionExclusion, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    (ie.plus1, ie.plus2, ie.min) match {
-      case (Some(plus1), Some(plus2), Some(min)) => {
-        val plus1lwmc = visit(plus1, params)
-        val plus2lwmc = visit(plus2, params)
-        val minlwmc = visit(min, params)
-        val answer = plus1lwmc + plus2lwmc - minlwmc
-        println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
-        answer
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
+  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights))
+      : LogDouble = {
+    val llwmcc = visit(or.l.get, params)
+    val rlwmcc = visit(or.r.get, params)
+    val answer = llwmcc + rlwmcc
+    println(s"$llwmcc + $rlwmcc = $answer (or)")
+    answer
   }
 
-  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    (or.l, or.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = visit(l, params)
-        val rlwmcc = visit(r, params)
-        val answer = llwmcc + rlwmcc
-        println(s"$llwmcc + $rlwmcc = $answer (or)")
-        answer
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
-  }
-
-  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    (and.l, and.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = visit(l, params)
-        if (llwmcc.isZero) zero
-        else {
-          val rlwmcc = visit(r, params)
-          val answer = llwmcc * rlwmcc
-          println(s"$llwmcc * $rlwmcc = $answer (and)")
-          answer
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  protected def visitAndNode(
+    and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
+    val llwmcc = visit(and.l.get, params)
+    if (llwmcc.isZero) zero
+    else {
+      val rlwmcc = visit(and.r.get, params)
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      answer
     }
   }
 
@@ -292,37 +272,30 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
 
   // only decomposition nodes can reduce the number of relevant domains!
 
-  override protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    (and.l, and.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = retrieveWmc(l, params)
-        if (llwmcc.isZero) zero
-        else {
-          val rlwmcc = retrieveWmc(r, params)
-          val answer = llwmcc * rlwmcc
-          println(s"$llwmcc * $rlwmcc = $answer (and)")
-          answer
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  override protected def visitAndNode(
+    and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
+    val llwmcc = retrieveWmc(and.l.get, params)
+    if (llwmcc.isZero) zero
+    else {
+      val rlwmcc = retrieveWmc(and.r.get, params)
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      answer
     }
   }
 
-  override protected def visitForallNode(forall: IndependentPartialGroundingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    forall.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val childlwmc = retrieveWmc(child, params)
-        val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
-        if (nbGroundings == 0) {
-          one
-        } else {
-          val answer = childlwmc.pow(nbGroundings)
-          println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
-          answer
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
+  override protected def visitForallNode(
+    forall: IndependentPartialGroundingNode,
+    params: (DomainSizes, PredicateWeights)): LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val childlwmc = retrieveWmc(forall.child.get, params)
+    val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
+    if (nbGroundings == 0) {
+      one
+    } else {
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      answer
     }
   }
 
@@ -349,7 +322,9 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
 
 }
 
-protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeights), SignLogDouble] with WmcVisitor {
+protected class SignLogDoubleWmc
+    extends NnfVisitor[(DomainSizes, PredicateWeights), SignLogDouble]
+    with WmcVisitor {
 
   import edu.ucla.cs.starai.forclift.util.SignLogDouble._
 
@@ -364,130 +339,108 @@ protected class SignLogDoubleWmc extends NnfVisitor[(DomainSizes, PredicateWeigh
   //    wmc
   //  }
 
-  protected def visitDomainRecursion(dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    (dr.mixedChild, dr.groundChild) match {
-      case (Some(mixedChild), Some(groundChild)) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = dr.domain.size(domainSizes, dr.ineqs)
-        if (maxSize < 1) one
-        else {
-          val groundChildWmc = visit(groundChild, params)
-          // old inference, linear
-          var logWeight = groundChildWmc.pow(maxSize)
-          val childchildWmc = mixedChild.child match {
-            case Some(child) => visit(child, params)
-            case None => throw new Exception("you forgot to call update()")
-          }
-          val power = (maxSize * (maxSize - 1)) / 2
-          val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
-          println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
-          answer
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  protected def visitDomainRecursion(dr: DomainRecursionNode,
+                                     params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = dr.domain.size(domainSizes, dr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val groundChildWmc = visit(dr.groundChild.get, params)
+      // old inference, linear
+      var logWeight = groundChildWmc.pow(maxSize)
+      val childchildWmc = visit(dr.mixedChild.get.child.get, params)
+      val power = (maxSize * (maxSize - 1)) / 2
+      val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
+      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
+      answer
     }
   }
 
-  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
-                                             params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    idr.mixedChild match {
-      case Some(mc) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-        if (maxSize < 1) one
-        else {
-          val childchildWmc = visit(mc, params)
-          val answer = maxSize * childchildWmc
-          println(s"$maxSize * $childchildWmc = $answer (improved domain recursion)")
-          answer
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
+  protected def visitImprovedDomainRecursion(
+    idr: ImprovedDomainRecursionNode, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val childchildWmc = visit(idr.mixedChild.get, params)
+      val answer = maxSize * childchildWmc
+      println(s"$maxSize * $childchildWmc = $answer (improved domain recursion)")
+      answer
     }
   }
 
-  protected def visitExists(exists: CountingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    exists.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
-        var logWeight = zero;
-        println("exists/counting:")
-        for (nbTrue <- 0 to maxSize) {
-          val newDomainSizes = (domainSizes
-                                  + (exists.subdomain, nbTrue)
-                                  + (exists.subdomain.complement, (maxSize - nbTrue)));
-          val newParams = (newDomainSizes, predicateWeights)
-          val childWeight = visit(child, newParams)
-          val binomialCoeff = Binomial.coeff(maxSize, nbTrue).toSignDouble
-          logWeight += binomialCoeff * childWeight
-          println(s" + $maxSize C $nbTrue * $childWeight")
-        }
-        println(s"= $logWeight")
-        logWeight
-      }
-      case None => throw new Exception("you forgot to call update()")
+  protected def visitExists(exists: CountingNode,
+                            params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
+    var logWeight = zero;
+    println("exists/counting:")
+    for (nbTrue <- 0 to maxSize) {
+      val newDomainSizes = (domainSizes
+                              + (exists.subdomain, nbTrue)
+                              + (exists.subdomain.complement,
+                                 (maxSize - nbTrue)));
+      val newParams = (newDomainSizes, predicateWeights)
+      val childWeight = visit(exists.child.get, newParams)
+      val binomialCoeff = Binomial.coeff(maxSize, nbTrue).toSignDouble
+      logWeight += binomialCoeff * childWeight
+      println(s" + $maxSize C $nbTrue * $childWeight")
+    }
+    println(s"= $logWeight")
+    logWeight
+  }
+
+  protected def visitConstraintRemovalNode(
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = visit(cr.child.get, params)
+
+  protected def visitForallNode(forall: IndependentPartialGroundingNode,
+                                params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val childlwmc = visit(forall.child.get, params)
+    val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
+    if (nbGroundings == 0) {
+      one
+    } else {
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      answer
     }
   }
 
-  protected def visitForallNode(forall: IndependentPartialGroundingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    forall.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val childlwmc = visit(child, params)
-        val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
-        if (nbGroundings == 0) {
-          one
-        } else {
-          val answer = childlwmc.pow(nbGroundings)
-          println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
-          answer
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
-    }
+  protected def visitInclusionExclusionNode(
+    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val plus1lwmc = visit(ie.plus1.get, params)
+    val plus2lwmc = visit(ie.plus2.get, params)
+    val minlwmc = visit(ie.min.get, params)
+    val answer = plus1lwmc + plus2lwmc - minlwmc
+    println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
+    answer
   }
 
-  protected def visitInclusionExclusionNode(ie: InclusionExclusion, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    (ie.plus1, ie.plus2, ie.min) match {
-      case (Some(plus1), Some(plus2), Some(min)) => {
-        val plus1lwmc = visit(plus1, params)
-        val plus2lwmc = visit(plus2, params)
-        val minlwmc = visit(min, params)
-        val answer = plus1lwmc + plus2lwmc - minlwmc
-        println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
-        answer
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
+  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val llwmcc = visit(or.l.get, params)
+    val rlwmcc = visit(or.r.get, params)
+    val answer = llwmcc + rlwmcc
+    println(s"$llwmcc + $rlwmcc = $answer (or)")
+    answer
   }
 
-  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    (or.l, or.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = visit(l, params)
-        val rlwmcc = visit(r, params)
-        val answer = llwmcc + rlwmcc
-        println(s"$llwmcc + $rlwmcc = $answer (or)")
-        answer
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
-  }
-
-  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    (and.l, and.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = visit(l, params)
-        if (llwmcc.isZero) zero
-        else {
-          val rlwmcc = visit(r, params)
-          val answer = llwmcc * rlwmcc
-          println(s"$llwmcc * $rlwmcc = $answer (and)")
-          answer
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val llwmcc = visit(and.l.get, params)
+    if (llwmcc.isZero) zero
+    else {
+      val rlwmcc = visit(and.r.get, params)
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      answer
     }
   }
 
@@ -564,38 +517,30 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
 
   // only decomposition nodes can reduce the number of relevant domains!
 
-  override protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    (and.l, and.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = retrieveWmc(l, params)
-        if (llwmcc.isZero) zero
-        else {
-          val rlwmcc = retrieveWmc(r, params)
-          val answer = llwmcc * rlwmcc
-          println(s"$llwmcc * $rlwmcc = $answer (and)")
-          answer
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  override protected def visitAndNode(
+    and: And, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
+    val llwmcc = retrieveWmc(and.l.get, params)
+    if (llwmcc.isZero) zero
+    else {
+      val rlwmcc = retrieveWmc(and.r.get, params)
+      val answer = llwmcc * rlwmcc
+      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      answer
     }
   }
 
-  override protected def visitForallNode(forall: IndependentPartialGroundingNode,
-      params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    forall.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val childlwmc = retrieveWmc(child, params)
-        val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
-        if (nbGroundings == 0) {
-          one
-        } else {
-          val answer = childlwmc.pow(nbGroundings)
-          println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
-          answer
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
+  override protected def visitForallNode(
+    forall: IndependentPartialGroundingNode,
+    params: (DomainSizes, PredicateWeights)): SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val childlwmc = retrieveWmc(forall.child.get, params)
+    val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
+    if (nbGroundings == 0) {
+      one
+    } else {
+      val answer = childlwmc.pow(nbGroundings)
+      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      answer
     }
   }
 
@@ -637,6 +582,15 @@ class SafeSignLogDoubleWmc extends SignLogDoubleWmc {
     val (domainSizes, predicateWeights) = params
     if (domainSizes.contains(exists.domain)) {
       super.visitExists(exists, params)
+    } else NaN
+  }
+
+  override protected def visitConstraintRemovalNode(
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    if (domainSizes.contains(cr.domain)) {
+      super.visitConstraintRemovalNode(cr, params)
     } else NaN
   }
 
@@ -793,63 +747,55 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
       return SignLogDouble.fromLog(if(blex > 0) res + blex * LOG2 else res);
   }
 
-  protected def visitDomainRecursion(dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights)): BigInt = {
-    (dr.mixedChild, dr.groundChild) match {
-      case (Some(mixedChild), Some(groundChild)) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = dr.domain.size(domainSizes, dr.ineqs)
-        if (maxSize < 1) one
-        else {
-          val groundChildWmc = visit(groundChild, params)
-          // old inference, linear
-          var logWeight = groundChildWmc.pow(maxSize)
-          val childchildWmc = mixedChild.child match {
-            case Some(child) => visit(child, params)
-            case _ => throw new Exception("you forgot to call update()")
-          }
-          groundChildWmc.pow(maxSize) * childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  protected def visitDomainRecursion(dr: DomainRecursionNode,
+                                     params: (DomainSizes, PredicateWeights))
+      : BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = dr.domain.size(domainSizes, dr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val groundChildWmc = visit(dr.groundChild.get, params)
+      // old inference, linear
+      var logWeight = groundChildWmc.pow(maxSize)
+      val childchildWmc = visit(dr.mixedChild.get.child.get, params)
+      groundChildWmc.pow(maxSize) *
+        childchildWmc.pow((maxSize * (maxSize - 1)) / 2)
     }
   }
 
   protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
-                                             params: (DomainSizes, PredicateWeights)): BigInt = {
-    idr.mixedChild match {
-      case Some(mc) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-        if (maxSize < 1) one
-        else {
-          val childchildWmc = visit(mc, params)
-          maxSize * childchildWmc
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
+                                             params: (DomainSizes, PredicateWeights))
+      : BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize = idr.domain.size(domainSizes, idr.ineqs)
+    if (maxSize < 1) one
+    else {
+      val childchildWmc = visit(idr.mixedChild.get, params)
+      maxSize * childchildWmc
     }
   }
 
-  protected def visitExists(exists: CountingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
-    exists.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
-        var logWeight = zero;
-        for (nbTrue <- 0 to maxSize) {
-          val newDomainSizes = (domainSizes
-                                  + (exists.subdomain, nbTrue)
-                                  + (exists.subdomain.complement, (maxSize - nbTrue)));
-          val newParams = (newDomainSizes, predicateWeights)
-          val childWeight = visit(child, newParams)
-          val binomialCoeff = coeff(maxSize, nbTrue)
-          logWeight += binomialCoeff * childWeight
-        }
-        logWeight
-      }
-      case None => throw new Exception("you forgot to call update()")
+  protected def visitExists(
+    exists: CountingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
+    var logWeight = zero;
+    for (nbTrue <- 0 to maxSize) {
+      val newDomainSizes = (domainSizes
+                              + (exists.subdomain, nbTrue)
+                              + (exists.subdomain.complement,
+                                 (maxSize - nbTrue)));
+      val newParams = (newDomainSizes, predicateWeights)
+      val childWeight = visit(exists.child.get, newParams)
+      val binomialCoeff = coeff(maxSize, nbTrue)
+      logWeight += binomialCoeff * childWeight
     }
+    logWeight
   }
+
+  protected def visitConstraintRemovalNode(
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
+      : BigInt = visit(cr.child.get, params)
 
   // special cache for bigint factorials (cf. Binomial class)
   private[this] val factorialCache = new collection.mutable.ArrayBuffer[BigInt] ++ List(one, one)
@@ -867,56 +813,41 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
   def coeff(n: Int, k: Int): BigInt = factorial(n) / factorial(k) / factorial(n - k)
 
 
-  protected def visitForallNode(forall: IndependentPartialGroundingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
-    forall.child match {
-      case Some(child) => {
-        val (domainSizes, predicateWeights) = params
-        val childlwmc = visit(child, params)
-        val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
-        if (nbGroundings == 0) {
-          one
-        } else {
-          childlwmc.pow(nbGroundings)
-        }
-      }
-      case None => throw new Exception("you forgot to call update()")
+  protected def visitForallNode(forall: IndependentPartialGroundingNode,
+                                params: (DomainSizes, PredicateWeights))
+      : BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val childlwmc = visit(forall.child.get, params)
+    val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
+    if (nbGroundings == 0) {
+      one
+    } else {
+      childlwmc.pow(nbGroundings)
     }
   }
 
-  protected def visitInclusionExclusionNode(ie: InclusionExclusion, params: (DomainSizes, PredicateWeights)): BigInt = {
-    (ie.plus1, ie.plus2, ie.min) match {
-      case (Some(plus1), Some(plus2), Some(min)) => {
-        val plus1lwmc = visit(plus1, params)
-        val plus2lwmc = visit(plus2, params)
-        val minlwmc = visit(min, params)
-        plus1lwmc + plus2lwmc - minlwmc
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
+  protected def visitInclusionExclusionNode(
+    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights)): BigInt = {
+    val plus1lwmc = visit(ie.plus1.get, params)
+    val plus2lwmc = visit(ie.plus2.get, params)
+    val minlwmc = visit(ie.min.get, params)
+    plus1lwmc + plus2lwmc - minlwmc
   }
 
-  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights)): BigInt = {
-    (or.l, or.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = visit(l, params)
-        val rlwmcc = visit(r, params)
-        llwmcc + rlwmcc
-      }
-      case _ => throw new Exception("you forgot to call update()")
-    }
+  protected def visitOrNode(or: Or,
+                            params: (DomainSizes, PredicateWeights)): BigInt = {
+    val llwmcc = visit(or.l.get, params)
+    val rlwmcc = visit(or.r.get, params)
+    llwmcc + rlwmcc
   }
 
-  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights)): BigInt = {
-    (and.l, and.r) match {
-      case (Some(l), Some(r)) => {
-        val llwmcc = visit(l, params)
-        if (llwmcc == zero) zero
-        else {
-          val rlwmcc = visit(r, params)
-          llwmcc * rlwmcc
-        }
-      }
-      case _ => throw new Exception("you forgot to call update()")
+  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights))
+      : BigInt = {
+    val llwmcc = visit(and.l.get, params)
+    if (llwmcc == zero) zero
+    else {
+      val rlwmcc = visit(and.r.get, params)
+      llwmcc * rlwmcc
     }
   }
 

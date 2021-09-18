@@ -27,6 +27,9 @@ class PostOrderVisitor extends NnfVisitor[Unit, Unit] {
   protected def visitExists(exists: CountingNode, u: Unit): Unit =
     visit(exists.child.get)
 
+  protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, u: Unit)
+      : Unit = visit(cr.child.get)
+
   protected def visitForallNode(forall: IndependentPartialGroundingNode,
                                 u: Unit): Unit = visit(forall.child.get)
 
@@ -97,6 +100,14 @@ class DomainsVisitor(val nodes: ListBuffer[NNFNode])
                         exists.subdomain.complement) + exists.domain
     val returnValue = exists.domains != newDomains
     exists.domains = newDomains
+    returnValue
+  }
+
+  protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, u: Unit)
+      : Boolean = {
+    val newDomains = cr.child.get.domains + cr.domain
+    val returnValue = cr.domains != newDomains
+    cr.domains = newDomains
     returnValue
   }
 
@@ -197,6 +208,14 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
         _.reverseDomainSplitting(exists.domain, exists.subdomain) })
     val returnValue = exists.variablesForSmoothing != countedSubdomainParents
     exists.variablesForSmoothing = countedSubdomainParents
+    returnValue
+  }
+
+  protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, u: Unit)
+      : Boolean = {
+    val returnValue = cr.variablesForSmoothing !=
+      cr.child.get.variablesForSmoothing
+    cr.variablesForSmoothing = cr.child.get.variablesForSmoothing
     returnValue
   }
 
