@@ -409,7 +409,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val trueUnitClause = Clause(List(bestLit), List(), unitConstrs.setDomain(logVar, subdomain)).standardizeApart
       val falseUnitClause = Clause(List(), List(bestLit), unitConstrs.setDomain(logVar, subdomain.complement)).standardizeApart
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
-      println("counting")
+      println("counting (" + subdomain + " and " + subdomain.complement + ")")
       println(cnf.toString)
       Some(new CountingNode(cnf, Some(compile(childCNF)), domain, subdomain, msg))
     } else None

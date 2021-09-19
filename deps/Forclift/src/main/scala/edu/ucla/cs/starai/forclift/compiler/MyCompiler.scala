@@ -43,7 +43,7 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     val headVar2 = (cnf.clauses.head.literalVariables - headVar1).head
     val msg = "Domain recursion on $" + domain + "$"
     println("\nimproved domain recursion")
-    println(mixedCNF + "\n")
+    println(cnf + "\n")
     val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs, domain, msg)
     updateCache(cnf, node)
     node.update(List(compile(mixedCNF)))
@@ -77,7 +77,7 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
                                      replaceDomains(originalDomain,
                                                     newDomain) }.toList: _*)
                 println("\nconstraint removal")
-                println(newCnf + "\n")
+                println(cnf + "\n")
                 return Some(new ConstraintRemovalNode(
                               cnf, Some(compile(newCnf)), originalDomain,
                               newDomain))

@@ -356,13 +356,21 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
 
   lazy val evalOrder = child.get.evalOrder + 1
 
+  // same as in CountingNode
   def smooth = if (NNFNode.smoothingCache.contains(this)) {
     NNFNode.smoothingCache(this)
   } else {
     val newNode = new ConstraintRemovalNode(cnf, None, domain, subdomain,
                                             explanation)
     NNFNode.smoothingCache(this) = newNode
-    newNode.update(List(child.get.smooth))
+    val countedSubdomainParents = NNFNode.removeSubsumed(
+      child.get.variablesForSmoothing.map {
+        _.reverseDomainSplitting(domain, subdomain) })
+    val disjCounted = makeDisjoint(countedSubdomainParents.toList)
+    val childMissing = disjCounted.flatMap {
+      _.minus(child.get.variablesForSmoothing) }
+    val childSmoothAll = child.get.smooth.smoothWith(childMissing.toSet)
+    newNode.update(List(childSmoothAll))
     newNode
   }
 

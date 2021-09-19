@@ -213,9 +213,11 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
 
   protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, u: Unit)
       : Boolean = {
-    val returnValue = cr.variablesForSmoothing !=
-      cr.child.get.variablesForSmoothing
-    cr.variablesForSmoothing = cr.child.get.variablesForSmoothing
+    val countedSubdomainParents = NNFNode.removeSubsumed(
+      cr.child.get.variablesForSmoothing.map {
+        _.reverseDomainSplitting(cr.domain, cr.subdomain) })
+    val returnValue = cr.variablesForSmoothing != countedSubdomainParents
+    cr.variablesForSmoothing = countedSubdomainParents
     returnValue
   }
 

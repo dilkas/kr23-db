@@ -116,7 +116,16 @@ protected class LogDoubleWmc
 
   protected def visitConstraintRemovalNode(
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : LogDouble = visit(cr.child.get, params)
+      : LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val newDomainSize = cr.domain.size(domainSizes, Set())
+    if (newDomainSize == 0) 0
+    else {
+      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
+        (cr.subdomain.complement, 1)
+      visit(cr.child.get, (newDomainSizes, predicateWeights))
+    }
+  }
 
   protected def visitForallNode(forall: IndependentPartialGroundingNode,
                                 params: (DomainSizes, PredicateWeights))
@@ -377,7 +386,6 @@ protected class SignLogDoubleWmc
     val (domainSizes, predicateWeights) = params
     val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero;
-    println("exists/counting:")
     for (nbTrue <- 0 to maxSize) {
       val newDomainSizes = (domainSizes
                               + (exists.subdomain, nbTrue)
@@ -395,7 +403,18 @@ protected class SignLogDoubleWmc
 
   protected def visitConstraintRemovalNode(
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = visit(cr.child.get, params)
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val newDomainSize = cr.domain.size(domainSizes, Set())
+    if (newDomainSize == 0) 0
+    else {
+      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
+        (cr.subdomain.complement, 1)
+      println("Adding domain " + cr.subdomain + " of cardinality " +
+                (newDomainSize - 1))
+      visit(cr.child.get, (newDomainSizes, predicateWeights))
+    }
+  }
 
   protected def visitForallNode(forall: IndependentPartialGroundingNode,
                                 params: (DomainSizes, PredicateWeights))
@@ -447,6 +466,7 @@ protected class SignLogDoubleWmc
   protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights))
       : SignLogDouble = try {
     val newDomainSizes = params._1.shrink(ref.domainMap)
+    println("visitRefNode. ref: " + ref + ", domain sizes before: " + params._1 + ", domain sizes after: " + newDomainSizes)
     visit(ref.nnfNode.get, (newDomainSizes, params._2))
   } catch {
     case e: DomainSize.CantShrinkDomainException => 0
@@ -795,7 +815,16 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
 
   protected def visitConstraintRemovalNode(
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : BigInt = visit(cr.child.get, params)
+      : BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val newDomainSize = cr.domain.size(domainSizes, Set())
+    if (newDomainSize == 0) 0
+    else {
+      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
+        (cr.subdomain.complement, 1)
+      visit(cr.child.get, (newDomainSizes, predicateWeights))
+    }
+  }
 
   // special cache for bigint factorials (cf. Binomial class)
   private[this] val factorialCache = new collection.mutable.ArrayBuffer[BigInt] ++ List(one, one)

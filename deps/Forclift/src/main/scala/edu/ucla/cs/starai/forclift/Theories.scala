@@ -127,8 +127,7 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       }
       // now remove cAtoms and try again shattering the newly introduced ones
       clauses = shClauses
-      // TODO check for subsumes in some direction not equivalence?
-      cAtoms = disjoin(nextCAtoms.filter { next => !cAtoms.exists { next.subsumes(_) } }) //distinct(nextCAtoms ++ cAtoms) //
+      cAtoms = disjoin(nextCAtoms.filter { next => !cAtoms.exists { next.subsumes(_) } })
     } while (somethingChanged)
     if (clauses.exists { _.needsIneqDomainShattering }) {
       (new CNF(clauses.flatMap { _.shatterIneqDomains })).shatterIneqs
@@ -166,8 +165,7 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       }
       // now remove cAtoms and try again shattering the newly introduced ones
       clauses = shClauses
-      // TODO check for subsumes in some direction not equivalence?
-      cAtoms = disjoin(nextCAtoms.filter { next => !cAtoms.exists { next.subsumes(_) } }) //distinct(nextCAtoms ++ cAtoms) //
+      cAtoms = disjoin(nextCAtoms.filter { next => !cAtoms.exists { next.subsumes(_) } })
     } while (somethingChanged)
     if (clauses.exists { _.needsIneqDomainShattering }) {
       (new CNF(clauses.flatMap { _.shatterIneqDomains })).shatterDomains
@@ -267,6 +265,8 @@ object CNF {
     private val cause: Throwable = None.orNull) extends
       Exception(message, cause)
 
+  /** Increment the time counter and replace each candidate domain with its
+    parent if possible, and eliminate it completely if not. */
   def update(state: State): State = (
     state._1 + 1,
     state._2.flatMap { candidate => candidate._1.parents.headOption match {
@@ -285,35 +285,46 @@ object CNF {
       }
     }
 
+  /** If possible, identify the values in the map as subsets of some of the
+    keys. */
   def postprocess(domainMap: Map[Domain, Domain])
-      : Map[Domain, (Domain, Int)] = domainMap.map
-  { case (d1, d2) => {
-     lazy val stateStream: Stream[State] = (0, domainMap.keys.map {
-                                              d: Domain => (d, d) } ) #::
-       stateStream.map(update)
-     stateStream.flatMap(findDomain(d2)).headOption match {
-       case Some(d) => (d1, d)
-       case None => throw DomainNotMatchedException()
-     }
-   } }.toMap
+      : Option[Map[Domain, (Domain, Int)]] = {
+    println("Postprocessing " + domainMap)
+    try {
+      Some(domainMap.map {
+             case (d1, d2) => {
+               lazy val stateStream: Stream[State] = (0, domainMap.keys.map {
+                                                        d: Domain => (d, d) }
+               ) #:: stateStream.map(update)
+               stateStream.flatMap(findDomain(d2)).headOption match {
+                 case Some(d) => (d1, d)
+                 case None => throw DomainNotMatchedException()
+               }
+             } }.toMap)
+    } catch {
+      case c: DomainNotMatchedException => None
+    }
+  }
 
-  // TODO (Paulius): may need some additional common-sense checks
-  def identifyRecursion(from: CNF, to: CNF, partialMap: Map[Domain, Domain] =
-                          Map.empty): Option[Map[Domain, (Domain, Int)]] = {
-    if (from.hashCode != to.hashCode) {
-      println("different: " + from + " AND " + to)
+  // NewTheory is the theory that corresponds to the new circuit node which is
+  // being added whereas oldTheory is the theory for an already-existing node.
+  // PartialMap maps domains of oldTheory to domains of newTheory. Before
+  // returning this map, we express all domains of newTheory that appear in
+  // partialMap as (subsets of) domains of oldTheory.
+  def identifyRecursion(newTheory: CNF, oldTheory: CNF,
+                        partialMap: Map[Domain, Domain] = Map.empty)
+      : Option[Map[Domain, (Domain, Int)]] = {
+    if (newTheory.size != oldTheory.size ||
+          newTheory.hashCode != oldTheory.hashCode) {
+      println("different: " + newTheory + " AND " + oldTheory)
       None
-    } else if (from.isEmpty) {
-      try {
-        Some(postprocess(partialMap))
-      } catch {
-        case c: DomainNotMatchedException => None
-      }
+    } else if (oldTheory.isEmpty) {
+      postprocess(partialMap)
     } else {
-      for (clause1 <- from) {
-        val newFrom = new CNF((from - clause1).toList)
-        for (clause2 <- to.filter { _.hashCode == clause1.hashCode } ) {
-          val newTo = new CNF((to - clause2).toList)
+      for (clause1 <- oldTheory) {
+        val updatedOldTheory = new CNF((oldTheory - clause1).toList)
+        for (clause2 <- newTheory.filter { _.hashCode == clause1.hashCode } ) {
+          val updatedNewTheory = new CNF((newTheory - clause2).toList)
 
           def myFilter(bijection: Map[Var, Var]): Boolean = bijection.forall {
             case (v1, v2) => {
@@ -327,18 +338,25 @@ object CNF {
             bijection <- clause1.variableBijections(clause2, myFilter)
             if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
-            val updatedMap = partialMap ++ clause1.allVariables.map { v =>
-              (clause1.constrs.domainFor(v),
-               clause2.constrs.domainFor(bijection(v))) }
-            val recursion = identifyRecursion(newFrom, newTo, updatedMap)
+            println("clause1 has " + clause1.allVariables.size + " variables")
+            val updatedMap = partialMap ++ clause1.allVariables.map {
+              v => {
+                println("Adding domains (" + clause1.constrs.domainFor(v) +
+                          ", " + clause2.constrs.domainFor(bijection(v)) +
+                          ") for variable " + v)
+                (clause1.constrs.domainFor(v),
+                 clause2.constrs.domainFor(bijection(v)))
+              } }
+            val recursion = identifyRecursion(updatedNewTheory,
+                                              updatedOldTheory, updatedMap)
             if (recursion.isDefined) {
-              println("compatible: " + from + " AND " + to)
+              println("compatible: " + newTheory + " AND " + oldTheory)
               return recursion
             }
           }
         }
       }
-      println("different: " + from + " AND " + to)
+      println("different: " + newTheory + " AND " + oldTheory)
       None
     }
   }
