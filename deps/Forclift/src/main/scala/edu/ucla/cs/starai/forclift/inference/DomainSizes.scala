@@ -47,7 +47,6 @@ class DomainSize(
     if (n == 0) {
       this
     } else if (n <= size) {
-    println("reduceSize: shrinking domain from " + size + " by " + n)
     new DomainSize(size - n, constants)
   } else {
     throw new DomainSize.CantShrinkDomainException()
@@ -228,10 +227,8 @@ class DomainSizes(
   }
 
   def shrink(domainMap: Map[Domain, (Domain, Int)]): DomainSizes = {
-    //println("Shrinking " + this + " w.r.t. " + domainMap)
     new DomainSizes(map { case (domain, size) => {
                            val v = domainMap.getOrElse(domain, (domain, 0))
-                           println("shrink: replacing " + domain + " with " + v._1 + " reduced by " + v._2)
                            (domain, self(v._1).reduceSize(v._2))
                          } }.toMap)
   }

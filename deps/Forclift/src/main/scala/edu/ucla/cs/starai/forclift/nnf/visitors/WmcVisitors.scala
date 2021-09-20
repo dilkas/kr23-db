@@ -178,9 +178,13 @@ protected class LogDoubleWmc
                              params: (DomainSizes, PredicateWeights))
       : LogDouble = try {
     val newDomainSizes = params._1.shrink(ref.domainMap)
-    visit(ref.nnfNode.get, (newDomainSizes, params._2))
+    val answer = visit(ref.nnfNode.get, (newDomainSizes, params._2))
+    println(s"$answer (ref)")
+    answer
   } catch {
-    case e: DomainSize.CantShrinkDomainException => 0
+    case e: DomainSize.CantShrinkDomainException => {
+      println("0 (ref, base case)")
+      0}
   }
 
   protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
@@ -189,6 +193,7 @@ protected class LogDoubleWmc
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     val weight = weights.negWPlusPosWLogDouble
     val answer = weight.pow(nbGroundings)
+    println("Domain sizes when visiting the smoothing node: " + domainSizes)
     println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
     answer
   }

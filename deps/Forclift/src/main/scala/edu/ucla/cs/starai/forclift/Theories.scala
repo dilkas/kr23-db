@@ -268,14 +268,13 @@ object CNF {
   /** Increment the time counter and replace each candidate domain with its
     parent if possible, and eliminate it completely if not. */
   def update(state: State): State = {
-    println("State: " + state._2)
-    (
-      state._1 + 1,
-      state._2.flatMap { candidate => candidate._1.parents.headOption match {
-                          case Some(p)  => Some((p, candidate._2))
-                          case None => None
-                        } }
-    )
+    val newStates = state._2.flatMap { candidate =>
+      candidate._1.parents.headOption match {
+        case Some(p)  => Some((p, candidate._2))
+        case None => None
+      } }
+    println("Updated state to " + newStates)
+    (state._1 + 1, newStates)
   }
 
   def findDomain(domain: Domain)(state: State): Option[(Domain, Int)] =
@@ -283,7 +282,7 @@ object CNF {
       throw DomainNotMatchedException()
     } else {
       state._2.find { _._1 == domain } match {
-        case Some(candidate) => Some((candidate._2, state._1))
+        case Some(candidate) => Some((candidate._1, state._1))
         case None => None
       }
     }
