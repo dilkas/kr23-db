@@ -706,7 +706,7 @@ class PositiveUnitClause(
     case _ => false
   }
 
-  override def hashCode: Int = (atom, constrs).hashCode
+  override def hashCode: Int = (atom.predicate, constrs).hashCode
 
   def equivalent(other: PositiveUnitClause) = {
     val equivalent = ((this eq other) || (!this.independent(other) &&

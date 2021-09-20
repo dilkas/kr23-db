@@ -410,8 +410,7 @@ protected class SignLogDoubleWmc
     else {
       val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
         (cr.subdomain.complement, 1)
-      println("Adding domain " + cr.subdomain + " of cardinality " +
-                (newDomainSize - 1))
+      //println("Adding domain " + cr.subdomain + " of cardinality " + (newDomainSize - 1))
       visit(cr.child.get, (newDomainSizes, predicateWeights))
     }
   }
@@ -466,7 +465,7 @@ protected class SignLogDoubleWmc
   protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights))
       : SignLogDouble = try {
     val newDomainSizes = params._1.shrink(ref.domainMap)
-    println("visitRefNode. ref: " + ref + ", domain sizes before: " + params._1 + ", domain sizes after: " + newDomainSizes)
+    //println("visitRefNode. ref: " + ref + ", domain sizes before: " + params._1 + ", domain sizes after: " + newDomainSizes)
     visit(ref.nnfNode.get, (newDomainSizes, params._2))
   } catch {
     case e: DomainSize.CantShrinkDomainException => 0
