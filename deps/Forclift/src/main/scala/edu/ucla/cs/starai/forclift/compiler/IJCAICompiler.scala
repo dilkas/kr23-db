@@ -411,7 +411,9 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
       println("counting (" + subdomain + " and " + subdomain.complement + ")")
       println(cnf.toString)
-      Some(new CountingNode(cnf, Some(compile(childCNF)), domain, subdomain, msg))
+      val node = new CountingNode(cnf, Some(compile(childCNF)), domain, subdomain, msg)
+      subdomain.setCause(node)
+      Some(node)
     } else None
   }
 

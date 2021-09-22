@@ -27,6 +27,7 @@ import System._
 import collection.mutable.ListBuffer
 import breeze.math._
 import edu.ucla.cs.starai.forclift.nnf.visitors.SafeSignLogDoubleWmc
+import edu.ucla.cs.starai.forclift.nnf.visitors.WmcVisitor
 
 class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
           val domainMap: Map[Domain, (Domain, Int)],
@@ -139,8 +140,18 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
           "  " + getName(nameSpace) + " -> " + r.get.getName(nameSpace) + ";\n"
       } else {
         val wmcVisitor = new SafeSignLogDoubleWmc
-        val llwmc = try { wmcVisitor.visit(l.get.smooth, (domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
-        val rlwmc = try { wmcVisitor.visit(r.get.smooth, (domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
+        val llwmc = try {
+          wmcVisitor.visit(l.get.smooth, (domainSizes, predicateWeights,
+                                          WmcVisitor.ParameterMap.empty))
+        } catch {
+          case e: UnsupportedOperationException => Complex.nan
+        }
+        val rlwmc = try {
+          wmcVisitor.visit(r.get.smooth, (domainSizes, predicateWeights,
+                                          WmcVisitor.ParameterMap.empty))
+        } catch {
+          case e: UnsupportedOperationException => Complex.nan
+        }
         "  " + getName(nameSpace) + " -> " + "and" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
           "  " + "and" + getName(nameSpace) + " -> " + l.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + llwmc + " $ ") + """];""" + "\n" +
           "  " + "and" + getName(nameSpace) + " -> " + r.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + rlwmc + " $ ") + """];""" + "\n"
@@ -221,8 +232,18 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
           "  " + getName(nameSpace) + " -> " + r.get.getName(nameSpace) + ";\n"
       } else {
         val wmcVisitor = new SafeSignLogDoubleWmc
-        val llwmc = try { wmcVisitor.visit(l.get.smooth,(domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
-        val rlwmc = try { wmcVisitor.visit(r.get.smooth,(domainSizes, predicateWeights)) } catch { case e: UnsupportedOperationException => Complex.nan }
+        val llwmc = try {
+          wmcVisitor.visit(l.get.smooth,(domainSizes, predicateWeights,
+                                         WmcVisitor.ParameterMap.empty))
+        } catch {
+          case e: UnsupportedOperationException => Complex.nan
+        }
+        val rlwmc = try {
+          wmcVisitor.visit(r.get.smooth,(domainSizes, predicateWeights,
+                                         WmcVisitor.ParameterMap.empty))
+        } catch {
+          case e: UnsupportedOperationException => Complex.nan
+        }
         "  " + getName(nameSpace) + " -> " + "or" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
           "  " + "or" + getName(nameSpace) + " -> " + l.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + llwmc + " $ ") + """];""" + "\n" +
         "  " + "or" + getName(nameSpace) + " -> " + r.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + rlwmc + " $ ") + """];""" + "\n"
@@ -343,7 +364,8 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
 
 class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
                             val domain: Domain, val subdomain: SubDomain,
-                            val explanation: String = "") extends NNFNode {
+                            val explanation: String = "")
+    extends ParametrisedNode {
 
   override def update(children : List[NNFNode]) = {
     require(children.length == 1)

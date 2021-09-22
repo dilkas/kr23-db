@@ -32,10 +32,19 @@ import edu.ucla.cs.starai.forclift.util.SoftMemCache
 import edu.ucla.cs.starai.forclift.Domain
 
 trait WmcVisitor {
+  // Duplicating this 2-3 times is still better than duplicating it ~50 times
+  type ParameterMap = collection.mutable.Map[ParametrisedNode, Int]
   def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble
 }
 
 object WmcVisitor {
+
+  type ParameterMap = collection.mutable.Map[ParametrisedNode, Int]
+
+  object ParameterMap {
+    def empty: ParameterMap = collection.mutable.Map.empty[ParametrisedNode,
+                                                           Int]
+  }
 
   def apply(predicateWeights: PredicateWeights): WmcVisitor = {
     val hasNegativeWeight = predicateWeights.values.exists(w => w.negW < 0 || w.posW < 0)
@@ -52,19 +61,21 @@ object WmcVisitor {
 }
 
 protected class LogDoubleWmc
-    extends NnfVisitor[(DomainSizes, PredicateWeights), LogDouble]
+    extends NnfVisitor[(DomainSizes, PredicateWeights,
+                        WmcVisitor.ParameterMap), LogDouble]
     with WmcVisitor {
 
   import edu.ucla.cs.starai.forclift.util.LogDouble._
 
   def wmc(nnf: NNFNode, domainSizes: DomainSizes,
           predicateWeights: PredicateWeights): SignLogDouble =
-    visit(nnf, (domainSizes, predicateWeights))
+    visit(nnf, (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty))
 
   protected def visitDomainRecursion(dr: DomainRecursionNode,
-                                     params: (DomainSizes, PredicateWeights))
+                                     params: (DomainSizes, PredicateWeights,
+                                              ParameterMap))
       : LogDouble = {
-    val (domainSizes, predicateWeights) = params
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = dr.domain.size(domainSizes, dr.ineqs)
     if (maxSize < 1) one
     else {
@@ -80,8 +91,8 @@ protected class LogDoubleWmc
 
   protected def visitImprovedDomainRecursion(
     idr: ImprovedDomainRecursionNode,
-    params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
+    params: (DomainSizes, PredicateWeights, ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) one
     else {
@@ -93,9 +104,9 @@ protected class LogDoubleWmc
   }
 
   protected def visitExists(exists: CountingNode,
-                            params: (DomainSizes, PredicateWeights))
-      : LogDouble = {
-    val (domainSizes, predicateWeights) = params
+                            params: (DomainSizes, PredicateWeights,
+                                     ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero
     println("exists/counting:")
@@ -104,7 +115,7 @@ protected class LogDoubleWmc
                               + (exists.subdomain, nbTrue)
                               + (exists.subdomain.complement,
                                  (maxSize - nbTrue)))
-      val newParams = (newDomainSizes, predicateWeights)
+      val newParams = (newDomainSizes, predicateWeights, parameterMap)
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue)
       logWeight += binomialCoeff * childWeight
@@ -115,22 +126,22 @@ protected class LogDoubleWmc
   }
 
   protected def visitConstraintRemovalNode(
-    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : LogDouble = {
-    val (domainSizes, predicateWeights) = params
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
+                                        ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSize = cr.domain.size(domainSizes, Set())
     if (newDomainSize == 0) 0
     else {
       val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
         (cr.subdomain.complement, 1)
-      visit(cr.child.get, (newDomainSizes, predicateWeights))
+      visit(cr.child.get, (newDomainSizes, predicateWeights, parameterMap))
     }
   }
 
   protected def visitForallNode(forall: IndependentPartialGroundingNode,
-                                params: (DomainSizes, PredicateWeights))
-      : LogDouble = {
-    val (domainSizes, predicateWeights) = params
+                                params: (DomainSizes, PredicateWeights,
+                                         ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val childlwmc = visit(forall.child.get, params)
     val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
     if (nbGroundings == 0) {
@@ -143,8 +154,8 @@ protected class LogDoubleWmc
   }
 
   protected def visitInclusionExclusionNode(
-    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights))
-      : LogDouble = {
+    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights,
+                                     ParameterMap)): LogDouble = {
     val plus1lwmc = visit(ie.plus1.get, params)
     val plus2lwmc = visit(ie.plus2.get, params)
     val minlwmc = visit(ie.min.get, params)
@@ -153,8 +164,8 @@ protected class LogDoubleWmc
     answer
   }
 
-  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights))
-      : LogDouble = {
+  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights,
+                                             ParameterMap)): LogDouble = {
     val llwmcc = visit(or.l.get, params)
     val rlwmcc = visit(or.r.get, params)
     val answer = llwmcc + rlwmcc
@@ -163,7 +174,8 @@ protected class LogDoubleWmc
   }
 
   protected def visitAndNode(
-    and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
+    and: And, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : LogDouble = {
     val llwmcc = visit(and.l.get, params)
     if (llwmcc.isZero) zero
     else {
@@ -175,20 +187,24 @@ protected class LogDoubleWmc
   }
 
   protected def visitRefNode(ref: Ref,
-                             params: (DomainSizes, PredicateWeights))
-      : LogDouble = try {
-    val newDomainSizes = params._1.shrink(ref.domainMap)
-    val answer = visit(ref.nnfNode.get, (newDomainSizes, params._2))
+                             params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): LogDouble = try {
+    val (domainSizes, predicateWeights, parameterMap) = params
+    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights,
+                                         parameterMap))
     println(s"$answer (ref)")
     answer
   } catch {
     case e: DomainSize.CantShrinkDomainException => {
-      println("0 (ref, base case)")
-      0}
+      println("1 (ref, base case)")
+      1}
   }
 
-  protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitSmoothingNode(
+    leaf: SmoothingNode, params: (DomainSizes, PredicateWeights,
+                                  ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     val weight = weights.negWPlusPosWLogDouble
@@ -198,15 +214,19 @@ protected class LogDoubleWmc
     answer
   }
 
-  protected def visitContradictionLeaf(leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitContradictionLeaf(
+    leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val hasSolution = leaf.clause.hasConstraintSolution(domainSizes)
     //if the clause has no groundings, it resolves to true
     if (hasSolution) zero else one
   }
 
-  protected def visitUnitLeaf(leaf: UnitLeaf, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitUnitLeaf(
+    leaf: UnitLeaf, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     //if the unit clause has no groundings, it resolves to true
@@ -225,16 +245,20 @@ protected class LogDoubleWmc
     }
   }
 
-  protected def visitGroundingNode(leaf: GroundingNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitGroundingNode(
+    leaf: GroundingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weightedCNF = WeightedCNF(leaf.cnf, domainSizes, predicateWeights)
     val logWmc = weightedCNF.logPropWmc.toLogDouble
     assume(!logWmc.isNaN)
     logWmc
   }
 
-  protected def visitFalse(params: (DomainSizes, PredicateWeights)): LogDouble = zero
-  protected def visitTrue(params: (DomainSizes, PredicateWeights)): LogDouble = one
+  protected def visitFalse(params: (DomainSizes, PredicateWeights,
+                                    ParameterMap)): LogDouble = zero
+  protected def visitTrue(params: (DomainSizes, PredicateWeights,
+                                   ParameterMap)): LogDouble = one
 
 }
 
@@ -287,7 +311,8 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
   // only decomposition nodes can reduce the number of relevant domains!
 
   override protected def visitAndNode(
-    and: And, params: (DomainSizes, PredicateWeights)): LogDouble = {
+    and: And, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : LogDouble = {
     val llwmcc = retrieveWmc(and.l.get, params)
     if (llwmcc.isZero) zero
     else {
@@ -300,8 +325,8 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
 
   override protected def visitForallNode(
     forall: IndependentPartialGroundingNode,
-    params: (DomainSizes, PredicateWeights)): LogDouble = {
-    val (domainSizes, predicateWeights) = params
+    params: (DomainSizes, PredicateWeights, ParameterMap)): LogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val childlwmc = retrieveWmc(forall.child.get, params)
     val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
     if (nbGroundings == 0) {
@@ -313,13 +338,15 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
     }
   }
 
-  @inline private def retrieveWmc(node: NNFNode, params: (DomainSizes, PredicateWeights)): LogDouble = {
+  @inline private def retrieveWmc(
+    node: NNFNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : LogDouble = {
     if(node.evalOrder == 0) {
       // there is no point in caching if the computation is O(1){
       return visit(node, params)
     }else {
 	    val domains: IndexedSeq[Domain] = node.orderedDomains
-	    val (domainSizes, predicateWeights) = params
+	    val (domainSizes, predicateWeights, parameterMap) = params
 	    val key = new Key(node, domains.map(domainSizes(_).size))
 	    val result = cache.get(key)
 	    if (result.nonEmpty) {
@@ -337,26 +364,22 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
 }
 
 protected class SignLogDoubleWmc
-    extends NnfVisitor[(DomainSizes, PredicateWeights), SignLogDouble]
+    extends NnfVisitor[(DomainSizes, PredicateWeights, WmcVisitor.ParameterMap),
+                       SignLogDouble]
     with WmcVisitor {
 
   import edu.ucla.cs.starai.forclift.util.SignLogDouble._
 
-  def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble = {
-    visit(nnf, (domainSizes, predicateWeights))
+  def wmc(
+    nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights)
+      : SignLogDouble = {
+    visit(nnf, (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty))
   }
 
-  //  // add to debug NaN evaluation
-  //  override def visit(node: NNFNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-  //    val wmc = super.visit(node, params)
-  //    require(!wmc.isNaN)
-  //    wmc
-  //  }
-
-  protected def visitDomainRecursion(dr: DomainRecursionNode,
-                                     params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitDomainRecursion(
+    dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = dr.domain.size(domainSizes, dr.ineqs)
     if (maxSize < 1) one
     else {
@@ -372,9 +395,9 @@ protected class SignLogDoubleWmc
   }
 
   protected def visitImprovedDomainRecursion(
-    idr: ImprovedDomainRecursionNode, params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+    idr: ImprovedDomainRecursionNode, params: (DomainSizes, PredicateWeights,
+                                               ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) one
     else {
@@ -385,10 +408,10 @@ protected class SignLogDoubleWmc
     }
   }
 
-  protected def visitExists(exists: CountingNode,
-                            params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitExists(
+    exists: CountingNode, params: (DomainSizes, PredicateWeights,
+                                   ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero;
     for (nbTrue <- 0 to maxSize) {
@@ -396,7 +419,7 @@ protected class SignLogDoubleWmc
                               + (exists.subdomain, nbTrue)
                               + (exists.subdomain.complement,
                                  (maxSize - nbTrue)));
-      val newParams = (newDomainSizes, predicateWeights)
+      val newParams = (newDomainSizes, predicateWeights, parameterMap)
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue).toSignDouble
       logWeight += binomialCoeff * childWeight
@@ -407,23 +430,23 @@ protected class SignLogDoubleWmc
   }
 
   protected def visitConstraintRemovalNode(
-    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
+                                        ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSize = cr.domain.size(domainSizes, Set())
     if (newDomainSize == 0) 0
     else {
       val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
         (cr.subdomain.complement, 1)
       //println("Adding domain " + cr.subdomain + " of cardinality " + (newDomainSize - 1))
-      visit(cr.child.get, (newDomainSizes, predicateWeights))
+      visit(cr.child.get, (newDomainSizes, predicateWeights, parameterMap))
     }
   }
 
-  protected def visitForallNode(forall: IndependentPartialGroundingNode,
-                                params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitForallNode(
+    forall: IndependentPartialGroundingNode,
+    params: (DomainSizes, PredicateWeights, ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val childlwmc = visit(forall.child.get, params)
     val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
     if (nbGroundings == 0) {
@@ -436,8 +459,8 @@ protected class SignLogDoubleWmc
   }
 
   protected def visitInclusionExclusionNode(
-    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
+    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights,
+                                     ParameterMap)): SignLogDouble = {
     val plus1lwmc = visit(ie.plus1.get, params)
     val plus2lwmc = visit(ie.plus2.get, params)
     val minlwmc = visit(ie.min.get, params)
@@ -446,7 +469,8 @@ protected class SignLogDoubleWmc
     answer
   }
 
-  protected def visitOrNode(or: Or, params: (DomainSizes, PredicateWeights))
+  protected def visitOrNode(
+    or: Or, params: (DomainSizes, PredicateWeights, ParameterMap))
       : SignLogDouble = {
     val llwmcc = visit(or.l.get, params)
     val rlwmcc = visit(or.r.get, params)
@@ -455,7 +479,8 @@ protected class SignLogDoubleWmc
     answer
   }
 
-  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights))
+  protected def visitAndNode(
+    and: And, params: (DomainSizes, PredicateWeights, ParameterMap))
       : SignLogDouble = {
     val llwmcc = visit(and.l.get, params)
     if (llwmcc.isZero) zero
@@ -467,17 +492,21 @@ protected class SignLogDoubleWmc
     }
   }
 
-  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights))
+  protected def visitRefNode(
+    ref: Ref, params: (DomainSizes, PredicateWeights, ParameterMap))
       : SignLogDouble = try {
-    val newDomainSizes = params._1.shrink(ref.domainMap)
+    val (domainSizes, predicateWeights, parameterMap) = params
+    val newDomainSizes = domainSizes.shrink(ref.domainMap)
     //println("visitRefNode. ref: " + ref + ", domain sizes before: " + params._1 + ", domain sizes after: " + newDomainSizes)
-    visit(ref.nnfNode.get, (newDomainSizes, params._2))
+    visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
   } catch {
     case e: DomainSize.CantShrinkDomainException => 0
   }
 
-  protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitSmoothingNode(
+    leaf: SmoothingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     val weight = weights.negWPlusPosW
@@ -486,15 +515,19 @@ protected class SignLogDoubleWmc
     answer
   }
 
-  protected def visitContradictionLeaf(leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitContradictionLeaf(
+    leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val hasSolution = leaf.clause.hasConstraintSolution(domainSizes)
     //if the clause has no groundings, it resolves to true
     if (hasSolution) zero else one
   }
 
-  protected def visitUnitLeaf(leaf: UnitLeaf, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitUnitLeaf(
+    leaf: UnitLeaf, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     //if the unit clause has no groundings, it resolves to true
@@ -513,16 +546,20 @@ protected class SignLogDoubleWmc
     }
   }
 
-  protected def visitGroundingNode(leaf: GroundingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitGroundingNode(
+    leaf: GroundingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weightedCNF = WeightedCNF(leaf.cnf, domainSizes, predicateWeights)
     val logWmc = weightedCNF.logPropWmc
     assume(!logWmc.isNaN)
     logWmc
   }
 
-  protected def visitFalse(params: (DomainSizes, PredicateWeights)): SignLogDouble = zero
-  protected def visitTrue(params: (DomainSizes, PredicateWeights)): SignLogDouble = one
+  protected def visitFalse(params: (DomainSizes, PredicateWeights,
+                                    ParameterMap)): SignLogDouble = zero
+  protected def visitTrue(params: (DomainSizes, PredicateWeights,
+                                   ParameterMap)): SignLogDouble = one
 
 }
 
@@ -542,7 +579,8 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
   // only decomposition nodes can reduce the number of relevant domains!
 
   override protected def visitAndNode(
-    and: And, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
+    and: And, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
     val llwmcc = retrieveWmc(and.l.get, params)
     if (llwmcc.isZero) zero
     else {
@@ -555,8 +593,8 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
 
   override protected def visitForallNode(
     forall: IndependentPartialGroundingNode,
-    params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+    params: (DomainSizes, PredicateWeights, ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val childlwmc = retrieveWmc(forall.child.get, params)
     val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
     if (nbGroundings == 0) {
@@ -568,13 +606,15 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
     }
   }
 
-  @inline private def retrieveWmc(node: NNFNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
+  @inline private def retrieveWmc(
+    node: NNFNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
     if(node.evalOrder == 0) {
       // there is no point in caching if the computation is O(1)
       return visit(node, params)
     } else{
 	    val domains: IndexedSeq[Domain] = node.orderedDomains
-	    val (domainSizes, predicateWeights) = params
+	    val (domainSizes, predicateWeights, parameterMap) = params
 	    val key = new Key(node, domains.map(domainSizes(_).size))
 	    val result = cache.get(key)
 	    if (result.nonEmpty) {
@@ -595,67 +635,82 @@ class SafeSignLogDoubleWmc extends SignLogDoubleWmc {
 
   import SignLogDouble._
 
-  override protected def visitForallNode(forall: IndependentPartialGroundingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitForallNode(
+    forall: IndependentPartialGroundingNode,
+    params: (DomainSizes, PredicateWeights, ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (domainSizes.contains(forall.d)) {
       super.visitForallNode(forall, params)
     } else NaN
   }
 
-  override protected def visitExists(exists: CountingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitExists(
+    exists: CountingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (domainSizes.contains(exists.domain)) {
       super.visitExists(exists, params)
     } else NaN
   }
 
   override protected def visitConstraintRemovalNode(
-    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
+                                        ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (domainSizes.contains(cr.domain)) {
       super.visitConstraintRemovalNode(cr, params)
     } else NaN
   }
 
-  override protected def visitDomainRecursion(dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights)) = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitDomainRecursion(
+    dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)) = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (domainSizes.contains(dr.domain)) {
       super.visitDomainRecursion(dr, params)
     } else NaN
   }
 
-  override protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
-                                                      params: (DomainSizes, PredicateWeights)) = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitImprovedDomainRecursion(
+    idr: ImprovedDomainRecursionNode, params: (DomainSizes, PredicateWeights,
+                                               ParameterMap)) = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (domainSizes.contains(idr.domain)) {
       super.visitImprovedDomainRecursion(idr, params)
     } else NaN
   }
 
-  override protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitSmoothingNode(
+    leaf: SmoothingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (leaf.clause.constrs.domains.forall { domainSizes.contains(_) }) {
       super.visitSmoothingNode(leaf, params)
     } else NaN
   }
 
-  override protected def visitUnitLeaf(leaf: UnitLeaf, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitUnitLeaf(
+    leaf: UnitLeaf, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (leaf.clause.constrs.domains.forall { domainSizes.contains(_) }) {
       super.visitUnitLeaf(leaf, params)
     } else NaN
   }
 
-  override protected def visitContradictionLeaf(leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitContradictionLeaf(
+    leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (leaf.clause.constrs.domains.forall { domainSizes.contains(_) }) {
       super.visitContradictionLeaf(leaf, params)
     } else NaN
   }
 
-  override protected def visitGroundingNode(leaf: GroundingNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
-    val (domainSizes, predicateWeights) = params
+  override protected def visitGroundingNode(
+    leaf: GroundingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     if (leaf.cnf.domains.forall { domainSizes.contains(_) }) {
       super.visitGroundingNode(leaf, params)
     } else NaN
@@ -671,8 +726,10 @@ object VerifyWmcVisitor {
 
   class VerificationFailedException extends Exception
 
-  def verify(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights) {
-    (new VerifyWmcVisitor()).visit(nnf, (domainSizes, predicateWeights))
+  def verify(nnf: NNFNode, domainSizes: DomainSizes,
+             predicateWeights: PredicateWeights) {
+    (new VerifyWmcVisitor()).visit(nnf, (domainSizes, predicateWeights,
+                                         WmcVisitor.ParameterMap.empty))
   }
 
 }
@@ -681,14 +738,17 @@ protected class VerifyWmcVisitor extends SignLogDoubleWmc {
 
   val nonVerifyingWmcVisitor = new SignLogDoubleWmc
 
-  override def visit(nnfNode: NNFNode, params: (DomainSizes, PredicateWeights)): SignLogDouble = {
+  override def visit(
+    nnfNode: NNFNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : SignLogDouble = {
     val wmc = super.visit(nnfNode, params)
     verifyLocal(nnfNode, params)
     wmc
   }
 
-  protected def verifyLocal(nnfNode: NNFNode, params: (DomainSizes, PredicateWeights)) {
-    val (domainSizes, predicateWeights) = params
+  protected def verifyLocal(
+    nnfNode: NNFNode, params: (DomainSizes, PredicateWeights, ParameterMap)) {
+    val (domainSizes, predicateWeights, parameterMap) = params
     try {
       val cnf = nnfNode.cnf
       val weightedCNF = WeightedCNF(cnf, domainSizes, predicateWeights)
@@ -745,14 +805,21 @@ protected class VerifyWmcVisitor extends SignLogDoubleWmc {
 /**
  * Goes out of memory
  */
-protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(DomainSizes, PredicateWeights), BigInt] with WmcVisitor {
+protected class BigIntWmc(val decimalPrecision: Int = 100)
+    extends NnfVisitor[(DomainSizes, PredicateWeights,
+                        WmcVisitor.ParameterMap), BigInt]
+    with WmcVisitor {
 
   val zero: BigInt = 0
   val one: BigInt = 1
 
-  def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble = {
-    val normalization: LogDouble = LogDouble.doubleToLogDouble(decimalPrecision).pow(numRandVars(domainSizes,predicateWeights))
-    bigInt2SignLogDouble(visit(nnf, (domainSizes, predicateWeights)))/normalization
+  def wmc(nnf: NNFNode, domainSizes: DomainSizes,
+          predicateWeights: PredicateWeights): SignLogDouble = {
+    val normalization: LogDouble = LogDouble.doubleToLogDouble(decimalPrecision
+    ).pow(numRandVars(domainSizes,predicateWeights))
+    bigInt2SignLogDouble(
+      visit(nnf, (domainSizes, predicateWeights,
+                  WmcVisitor.ParameterMap.empty)))/normalization
   }
 
   def numRandVars(domainSizes: DomainSizes, predicateWeights: PredicateWeights): Int = {
@@ -771,10 +838,10 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
       return SignLogDouble.fromLog(if(blex > 0) res + blex * LOG2 else res);
   }
 
-  protected def visitDomainRecursion(dr: DomainRecursionNode,
-                                     params: (DomainSizes, PredicateWeights))
-      : BigInt = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitDomainRecursion(
+    dr: DomainRecursionNode, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = dr.domain.size(domainSizes, dr.ineqs)
     if (maxSize < 1) one
     else {
@@ -787,10 +854,10 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
     }
   }
 
-  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode,
-                                             params: (DomainSizes, PredicateWeights))
-      : BigInt = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitImprovedDomainRecursion(
+    idr: ImprovedDomainRecursionNode, params: (DomainSizes, PredicateWeights,
+                                               ParameterMap)): BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) one
     else {
@@ -800,8 +867,9 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
   }
 
   protected def visitExists(
-    exists: CountingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
-    val (domainSizes, predicateWeights) = params
+    exists: CountingNode, params: (DomainSizes, PredicateWeights,
+                                   ParameterMap)): BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize: Int = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero;
     for (nbTrue <- 0 to maxSize) {
@@ -809,7 +877,7 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
                               + (exists.subdomain, nbTrue)
                               + (exists.subdomain.complement,
                                  (maxSize - nbTrue)));
-      val newParams = (newDomainSizes, predicateWeights)
+      val newParams = (newDomainSizes, predicateWeights, parameterMap)
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = coeff(maxSize, nbTrue)
       logWeight += binomialCoeff * childWeight
@@ -818,15 +886,15 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
   }
 
   protected def visitConstraintRemovalNode(
-    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights))
-      : BigInt = {
-    val (domainSizes, predicateWeights) = params
+    cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
+                                        ParameterMap)): BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSize = cr.domain.size(domainSizes, Set())
     if (newDomainSize == 0) 0
     else {
       val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
         (cr.subdomain.complement, 1)
-      visit(cr.child.get, (newDomainSizes, predicateWeights))
+      visit(cr.child.get, (newDomainSizes, predicateWeights, parameterMap))
     }
   }
 
@@ -846,10 +914,10 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
   def coeff(n: Int, k: Int): BigInt = factorial(n) / factorial(k) / factorial(n - k)
 
 
-  protected def visitForallNode(forall: IndependentPartialGroundingNode,
-                                params: (DomainSizes, PredicateWeights))
-      : BigInt = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitForallNode(
+    forall: IndependentPartialGroundingNode,
+    params: (DomainSizes, PredicateWeights, ParameterMap)): BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val childlwmc = visit(forall.child.get, params)
     val nbGroundings = forall.d.size(domainSizes, forall.ineqs)
     if (nbGroundings == 0) {
@@ -860,22 +928,23 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
   }
 
   protected def visitInclusionExclusionNode(
-    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights)): BigInt = {
+    ie: InclusionExclusion, params: (DomainSizes, PredicateWeights,
+                                     ParameterMap)): BigInt = {
     val plus1lwmc = visit(ie.plus1.get, params)
     val plus2lwmc = visit(ie.plus2.get, params)
     val minlwmc = visit(ie.min.get, params)
     plus1lwmc + plus2lwmc - minlwmc
   }
 
-  protected def visitOrNode(or: Or,
-                            params: (DomainSizes, PredicateWeights)): BigInt = {
+  protected def visitOrNode(
+    or: Or, params: (DomainSizes, PredicateWeights, ParameterMap)): BigInt = {
     val llwmcc = visit(or.l.get, params)
     val rlwmcc = visit(or.r.get, params)
     llwmcc + rlwmcc
   }
 
-  protected def visitAndNode(and: And, params: (DomainSizes, PredicateWeights))
-      : BigInt = {
+  protected def visitAndNode(
+    and: And, params: (DomainSizes, PredicateWeights, ParameterMap)): BigInt = {
     val llwmcc = visit(and.l.get, params)
     if (llwmcc == zero) zero
     else {
@@ -884,30 +953,38 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
     }
   }
 
-  protected def visitRefNode(ref: Ref, params: (DomainSizes, PredicateWeights))
+  protected def visitRefNode(
+    ref: Ref, params: (DomainSizes, PredicateWeights, ParameterMap))
       : BigInt = try {
-    val newDomainSizes = params._1.shrink(ref.domainMap)
-    visit(ref.nnfNode.get, (newDomainSizes, params._2))
+    val (domainSizes, predicateWeights, parameterMap) = params
+    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
   } catch {
     case e: DomainSize.CantShrinkDomainException => 0
   }
 
-  protected def visitSmoothingNode(leaf: SmoothingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitSmoothingNode(
+    leaf: SmoothingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     BigInt((decimalPrecision*weights.negWPlusPosWDouble).toInt).pow(nbGroundings)
   }
 
-  protected def visitContradictionLeaf(leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights)): BigInt = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitContradictionLeaf(
+    leaf: ContradictionLeaf, params: (DomainSizes, PredicateWeights,
+                                      ParameterMap)): BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val hasSolution = leaf.clause.hasConstraintSolution(domainSizes)
     //if the clause has no groundings, it resolves to true
     if (hasSolution) zero else one
   }
 
-  protected def visitUnitLeaf(leaf: UnitLeaf, params: (DomainSizes, PredicateWeights)): BigInt = {
-    val (domainSizes, predicateWeights) = params
+  protected def visitUnitLeaf(
+    leaf: UnitLeaf, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : BigInt = {
+    val (domainSizes, predicateWeights, parameterMap) = params
     val weights = predicateWeights(leaf.clause.atom.predicate)
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     //if the unit clause has no groundings, it resolves to true
@@ -916,12 +993,16 @@ protected class BigIntWmc(val decimalPrecision: Int = 100) extends NnfVisitor[(D
     else BigInt((decimalPrecision*weights.negWDouble).toInt).pow(nbGroundings)
   }
 
-  protected def visitGroundingNode(leaf: GroundingNode, params: (DomainSizes, PredicateWeights)): BigInt = {
+  protected def visitGroundingNode(
+    leaf: GroundingNode, params: (DomainSizes, PredicateWeights, ParameterMap))
+      : BigInt = {
     throw new UnsupportedOperationException
   }
 
 
-  protected def visitFalse(params: (DomainSizes, PredicateWeights)): BigInt = zero
-  protected def visitTrue(params: (DomainSizes, PredicateWeights)): BigInt = one
+  protected def visitFalse(params: (DomainSizes, PredicateWeights,
+                                    ParameterMap)): BigInt = zero
+  protected def visitTrue(params: (DomainSizes, PredicateWeights,
+                                   ParameterMap)): BigInt = one
 
 }

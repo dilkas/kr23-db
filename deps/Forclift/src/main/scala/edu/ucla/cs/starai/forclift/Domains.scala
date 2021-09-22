@@ -17,6 +17,7 @@
 package edu.ucla.cs.starai.forclift
 
 import edu.ucla.cs.starai.forclift.inference._
+import edu.ucla.cs.starai.forclift.nnf.ParametrisedNode
 import collection._
 
 sealed abstract class Domain {
@@ -225,7 +226,12 @@ object Universe extends RootDomain("U") {
 }
 
 abstract class SubDomain(val superScript: String, val subScript: String,
-    parent: Domain, val excludedConstants: collection.Set[Constant]) extends Domain {
+                         parent: Domain,
+                         val excludedConstants: collection.Set[Constant],
+                         var cause: Option[ParametrisedNode] = None)
+    extends Domain {
+
+  def setCause(newCause: ParametrisedNode) = { cause = Some(newCause) }
 
   def complement: SubDomain
 

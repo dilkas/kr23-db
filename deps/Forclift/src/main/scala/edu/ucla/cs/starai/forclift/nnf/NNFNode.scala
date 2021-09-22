@@ -244,3 +244,5 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
     depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String)
 
 }
+
+abstract class ParametrisedNode() extends NNFNode {}

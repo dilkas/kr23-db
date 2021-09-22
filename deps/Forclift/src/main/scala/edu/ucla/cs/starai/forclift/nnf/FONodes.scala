@@ -21,6 +21,7 @@ import scala.collection._
 import edu.ucla.cs.starai.forclift._
 import edu.ucla.cs.starai.forclift.inference._
 import edu.ucla.cs.starai.forclift.nnf.visitors.SafeSignLogDoubleWmc
+import edu.ucla.cs.starai.forclift.nnf.visitors.WmcVisitor
 import edu.ucla.cs.starai.forclift.util._
 import edu.ucla.cs.starai.forclift.util.Binomial._
 import edu.ucla.cs.starai.forclift.util.ExternalBinaries
@@ -79,7 +80,9 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
         "  " + getName(nameSpace) + " -> " + child.get.getName(nameSpace) + ";\n"
       } else {
         val wmcVisitor = new SafeSignLogDoubleWmc
-        val childlwmc = wmcVisitor.visit(child.get.smooth, (domainSizes, predicateWeights))
+        val childlwmc = wmcVisitor.visit(child.get.smooth,
+                                         (domainSizes, predicateWeights,
+                                          WmcVisitor.ParameterMap.empty))
         "  " + getName(nameSpace) + " -> " + "exp" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
           "  " + "exp" + getName(nameSpace) + " -> " + child.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + childlwmc.exp + " $ ") + """];""" + "\n"
       }
@@ -98,7 +101,7 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
 
 class CountingNode(val cnf: CNF, var child: Option[NNFNode],
   val domain: Domain, val subdomain: SubDomain,
-  val explanation: String = "") extends NNFNode {
+  val explanation: String = "") extends ParametrisedNode {
 
   override def update(children : List[NNFNode]) = {
     require(children.length == 1)
@@ -237,8 +240,12 @@ class DomainRecursionNode(
           "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
       } else {
         val wmcVisitor = new SafeSignLogDoubleWmc
-        val groundChildWmc = wmcVisitor.visit(groundChild.get.smooth,(domainSizes, predicateWeights))
-        val mixedChildWmc = wmcVisitor.visit(mixedChild.get.smooth,(domainSizes - domain, predicateWeights))
+        val groundChildWmc = wmcVisitor.visit(groundChild.get.smooth,
+                                              (domainSizes, predicateWeights,
+                                               WmcVisitor.ParameterMap.empty))
+        val mixedChildWmc = wmcVisitor.visit(
+          mixedChild.get.smooth, (domainSizes - domain, predicateWeights,
+                                  WmcVisitor.ParameterMap.empty))
         "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
           "  " + "domainrec" + getName(nameSpace) + " -> " + mixedChild.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
           "  " + "domainrec" + getName(nameSpace) + " -> " + groundChild.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + groundChildWmc.exp + " $ ") + """];""" + "\n" +
@@ -312,7 +319,9 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
           "  " + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"
       } else {
         val wmcVisitor = new SafeSignLogDoubleWmc
-        val mixedChildWmc = wmcVisitor.visit(mixedChild.get.smooth,(domainSizes - domain, predicateWeights))
+        val mixedChildWmc = wmcVisitor.visit(
+          mixedChild.get.smooth,(domainSizes - domain, predicateWeights,
+                                 WmcVisitor.ParameterMap.empty))
         "  " + getName(nameSpace) + " -> " + "domainrec" + getName(nameSpace) + """ [""" + edgeLabel(explanation) + """];""" + "\n" +
           "  " + "domainrec" + getName(nameSpace) + " -> " + mixedChild.get.getName(nameSpace) + """ [""" + edgeLabel(" $ " + mixedChildWmc.exp + " $ ") + """];""" + "\n" +
           "  " + "domainrec" + getName(nameSpace) + " -> " + getName(nameSpace) + """ [""" + edgeLabel("$" + domain + """ \leftarrow """ + domain + """ \setminus \{""" + c + """\}$""") + """];""" + "\n"

@@ -78,9 +78,10 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
                                                     newDomain) }.toList: _*)
                 println("\nconstraint removal")
                 println(cnf + "\n")
-                return Some(new ConstraintRemovalNode(
-                              cnf, Some(compile(newCnf)), originalDomain,
-                              newDomain))
+                val node = new ConstraintRemovalNode(
+                  cnf, Some(compile(newCnf)), originalDomain, newDomain)
+                newDomain.setCause(node)
+                return Some(node)
               }
             }
             case _ => {}
@@ -97,7 +98,6 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
-    tryConstraintRemoval, // new
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation,
     tryTautologyClauseElimination, // added wrt NIPS11
@@ -108,7 +108,8 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     tryShatter,
     tryIndependentPartialGrounding, // O(log(n))
     tryCounting, // O(n)
-    tryDomainRecursion, // is O(log(n)) now! But assumes no unary predicates
+    //tryDomainRecursion, // is O(log(n)) now! But assumes no unary predicates
+    tryConstraintRemoval, // new
     tryImprovedDomainRecursion // new
   )
 
