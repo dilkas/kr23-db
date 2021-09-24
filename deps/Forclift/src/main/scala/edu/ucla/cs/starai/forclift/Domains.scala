@@ -231,7 +231,10 @@ abstract class SubDomain(val superScript: String, val subScript: String,
                          var cause: Option[ParametrisedNode] = None)
     extends Domain {
 
-  def setCause(newCause: ParametrisedNode) = { cause = Some(newCause) }
+  def setCause(newCause: ParametrisedNode) = {
+    println("Updating the cause of " + this + " to " + newCause)
+    cause = Some(newCause)
+  }
 
   def complement: SubDomain
 

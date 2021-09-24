@@ -19,6 +19,7 @@ package edu.ucla.cs.starai.forclift
 import collection._
 import scala.collection.immutable.Stream
 import edu.ucla.cs.starai.forclift.inference._
+import edu.ucla.cs.starai.forclift.nnf.ParametrisedNode
 
 final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
@@ -254,50 +255,55 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
 object CNF {
 
+  type DomainMap = Map[Domain, (Domain, List[(ParametrisedNode, Boolean)])]
+
   def apply(clauses: Clause*) = new CNF(clauses.toList)
 
-  // The first element of each pair is the domain to be compared,
-  // and the second element is its 'origin' domain.
-  type State = (Int, Iterable[(Domain, Domain)])
+  // The first element of each tuple is the domain to be compared, the second
+  // element is its 'origin' domain, and the third element is its 'history'.
+  type State = Iterable[(Domain, Domain, List[(ParametrisedNode, Boolean)])]
 
   final case class DomainNotMatchedException(
     private val message: String = "",
     private val cause: Throwable = None.orNull) extends
       Exception(message, cause)
 
-  /** Increment the time counter and replace each candidate domain with its
-    parent if possible, and eliminate it completely if not. */
   def update(state: State): State = {
-    val newStates = state._2.flatMap { candidate =>
-      candidate._1.parents.headOption match {
-        case Some(p)  => Some((p, candidate._2))
-        case None => None
-      } }
+    val newStates = state.flatMap {
+      case (domain: Domain, origin: Domain,
+            history: List[(ParametrisedNode, Boolean)]) =>
+        if (domain.isInstanceOf[SubDomain]) {
+          val newHistory = (domain.asInstanceOf[SubDomain].cause.get,
+                            domain.isInstanceOf[ComplementDomain])
+          List((domain.parents.head, origin, newHistory :: history))
+        } else {
+          List()
+        }
+    }
     println("Updated state to " + newStates)
-    (state._1 + 1, newStates)
+    newStates
   }
 
-  def findDomain(domain: Domain)(state: State): Option[(Domain, Int)] =
-    if (state._2.isEmpty) {
+  def findDomain(domain: Domain)(state: State)
+      : Option[(Domain, List[(ParametrisedNode, Boolean)])] =
+    if (state.isEmpty) {
       throw DomainNotMatchedException()
     } else {
-      state._2.find { _._1 == domain } match {
-        case Some(candidate) => Some((candidate._1, state._1))
+      state.find { _._1 == domain } match {
+        case Some((_, origin, history)) => Some(origin, history)
         case None => None
       }
     }
 
   /** If possible, identify the values in the map as subsets of some of the
     keys. */
-  def postprocess(domainMap: Map[Domain, Domain])
-      : Option[Map[Domain, (Domain, Int)]] = {
+  def postprocess(domainMap: Map[Domain, Domain]): Option[DomainMap] = {
     println("Postprocessing " + domainMap)
     try {
       Some(domainMap.map {
              case (d1, d2) => {
-               lazy val stateStream: Stream[State] = (0, domainMap.values.map {
-                                                        d: Domain => (d, d) }
-               ) #:: stateStream.map(update)
+               lazy val stateStream: Stream[State] = domainMap.values.map {
+                 d: Domain => (d, d, List()) } #:: stateStream.map(update)
                stateStream.flatMap(findDomain(d1)).headOption match {
                  case Some(d) => (d1, d)
                  case None => throw DomainNotMatchedException()
@@ -315,7 +321,7 @@ object CNF {
   // partialMap as (subsets of) domains of oldTheory.
   def identifyRecursion(newTheory: CNF, oldTheory: CNF,
                         partialMap: Map[Domain, Domain] = Map.empty)
-      : Option[Map[Domain, (Domain, Int)]] = {
+      : Option[DomainMap] = {
     if (newTheory.size != oldTheory.size ||
           newTheory.hashCode != oldTheory.hashCode) {
       println("different: " + newTheory + " AND " + oldTheory)

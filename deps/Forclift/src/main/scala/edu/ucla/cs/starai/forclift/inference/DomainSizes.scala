@@ -20,6 +20,7 @@ import edu.ucla.cs.starai.forclift._
 import scala.language.implicitConversions
 import edu.ucla.cs.starai.forclift.compiler._
 import edu.ucla.cs.starai.forclift.conditioning._
+import edu.ucla.cs.starai.forclift.nnf.visitors.WmcVisitor
 
 import edu.ucla.cs.starai.forclift.propositional._
 import scala.collection._
@@ -43,19 +44,25 @@ import util._
 class DomainSize(
   val size: Int,
   val constants: Set[Constant] = Set()) {
-  def reduceSize(n: Int) =
+
+  def reduceSize(n: Int) = {
+    require(n >= 0)
     if (n == 0) {
       this
     } else if (n <= size) {
-    new DomainSize(size - n, constants)
-  } else {
-    throw new DomainSize.CantShrinkDomainException()
+      new DomainSize(size - n, constants)
+    } else {
+      throw new DomainSize.CantShrinkDomainException()
+    }
   }
+
   def +(s: DomainSize) = {
     new DomainSize(size + s.size, constants ++ s.constants)
   }
+
   def isEmpty = (size == 0)
   override def toString = size + " " + constants.mkString("{", ",", "}")
+
 }
 
 object DomainSize {
@@ -226,11 +233,17 @@ class DomainSizes(
     }
   }
 
-  def shrink(domainMap: Map[Domain, (Domain, Int)]): DomainSizes = {
-    new DomainSizes(map { case (domain, size) => {
-                           val v = domainMap.getOrElse(domain, (domain, 0))
-                           (domain, self(v._1).reduceSize(v._2))
-                         } }.toMap)
+  def shrink(domainMap: CNF.DomainMap,
+             parameterMap: WmcVisitor.ParameterMap): DomainSizes = {
+    val newDomainSizes = map {
+      case (domain, _) => {
+        val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))
+        val decrement = history.map { case (node, complement) =>
+          if (complement) parameterMap(node)._2 else parameterMap(node)._1 }.sum
+        (domain, self(newDomain).reduceSize(decrement))
+      }
+    }
+    new DomainSizes(newDomainSizes.toMap)
   }
 }
 

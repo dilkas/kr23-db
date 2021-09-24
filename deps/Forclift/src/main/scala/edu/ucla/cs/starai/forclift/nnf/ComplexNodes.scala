@@ -30,8 +30,8 @@ import edu.ucla.cs.starai.forclift.nnf.visitors.SafeSignLogDoubleWmc
 import edu.ucla.cs.starai.forclift.nnf.visitors.WmcVisitor
 
 class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
-          val domainMap: Map[Domain, (Domain, Int)],
-          val explanation: String = "") extends NNFNode {
+          val domainMap: CNF.DomainMap, val explanation: String = "")
+    extends NNFNode {
 
   override def update(children : List[NNFNode]) = {
     require(children.length == 1)

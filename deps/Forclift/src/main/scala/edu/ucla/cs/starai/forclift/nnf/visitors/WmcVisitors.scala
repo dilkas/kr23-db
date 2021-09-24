@@ -33,17 +33,16 @@ import edu.ucla.cs.starai.forclift.Domain
 
 trait WmcVisitor {
   // Duplicating this 2-3 times is still better than duplicating it ~50 times
-  type ParameterMap = collection.mutable.Map[ParametrisedNode, Int]
+  type ParameterMap = Map[ParametrisedNode, (Int, Int)]
   def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble
 }
 
 object WmcVisitor {
 
-  type ParameterMap = collection.mutable.Map[ParametrisedNode, Int]
+  type ParameterMap = Map[ParametrisedNode, (Int, Int)]
 
   object ParameterMap {
-    def empty: ParameterMap = collection.mutable.Map.empty[ParametrisedNode,
-                                                           Int]
+    def empty: ParameterMap = Map.empty[ParametrisedNode, (Int, Int)]
   }
 
   def apply(predicateWeights: PredicateWeights): WmcVisitor = {
@@ -115,7 +114,8 @@ protected class LogDoubleWmc
                               + (exists.subdomain, nbTrue)
                               + (exists.subdomain.complement,
                                  (maxSize - nbTrue)))
-      val newParams = (newDomainSizes, predicateWeights, parameterMap)
+      val newParams = (newDomainSizes, predicateWeights,
+                       parameterMap + (exists -> (nbTrue, maxSize - nbTrue)))
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue)
       logWeight += binomialCoeff * childWeight
@@ -129,12 +129,13 @@ protected class LogDoubleWmc
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
                                         ParameterMap)): LogDouble = {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSize = cr.domain.size(domainSizes, Set())
-    if (newDomainSize == 0) 0
+    val newDomainSize = cr.domain.size(domainSizes, Set()) - 1
+    if (newDomainSize < 0) 0
     else {
-      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
+      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize) +
         (cr.subdomain.complement, 1)
-      visit(cr.child.get, (newDomainSizes, predicateWeights, parameterMap))
+      visit(cr.child.get, (newDomainSizes, predicateWeights,
+                           parameterMap + (cr -> (newDomainSize, 1))))
     }
   }
 
@@ -190,7 +191,7 @@ protected class LogDoubleWmc
                              params: (DomainSizes, PredicateWeights,
                                       ParameterMap)): LogDouble = try {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
     val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights,
                                          parameterMap))
     println(s"$answer (ref)")
@@ -496,7 +497,7 @@ protected class SignLogDoubleWmc
     ref: Ref, params: (DomainSizes, PredicateWeights, ParameterMap))
       : SignLogDouble = try {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
     //println("visitRefNode. ref: " + ref + ", domain sizes before: " + params._1 + ", domain sizes after: " + newDomainSizes)
     visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
   } catch {
@@ -957,7 +958,7 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
     ref: Ref, params: (DomainSizes, PredicateWeights, ParameterMap))
       : BigInt = try {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
     visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
   } catch {
     case e: DomainSize.CantShrinkDomainException => 0
