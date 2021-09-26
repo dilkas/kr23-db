@@ -78,9 +78,11 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
                                                     newDomain) }.toList: _*)
                 println("\nconstraint removal")
                 println(cnf + "\n")
-                val node = new ConstraintRemovalNode(
-                  cnf, Some(compile(newCnf)), originalDomain, newDomain)
+                val node = new ConstraintRemovalNode(cnf, None, originalDomain,
+                                                     newDomain)
+                updateCache(cnf, node)
                 newDomain.setCause(node)
+                node.update(List(compile(newCnf)))
                 return Some(node)
               }
             }

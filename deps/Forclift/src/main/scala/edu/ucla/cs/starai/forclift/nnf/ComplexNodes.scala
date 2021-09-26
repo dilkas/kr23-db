@@ -367,6 +367,13 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
                             val explanation: String = "")
     extends ParametrisedNode {
 
+  def canEqual(a: Any) = a.isInstanceOf[ConstraintRemovalNode]
+
+  override def equals(that: Any): Boolean = that match {
+    case that: ConstraintRemovalNode => cnf == that.cnf
+    case _ => false
+  }
+
   override def update(children : List[NNFNode]) = {
     require(children.length == 1)
     child = Some(children.head)
@@ -440,8 +447,6 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
 
   override def toString(nameSpace: NameSpace[NNFNode, String]): String =
     (super.toString(nameSpace) +
-       getName(nameSpace) + " = reduce " + domain + " to " + subdomain + " " +
-       child.get.getName(nameSpace) + "\n" + "\n" +
-       child.get.toString(nameSpace))
+       getName(nameSpace) + " = reduce " + domain + " to " + subdomain) //+ " " + child.get.getName(nameSpace) + "\n" + "\n" + child.get.toString(nameSpace))
 
 }

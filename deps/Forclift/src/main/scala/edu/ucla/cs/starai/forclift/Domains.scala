@@ -231,8 +231,10 @@ abstract class SubDomain(val superScript: String, val subScript: String,
                          var cause: Option[ParametrisedNode] = None)
     extends Domain {
 
+  def getCause = cause.get
+
   def setCause(newCause: ParametrisedNode) = {
-    println("Updating the cause of " + this + " to " + newCause)
+    println("Updating the cause of a domain")
     cause = Some(newCause)
   }
 
@@ -283,7 +285,10 @@ class ComplementDomain(
   subScript: String,
   parent: Domain,
   val complement: SubDomain,
-  excludedConstants: collection.Set[Constant]) extends SubDomain(superScript, subScript, parent, excludedConstants) {
+  excludedConstants: collection.Set[Constant])
+    extends SubDomain(superScript, subScript, parent, excludedConstants) {
+
+  override def getCause = complement.getCause
 
   /**
    * Assumes that all constants in excluded are part of the domain.

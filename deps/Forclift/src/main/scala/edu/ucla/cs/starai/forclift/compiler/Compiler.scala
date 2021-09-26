@@ -103,7 +103,10 @@ abstract class AbstractCompiler extends Compiler {
           println(cnf)
           println("After:")
           println(results._1.cnf + "\n")
-          Some(new Ref(cnf, Some(results._1), results._2, "Cache hit."))
+          val node = new Ref(cnf, None, results._2, "Cache hit.")
+          updateCache(cnf, node)
+          node.update(List(results._1)) // not necessary
+          Some(node)
         }
         case None => None
       }

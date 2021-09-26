@@ -273,7 +273,7 @@ object CNF {
       case (domain: Domain, origin: Domain,
             history: List[(ParametrisedNode, Boolean)]) =>
         if (domain.isInstanceOf[SubDomain]) {
-          val newHistory = (domain.asInstanceOf[SubDomain].cause.get,
+          val newHistory = (domain.asInstanceOf[SubDomain].getCause,
                             domain.isInstanceOf[ComplementDomain])
           List((domain.parents.head, origin, newHistory :: history))
         } else {

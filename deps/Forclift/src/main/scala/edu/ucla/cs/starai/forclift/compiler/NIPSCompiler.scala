@@ -79,9 +79,11 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
       assume(mixedNnf.nonEmpty) // property of DR?
       println("\ndomain recursion")
       println(cnf.toString + "\n")
-      Some(new DomainRecursionNode(cnf, Some(mixedNnf.get),
-                                   Some(compile(groundCNF)), constant, ineqs,
-                                   domain, msg))
+      val node = new DomainRecursionNode(cnf, None, None, constant, ineqs,
+                                         domain, msg)
+      updateCache(cnf, node)
+      node.update(List(mixedNnf.get, compile(groundCNF)))
+      Some(node)
     } else None
   }
 

@@ -93,12 +93,15 @@ protected class LogDoubleWmc
     params: (DomainSizes, PredicateWeights, ParameterMap)): LogDouble = {
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-    if (maxSize < 1) one
+    if (maxSize < 1) {
+      println("1 (improved domain recursion, base case)")
+      one
+    }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      val answer = maxSize * childchildWmc
-      println(s"$maxSize * $childchildWmc = $answer (improved domain recursion)")
-      answer
+      // TODO (Paulius): replace with binomial coefficients
+      println(s"$childchildWmc (improved domain recursion)")
+      childchildWmc
     }
   }
 

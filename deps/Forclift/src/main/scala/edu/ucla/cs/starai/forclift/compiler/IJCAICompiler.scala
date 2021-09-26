@@ -86,7 +86,10 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val branchCnf = new CNF(propagatedClauses)
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
-      Some(new And(cnf, Some(compile(unitCNF)), Some(compile(branchCnf)), msg))
+      val node = new And(cnf, None, None, msg)
+      updateCache(cnf, node)
+      node.update(List(compile(unitCNF), compile(branchCnf)))
+      Some(node)
     } else None
   }
 
@@ -102,7 +105,10 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val branchCnf = new CNF(propagatedClauses)
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
-      Some(new And(cnf, Some(compile(unitCNF)), Some(compile(branchCnf)), msg))
+      val node = new And(cnf, None, None, msg)
+      updateCache(cnf, node)
+      node.update(List(compile(unitCNF), compile(branchCnf)))
+      Some(node)
     } else None
   }
 
@@ -137,7 +143,10 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println("\nindependent subtheories")
       println(cnf.toString + "\n")
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
-      Some(new And(cnf, Some(compile(new CNF(dep))), Some(compile(new CNF(indep))), msg))
+      val node = new And(cnf, None, None, msg)
+      updateCache(cnf, node)
+      node.update(List(compile(new CNF(dep)), compile(new CNF(indep))))
+      Some(node)
     }
   }
 
@@ -187,7 +196,10 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val trueBranch = cnf + Clause(List(literal), List())
       val falseBranch = cnf + Clause(List(), List(literal))
       val msg = "Shannon decomposition on $" + literal.toLatex(new VarNameSpace) + "$."
-      Some(new Or(cnf, Some(compile(trueBranch)), Some(compile(falseBranch)), msg))
+      val node = new Or(cnf, None, None, msg)
+      updateCache(cnf, node)
+      node.update(List(compile(trueBranch), compile(falseBranch)))
+      Some(node)
     } else None
   }
 
@@ -203,9 +215,11 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val plus2Branch = new CNF(cl2 :: otherClauses)
       val minBranch = new CNF(cl1 :: cl2 :: otherClauses)
       val msg = "Inclusion-exclusion on $" + clause.toLatex() + "$."
-      Some(new InclusionExclusion(cnf, Some(compile(plus1Branch)),
-                                  Some(compile(plus2Branch)),
-                                  Some(compile(minBranch)), msg))
+      val node = new InclusionExclusion(cnf, None, None, None, msg)
+      updateCache(cnf, node)
+      node.update(List(compile(plus1Branch), compile(plus2Branch),
+                       compile(minBranch)))
+      Some(node)
     } else None
   }
 
@@ -276,8 +290,10 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 	      }.toSet
 	      val msg = ("""Independent partial grounding of $ X \in """ + rootVarDomain + """ $""" +
 	        (if (rootVarIneqs.isEmpty) "." else """, $ """ + rootVarIneqs.map { """X \neq """ + _.toString }.mkString(" , ") + " $."))
-	      val inversionNode = new IndependentPartialGroundingNode(cnf, Some(compile(invertedCNF)),
-	        constant, rootVarIneqs, rootVarDomain, msg)
+        val inversionNode = new IndependentPartialGroundingNode(
+          cnf, None, constant, rootVarIneqs, rootVarDomain, msg)
+        updateCache(cnf, inversionNode)
+        inversionNode.update(List(compile(invertedCNF)))
         println("\nindependent partial grounding")
         println(cnf.toString + "\n")
 	      Some(inversionNode)
@@ -411,8 +427,10 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
       println("counting (" + subdomain + " and " + subdomain.complement + ")")
       println(cnf.toString)
-      val node = new CountingNode(cnf, Some(compile(childCNF)), domain, subdomain, msg)
+      val node = new CountingNode(cnf, None, domain, subdomain, msg)
+      updateCache(cnf, node)
       subdomain.setCause(node)
+      node.update(List(compile(childCNF)))
       Some(node)
     } else None
   }
