@@ -280,7 +280,7 @@ object CNF {
           List()
         }
     }
-    println("Updated state to " + newStates)
+    //println("Updated state to " + newStates)
     newStates
   }
 
@@ -324,7 +324,7 @@ object CNF {
       : Option[DomainMap] = {
     if (newTheory.size != oldTheory.size ||
           newTheory.hashCode != oldTheory.hashCode) {
-      println("different: " + newTheory + " AND " + oldTheory)
+      //println("different: " + newTheory + " AND " + oldTheory)
       None
     } else if (oldTheory.isEmpty) {
       postprocess(partialMap)
@@ -346,25 +346,25 @@ object CNF {
             bijection <- clause1.variableBijections(clause2, myFilter)
             if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
-            println("clause1 has " + clause1.allVariables.size + " variables")
+            //println("clause1 has " + clause1.allVariables.size + " variables")
             val updatedMap = partialMap ++ clause1.allVariables.map {
               v => {
-                println("Adding domains (" + clause1.constrs.domainFor(v) +
-                          ", " + clause2.constrs.domainFor(bijection(v)) +
-                          ") for variable " + v)
+                // println("Adding domains (" + clause1.constrs.domainFor(v) +
+                //           ", " + clause2.constrs.domainFor(bijection(v)) +
+                //           ") for variable " + v)
                 (clause1.constrs.domainFor(v),
                  clause2.constrs.domainFor(bijection(v)))
               } }
             val recursion = identifyRecursion(updatedNewTheory,
                                               updatedOldTheory, updatedMap)
             if (recursion.isDefined) {
-              println("compatible: " + newTheory + " AND " + oldTheory)
+              //println("compatible: " + newTheory + " AND " + oldTheory)
               return recursion
             }
           }
         }
       }
-      println("different: " + newTheory + " AND " + oldTheory)
+      //println("different: " + newTheory + " AND " + oldTheory)
       None
     }
   }

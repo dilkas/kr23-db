@@ -41,8 +41,8 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     val mixedCNF = new CNF(mixedClauses)
     val headVar1 = cnf.clauses.head.literalVariables.head
     val headVar2 = (cnf.clauses.head.literalVariables - headVar1).head
-    val msg = "Domain recursion on $" + domain + "$"
-    println("\nimproved domain recursion")
+    val msg = "Improved domain recursion on $" + domain + "$"
+    println(msg)
     println(cnf + "\n")
     val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs, domain, msg)
     updateCache(cnf, node)

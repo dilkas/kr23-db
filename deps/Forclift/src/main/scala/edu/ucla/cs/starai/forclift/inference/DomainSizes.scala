@@ -46,11 +46,11 @@ class DomainSize(
   val constants: Set[Constant] = Set()) {
 
   def reduceSize(n: Int) = {
-    require(n >= 0)
-    if (n == 0) {
+    println("reducing domain size from " + size + " to " + n)
+    if (n == size) {
       this
     } else if (n <= size) {
-      new DomainSize(size - n, constants)
+      new DomainSize(n, constants)
     } else {
       throw new DomainSize.CantShrinkDomainException()
     }
@@ -235,12 +235,17 @@ class DomainSizes(
 
   def shrink(domainMap: CNF.DomainMap,
              parameterMap: WmcVisitor.ParameterMap): DomainSizes = {
+    println("Shrinking domainMap:")
+    println(domainMap)
+    println("Shrinking parameterMap:")
+    println(parameterMap)
+    println("==========")
     val newDomainSizes = map {
       case (domain, _) => {
         val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))
-        val decrement = history.map { case (node, complement) =>
+        val newSize = history.map { case (node, complement) =>
           if (complement) parameterMap(node)._2 else parameterMap(node)._1 }.sum
-        (domain, self(newDomain).reduceSize(decrement))
+        (domain, self(newDomain).reduceSize(newSize))
       }
     }
     new DomainSizes(newDomainSizes.toMap)

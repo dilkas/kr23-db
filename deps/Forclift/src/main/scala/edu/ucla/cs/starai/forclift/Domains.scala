@@ -234,7 +234,7 @@ abstract class SubDomain(val superScript: String, val subScript: String,
   def getCause = cause.get
 
   def setCause(newCause: ParametrisedNode) = {
-    println("Updating the cause of a domain")
+    //println("Updating the cause of a domain")
     cause = Some(newCause)
   }
 

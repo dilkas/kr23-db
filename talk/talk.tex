@@ -103,7 +103,17 @@
       \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
       \forall w, x \in M. \forall y \in N. &P(w, y) \land P(x, y) \Rightarrow w=x
     \end{align*}
-    Answer: $\sum_{k=0}^{\min\{m, n\}} k!\binom{m}{k}\binom{n}{k}$.
+    My answer: $\sum_{k=0}^{\min\{m, n\}} k!\binom{m}{k}\binom{n}{k}$.
+
+    \pause
+    \alert{Answer found by Forclift:}
+    \[
+    f(m, n) =
+    \begin{cases}
+      1 & \text{if } m = 0 \\
+      \sum_{k=0}^{\min\{n, 1\}} \binom{n}{k} f(m-1, k) & \text{otherwise.}
+    \end{cases}
+    \]
   \end{block}
 \end{frame}
 

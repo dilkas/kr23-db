@@ -98,7 +98,7 @@ abstract class AbstractCompiler extends Compiler {
           case None => None
         } }.headOption match {
         case Some(results) => {
-          println("\nCache hit: " + results._2)
+          println("\nCache hit.")
           println("Before:")
           println(cnf)
           println("After:")

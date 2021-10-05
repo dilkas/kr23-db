@@ -32,7 +32,10 @@ import edu.ucla.cs.starai.forclift.util.SoftMemCache
 import edu.ucla.cs.starai.forclift.Domain
 
 trait WmcVisitor {
-  // Duplicating this 2-3 times is still better than duplicating it ~50 times
+  // For each ParametrisedNode, we hold the new cardinalities for the two
+  // domains that were introduced at that node.
+  // NOTE: Duplicating this type info 2-3 times is still better than duplicating
+  // it ~50 times.
   type ParameterMap = Map[ParametrisedNode, (Int, Int)]
   def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble
 }
@@ -99,7 +102,6 @@ protected class LogDoubleWmc
     }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      // TODO (Paulius): replace with binomial coefficients
       println(s"$childchildWmc (improved domain recursion)")
       childchildWmc
     }
@@ -132,13 +134,16 @@ protected class LogDoubleWmc
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
                                         ParameterMap)): LogDouble = {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSize = cr.domain.size(domainSizes, Set()) - 1
-    if (newDomainSize < 0) 0
+    val domainSize = cr.domain.size(domainSizes, Set())
+    if (domainSize <= 0) 0
     else {
-      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize) +
+      val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
-      visit(cr.child.get, (newDomainSizes, predicateWeights,
-                           parameterMap + (cr -> (newDomainSize, 1))))
+      val child = visit(cr.child.get,
+                        (newDomainSizes, predicateWeights,
+                         parameterMap + (cr -> (domainSize - 1, 1))))
+      println(s"$child (constraint removal)")
+      child
     }
   }
 
@@ -437,13 +442,17 @@ protected class SignLogDoubleWmc
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
                                         ParameterMap)): SignLogDouble = {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSize = cr.domain.size(domainSizes, Set())
-    if (newDomainSize == 0) 0
+    val domainSize = cr.domain.size(domainSizes, Set())
+    if (domainSize <= 0) 0
     else {
-      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
+      val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
       //println("Adding domain " + cr.subdomain + " of cardinality " + (newDomainSize - 1))
-      visit(cr.child.get, (newDomainSizes, predicateWeights, parameterMap))
+      val child = visit(cr.child.get,
+                        (newDomainSizes, predicateWeights,
+                         parameterMap + (cr -> (domainSize - 1, 1))))
+      println(s"$child (constraint removal)")
+      child
     }
   }
 
@@ -893,12 +902,16 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
     cr: ConstraintRemovalNode, params: (DomainSizes, PredicateWeights,
                                         ParameterMap)): BigInt = {
     val (domainSizes, predicateWeights, parameterMap) = params
-    val newDomainSize = cr.domain.size(domainSizes, Set())
-    if (newDomainSize == 0) 0
+    val domainSize = cr.domain.size(domainSizes, Set())
+    if (domainSize <= 0) 0
     else {
-      val newDomainSizes = domainSizes + (cr.subdomain, newDomainSize - 1) +
+      val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
-      visit(cr.child.get, (newDomainSizes, predicateWeights, parameterMap))
+      val child = visit(cr.child.get,
+                        (newDomainSizes, predicateWeights,
+                         parameterMap + (cr -> (domainSize - 1, 1))))
+      println(s"$child (constraint removal)")
+      child
     }
   }
 
