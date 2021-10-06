@@ -173,9 +173,10 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
     println("Smoothing started")
     while (changesMade) {
       changesMade = false
-      nodes.foreach { changesMade ^= visit(_, ()) }
+      println("Starting a new round of smoothing")
+      nodes.foreach { changesMade |= visit(_, ()) }
     }
-    println("Smoothing finished")
+    println("Smoothing finished\n")
   }
 
   protected def visitDomainRecursion(dr: DomainRecursionNode, u: Unit)
@@ -289,7 +290,8 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
     val returnValue = ref.variablesForSmoothing !=
       ref.nnfNode.get.variablesForSmoothing
     ref.variablesForSmoothing = ref.nnfNode.get.variablesForSmoothing
-    println("ref: " + returnValue)
+    println("ref: " + returnValue + ". before: " + ref.variablesForSmoothing +
+              ", after: " + ref.nnfNode.get.variablesForSmoothing)
     returnValue
   }
 

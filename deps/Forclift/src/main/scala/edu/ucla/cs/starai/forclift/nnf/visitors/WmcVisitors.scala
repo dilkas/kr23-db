@@ -207,7 +207,8 @@ protected class LogDoubleWmc
   } catch {
     case e: DomainSize.CantShrinkDomainException => {
       println("1 (ref, base case)")
-      1}
+      1
+    }
   }
 
   protected def visitSmoothingNode(
@@ -408,12 +409,14 @@ protected class SignLogDoubleWmc
                                                ParameterMap)): SignLogDouble = {
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-    if (maxSize < 1) one
+    if (maxSize < 1) {
+      println("1 (improved domain recursion, base case)")
+      one
+    }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      val answer = maxSize * childchildWmc
-      println(s"$maxSize * $childchildWmc = $answer (improved domain recursion)")
-      answer
+      println(s"$childchildWmc (improved domain recursion)")
+      childchildWmc
     }
   }
 
@@ -428,7 +431,8 @@ protected class SignLogDoubleWmc
                               + (exists.subdomain, nbTrue)
                               + (exists.subdomain.complement,
                                  (maxSize - nbTrue)));
-      val newParams = (newDomainSizes, predicateWeights, parameterMap)
+      val newParams = (newDomainSizes, predicateWeights,
+                       parameterMap + (exists -> (nbTrue, maxSize - nbTrue)))
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue).toSignDouble
       logWeight += binomialCoeff * childWeight
@@ -510,10 +514,14 @@ protected class SignLogDoubleWmc
       : SignLogDouble = try {
     val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
-    //println("visitRefNode. ref: " + ref + ", domain sizes before: " + params._1 + ", domain sizes after: " + newDomainSizes)
-    visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
+    val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
+    println(s"$answer (ref)")
+    answer
   } catch {
-    case e: DomainSize.CantShrinkDomainException => 0
+    case e: DomainSize.CantShrinkDomainException => {
+      println("1 (ref, base case)")
+      1
+    }
   }
 
   protected def visitSmoothingNode(
@@ -872,10 +880,14 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
                                                ParameterMap)): BigInt = {
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
-    if (maxSize < 1) one
+    if (maxSize < 1) {
+      println("1 (improved domain recursion, base case)")
+      one
+    }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      maxSize * childchildWmc
+      println(s"$childchildWmc (improved domain recursion)")
+      childchildWmc
     }
   }
 
@@ -890,7 +902,8 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
                               + (exists.subdomain, nbTrue)
                               + (exists.subdomain.complement,
                                  (maxSize - nbTrue)));
-      val newParams = (newDomainSizes, predicateWeights, parameterMap)
+      val newParams = (newDomainSizes, predicateWeights,
+                       parameterMap + (exists -> (nbTrue, maxSize - nbTrue)))
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = coeff(maxSize, nbTrue)
       logWeight += binomialCoeff * childWeight
@@ -975,9 +988,14 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
       : BigInt = try {
     val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
-    visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
+    val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
+    println(s"$answer (ref)")
+    answer
   } catch {
-    case e: DomainSize.CantShrinkDomainException => 0
+    case e: DomainSize.CantShrinkDomainException => {
+      println("1 (ref, base case)")
+      1
+    }
   }
 
   protected def visitSmoothingNode(

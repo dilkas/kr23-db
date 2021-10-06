@@ -46,7 +46,7 @@ class DomainSize(
   val constants: Set[Constant] = Set()) {
 
   def reduceSize(n: Int) = {
-    println("reducing domain size from " + size + " to " + n)
+    //println("reducing domain size from " + size + " to " + n)
     if (n == size) {
       this
     } else if (n <= size) {
@@ -235,11 +235,11 @@ class DomainSizes(
 
   def shrink(domainMap: CNF.DomainMap,
              parameterMap: WmcVisitor.ParameterMap): DomainSizes = {
-    println("Shrinking domainMap:")
-    println(domainMap)
-    println("Shrinking parameterMap:")
-    println(parameterMap)
-    println("==========")
+    // println("Shrinking domainMap:")
+    // println(domainMap)
+    // println("Shrinking parameterMap:")
+    // println(parameterMap)
+    // println("==========")
     val newDomainSizes = map {
       case (domain, _) => {
         val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))
