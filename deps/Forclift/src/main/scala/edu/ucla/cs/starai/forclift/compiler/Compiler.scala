@@ -88,7 +88,7 @@ abstract class AbstractCompiler extends Compiler {
         nnfCache.getOrElse(cnf.hashCode, List[(CNF, NNFNode)]())
   }
 
-  def tryCache(cnf: CNF): Option[NNFNode] = {
+  def tryCache(cnf: CNF): InferenceResult = {
     if (!nnfCache.contains(cnf.hashCode)) {
       None
     } else {
@@ -103,17 +103,21 @@ abstract class AbstractCompiler extends Compiler {
           println(cnf)
           println("After:")
           println(results._1.cnf + "\n")
-          val node = new Ref(cnf, None, results._2, "Cache hit.")
+          val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
           updateCache(cnf, node)
-          node.update(List(results._1)) // not necessary
-          Some(node)
+          Some((Some(node), List[CNF]()))
         }
         case None => None
       }
     }
   }
 
-  type InferenceRule = CNF => Option[NNFNode]
+  // None means that the inference rule doesn't apply. (None, _) means that a
+  // new node wasn't created but the theory was updated (we assume that in this
+  // case the list has exactly one element). In all other cases, the list holds
+  // theories that will be compiled into direct successors of the returned node.
+  type InferenceResult = Option[(Option[NNFNode], List[CNF])]
+  type InferenceRule = CNF => InferenceResult
 
   def inferenceRules: List[InferenceRule]
 
@@ -124,33 +128,61 @@ abstract class AbstractCompiler extends Compiler {
     require(!cnf.domains.contains(EmptyDomain), s"Cannot compile CNFs containing the empty domain: $cnf")
   }
 
-  def compile2(cnf: CNF): NNFNode = {
+  def greedySearch(cnf: CNF): NNFNode = {
     checkCnfInput(cnf)
     var rules = inferenceRules
     var nnf: NNFNode = null
     while (nnf == null && rules.nonEmpty) {
       val tryRule = rules.head(cnf)
-      if (tryRule.nonEmpty) nnf = tryRule.get
+
+      if (tryRule.nonEmpty) {
+        val (node, successors) = tryRule.get
+        if (node.isEmpty) {
+          require(successors.size == 1)
+          nnf = greedySearch(successors.head)
+        } else {
+          nnf = node.get
+          updateCache(cnf, nnf)
+          nnf.update(successors.map(greedySearch))
+        }
+      }
       else rules = rules.tail
     }
     if (nnf == null) {
       nnf = cannotCompile(cnf)
     }
-    updateCache(cnf, nnf)
     nnf
   }
+
+  // def breadthFirstTraverse(cnf: CNF, f: CNF => Queue[CNF]): Stream[CNF] = {
+  //   def recurse(q: Queue[CNF]): Stream[CNF] = {
+  //     if (q.isEmpty) {
+  //       Stream.Empty
+  //     } else {
+  //       val (cnf, tail) = q.dequeue
+  //       cnf #:: recurse(tail ++ f(cnf))
+  //     }
+  //   }
+
+  //   cnf #:: recurse(Queue.empty ++ f(cnf))
+  // }
+
+  // TODO: each rule calls compile(). Need to change that. Instead, it should return Option[NNFNode, List[CNF]]. The compilation function then runs updateCache, makes the recursive calls, and calls update on the NNFNode.
+  // ???: catch IllegalArgumentException
+  // TODO: when to stop?
+  // TODO: what combinations of operations should I explore?
 
   def compile(cnf: CNF): NNFNode = {
     if (Compiler.neverRun) {
       Compiler.neverRun = false
-      val nnf = compile2(cnf)
+      val nnf = greedySearch(cnf)
       val postOrderVisitor = new PostOrderVisitor
       postOrderVisitor.visit(nnf)
       val domainsVisitor = new DomainsVisitor(postOrderVisitor.nodeOrder)
       domainsVisitor.updateDomains
       nnf
     } else {
-      compile2(cnf)
+      greedySearch(cnf)
     }
   }
 

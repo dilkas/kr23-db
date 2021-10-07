@@ -45,12 +45,10 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     println(msg)
     println(cnf + "\n")
     val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs, domain, msg)
-    updateCache(cnf, node)
-    node.update(List(compile(mixedCNF)))
-    Some(node)
+    Some((Some(node), List(mixedCNF)))
   }
 
-  def tryConstraintRemoval(cnf: CNF): Option[NNFNode] = {
+  def tryConstraintRemoval(cnf: CNF): InferenceResult = {
     for (originalClause <- cnf) {
       for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
         val originalDomain = originalClause.constrs.domainFor(variable)
@@ -80,10 +78,8 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
                 println(cnf + "\n")
                 val node = new ConstraintRemovalNode(cnf, None, originalDomain,
                                                      newDomain)
-                updateCache(cnf, node)
                 newDomain.setCause(node)
-                node.update(List(compile(newCnf)))
-                return Some(node)
+                return Some((Some(node), List(newCnf)))
               }
             }
             case _ => {}

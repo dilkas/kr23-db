@@ -47,23 +47,38 @@
 \end{frame}
 
 \begin{frame}{Counting (Unweighted) Functions: Currently Unliftable (1)}
-  \cite{stanley2011enumerative}
-  \begin{block}{Functions $M \to N$ (let $|M| = m$ and $|N| = n$)}
-    Theory:
-    \begin{align*}
-      \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
-      \forall x \in M. \exists y \in N. &P(x, y)
-    \end{align*}
-    Answer: $n^m$.
-  \end{block}
+  %% \cite{stanley2011enumerative}
+  %% \begin{block}{Functions $M \to N$ (let $|M| = m$ and $|N| = n$)}
+  %%   Theory:
+  %%   \begin{align*}
+  %%     \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
+  %%     \forall x \in M. \exists y \in N. &P(x, y)
+  %%   \end{align*}
+  %%   Answer: $n^m$.
+  %% \end{block}
   \begin{block}{Injections}
     Theory:
     \begin{align*}
       \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
       \forall x \in M. \exists y \in N. &P(x, y) \\
-      \alert{\forall w, x \in M. \forall y \in N.} &\alert{P(w, y) \land P(x, y) \Rightarrow w=x}
+      \forall w, x \in M. \forall y \in N. &P(w, y) \land P(x, y) \Rightarrow w=x
     \end{align*}
     Answer: $n^{\underline{m}} = n \cdot (n-1)\cdots(n-m+1)$ if $m \le n$ and $0$ otherwise (for positive $m$ and $n$).
+
+    \pause
+    \alert{Answer found by Forclift:}
+    \[
+    f(m, n) = \sum_{k=0}^m \binom{m}{k}(-1)^{m-k}g(k, n),
+    \]
+    where
+    \[
+    g(k, n) =
+    \begin{cases}
+      1 & \text{if } k = 0 \\
+      \sum_{l=0}^n [l < 2]g(k-1, n-l) & \text{otherwise.}
+    \end{cases}
+    \]
+    (exponential...)
   \end{block}
 \end{frame}
 

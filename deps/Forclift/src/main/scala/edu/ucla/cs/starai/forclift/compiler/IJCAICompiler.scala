@@ -35,7 +35,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
   def tryTautology(cnf: CNF) = {
     if (cnf.isTautology) {
       println("\ntautology\n")
-      Some(TrueNode)
+      Some((Some(TrueNode), List[CNF]()))
     } else None
   }
 
@@ -48,7 +48,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println(cnf.toString + "\n")
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, true)
-      Some(unitLeaf)
+      Some((Some(unitLeaf), List[CNF]()))
     } else None
   }
 
@@ -59,7 +59,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println(cnf.toString + "\n")
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, false)
-      Some(unitLeaf)
+      Some((Some(unitLeaf), List[CNF]()))
     } else None
   }
 
@@ -70,7 +70,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println(cnf.toString + "\n")
       val contradiction = cnf.clauses.head
       val contradictionLeaf = new ContradictionLeaf(cnf, contradiction.toContradictionClause, true)
-      Some(contradictionLeaf)
+      Some((Some(contradictionLeaf), List[CNF]()))
     } else None
   }
 
@@ -87,9 +87,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
-      updateCache(cnf, node)
-      node.update(List(compile(unitCNF), compile(branchCnf)))
-      Some(node)
+      Some((Some(node), List(unitCNF, branchCnf)))
     } else None
   }
 
@@ -106,26 +104,25 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
-      updateCache(cnf, node)
-      node.update(List(compile(unitCNF), compile(branchCnf)))
-      Some(node)
+      Some((Some(node), List(unitCNF, branchCnf)))
     } else None
   }
 
-  def tryRemoveDoubleClauses(cnf: CNF): Option[NNFNode] = {
+  def tryRemoveDoubleClauses(cnf: CNF): InferenceResult = {
     val newClauses = cnf.clauses.toSet.toList
     if (newClauses.size < cnf.clauses.size) {
       println("\nremove double clauses")
       println(cnf.toString + "\n")
-      Some(compile(new CNF(newClauses)))
+      Some((None, List(new CNF(newClauses))))
     } else None
   }
 
-  def tryIndependentSubtheories(cnf: CNF): Option[And] = {
+  def tryIndependentSubtheories(cnf: CNF): InferenceResult = {
     tryIndependentSubtheories(cnf, false)
   }
 
-  def tryIndependentSubtheories(cnf: CNF, afterShattering: Boolean): Option[And] = {
+  def tryIndependentSubtheories(cnf: CNF, afterShattering: Boolean)
+      : InferenceResult = {
     def partition(depClauses: List[Clause], indepClauses: List[Clause]): (List[Clause], List[Clause]) = {
       if (indepClauses.isEmpty) (depClauses, Nil)
       else depClauses match {
@@ -144,16 +141,15 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println(cnf.toString + "\n")
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
       val node = new And(cnf, None, None, msg)
-      updateCache(cnf, node)
-      node.update(List(compile(new CNF(dep)), compile(new CNF(indep))))
-      Some(node)
+      Some((Some(node), List(new CNF(dep), new CNF(indep))))
     }
   }
 
   /**
    * Same as tryIndependentSubtheories but try shattering before.
    */
-  def tryIndependentSubtheoriesAfterShattering(cnf: CNF): Option[And] = {
+  def tryIndependentSubtheoriesAfterShattering(cnf: CNF)
+      : InferenceResult = {
     val shatteredCnf = shatter(cnf)
     if (cnf eq shatteredCnf) None
     else {
@@ -171,15 +167,16 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     else None
   }
 
-  def tryGroundDecomposition(cnf: CNF): Option[Or] = {
+  def tryGroundDecomposition(cnf: CNF): InferenceResult = {
     tryGroundDecomposition(cnf, false)
   }
 
-  def tryGroundDecompositionCountShattered(cnf: CNF): Option[Or] = {
+  def tryGroundDecompositionCountShattered(cnf: CNF): InferenceResult = {
     tryGroundDecomposition(cnf, true)
   }
 
-  def tryGroundDecomposition(cnf: CNF, countShatteredLiterals: Boolean): Option[Or] = {
+  def tryGroundDecomposition(cnf: CNF, countShatteredLiterals: Boolean)
+      : InferenceResult = {
     val countingCnf = if (countShatteredLiterals) shatter(cnf) else cnf
     val groundLiterals = countingCnf.clauses.flatMap { _.groundLiterals }
     if (groundLiterals.nonEmpty) {
@@ -197,9 +194,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val falseBranch = cnf + Clause(List(), List(literal))
       val msg = "Shannon decomposition on $" + literal.toLatex(new VarNameSpace) + "$."
       val node = new Or(cnf, None, None, msg)
-      updateCache(cnf, node)
-      node.update(List(compile(trueBranch), compile(falseBranch)))
-      Some(node)
+      Some((Some(node), List(trueBranch, falseBranch)))
     } else None
   }
 
@@ -216,17 +211,14 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       val minBranch = new CNF(cl1 :: cl2 :: otherClauses)
       val msg = "Inclusion-exclusion on $" + clause.toLatex() + "$."
       val node = new InclusionExclusion(cnf, None, None, None, msg)
-      updateCache(cnf, node)
-      node.update(List(compile(plus1Branch), compile(plus2Branch),
-                       compile(minBranch)))
-      Some(node)
+      Some((Some(node), List(plus1Branch, plus2Branch, minBranch)))
     } else None
   }
 
   def tryShatter(cnf: CNF) = {
     val shatteredCnf = shatter(cnf)
     if (shatteredCnf eq cnf) None
-    else Some(compile(shatteredCnf))
+    else Some(None, List(shatteredCnf))
   }
 
   case class IndexedConstant(val i: Int) {
@@ -248,7 +240,7 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 
   type ChoiceMap = collection.mutable.Map[Clause, Var]
 
-  def tryIndependentPartialGrounding(cnf: CNF): Option[IndependentPartialGroundingNode] = {
+  def tryIndependentPartialGrounding(cnf: CNF): InferenceResult = {
     // in the future, this should be implemented  by finding all binding classes and then checking size and root
     if(cnf.clauses.exists(_.rootVars.isEmpty)) return None
     else {
@@ -292,11 +284,9 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
 	        (if (rootVarIneqs.isEmpty) "." else """, $ """ + rootVarIneqs.map { """X \neq """ + _.toString }.mkString(" , ") + " $."))
         val inversionNode = new IndependentPartialGroundingNode(
           cnf, None, constant, rootVarIneqs, rootVarDomain, msg)
-        updateCache(cnf, inversionNode)
-        inversionNode.update(List(compile(invertedCNF)))
         println("\nindependent partial grounding")
         println(cnf.toString + "\n")
-	      Some(inversionNode)
+	      Some((Some(inversionNode), List(invertedCNF)))
       }
     }
   }
@@ -428,10 +418,8 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
       println("counting (" + subdomain + " and " + subdomain.complement + ")")
       println(cnf.toString)
       val node = new CountingNode(cnf, None, domain, subdomain, msg)
-      updateCache(cnf, node)
       subdomain.setCause(node)
-      node.update(List(compile(childCNF)))
-      Some(node)
+      Some((Some(node), List(childCNF)))
     } else None
   }
 

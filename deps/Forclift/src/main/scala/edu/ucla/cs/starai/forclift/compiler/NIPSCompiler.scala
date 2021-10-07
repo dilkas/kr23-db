@@ -79,11 +79,12 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
       assume(mixedNnf.nonEmpty) // property of DR?
       println("\ndomain recursion")
       println(cnf.toString + "\n")
-      val node = new DomainRecursionNode(cnf, None, None, constant, ineqs,
-                                         domain, msg)
-      updateCache(cnf, node)
-      node.update(List(mixedNnf.get, compile(groundCNF)))
-      Some(node)
+      // NOTE: The code below is deprecated
+      val node = new DomainRecursionNode(
+        cnf,
+        Some(mixedNnf.get._1.get.asInstanceOf[IndependentPartialGroundingNode]),
+        None, constant, ineqs, domain, msg)
+      Some((Some(node), List(groundCNF)))
     } else None
   }
 

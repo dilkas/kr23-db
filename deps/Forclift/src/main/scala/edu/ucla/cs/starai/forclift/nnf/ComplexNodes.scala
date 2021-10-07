@@ -34,8 +34,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
     extends NNFNode {
 
   override def update(children : List[NNFNode]) = {
-    require(children.length == 1)
-    nnfNode = Some(children.head)
+    if (children.length == 1) nnfNode = Some(children.head)
   }
 
   def size = 0

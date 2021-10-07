@@ -33,7 +33,7 @@ abstract class V1_1Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.un
   def tryTautologyClauseElimination(cnf: CNF) = {
     val newCnf = cnf.removeTautologies
     if (newCnf eq cnf) None
-    else Some(compile(newCnf))
+    else Some((None, List(newCnf)))
   }
   override def inferenceRules: List[InferenceRule] = List(
     tryCache,
