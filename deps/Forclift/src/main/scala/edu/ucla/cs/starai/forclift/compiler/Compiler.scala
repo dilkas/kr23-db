@@ -17,6 +17,7 @@
 package edu.ucla.cs.starai.forclift.compiler
 
 import collection._
+import scala.collection.immutable.Queue
 
 import edu.ucla.cs.starai.forclift.nnf.visitors.DomainsVisitor
 import edu.ucla.cs.starai.forclift.nnf.visitors.PostOrderVisitor
@@ -40,6 +41,7 @@ object Compiler {
 
   type SizeHints = (Domain => Int)
 
+  val greedy: Boolean = false
   var neverRun: Boolean = true
 
 }
@@ -134,7 +136,6 @@ abstract class AbstractCompiler extends Compiler {
     var nnf: NNFNode = null
     while (nnf == null && rules.nonEmpty) {
       val tryRule = rules.head(cnf)
-
       if (tryRule.nonEmpty) {
         val (node, successors) = tryRule.get
         if (node.isEmpty) {
@@ -142,8 +143,9 @@ abstract class AbstractCompiler extends Compiler {
           nnf = greedySearch(successors.head)
         } else {
           nnf = node.get
+          // the important bit
           updateCache(cnf, nnf)
-          nnf.update(successors.map(greedySearch))
+          nnf.update(successors.map(successor => Some(greedySearch(successor))))
         }
       }
       else rules = rules.tail
@@ -154,28 +156,74 @@ abstract class AbstractCompiler extends Compiler {
     nnf
   }
 
-  // def breadthFirstTraverse(cnf: CNF, f: CNF => Queue[CNF]): Stream[CNF] = {
-  //   def recurse(q: Queue[CNF]): Stream[CNF] = {
-  //     if (q.isEmpty) {
-  //       Stream.Empty
-  //     } else {
-  //       val (cnf, tail) = q.dequeue
-  //       cnf #:: recurse(tail ++ f(cnf))
-  //     }
-  //   }
+  // NOTE: We assume that CNF->NNFNode updates are accepted by NNFNodes in the
+  // same order as the corresponding CNFs are found in the Queue.
+  type PartialCircuit = (NNFNode, List[CNF])
 
-  //   cnf #:: recurse(Queue.empty ++ f(cnf))
-  // }
+  /** Apply all rules to the formula. The NNFNodes are just placeholders
+    whenever this function is called by nextCircuits. */
+  def applyRules(cnf: CNF): Queue[PartialCircuit] = {
+    checkCnfInput(cnf)
+    val answer = inferenceRules.flatMap {
+      _(cnf) match {
+        case None => None // the rule is not applicable
+        case Some((node: Option[NNFNode], successors: List[CNF])) => {
+          node match {
+            case None => {
+              // rerun on the updated theory
+              require(successors.size == 1)
+              applyRules(successors.head)
+            }
+            case Some(node2) => Some((node2, successors))
+          }
+        }
+      }
+    }
+    Queue(answer: _*)
+  }
 
-  // TODO: each rule calls compile(). Need to change that. Instead, it should return Option[NNFNode, List[CNF]]. The compilation function then runs updateCache, makes the recursive calls, and calls update on the NNFNode.
-  // ???: catch IllegalArgumentException
-  // TODO: when to stop?
-  // TODO: what combinations of operations should I explore?
+  /** Apply applyRules to the first loose end in the partial circuit,
+    generating new states in the search tree. */
+  def nextCircuits(partialCircuit: PartialCircuit): Queue[PartialCircuit] = {
+    require(!partialCircuit._2.isEmpty)
+    val answer = applyRules(partialCircuit._2.head).map {
+      case (newNode: NNFNode, successors: List[CNF]) => {
+        NNFNode.updateCache.clear()
+        (partialCircuit._1.addNode(newNode)._1,
+         successors ++ partialCircuit._2.tail)
+      }
+    }
+    Queue(answer: _*)
+  }
+
+  /** (Lazily) produces a stream of circuits that compute the WFOMC of the
+    given theory */
+  def breadthFirstTraverse(cnf: CNF): Stream[NNFNode] = {
+    def recurse(q: Queue[PartialCircuit]): Stream[NNFNode] = if (q.isEmpty) {
+      Stream.Empty
+    } else {
+      val (partialCircuit, tail) = q.dequeue
+      if (partialCircuit._2.isEmpty) // a complete circuit
+        partialCircuit._1 #:: recurse(tail ++ nextCircuits(partialCircuit))
+      else
+        recurse(tail ++ nextCircuits(partialCircuit))
+    }
+    recurse(Queue.empty ++ applyRules(cnf))
+  }
+
+  /** A simple BFS mainly for testing purposes */
+  def breadthFirstSearch(cnf: CNF): NNFNode = {
+    val maxSolutionCount = 3 // TODO: maybe replace this with max depth
+    val circuits = breadthFirstTraverse(cnf).take(maxSolutionCount)
+    circuits.foreach { _.showPDF(null, null) }
+    circuits.head
+  }
 
   def compile(cnf: CNF): NNFNode = {
     if (Compiler.neverRun) {
       Compiler.neverRun = false
-      val nnf = greedySearch(cnf)
+      val nnf = if (Compiler.greedy) greedySearch(cnf)
+                else breadthFirstSearch(cnf)
       val postOrderVisitor = new PostOrderVisitor
       postOrderVisitor.visit(nnf)
       val domainsVisitor = new DomainsVisitor(postOrderVisitor.nodeOrder)

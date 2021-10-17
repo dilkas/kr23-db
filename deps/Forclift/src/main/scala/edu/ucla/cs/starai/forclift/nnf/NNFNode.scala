@@ -74,19 +74,54 @@ object NNFNode {
     removeDoubles(clauses2).toSet
   }
 
-  val conditionCache = new mutable.HashMap[(NNFNode, Set[Atom], Set[Atom]), NNFNode]
+  val conditionCache = new mutable.HashMap[(NNFNode, Set[Atom], Set[Atom]),
+                                           NNFNode]
   val smoothingCache = new mutable.HashMap[NNFNode, NNFNode]
+  val updateCache = new mutable.HashMap[NNFNode, NNFNode]
 
 }
 
 abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
                          Set[PositiveUnitClause]()) {
 
+  def myClone: NNFNode
+
   def cnf: CNF
+
+  def directSuccessors: List[Option[NNFNode]] = List[Option[NNFNode]]()
 
   def explanation: String
 
-  def update(children: List[NNFNode]) = ()
+  /** Set the outedges to point to children. The length of the list must match
+    the outdegree. */
+  def update(children: List[Option[NNFNode]]) = ()
+
+  def updateFirst(child: NNFNode): Boolean = false
+
+  /** Returns a copy of the graph 'rooted' at this node, with newNode inserted
+    as the 'leftmost' direct successor of the predecessor. Uses updateCache. */
+  def addNode(newNode: NNFNode): (NNFNode, Boolean) =
+    if (NNFNode.updateCache.contains(this)) {
+      (NNFNode.updateCache(this), false)
+    } else {
+      val newThis = myClone
+      NNFNode.updateCache(this) = newThis
+      var added: Boolean = updateFirst(newNode)
+      newThis.update(
+        newThis.directSuccessors.map {
+          _ match {
+            case None => None
+            case Some(node) => if (!added) {
+              val (successorCopy, somethingChanged) = node.addNode(newNode)
+              added |= somethingChanged
+              Some(successorCopy)
+            } else {
+              Some(node.myClone)
+            }
+          }
+        })
+      (newThis, added)
+    }
 
   def size: Int
 

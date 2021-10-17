@@ -15,7 +15,7 @@
 \DeclareRobustCommand{\stirling}{\genfrac\{\}{0pt}{}}
 
 \author{Paulius Dilkas}
-\title{Symmetric Weighted First-Order Model Counting and Factorial-Like Functions}
+\title{Empowering (Domain) Recursion in Symmetric Weighted First-Order Model Counting}
 \date{}
 
 \begin{document}
@@ -161,6 +161,30 @@
       graph that would otherwise cause infinite loops.
     \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Domain Size Comparisons}
+  \begin{block}{$|N| < 2$ (Forclift can already do this!)}
+    \[
+    \phi \equiv \forall x, y \in N \text{ s.t. } x \ne y\text{, } P,
+    \]
+    where $w(P) = 0$. The algebraic (multiplicative) contribution of $\phi$ is $w(P)^{\mathrm{gr}(\phi)}$.
+    \begin{itemize}
+    \item If $|N| \ge 2$, then $\mathrm{gr}(\phi) > 0$, and so $0^{\mathrm{gr}(\phi)} = 0$.
+    \item If $|N| < 2$, then we get $0^0 = 1$.
+    \item Of course, 2 can be replaced by any other positive integer.
+    \end{itemize}
+  \end{block}
+  \pause
+  \begin{block}{$m < n$ (possible, but a bit complicated)}
+    \[
+    f(m, n) = \begin{cases}
+      0 & \text{if } n = 0 \\
+      1 & \text{if } m = 0 \text{ and } n > 0 \\
+      f(m-1, n-1) & \text{otherwise.}
+    \end{cases}
+    \]
+  \end{block}
 \end{frame}
 
 \end{document}

@@ -31,6 +31,8 @@ import breeze.math._
 class GroundingNode(val cnf: CNF, val explanation: String = "")
     extends NNFNode(NNFNode.removeSubsumed(cnf.toPositiveUnitClauses)) {
 
+  def myClone: NNFNode = new GroundingNode(cnf, explanation)
+
   def size = 1
 
   lazy val domains = cnf.domains
@@ -49,6 +51,8 @@ class GroundingNode(val cnf: CNF, val explanation: String = "")
 }
 
 object TrueNode extends NNFNode {
+
+  override def myClone = this
 
   def size = 1
 
@@ -75,6 +79,8 @@ object TrueNode extends NNFNode {
 
 object FalseNode extends NNFNode {
 
+  override def myClone = this
+
   def size = 1
 
   lazy val domains = Set.empty[Domain]
@@ -99,6 +105,9 @@ object FalseNode extends NNFNode {
 }
 
 class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val positive: Boolean, val explanation: String = "") extends NNFNode {
+
+  def myClone: NNFNode = new ContradictionLeaf(cnf, clause, positive,
+                                               explanation)
 
   def size = 1
 
@@ -125,6 +134,8 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
     extends NNFNode(Set(clause.toPositiveUnitClause)) {
 
   require(clause.isUnconditional, "Unit leafs have to be unconditional for smoothing to be correct: "+clause)
+
+  def myClone: NNFNode = new UnitLeaf(cnf, clause, positive, explanation)
 
   def size = 1
 
@@ -154,6 +165,8 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
 
 class SmoothingNode(val clause: PositiveUnitClause)
     extends NNFNode(Set(clause.toPositiveUnitClause)) {
+
+  def myClone: NNFNode = new SmoothingNode(clause)
 
   def size = 1
 

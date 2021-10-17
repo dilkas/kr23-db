@@ -33,8 +33,20 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
           val domainMap: CNF.DomainMap, val explanation: String = "")
     extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
-    if (children.length == 1) nnfNode = Some(children.head)
+  def myClone: NNFNode = new Ref(cnf, nnfNode, domainMap, explanation)
+
+  override def directSuccessors = List(nnfNode)
+
+  override def update(children: List[Option[NNFNode]]) = {
+    require(children.length == 1)
+    nnfNode = children.head
+  }
+
+  override def updateFirst(child: NNFNode) = if (nnfNode.isEmpty) {
+    nnfNode = Some(child)
+    true
+  } else {
+    false
   }
 
   def size = 0
@@ -46,7 +58,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
   } else {
     val newNode = new Ref(cnf, None, domainMap, explanation)
     NNFNode.smoothingCache(this) = newNode
-    newNode.update(List(nnfNode.get.smooth))
+    newNode.update(List(Some(nnfNode.get.smooth)))
     newNode
   }
 
@@ -87,10 +99,24 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
 class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
           val explanation: String = "") extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
+  def myClone: NNFNode = new And(cnf, l, r, explanation)
+
+  override def directSuccessors = List(l, r)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 2)
-    l = Some(children.head)
-    r = Some(children.tail.head)
+    l = children.head
+    r = children.tail.head
+  }
+
+  override def updateFirst(child: NNFNode) = if (l.isEmpty) {
+    l = Some(child)
+    true
+  } else if (r.isEmpty) {
+    r = Some(child)
+    true
+  } else {
+    false
   }
 
   def size = l.get.size + r.get.size + 1
@@ -108,7 +134,7 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
   } else {
     val newNode = new And(cnf, None, None, explanation)
     NNFNode.smoothingCache(this) = newNode
-    newNode.update(List(l.get.smooth, r.get.smooth))
+    newNode.update(List(Some(l.get.smooth), Some(r.get.smooth)))
     newNode
   }
 
@@ -173,10 +199,23 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
          val explanation: String = "") extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
+  def myClone: NNFNode = new Or(cnf, l, r, explanation)
+
+  override def directSuccessors = List(l, r)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 2)
-    l = Some(children.head)
-    r = Some(children.tail.head)
+    l = children.head
+    r = children.tail.head
+  }
+  override def updateFirst(child: NNFNode) = if (l.isEmpty) {
+    l = Some(child)
+    true
+  } else if (r.isEmpty) {
+    r = Some(child)
+    true
+  } else {
+    false
   }
 
   def size = l.get.size + r.get.size + 1
@@ -200,7 +239,7 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
       _.minus(r.get.variablesForSmoothing) }
     val lSmoothAll = l.get.smooth.smoothWith(lMissing)
     val rSmoothAll = r.get.smooth.smoothWith(rMissing)
-    newNode.update(List(lSmoothAll, rSmoothAll))
+    newNode.update(List(Some(lSmoothAll), Some(rSmoothAll)))
     newNode
   }
 
@@ -266,11 +305,29 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
                          var plus2: Option[NNFNode], var min: Option[NNFNode],
                          val explanation: String = "") extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
+  def myClone: NNFNode = new InclusionExclusion(cnf, plus1, plus2, min,
+                                                explanation)
+
+  override def directSuccessors = List(plus1, plus2, min)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 3)
-    plus1 = Some(children.head)
-    plus2 = Some(children.tail.head)
-    min = Some(children.tail.tail.head)
+    plus1 = children.head
+    plus2 = children.tail.head
+    min = children.tail.tail.head
+  }
+
+  override def updateFirst(child: NNFNode) = if (plus1.isEmpty) {
+    plus1 = Some(child)
+    true
+  } else if (plus2.isEmpty) {
+    plus2 = Some(child)
+    true
+  } else if (min.isEmpty) {
+    min = Some(child)
+    true
+  } else {
+    false
   }
 
   def size = plus1.get.size + plus2.get.size + min.get.size + 1
@@ -301,7 +358,8 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
     val plus1SmoothAll = plus1.get.smooth.smoothWith(plus1Missing)
     val plus2SmoothAll = plus2.get.smooth.smoothWith(plus2Missing)
     val minSmoothAll = min.get.smooth.smoothWith(minMissing)
-    newNode.update(List(plus1SmoothAll, plus2SmoothAll, minSmoothAll))
+    newNode.update(List(Some(plus1SmoothAll), Some(plus2SmoothAll),
+                        Some(minSmoothAll)))
     newNode
   }
 
@@ -366,6 +424,9 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
                             val explanation: String = "")
     extends ParametrisedNode {
 
+  def myClone: NNFNode = new ConstraintRemovalNode(cnf, child, domain, subdomain,
+                                                   explanation)
+
   def canEqual(a: Any) = a.isInstanceOf[ConstraintRemovalNode]
 
   override def equals(that: Any): Boolean = that match {
@@ -373,9 +434,18 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
     case _ => false
   }
 
-  override def update(children : List[NNFNode]) = {
+  override def directSuccessors = List(child)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 1)
-    child = Some(children.head)
+    child = children.head
+  }
+
+  override def updateFirst(newChild: NNFNode) = if (child.isEmpty) {
+    child = Some(newChild)
+    true
+  } else {
+    false
   }
 
   def size = child.get.size + 1
@@ -398,7 +468,7 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
     val childMissing = disjCounted.flatMap {
       _.minus(child.get.variablesForSmoothing) }
     val childSmoothAll = child.get.smooth.smoothWith(childMissing.toSet)
-    newNode.update(List(childSmoothAll))
+    newNode.update(List(Some(childSmoothAll)))
     newNode
   }
 

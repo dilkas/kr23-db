@@ -32,19 +32,31 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
                                       val explanation: String = "")
     extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
+  def myClone: NNFNode =
+    new IndependentPartialGroundingNode(cnf, child, c, ineqs, d, explanation)
+
+  override def directSuccessors = List(child)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 1)
-    child = Some(children.head)
+    child = children.head
+  }
+
+  override def updateFirst(newChild: NNFNode) = if (child.isEmpty) {
+    child = Some(newChild)
+    true
+  } else {
+    false
   }
 
   lazy val smooth =
     if (NNFNode.smoothingCache.contains(this)) {
       NNFNode.smoothingCache(this)
     } else {
-      val newNode = new IndependentPartialGroundingNode(cnf, None, c, ineqs,
-                                                        d, explanation)
+      val newNode = new IndependentPartialGroundingNode(cnf, None, c, ineqs, d,
+                                                        explanation)
       NNFNode.smoothingCache(this) = newNode
-      newNode.update(List(child.get.smooth))
+      newNode.update(List(Some(child.get.smooth)))
       newNode
     }
 
@@ -103,6 +115,11 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
   val domain: Domain, val subdomain: SubDomain,
   val explanation: String = "") extends ParametrisedNode {
 
+  def myClone: NNFNode = new CountingNode(cnf, child, domain, subdomain,
+                                          explanation)
+
+  override def directSuccessors = List(child)
+
   def canEqual(a: Any) = a.isInstanceOf[CountingNode]
 
   override def equals(that: Any): Boolean = that match {
@@ -110,9 +127,16 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
     case _ => false
   }
 
-  override def update(children : List[NNFNode]) = {
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 1)
-    child = Some(children.head)
+    child = children.head
+  }
+
+  override def updateFirst(newChild: NNFNode) = if (child.isEmpty) {
+    child = Some(newChild)
+    true
+  } else {
+    false
   }
 
   def size = child.get.size + 1
@@ -137,7 +161,7 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
     val childMissing = disjCounted.flatMap {
       _.minus(child.get.variablesForSmoothing) }
     val childSmoothAll = child.get.smooth.smoothWith(childMissing.toSet)
-    newNode.update(List(childSmoothAll))
+    newNode.update(List(Some(childSmoothAll)))
     newNode
   }
 
@@ -188,10 +212,27 @@ class DomainRecursionNode(
   var groundChild: Option[NNFNode], val c: Constant, val ineqs: Set[Constant],
   val domain: Domain, val explanation: String = "") extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
+  def myClone: NNFNode = new DomainRecursionNode(cnf, mixedChild, groundChild,
+                                                 c, ineqs, domain, explanation)
+
+  override def directSuccessors = List(mixedChild, groundChild)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 2)
-    mixedChild = Some(children.head.asInstanceOf[IndependentPartialGroundingNode])
-    groundChild = Some(children.tail.head)
+    mixedChild = children.head.map {
+      _.asInstanceOf[IndependentPartialGroundingNode]
+    }
+    groundChild = children.tail.head
+  }
+
+  override def updateFirst(child: NNFNode) = if (mixedChild.isEmpty) {
+    mixedChild = Some(child.asInstanceOf[IndependentPartialGroundingNode])
+    true
+  } else if (groundChild.isEmpty) {
+    groundChild = Some(child)
+    true
+  } else {
+    false
   }
 
   def size = mixedChild.get.size + groundChild.get.size + 1
@@ -206,10 +247,10 @@ class DomainRecursionNode(
   def smooth = if (NNFNode.smoothingCache.contains(this)) {
     NNFNode.smoothingCache(this)
   } else {
-    val newNode = new DomainRecursionNode(cnf, None, None, c, ineqs,
-                                          domain, explanation)
+    val newNode = new DomainRecursionNode(cnf, None, None, c, ineqs, domain,
+                                          explanation)
     NNFNode.smoothingCache(this) = newNode
-    newNode.update(List(mixedChild.get.smooth, groundChild.get.smooth))
+    newNode.update(List(Some(mixedChild.get.smooth), Some(groundChild.get.smooth)))
     newNode
   }
 
@@ -276,9 +317,22 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
                                   val domain: Domain,
                                   val explanation: String = "") extends NNFNode {
 
-  override def update(children : List[NNFNode]) = {
+  def myClone: NNFNode =
+    new ImprovedDomainRecursionNode(cnf, mixedChild, c, ineqs, domain,
+                                    explanation)
+
+  override def directSuccessors = List(mixedChild)
+
+  override def update(children: List[Option[NNFNode]]) = {
     require(children.length == 1)
-    mixedChild = Some(children.head)
+    mixedChild = children.head
+  }
+
+  override def updateFirst(child: NNFNode) = if (mixedChild.isEmpty) {
+    mixedChild = Some(child)
+    true
+  } else {
+    false
   }
 
   def size = mixedChild.size + 1
@@ -290,10 +344,10 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
   lazy val smooth = if (NNFNode.smoothingCache.contains(this)) {
     NNFNode.smoothingCache(this)
   } else {
-    val newNode = new ImprovedDomainRecursionNode(cnf, None, c, ineqs,
-                                                  domain, explanation)
+    val newNode = new ImprovedDomainRecursionNode(cnf, None, c, ineqs, domain,
+                                                  explanation)
     NNFNode.smoothingCache(this) = newNode
-    newNode.update(List(mixedChild.get.smooth))
+    newNode.update(List(Some(mixedChild.get.smooth)))
     newNode
   }
 
