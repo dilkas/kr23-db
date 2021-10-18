@@ -165,6 +165,7 @@ abstract class AbstractCompiler extends Compiler {
   def applyRules(cnf: CNF): Queue[PartialCircuit] = {
     checkCnfInput(cnf)
     val answer = inferenceRules.flatMap {
+      println(".")
       _(cnf) match {
         case None => None // the rule is not applicable
         case Some((node: Option[NNFNode], successors: List[CNF])) => {
@@ -172,6 +173,7 @@ abstract class AbstractCompiler extends Compiler {
             case None => {
               // rerun on the updated theory
               require(successors.size == 1)
+              println("The theory was modified without adding a circuit node")
               applyRules(successors.head)
             }
             case Some(node2) => Some((node2, successors))
@@ -179,6 +181,7 @@ abstract class AbstractCompiler extends Compiler {
         }
       }
     }
+    println("applyRules: returning a queue of size " + answer.size)
     Queue(answer: _*)
   }
 
@@ -189,8 +192,10 @@ abstract class AbstractCompiler extends Compiler {
     val answer = applyRules(partialCircuit._2.head).map {
       case (newNode: NNFNode, successors: List[CNF]) => {
         NNFNode.updateCache.clear()
-        (partialCircuit._1.addNode(newNode)._1,
-         successors ++ partialCircuit._2.tail)
+        val newSuccessors = successors ++ partialCircuit._2.tail
+        println("The number of uncompiled theories changed from " +
+                  partialCircuit._2.size + " to " + newSuccessors.size)
+        (partialCircuit._1.addNode(newNode)._1, newSuccessors)
       }
     }
     Queue(answer: _*)
@@ -203,8 +208,10 @@ abstract class AbstractCompiler extends Compiler {
       Stream.Empty
     } else {
       val (partialCircuit, tail) = q.dequeue
-      if (partialCircuit._2.isEmpty) // a complete circuit
+      if (partialCircuit._2.isEmpty) { // a complete circuit. TODO: this doesn't ever happen, does it?
+        println("Found a circuit!")
         partialCircuit._1 #:: recurse(tail ++ nextCircuits(partialCircuit))
+      }
       else
         recurse(tail ++ nextCircuits(partialCircuit))
     }

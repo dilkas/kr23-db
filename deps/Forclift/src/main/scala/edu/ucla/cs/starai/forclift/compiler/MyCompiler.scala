@@ -14,38 +14,48 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     extends V1_1Compiler(sizeHint) {
 
   def tryImprovedDomainRecursion(cnf: CNF) = {
-    val domain = cnf.clauses.head.constrs.domainFor(cnf.clauses.head.literalVariables.head)
-    val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
-    val constant = groundingConstantFor(cnf, domain)
-    println("tryImprovedDomainRecursion: selected constant " + constant)
-    val mixedClauses = cnf.clauses.flatMap {
-      clause => {
-        // only consider the subset of variables that come from the same domain
-        val vars = clause.literalVariables.filter { clause.constrs.domainFor(_).equals(domain) }
-        println("tryImprovedDomainRecursion: identified " + vars.size + " viable variables")
-        vars.subsets.flatMap {
-          equalVariables => {
-            val substitutedClause = clause.substituteOption((variable: Var) =>
-              if (equalVariables.contains(variable)) constant else variable)
-            substitutedClause match {
-              case Some(s) => {
-                val ineqVars = vars -- equalVariables
-                List(ineqVars.foldLeft(s) { _.addInequality(_, constant) })
+    cnf.clauses.find { !_.literalVariables.isEmpty } match {
+      case None => None
+      case Some(suitableClause) => {
+        val domain = suitableClause.constrs.domainFor(
+          suitableClause.literalVariables.head)
+        val ineqs = suitableClause.constrs.ineqConstrs(
+          suitableClause.literalVariables.head).collect {
+          case c: Constant => c
+        }
+        val constant = groundingConstantFor(cnf, domain)
+        val mixedClauses = cnf.clauses.flatMap {
+          clause => {
+            // only consider the subset of variables that come from the same
+            // domain
+            val vars = clause.literalVariables.filter {
+              clause.constrs.domainFor(_).equals(domain)
+            }
+            vars.subsets.flatMap {
+              equalVariables => {
+                val substitutedClause = clause.substituteOption(
+                  (variable: Var) => if (equalVariables.contains(variable))
+                                       constant else variable)
+                substitutedClause match {
+                  case Some(s) => {
+                    val ineqVars = vars -- equalVariables
+                    List(ineqVars.foldLeft(s) { _.addInequality(_, constant) })
+                  }
+                  case None => List()
+                }
               }
-              case None => List()
             }
           }
         }
+        val mixedCNF = new CNF(mixedClauses)
+        val msg = "Improved domain recursion on $" + domain + "$"
+        println(msg)
+        println(cnf + "\n")
+        val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs,
+                                                   domain, msg)
+        Some((Some(node), List(mixedCNF)))
       }
     }
-    val mixedCNF = new CNF(mixedClauses)
-    val headVar1 = cnf.clauses.head.literalVariables.head
-    val headVar2 = (cnf.clauses.head.literalVariables - headVar1).head
-    val msg = "Improved domain recursion on $" + domain + "$"
-    println(msg)
-    println(cnf + "\n")
-    val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs, domain, msg)
-    Some((Some(node), List(mixedCNF)))
   }
 
   def tryConstraintRemoval(cnf: CNF): InferenceResult = {
