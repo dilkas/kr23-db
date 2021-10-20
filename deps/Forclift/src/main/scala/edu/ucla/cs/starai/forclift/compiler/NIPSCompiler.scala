@@ -88,6 +88,10 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
     } else None
   }
 
+  override def nonSinkRules: List[InferenceRule] = {
+    super.nonSinkRules ::: List[InferenceRule](tryDomainRecursion)
+  }
+
   override def inferenceRules: List[InferenceRule] = {
     super.inferenceRules ::: List[InferenceRule](tryDomainRecursion)
   }

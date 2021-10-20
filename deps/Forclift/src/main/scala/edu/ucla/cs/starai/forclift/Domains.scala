@@ -84,7 +84,8 @@ sealed abstract class Domain {
       if ((diff1.isInstanceOf[RootDomain] || diff2.isInstanceOf[RootDomain]) ||
         diff1.asInstanceOf[SubDomain].complement == diff2) {
         EmptyDomain
-      } else throw new IllegalStateException("Complex intersection!")
+      } else throw new IllegalStateException(
+        "Complex intersection! Differing ancestors: " + diff1 + " and " + diff2)
     }
   }
 

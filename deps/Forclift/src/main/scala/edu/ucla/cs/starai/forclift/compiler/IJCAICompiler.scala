@@ -421,6 +421,24 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     } else None
   }
 
+  def sinkRules: List[InferenceRule] = List(
+    tryCache,
+    tryTautology,
+    tryContradictionClause,
+    tryPositiveUnitClause,
+    tryNegativeUnitClause,
+    tryPositiveUnitPropagation,
+    tryNegativeUnitPropagation)
+
+  def nonSinkRules: List[InferenceRule] = List(
+    tryIndependentSubtheories,
+    tryIndependentSubtheoriesAfterShattering,
+    tryGroundDecomposition,
+    tryInclusionExclusion,
+    tryShatter,
+    tryIndependentPartialGrounding,
+    tryCounting)
+
   def inferenceRules: List[InferenceRule] = List(
     tryCache,
     tryTautology,

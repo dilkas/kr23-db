@@ -121,6 +121,10 @@ abstract class AbstractCompiler extends Compiler {
   type InferenceResult = Option[(Option[NNFNode], List[CNF])]
   type InferenceRule = CNF => InferenceResult
 
+  def sinkRules: List[InferenceRule]
+  def nonSinkRules: List[InferenceRule]
+  // NOTE: we assume that inferenceRules = sinkRules ++ nonSinkRules (possibly
+  // in a different order)
   def inferenceRules: List[InferenceRule]
 
   var nbCompilationSteps = 0;
@@ -160,29 +164,52 @@ abstract class AbstractCompiler extends Compiler {
   // same order as the corresponding CNFs are found in the Queue.
   type PartialCircuit = (NNFNode, List[CNF])
 
+  def applySinkRules(cnf: CNF): Option[PartialCircuit] = {
+    var rules = sinkRules
+    var nnf: NNFNode = null
+    var outEdges: List[CNF] = List[CNF]()
+    while (nnf == null && rules.nonEmpty) {
+      val tryRule = rules.head(cnf)
+      if (tryRule.nonEmpty) {
+        val (node, successors) = tryRule.get
+        nnf = node.get // this always exists
+        outEdges = successors
+        updateCache(cnf, nnf)
+      } else {
+        rules = rules.tail
+      }
+    }
+    if (nnf == null) None else Some((nnf, outEdges))
+  }
+
   /** Apply all rules to the formula. The NNFNodes are just placeholders
     whenever this function is called by nextCircuits. */
   def applyRules(cnf: CNF): Queue[PartialCircuit] = {
     checkCnfInput(cnf)
-    val answer = inferenceRules.flatMap {
-      println(".")
-      _(cnf) match {
-        case None => None // the rule is not applicable
-        case Some((node: Option[NNFNode], successors: List[CNF])) => {
-          node match {
-            case None => {
-              // rerun on the updated theory
-              require(successors.size == 1)
-              println("The theory was modified without adding a circuit node")
-              applyRules(successors.head)
+    val potentialAnswer = applySinkRules(cnf)
+    if (potentialAnswer.isDefined) {
+      Queue(potentialAnswer.get)
+    } else {
+      val answer = nonSinkRules.flatMap {
+        println(".")
+        _(cnf) match {
+          case None => None // the rule is not applicable
+          case Some((node: Option[NNFNode], successors: List[CNF])) => {
+            node match {
+              case None => {
+                // rerun on the updated theory
+                require(successors.size == 1)
+                println("The theory was modified without adding a circuit node")
+                applyRules(successors.head)
+              }
+              case Some(node2) => Some((node2, successors))
             }
-            case Some(node2) => Some((node2, successors))
           }
         }
       }
+      println("applyRules: returning a queue of size " + answer.size)
+      Queue(answer: _*)
     }
-    println("applyRules: returning a queue of size " + answer.size)
-    Queue(answer: _*)
   }
 
   /** Apply applyRules to the first loose end in the partial circuit,
@@ -208,19 +235,20 @@ abstract class AbstractCompiler extends Compiler {
       Stream.Empty
     } else {
       val (partialCircuit, tail) = q.dequeue
-      if (partialCircuit._2.isEmpty) { // a complete circuit. TODO: this doesn't ever happen, does it?
+      if (partialCircuit._2.isEmpty) { // a complete circuit
         println("Found a circuit!")
         partialCircuit._1 #:: recurse(tail ++ nextCircuits(partialCircuit))
       }
-      else
+      else {
         recurse(tail ++ nextCircuits(partialCircuit))
+      }
     }
     recurse(Queue.empty ++ applyRules(cnf))
   }
 
   /** A simple BFS mainly for testing purposes */
   def breadthFirstSearch(cnf: CNF): NNFNode = {
-    val maxSolutionCount = 3 // TODO: maybe replace this with max depth
+    val maxSolutionCount = 1 // TODO: maybe replace this with max depth
     val circuits = breadthFirstTraverse(cnf).take(maxSolutionCount)
     circuits.foreach { _.showPDF(null, null) }
     circuits.head

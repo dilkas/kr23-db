@@ -100,6 +100,27 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     None
   }
 
+  override def sinkRules: List[InferenceRule] = List(
+    tryCache,
+    tryTautology,
+    tryContradictionClause,
+    tryPositiveUnitClause,
+    tryNegativeUnitClause,
+    tryPositiveUnitPropagation,
+    tryNegativeUnitPropagation)
+
+  override def nonSinkRules: List[InferenceRule] = List(
+    tryTautologyClauseElimination,
+    tryIndependentSubtheories,
+    tryIndependentSubtheoriesAfterShattering,
+    tryGroundDecomposition,
+    tryInclusionExclusion,
+    tryShatter,
+    tryIndependentPartialGrounding,
+    tryCounting,
+    tryConstraintRemoval,
+    tryImprovedDomainRecursion)
+
   override def inferenceRules: List[InferenceRule] = List(
     tryCache,
     tryTautology,
@@ -108,7 +129,7 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     tryNegativeUnitClause,
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation,
-    tryTautologyClauseElimination, // added wrt NIPS11
+    tryTautologyClauseElimination,
     tryIndependentSubtheories,
     tryIndependentSubtheoriesAfterShattering,
     tryGroundDecomposition,
@@ -116,7 +137,6 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     tryShatter,
     tryIndependentPartialGrounding, // O(log(n))
     tryCounting, // O(n)
-    //tryDomainRecursion, // is O(log(n)) now! But assumes no unary predicates
     tryConstraintRemoval, // new
     tryImprovedDomainRecursion // new
   )

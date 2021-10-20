@@ -35,6 +35,27 @@ abstract class V1_1Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.un
     if (newCnf eq cnf) None
     else Some((None, List(newCnf)))
   }
+
+  override def sinkRules: List[InferenceRule] = List(
+    tryCache,
+    tryTautology,
+    tryContradictionClause,
+    tryPositiveUnitClause,
+    tryNegativeUnitClause,
+    tryPositiveUnitPropagation,
+    tryNegativeUnitPropagation)
+
+  override def nonSinkRules: List[InferenceRule] = List(
+    tryTautologyClauseElimination,
+    tryIndependentSubtheories,
+    tryIndependentSubtheoriesAfterShattering,
+    tryGroundDecomposition,
+    tryInclusionExclusion,
+    tryShatter,
+    tryIndependentPartialGrounding,
+    tryCounting,
+    tryDomainRecursion)
+
   override def inferenceRules: List[InferenceRule] = List(
     tryCache,
     tryTautology,
