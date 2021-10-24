@@ -22,13 +22,19 @@ import edu.ucla.cs.starai.forclift.nnf._
 
 object V1_1Compiler {
 
-  val builder: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new V1_1Compiler(sizeHint) with LiftedCompiler
+  val builder: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new V1_1LiftedCompiler(sizeHint)
 
-  val builderWithGrounding: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new V1_1Compiler(sizeHint) with GroundingCompiler
+  val builderWithGrounding: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new V1_1GroundingCompiler(sizeHint)
 
 }
 
-abstract class V1_1Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_)) extends NIPS11Compiler(sizeHint) {
+abstract class V1_1Compiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends NIPS11Compiler(sizeHint, nnfCache) {
 
   def tryTautologyClauseElimination(cnf: CNF) = {
     val newCnf = cnf.removeTautologies
@@ -74,4 +80,26 @@ abstract class V1_1Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.un
     tryCounting, // O(n)
     tryDomainRecursion // is O(log(n)) now! But assumes no unary predicates
     )
+}
+
+class V1_1LiftedCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends V1_1Compiler(sizeHint, nnfCache) with LiftedCompiler {
+
+  def myClone: V1_1LiftedCompiler =
+    new V1_1LiftedCompiler(sizeHint, nnfCache)
+
+}
+
+class V1_1GroundingCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends V1_1Compiler(sizeHint, nnfCache) with GroundingCompiler {
+
+  def myClone: V1_1GroundingCompiler =
+    new V1_1GroundingCompiler(sizeHint, nnfCache)
+
 }

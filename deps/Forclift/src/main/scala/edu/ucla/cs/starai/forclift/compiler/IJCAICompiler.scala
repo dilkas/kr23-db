@@ -24,13 +24,19 @@ import constraints._
 
 object IJCAI11Compiler {
 
-  val builder: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new IJCAI11Compiler(sizeHint) with LiftedCompiler
+  val builder: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new IJCAI11LiftedCompiler(sizeHint)
 
-  val builderWithGrounding: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new IJCAI11Compiler(sizeHint) with GroundingCompiler
+  val builderWithGrounding: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new IJCAI11GroundingCompiler(sizeHint)
 
 }
 
-abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_)) extends AbstractCompiler {
+abstract class IJCAI11Compiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends AbstractCompiler(nnfCache) {
 
   def tryTautology(cnf: CNF) = {
     if (cnf.isTautology) {
@@ -456,5 +462,27 @@ abstract class IJCAI11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints
     tryShatter,
     tryIndependentPartialGrounding,
     tryCounting)
+
+}
+
+class IJCAI11LiftedCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends IJCAI11Compiler(sizeHint, nnfCache) with LiftedCompiler {
+
+  def myClone: IJCAI11LiftedCompiler =
+    new IJCAI11LiftedCompiler(sizeHint, nnfCache)
+
+}
+
+class IJCAI11GroundingCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends IJCAI11Compiler(sizeHint, nnfCache) with GroundingCompiler {
+
+  def myClone: IJCAI11GroundingCompiler =
+    new IJCAI11GroundingCompiler(sizeHint, nnfCache)
 
 }

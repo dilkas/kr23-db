@@ -5,13 +5,20 @@ import edu.ucla.cs.starai.forclift.nnf._
 import edu.ucla.cs.starai.forclift._
 
 object MyCompiler {
-  val builder: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new MyCompiler(sizeHint) with LiftedCompiler
-  val builderWithGrounding: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new MyCompiler(sizeHint) with GroundingCompiler
+
+  val builder: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new MyLiftedCompiler(sizeHint)
+
+  val builderWithGrounding: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new MyGroundingCompiler(sizeHint)
+
 }
 
-abstract class MyCompiler(sizeHint: Compiler.SizeHints =
-                            Compiler.SizeHints.unknown(_))
-    extends V1_1Compiler(sizeHint) {
+abstract class MyCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends V1_1Compiler(sizeHint, nnfCache) {
 
   def tryImprovedDomainRecursion(cnf: CNF) = {
     cnf.clauses.find { !_.literalVariables.isEmpty } match {
@@ -140,5 +147,27 @@ abstract class MyCompiler(sizeHint: Compiler.SizeHints =
     tryConstraintRemoval, // new
     tryImprovedDomainRecursion // new
   )
+
+}
+
+class MyLiftedCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends MyCompiler(sizeHint, nnfCache) with LiftedCompiler {
+
+  def myClone: MyLiftedCompiler =
+    new MyLiftedCompiler(sizeHint, nnfCache)
+
+}
+
+class MyGroundingCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends MyCompiler(sizeHint, nnfCache) with GroundingCompiler {
+
+  def myClone: MyGroundingCompiler =
+    new MyGroundingCompiler(sizeHint, nnfCache)
 
 }

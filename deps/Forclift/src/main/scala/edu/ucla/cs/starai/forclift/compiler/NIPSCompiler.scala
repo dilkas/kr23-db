@@ -22,13 +22,19 @@ import edu.ucla.cs.starai.forclift._
 
 object NIPS11Compiler {
 
-  val builder: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new NIPS11Compiler(sizeHint) with LiftedCompiler
+  val builder: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new NIPS11LiftedCompiler(sizeHint)
 
-  val builderWithGrounding: Compiler.Builder = (sizeHint: Compiler.SizeHints) => new NIPS11Compiler(sizeHint) with GroundingCompiler
+  val builderWithGrounding: Compiler.Builder =
+    (sizeHint: Compiler.SizeHints) => new NIPS11GroundingCompiler(sizeHint)
 
 }
 
-abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_)) extends IJCAI11Compiler(sizeHint) {
+abstract class NIPS11Compiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends IJCAI11Compiler(sizeHint, nnfCache) {
 
   def tryDomainRecursion(cnf: CNF) = {
     assume(cnf.clauses.forall { _.singletonLiterals.isEmpty })
@@ -95,5 +101,27 @@ abstract class NIPS11Compiler(sizeHint: Compiler.SizeHints = Compiler.SizeHints.
   override def inferenceRules: List[InferenceRule] = {
     super.inferenceRules ::: List[InferenceRule](tryDomainRecursion)
   }
+
+}
+
+class NIPS11LiftedCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends NIPS11Compiler(sizeHint, nnfCache) with LiftedCompiler {
+
+  def myClone: NIPS11LiftedCompiler =
+    new NIPS11LiftedCompiler(sizeHint, nnfCache)
+
+}
+
+class NIPS11GroundingCompiler(
+  sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
+    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
+    extends NIPS11Compiler(sizeHint, nnfCache) with GroundingCompiler {
+
+  def myClone: NIPS11GroundingCompiler =
+    new NIPS11GroundingCompiler(sizeHint, nnfCache)
 
 }
