@@ -113,6 +113,7 @@ abstract class MyCompiler(
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
+    tryRemoveDoubleClauses, // revival
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation)
 
@@ -134,6 +135,7 @@ abstract class MyCompiler(
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
+    tryRemoveDoubleClauses, // revival
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation,
     tryTautologyClauseElimination,

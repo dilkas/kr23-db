@@ -31,27 +31,29 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
 
   // The compiler stays the same because we're only applying a single rule,
   // i.e., the search tree doesn't branch out
-  def applySinkRules(cnf: CNF,
-                     compiler: AbstractCompiler): Option[PartialCircuit] = {
-    println("applySinkRules started")
+  def applySinkRules(cnf: CNF, compiler: AbstractCompiler)
+      : Option[Either[CNF, PartialCircuit]] = {
+    //println("applySinkRules started")
     var rules = compiler.sinkRules
-    var nnf: NNFNode = null
-    var outEdges: List[CNF] = List[CNF]()
-    while (nnf == null && rules.nonEmpty) {
-      println("applySinkRules: about to apply a rule on " + cnf)
+    while (rules.nonEmpty) {
+      //println("applySinkRules: about to apply a rule on " + cnf)
       val tryRule = rules.head(cnf)
-      println("applySinkRules: just applied a rule")
+      //println("applySinkRules: just applied a rule")
       if (tryRule.nonEmpty) {
         val (node, successors) = tryRule.get
-        nnf = node.get // this always exists
-        outEdges = successors
-        compiler.updateCache(cnf, nnf)
+        if (node.isEmpty) {
+          require(successors.size == 1)
+          return Some(Left(successors.head))
+        } else {
+          compiler.updateCache(cnf, node.get)
+          return Some(Right((compiler, node.get, successors)))
+        }
       } else {
         rules = rules.tail
       }
     }
-    println("applySinkRules finished")
-    if (nnf == null) None else Some((compiler, nnf, outEdges))
+    //println("applySinkRules finished")
+    None
   }
 
   /** Apply all rules to the formula. The NNFNodes are just placeholders
@@ -59,32 +61,32 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     compiler cache is instantiated for each element of the queue. */
   def applyRules(cnf: CNF,
                  compiler: AbstractCompiler): Queue[PartialCircuit] = {
-    println("applyRules started")
+    //println("applyRules started")
     Compiler.checkCnfInput(cnf)
-    val potentialAnswer = applySinkRules(cnf, compiler)
-    if (potentialAnswer.isDefined) {
-      println("applyRules finished")
-      Queue(potentialAnswer.get)
-    } else {
-      val answer = compiler.nonSinkRules.flatMap {
-        println(".")
-        _(cnf) match {
-          case None => None // the rule is not applicable
-          case Some((node: Option[NNFNode], successors: List[CNF])) => {
-            node match {
-              case None => {
-                // rerun on the updated theory
-                require(successors.size == 1)
-                println("The theory was modified without adding a circuit node")
-                applyRules(successors.head, compiler)
+    applySinkRules(cnf, compiler) match {
+      case Some(Left(cnf2)) => applyRules(cnf2, compiler)
+      case Some(Right(partialCircuit)) => Queue(partialCircuit)
+      case None => {
+        val answer = compiler.nonSinkRules.flatMap {
+          println(".")
+          _(cnf) match {
+            case None => None // the rule is not applicable
+            case Some((node: Option[NNFNode], successors: List[CNF])) => {
+              node match {
+                case None => {
+                  // rerun on the updated theory
+                  require(successors.size == 1)
+                  println("The theory was modified without adding a circuit node")
+                  applyRules(successors.head, compiler)
+                }
+                case Some(node2) => Some((compiler.myClone, node2, successors))
               }
-              case Some(node2) => Some((compiler.myClone, node2, successors))
             }
           }
         }
+        println("applyRules: returning a queue of size " + answer.size)
+        Queue(answer: _*)
       }
-      println("applyRules: returning a queue of size " + answer.size)
-      Queue(answer: _*)
     }
   }
 
@@ -92,7 +94,7 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     generating new states in the search tree. */
   def nextCircuits(partialCircuit: PartialCircuit): Queue[PartialCircuit] = {
     require(!partialCircuit._3.isEmpty)
-    println("nextCircuits started")
+    //println("nextCircuits started")
     val answer = applyRules(partialCircuit._3.head, partialCircuit._1).map {
       case (newCompiler: AbstractCompiler, newNode: NNFNode,
             successors: List[CNF]) => {
@@ -103,7 +105,7 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
         (newCompiler, partialCircuit._2.addNode(newNode)._1, newSuccessors)
       }
     }
-    println("nextCircuits finished")
+    //println("nextCircuits finished")
     Queue(answer: _*)
   }
 

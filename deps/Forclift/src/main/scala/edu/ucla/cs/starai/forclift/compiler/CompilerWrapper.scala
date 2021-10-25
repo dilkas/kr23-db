@@ -19,7 +19,7 @@ class CompilerWrapper(sizeHint: Compiler.SizeHints =
                         Compiler.SizeHints.unknown(_),
                       grounding: Boolean = false) extends Compiler {
 
-  val greedy: Boolean = true
+  val greedy: Boolean = false
 
   lazy val compiler = if (greedy) {
     new GreedyCompiler(sizeHint, grounding)

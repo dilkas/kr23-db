@@ -38,8 +38,8 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
   override def directSuccessors = List(nnfNode)
 
   override def update(children: List[Option[NNFNode]]) = {
-    require(children.length == 1)
-    nnfNode = children.head
+    require(children.length < 2)
+    if (!children.isEmpty) nnfNode = children.head
   }
 
   override def updateFirst(child: NNFNode) = if (nnfNode.isEmpty) {

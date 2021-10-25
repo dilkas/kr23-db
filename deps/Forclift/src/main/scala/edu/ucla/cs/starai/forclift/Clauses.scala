@@ -80,8 +80,14 @@ class Clause(
   override def equals(that: Any): Boolean = exactlyEquals(that)
 
   def exactlyEquals(that: Any): Boolean = that match {
-    case that: Clause => posLits.toSet == that.posLits.toSet &&
-        negLits.toSet == that.negLits.toSet && constrs == that.constrs
+    case that: Clause => {
+      val pos = posLits.toSet == that.posLits.toSet
+      val neg = negLits.toSet == that.negLits.toSet
+      val c = constrs == that.constrs
+      println("Comparing " + this + " and " + that + ". Positive literals: " +
+                pos + ", negative literals: " + neg + ", constraints: " + c)
+      pos && neg && c
+    }
     case _ => false
   }
 

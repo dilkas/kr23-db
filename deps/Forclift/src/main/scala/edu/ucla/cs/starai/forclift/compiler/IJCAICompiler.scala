@@ -117,9 +117,12 @@ abstract class IJCAI11Compiler(
   def tryRemoveDoubleClauses(cnf: CNF): InferenceResult = {
     val newClauses = cnf.clauses.toSet.toList
     if (newClauses.size < cnf.clauses.size) {
-      println("\nremove double clauses")
-      println(cnf.toString + "\n")
-      Some((None, List(new CNF(newClauses))))
+      val newCnf = new CNF(newClauses)
+      println("\nremove double clauses. Before:")
+      println(cnf + "\n")
+      println("After:")
+      println(newCnf + "\n")
+      Some((None, List(newCnf)))
     } else None
   }
 

@@ -322,16 +322,11 @@ object CNF {
   def identifyRecursion(newTheory: CNF, oldTheory: CNF,
                         partialMap: Map[Domain, Domain] = Map.empty)
       : Option[DomainMap] = {
-    //println("identifyRecursion started")
     if (newTheory.size != oldTheory.size ||
           newTheory.hashCode != oldTheory.hashCode) {
-      //println("different: " + newTheory + " AND " + oldTheory)
-      //println("identifyRecursion finished")
       None
     } else if (oldTheory.isEmpty) {
-      val x = postprocess(partialMap)
-      //println("identifyRecursion finished")
-      x
+      postprocess(partialMap)
     } else {
       for (clause1 <- oldTheory) {
         val updatedOldTheory = new CNF((oldTheory - clause1).toList)
@@ -350,40 +345,19 @@ object CNF {
             bijection <- clause1.variableBijections(clause2, myFilter)
             if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
-            //println("clause1 has " + clause1.allVariables.size + " variables")
             val updatedMap = partialMap ++ clause1.allVariables.map {
               v => {
-                // println("Adding domains (" + clause1.constrs.domainFor(v) +
-                //           ", " + clause2.constrs.domainFor(bijection(v)) +
-                //           ") for variable " + v)
                 (clause1.constrs.domainFor(v),
                  clause2.constrs.domainFor(bijection(v)))
               } }
-            // println("===identifyRecursion recursive call===")
-            // println("===new theory before:")
-            // println(newTheory)
-            // println("===new theory after:")
-            // println(updatedNewTheory)
-            // println("===old theory before:")
-            // println(oldTheory)
-            // println("===old theory after:")
-            // println(updatedOldTheory)
-            // println("===map before:")
-            // println(partialMap)
-            // println("===map after:")
-            // println(updatedMap)
             val recursion = identifyRecursion(updatedNewTheory,
                                               updatedOldTheory, updatedMap)
             if (recursion.isDefined) {
-              //println("compatible: " + newTheory + " AND " + oldTheory)
-              //println("identifyRecursion finished")
               return recursion
             }
           }
         }
       }
-      //println("different: " + newTheory + " AND " + oldTheory)
-      //println("identifyRecursion finished")
       None
     }
   }
