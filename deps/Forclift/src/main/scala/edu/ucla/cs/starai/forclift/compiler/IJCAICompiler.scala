@@ -83,8 +83,8 @@ abstract class IJCAI11Compiler(
   def tryPositiveUnitPropagation(cnf: CNF) = {
     val unitClauseOption = cnf.clauses.find { c => c.isPositiveUnitClause && c.isUnconditional }
     if (unitClauseOption.nonEmpty) {
-      println("\npositive unit propagation")
-      println(cnf.toString + "\n")
+      println("\nPositive unit propagation. Before:")
+      println(cnf)
       val unitClause = unitClauseOption.get
       val unitLiteral = unitClause.atoms.head
       val otherClauses: List[Clause] = cnf.clauses filterNot (_ == unitClause)
@@ -93,6 +93,10 @@ abstract class IJCAI11Compiler(
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
+      println("Positive unit propagation. After 1:")
+      println(unitCNF)
+      println("Positive unit propagation. After 2:")
+      println(branchCnf + "\n")
       Some((Some(node), List(unitCNF, branchCnf)))
     } else None
   }
@@ -146,8 +150,12 @@ abstract class IJCAI11Compiler(
     val (dep, indep) = partition(List(cnf.clauses.head), cnf.clauses.tail)
     if (indep.isEmpty) None
     else {
-      println("\nindependent subtheories")
-      println(cnf.toString + "\n")
+      println("\nIndependent subtheories. Before:")
+      println(cnf)
+      println("After 1:")
+      println(new CNF(dep))
+      println("After 2:")
+      println(new CNF(indep) + "\n")
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
       val node = new And(cnf, None, None, msg)
       Some((Some(node), List(new CNF(dep), new CNF(indep))))
@@ -240,7 +248,9 @@ abstract class IJCAI11Compiler(
   }
 
   def groundingConstantFor(cnf: CNF, domain: Domain) = {
-    val existingIndices = cnf.constants.collect { case Constant(IndexedConstant(i)) => i }
+    val existingIndices = cnf.constants.filter {
+      _.value.isInstanceOf[IndexedConstant]
+    }.map { _.value.asInstanceOf[IndexedConstant].i }.toSet
     val newIndex = Stream.from(0).find { index => !existingIndices(index) }.get
     groundingConstant(newIndex, domain)
   }
@@ -422,8 +432,10 @@ abstract class IJCAI11Compiler(
       val trueUnitClause = Clause(List(bestLit), List(), unitConstrs.setDomain(logVar, subdomain)).standardizeApart
       val falseUnitClause = Clause(List(), List(bestLit), unitConstrs.setDomain(logVar, subdomain.complement)).standardizeApart
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
-      println("counting (" + subdomain + " and " + subdomain.complement + ")")
-      println(cnf.toString)
+      println("\n" + msg + " Before:")
+      println(cnf)
+      println("After:")
+      println(childCNF + "\n")
       val node = new CountingNode(cnf, None, domain, subdomain, msg)
       subdomain.setCause(node)
       Some((Some(node), List(childCNF)))

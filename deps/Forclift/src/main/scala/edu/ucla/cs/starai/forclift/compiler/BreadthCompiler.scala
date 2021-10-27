@@ -43,7 +43,9 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
         val (node, successors) = tryRule.get
         if (node.isEmpty) {
           require(successors.size == 1)
-          return Some(Left(successors.head))
+          val recursiveResult = applySinkRules(successors.head, compiler)
+          return if (recursiveResult.isDefined) recursiveResult
+                 else Some(Left(successors.head))
         } else {
           compiler.updateCache(cnf, node.get)
           return Some(Right((compiler, node.get, successors)))

@@ -68,29 +68,59 @@ class Clause(
 
   def variableBijections(that: Clause,
                          condition: Map[Var, Var] => Boolean = (_ => true))
-      : Iterator[Var => Var] =
-    that.allVariables.toList.permutations.flatMap {
-      permutation => {
-        val bijection = (allVariables.toList zip permutation).toMap
-        if (condition(bijection)) Seq((variable: Var) => bijection(variable))
-        else Seq()
+      : Iterator[Var => Var] = that.allVariables.toList.permutations.flatMap {
+    permutation => {
+      val bijection = (allVariables.toList zip permutation).toMap
+      if (condition(bijection)) Seq((variable: Var) => bijection(variable))
+      else Seq()
+    }
+  }
+
+  override def equals(that: Any): Boolean = that match {
+    case that: Clause => {
+      if (hashCode != that.hashCode) {
+        false
+      } else {
+        def sameDomains(bijection: Map[Var, Var]): Boolean = bijection.forall {
+          case (v1, v2) => {
+            val d1 = constrs.domainFor(v1)
+            val d2 = that.constrs.domainFor(v2)
+            // println("sameDomains: comparing domains " + d1 + " and " + d2 +
+            //           ": " + (d1 == d2))
+            d1 == d2
+          }
+        }
+        // println("equals: comparing " + this + " and " + that)
+        val bijections = variableBijections(that, sameDomains).toList
+        // println("equals: identified " + bijections.size +
+        //           " bijections: " + bijections)
+        val answer = bijections.exists {
+          bijection => {
+            // println("equals: checking a bijection")
+            substitute(bijection).exactlyEquals(that)
+          }
+        }
+        // println("equals: " + answer)
+        answer
       }
     }
-
-  override def equals(that: Any): Boolean = exactlyEquals(that)
+    case _ => false
+  }
 
   def exactlyEquals(that: Any): Boolean = that match {
     case that: Clause => {
       val pos = posLits.toSet == that.posLits.toSet
       val neg = negLits.toSet == that.negLits.toSet
       val c = constrs == that.constrs
-      println("Comparing " + this + " and " + that + ". Positive literals: " +
-                pos + ", negative literals: " + neg + ", constraints: " + c)
+      // println("exactlyEquals: positive literals: " + pos +
+      //           ", negative literals: " + neg + ", constraints: " + c)
       pos && neg && c
     }
     case _ => false
   }
 
+  // the number of positive literals, the number of negative literals, the
+  // number of inequality constraints, and the number of variables
   override def hashCode: Int = {
     val prime = 31
     var result = 1
