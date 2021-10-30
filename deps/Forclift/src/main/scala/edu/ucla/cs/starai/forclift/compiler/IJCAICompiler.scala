@@ -70,6 +70,8 @@ abstract class IJCAI11Compiler(
   }
 
   def tryContradictionClause(cnf: CNF) = {
+    if (cnf.clauses.size == 1)
+      println("Ttesting if " + cnf.clauses.head + " is a contradiction")
     val isConditionalContradiction = cnf.clauses.size == 1 && cnf.clauses.head.isConditionalContradiction
     if (isConditionalContradiction) {
       println("\ncontradiction clause")
@@ -81,7 +83,17 @@ abstract class IJCAI11Compiler(
   }
 
   def tryPositiveUnitPropagation(cnf: CNF) = {
-    val unitClauseOption = cnf.clauses.find { c => c.isPositiveUnitClause && c.isUnconditional }
+    // println("Trying positive unit propagation on:")
+    // println(cnf)
+    val unitClauseOption = cnf.clauses.find {
+      c => {
+        // println("Clause")
+        // println(c)
+        // println("is a positive unit clause: " + c.isPositiveUnitClause +
+        //           ", is unconditional: " + c.isUnconditional)
+        c.isPositiveUnitClause && c.isUnconditional
+      }
+    }
     if (unitClauseOption.nonEmpty) {
       println("\nPositive unit propagation. Before:")
       println(cnf)
@@ -93,9 +105,7 @@ abstract class IJCAI11Compiler(
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
-      println("Positive unit propagation. After 1:")
-      println(unitCNF)
-      println("Positive unit propagation. After 2:")
+      println("Positive unit propagation. After:")
       println(branchCnf + "\n")
       Some((Some(node), List(unitCNF, branchCnf)))
     } else None

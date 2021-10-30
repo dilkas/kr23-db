@@ -298,7 +298,7 @@ object CNF {
   /** If possible, identify the values in the map as subsets of some of the
     keys. */
   def postprocess(domainMap: Map[Domain, Domain]): Option[DomainMap] = {
-    println("Postprocessing " + domainMap)
+    // println("Postprocessing " + domainMap)
     try {
       Some(domainMap.map {
              case (d1, d2) => {
@@ -310,7 +310,10 @@ object CNF {
                }
              } }.toMap)
     } catch {
-      case c: DomainNotMatchedException => None
+      case c: DomainNotMatchedException => {
+        // println("Postprocessing failed")
+        None
+      }
     }
   }
 
@@ -322,6 +325,12 @@ object CNF {
   def identifyRecursion(newTheory: CNF, oldTheory: CNF,
                         partialMap: Map[Domain, Domain] = Map.empty)
       : Option[DomainMap] = {
+    // println("identifyRecursion started between theories")
+    // println(newTheory)
+    // println("AND")
+    // println(oldTheory)
+    // println("WITH MAP")
+    // println(partialMap)
     if (newTheory.size != oldTheory.size ||
           newTheory.hashCode != oldTheory.hashCode) {
       None
@@ -341,8 +350,10 @@ object CNF {
             }
           }
 
+          val bijections = clause1.variableBijections(clause2, myFilter)
+          // println("found " + bijections.size + " bijections")
           for {
-            bijection <- clause1.variableBijections(clause2, myFilter)
+            bijection <- bijections
             if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
             val updatedMap = partialMap ++ clause1.allVariables.map {

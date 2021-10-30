@@ -68,13 +68,13 @@ class Clause(
 
   def variableBijections(that: Clause,
                          condition: Map[Var, Var] => Boolean = (_ => true))
-      : Iterator[Var => Var] = that.allVariables.toList.permutations.flatMap {
+      : List[Var => Var] = that.allVariables.toList.permutations.flatMap {
     permutation => {
       val bijection = (allVariables.toList zip permutation).toMap
-      if (condition(bijection)) Seq((variable: Var) => bijection(variable))
-      else Seq()
+      if (condition(bijection)) Some((variable: Var) => bijection(variable))
+      else None
     }
-  }
+  }.toList
 
   override def equals(that: Any): Boolean = that match {
     case that: Clause => {
@@ -91,7 +91,7 @@ class Clause(
           }
         }
         // println("equals: comparing " + this + " and " + that)
-        val bijections = variableBijections(that, sameDomains).toList
+        val bijections = variableBijections(that, sameDomains)
         // println("equals: identified " + bijections.size +
         //           " bijections: " + bijections)
         val answer = bijections.exists {
@@ -155,7 +155,11 @@ class Clause(
   /**
    * Check whether there are constraints not pertaining to the variables in the literals
    */
-  def isConditional = (constrVariables -- literalVariables).nonEmpty
+  def isConditional = {
+    // println("Clause: " + this + ". Constraint variables: " + constrVariables +
+    //           ", literal variables: " + literalVariables)
+    (constrVariables -- literalVariables).nonEmpty
+  }
 
   def isUnconditional = !isConditional
 
@@ -526,19 +530,23 @@ class Clause(
         case Nil => (Nil, indepLiterals)
       }
     }
-    val (dep, indep) = partition(List(atoms.head), atoms.tail)
-    if (indep.isEmpty) None
-    else {
-      val vars1 = dep.flatMap { _.variables }.toSet
-      val vars2 = indep.flatMap { _.variables }.toSet
-      val posLits1 = posLits.filter { l => dep.exists { l eq _ } }
-      val posLits2 = posLits.filter { l => indep.exists { l eq _ } }
-      val negLits1 = negLits.filter { l => dep.exists { l eq _ } }
-      val negLits2 = negLits.filter { l => indep.exists { l eq _ } }
-      val cl1 = new Clause(posLits1, negLits1, constrs)
-      val cl2 = new Clause(posLits2, negLits2, constrs)
-      // no need to standardize apart
-      Some((cl1, cl2))
+    if (atoms.isEmpty) {
+      None
+    } else {
+      val (dep, indep) = partition(List(atoms.head), atoms.tail)
+      if (indep.isEmpty) None
+      else {
+        val vars1 = dep.flatMap { _.variables }.toSet
+        val vars2 = indep.flatMap { _.variables }.toSet
+        val posLits1 = posLits.filter { l => dep.exists { l eq _ } }
+        val posLits2 = posLits.filter { l => indep.exists { l eq _ } }
+        val negLits1 = negLits.filter { l => dep.exists { l eq _ } }
+        val negLits2 = negLits.filter { l => indep.exists { l eq _ } }
+        val cl1 = new Clause(posLits1, negLits1, constrs)
+        val cl2 = new Clause(posLits2, negLits2, constrs)
+        // no need to standardize apart
+        Some((cl1, cl2))
+      }
     }
   }
 

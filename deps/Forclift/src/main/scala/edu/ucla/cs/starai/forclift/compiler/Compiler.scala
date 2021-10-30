@@ -94,12 +94,15 @@ abstract class AbstractCompiler(
   }
 
   def tryCache(cnf: CNF): InferenceResult = {
-    //println("tryCache started")
+    // println("tryCache started for theory:")
+    // println(cnf)
+    // println("tryCache: looking for " + cnf.hashCode + " among " +
+    //           nnfCache.keySet.toList.sorted)
     if (!nnfCache.contains(cnf.hashCode)) {
-      //println("tryCache finished")
+      // println("tryCache: not found")
       None
     } else {
-      //println("tryCache: examining " + nnfCache(cnf.hashCode).size + " potential matches")
+      // println("tryCache: found")
       nnfCache(cnf.hashCode).flatMap { case (theory, circuit) =>
         CNF.identifyRecursion(cnf, theory) match {
           case Some(recursion) => Some((circuit, recursion))
@@ -113,11 +116,11 @@ abstract class AbstractCompiler(
           println(results._1.cnf + "\n")
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
           updateCache(cnf, node)
-          //println("tryCache finished")
+          // println("tryCache finished")
           Some((Some(node), List[CNF]()))
         }
         case None => {
-          //println("tryCache finished")
+          // println("tryCache finished")
           None
         }
       }

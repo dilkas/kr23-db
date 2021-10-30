@@ -91,8 +91,10 @@ abstract class MyCompiler(
                                                             constant).
                                      replaceDomains(originalDomain,
                                                     newDomain) }.toList: _*)
-                println("\nconstraint removal")
-                println(cnf + "\n")
+                println("\nConstraint removal. Before:")
+                println(cnf)
+                println("After:")
+                println(newCnf + "\n")
                 val node = new ConstraintRemovalNode(cnf, None, originalDomain,
                                                      newDomain)
                 newDomain.setCause(node)
@@ -113,12 +115,13 @@ abstract class MyCompiler(
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
-    tryRemoveDoubleClauses, // revival
+    tryTautologyClauseElimination,
+    //tryRemoveDoubleClauses, // revival
     tryPositiveUnitPropagation,
-    tryNegativeUnitPropagation)
+    tryNegativeUnitPropagation,
+    tryConstraintRemoval)
 
   override def nonSinkRules: List[InferenceRule] = List(
-    tryTautologyClauseElimination,
     tryIndependentSubtheories,
     tryIndependentSubtheoriesAfterShattering,
     tryGroundDecomposition,
@@ -126,7 +129,6 @@ abstract class MyCompiler(
     tryShatter,
     tryIndependentPartialGrounding,
     tryCounting,
-    tryConstraintRemoval,
     tryImprovedDomainRecursion)
 
   override def inferenceRules: List[InferenceRule] = List(
@@ -135,7 +137,7 @@ abstract class MyCompiler(
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
-    tryRemoveDoubleClauses, // revival
+    //tryRemoveDoubleClauses, // revival
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation,
     tryTautologyClauseElimination,
@@ -159,7 +161,7 @@ class MyLiftedCompiler(
     extends MyCompiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: MyLiftedCompiler =
-    new MyLiftedCompiler(sizeHint, nnfCache)
+    new MyLiftedCompiler(sizeHint, nnfCache.clone)
 
 }
 
@@ -170,6 +172,6 @@ class MyGroundingCompiler(
     extends MyCompiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: MyGroundingCompiler =
-    new MyGroundingCompiler(sizeHint, nnfCache)
+    new MyGroundingCompiler(sizeHint, nnfCache.clone)
 
 }

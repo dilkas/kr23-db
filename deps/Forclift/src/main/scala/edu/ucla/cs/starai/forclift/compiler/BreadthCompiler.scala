@@ -33,7 +33,8 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
   // i.e., the search tree doesn't branch out
   def applySinkRules(cnf: CNF, compiler: AbstractCompiler)
       : Option[Either[CNF, PartialCircuit]] = {
-    //println("applySinkRules started")
+    // println("applySinkRules started for theory:")
+    // println(cnf)
     var rules = compiler.sinkRules
     while (rules.nonEmpty) {
       //println("applySinkRules: about to apply a rule on " + cnf)
@@ -47,8 +48,22 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
           return if (recursiveResult.isDefined) recursiveResult
                  else Some(Left(successors.head))
         } else {
-          compiler.updateCache(cnf, node.get)
-          return Some(Right((compiler, node.get, successors)))
+          val nnf = node.get
+          compiler.updateCache(cnf, nnf)
+          val recursiveResults = successors.map { applySinkRules(_, compiler) }
+          val remainingSuccessors = (successors zip recursiveResults).flatMap {
+            case (theory, result) => result match {
+              case None => Some(theory)
+              case Some(Left(newTheory)) => Some(newTheory)
+              case Some(Right(partialCircuit)) => {
+                nnf.updateFirst(partialCircuit._2)
+                partialCircuit._3
+              }
+            }
+          }
+          println("applySinkRules is returning a partial circuit with " +
+                    remainingSuccessors.size + " successors")
+          return Some(Right((compiler, nnf, remainingSuccessors)))
         }
       } else {
         rules = rules.tail
@@ -63,14 +78,14 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     compiler cache is instantiated for each element of the queue. */
   def applyRules(cnf: CNF,
                  compiler: AbstractCompiler): Queue[PartialCircuit] = {
-    //println("applyRules started")
+    // println("applyRules started for theory:")
+    // println(cnf)
     Compiler.checkCnfInput(cnf)
     applySinkRules(cnf, compiler) match {
       case Some(Left(cnf2)) => applyRules(cnf2, compiler)
       case Some(Right(partialCircuit)) => Queue(partialCircuit)
       case None => {
         val answer = compiler.nonSinkRules.flatMap {
-          println(".")
           _(cnf) match {
             case None => None // the rule is not applicable
             case Some((node: Option[NNFNode], successors: List[CNF])) => {
@@ -78,15 +93,21 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
                 case None => {
                   // rerun on the updated theory
                   require(successors.size == 1)
-                  println("The theory was modified without adding a circuit node")
+                  // println("The theory was modified without adding a circuit node")
                   applyRules(successors.head, compiler)
                 }
-                case Some(node2) => Some((compiler.myClone, node2, successors))
+                case Some(node2) => {
+                  val newCompiler = compiler.myClone
+                  newCompiler.updateCache(cnf, node2)
+                  println("applyRules is returning a partial circuit with " +
+                            successors.size + " successors")
+                  Some((newCompiler, node2, successors))
+                }
               }
             }
           }
         }
-        println("applyRules: returning a queue of size " + answer.size)
+        // println("applyRules: returning a queue of size " + answer.size)
         Queue(answer: _*)
       }
     }
@@ -104,6 +125,10 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
         val newSuccessors = successors ++ partialCircuit._3.tail
         println("The number of uncompiled theories changed from " +
                   partialCircuit._3.size + " to " + newSuccessors.size)
+        if (!newSuccessors.isEmpty) {
+          println("The first uncompiled theory is:")
+          println(newSuccessors.head)
+        }
         (newCompiler, partialCircuit._2.addNode(newNode)._1, newSuccessors)
       }
     }
@@ -111,12 +136,14 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     Queue(answer: _*)
   }
 
+  // TODO (Paulius): it would be better to identify the solution earlier
   /** (Lazily) produces a stream of circuits that compute the WFOMC of the
     given theory */
   def breadthFirstTraverse(q: Queue[PartialCircuit]): Stream[NNFNode] =
     if (q.isEmpty) {
       Stream.Empty
     } else {
+      println("Breadth first search is running on a queue of size " + q.size)
       val (partialCircuit, tail) = q.dequeue
       if (partialCircuit._3.isEmpty) { // a complete circuit
         println("Found a circuit!")
