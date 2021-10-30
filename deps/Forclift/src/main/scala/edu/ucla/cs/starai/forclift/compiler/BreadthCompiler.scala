@@ -29,51 +29,51 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     new MyLiftedCompiler(sizeHint)
   }
 
-  // The compiler stays the same because we're only applying a single rule,
-  // i.e., the search tree doesn't branch out
-  def applySinkRules(cnf: CNF, compiler: AbstractCompiler)
-      : Option[PartialCircuit] = {
-    // println("applySinkRules started for theory:")
-    // println(cnf)
-    var rules = compiler.sinkRules
-    while (rules.nonEmpty) {
-      //println("applySinkRules: about to apply a rule on " + cnf)
-      val tryRule = rules.head(cnf)
-      //println("applySinkRules: just applied a rule")
-      if (tryRule.nonEmpty) {
-        val (node, successors) = tryRule.get
-        if (node.isEmpty) {
-          require(successors.size == 1)
-          return applySinkRules(successors.head, compiler)
-        } else {
-          val nnf = node.get
-          compiler.updateCache(cnf, nnf)
-          val recursiveResults = successors.map { applySinkRules(_, compiler) }
-          val remainingSuccessors = (successors zip recursiveResults).flatMap {
-            case (theory, result) => result match {
-              case None => Some(theory)
-              case Some((rCompiler, rNode, rSuccessors)) => rNode match {
-                case None => {
-                  require(rSuccessors.size == 1)
-                  rSuccessors
-                }
-                case Some(rNode) => {
-                  nnf.updateFirst(rNode)
-                  rSuccessors
-                }
-              }
-            }
-          }
-          println("applySinkRules is returning a partial circuit with " +
-                    remainingSuccessors.size + " successors")
-          return Some((compiler, Some(nnf), remainingSuccessors))
-        }
-      } else {
-        rules = rules.tail
+  def applyToList(compiler: AbstractCompiler, circuit: NNFNode,
+                  formulas: List[CNF]): List[CNF] = {
+    formulas.map { applySinkRules(_, compiler) }.flatMap {
+      case (_, node, successors) => {
+        if (node.isDefined) circuit.updateFirst(node.get)
+        successors
       }
     }
-    //println("applySinkRules finished")
-    None
+  }
+
+  // The compiler stays the same because we're only applying a single rule,
+  // i.e., the search tree doesn't branch out
+  def applySinkRules(cnf: CNF, compiler: AbstractCompiler): PartialCircuit = {
+    var rules = compiler.sinkRules
+    while (rules.nonEmpty) {
+      rules.head(cnf) match {
+        case None => rules = rules.tail
+        case Some((node, successors)) => {
+          node match {
+            case None => {
+              require(successors.size == 1)
+              return applySinkRules(successors.head, compiler)
+            }
+            case Some(nnf) => {
+              compiler.updateCache(cnf, nnf)
+              val remainingSuccessors = applyToList(compiler, nnf, successors)
+              println("applySinkRules is returning a partial circuit with " +
+                        remainingSuccessors.size + " successors")
+              return (compiler, Some(nnf), remainingSuccessors)
+            }
+          }
+        }
+      }
+    }
+    (compiler, None, List(cnf))
+  }
+
+  /** Run the applySinkRules function on all of the successors (i.e.,
+    uncompiled formulas) of the given partial circuit, incorporate all results
+    into the main partial circuit, and return it. */
+  def applySinkRules(partialCircuit: PartialCircuit): PartialCircuit = {
+    val (compiler, node, successors) = partialCircuit
+    require(node.isDefined)
+    val newSuccessors = applyToList(compiler, node.get, successors)
+    (compiler, node, newSuccessors)
   }
 
   /** Apply all rules to the formula. The NNFNodes are just placeholders
@@ -81,42 +81,29 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     compiler cache is instantiated for each element of the queue. */
   def applyRules(cnf: CNF,
                  compiler: AbstractCompiler): Queue[PartialCircuit] = {
-    // println("applyRules started for theory:")
-    // println(cnf)
     Compiler.checkCnfInput(cnf)
-    applySinkRules(cnf, compiler) match {
-      case Some((compiler, None, successors)) => {
-        require(successors.size == 1)
-        applyRules(successors.head, compiler)
-      }
-      case Some(partialCircuit) => Queue(partialCircuit)
-      case None => {
-        val answer = compiler.nonSinkRules.flatMap {
-          _(cnf) match {
-            case None => None // the rule is not applicable
-            case Some((node: Option[NNFNode], successors: List[CNF])) => {
-              node match {
-                case None => {
-                  // rerun on the updated theory
-                  require(successors.size == 1)
-                  // println("The theory was modified without adding a circuit node")
-                  applyRules(successors.head, compiler)
-                }
-                case Some(node2) => {
-                  val newCompiler = compiler.myClone
-                  newCompiler.updateCache(cnf, node2)
-                  println("applyRules is returning a partial circuit with " +
-                            successors.size + " successors")
-                  Some((newCompiler, Some(node2), successors))
-                }
-              }
+    val answer = compiler.nonSinkRules.flatMap {
+      _(cnf) match {
+        case None => None // the rule is not applicable
+        case Some((node: Option[NNFNode], successors: List[CNF])) => {
+          node match {
+            case None => {
+              // rerun on the updated theory
+              require(successors.size == 1)
+              applyRules(successors.head, compiler)
+            }
+            case Some(node2) => {
+              val newCompiler = compiler.myClone
+              newCompiler.updateCache(cnf, node2)
+              println("applyRules is returning a partial circuit with " +
+                        successors.size + " successors")
+              Some(applySinkRules(newCompiler, Some(node2), successors))
             }
           }
         }
-        // println("applyRules: returning a queue of size " + answer.size)
-        Queue(answer: _*)
       }
     }
+    Queue(answer: _*)
   }
 
   /** Run applyRules on the first loose end in the partial circuit,
@@ -167,9 +154,8 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
   /** A simple BFS mainly for testing purposes */
   override def compile(cnf: CNF): NNFNode = {
     val maxSolutionCount = 1
-    val circuits = breadthFirstTraverse(Queue.empty ++
-                                          applyRules(cnf, compilerBuilder)).
-      take(maxSolutionCount)
+    val initialQueue = Queue(applySinkRules(cnf, compilerBuilder))
+    val circuits = breadthFirstTraverse(initialQueue).take(maxSolutionCount)
     circuits.foreach { _.showPDF(null, null) }
     circuits.head
   }
