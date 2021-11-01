@@ -19,21 +19,31 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
                         Compiler.SizeHints.unknown(_),
                       grounding: Boolean = false) extends Compiler {
 
+  final case class EndSearchException(private val message: String = "",
+                                      private val cause: Throwable =
+                                        None.orNull)
+      extends Exception(message, cause)
+
   // NOTE: We assume that CNF->NNFNode updates are accepted by NNFNodes in the
   // same order as the corresponding CNFs are found in the Queue.
   type PartialCircuit = (AbstractCompiler, Option[NNFNode], List[CNF])
 
-  def compilerBuilder = if (grounding) {
-    new MyGroundingCompiler(sizeHint)
-  } else {
-    new MyLiftedCompiler(sizeHint)
+  var circuits: List[NNFNode] = List[NNFNode]()
+
+  def foundSolution(circuit: NNFNode): Unit = {
+    circuits = circuit :: circuits
+    if (circuits.size >= 1) throw new EndSearchException
   }
 
   def applyToList(compiler: AbstractCompiler, circuit: NNFNode,
                   formulas: List[CNF]): List[CNF] = {
     formulas.map { applySinkRules(_, compiler) }.flatMap {
       case (_, node, successors) => {
-        if (node.isDefined) circuit.updateFirst(node.get)
+        if (node.isDefined) {
+          println("applyToList: adding " + node.get.getClass.getSimpleName +
+                    " below " + circuit.getClass.getSimpleName)
+          require(circuit.updateFirst(node.get))
+        }
         successors
       }
     }
@@ -55,8 +65,8 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
             case Some(nnf) => {
               compiler.updateCache(cnf, nnf)
               val remainingSuccessors = applyToList(compiler, nnf, successors)
-              println("applySinkRules is returning a partial circuit with " +
-                        remainingSuccessors.size + " successors")
+              // println("applySinkRules is returning a partial circuit with " +
+              //           remainingSuccessors.size + " successors")
               return (compiler, Some(nnf), remainingSuccessors)
             }
           }
@@ -80,9 +90,9 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     whenever this function is called by nextCircuits. A new copy of the
     compiler cache is instantiated for each element of the queue. */
   def applyRules(cnf: CNF,
-                 compiler: AbstractCompiler): Queue[PartialCircuit] = {
+                 compiler: AbstractCompiler): Stream[PartialCircuit] = {
     Compiler.checkCnfInput(cnf)
-    val answer = compiler.nonSinkRules.flatMap {
+    compiler.nonSinkRules.toStream.flatMap {
       _(cnf) match {
         case None => None // the rule is not applicable
         case Some((node: Option[NNFNode], successors: List[CNF])) => {
@@ -95,67 +105,82 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
             case Some(node2) => {
               val newCompiler = compiler.myClone
               newCompiler.updateCache(cnf, node2)
-              println("applyRules is returning a partial circuit with " +
-                        successors.size + " successors")
+              // println("applyRules is returning a partial circuit with " +
+              //           successors.size + " successors")
               Some(applySinkRules(newCompiler, Some(node2), successors))
             }
           }
         }
       }
     }
-    Queue(answer: _*)
   }
 
   /** Run applyRules on the first loose end in the partial circuit,
     generating new states in the search tree. */
-  def nextCircuits(partialCircuit: PartialCircuit): Queue[PartialCircuit] = {
-    require(!partialCircuit._3.isEmpty)
-    //println("nextCircuits started")
-    val answer = applyRules(partialCircuit._3.head, partialCircuit._1).map {
-      case (newCompiler, newNode, successors) => {
-        NNFNode.updateCache.clear()
-        val newSuccessors = successors ++ partialCircuit._3.tail
-        println("The number of uncompiled theories changed from " +
-                  partialCircuit._3.size + " to " + newSuccessors.size)
-        if (!newSuccessors.isEmpty) {
-          println("The first uncompiled theory is:")
-          println(newSuccessors.head)
+  def nextCircuits(partialCircuit: PartialCircuit): Queue[PartialCircuit] =
+    partialCircuit match {
+      case (_, circuit, Nil) => {
+        println("nextCircuits: found a solution in the queue")
+        foundSolution(circuit.get)
+        Queue.empty
+      }
+      case (compiler, circuit, successors) => {
+        val newPartialCircuits = applyRules(successors.head, compiler).flatMap {
+          case (newCompiler, newNode, newSuccessors) => {
+            NNFNode.updateCache.clear()
+            val newNewSuccessors = newSuccessors ++ successors.tail
+
+            println("nextCircuits: after applying " + newNode.get.explanation +
+                      ", the number of uncompiled theories changed from " +
+                      successors.size + " to " + newNewSuccessors.size)
+            if (!newNewSuccessors.isEmpty) {
+              println("The first uncompiled theory is:")
+              println(newNewSuccessors.head)
+            }
+
+            val newNewNode = circuit match {
+              case Some(node) => {
+                println("nextCircuits: adding " +
+                          newNode.get.getClass.getSimpleName + " below " +
+                          node.getClass.getSimpleName)
+                val (newCircuit, added) = node.myClone.addNode(newNode.get)
+                require(added)
+                newCircuit
+              }
+              case None => newNode.get
+            }
+            if (newNewSuccessors.isEmpty) {
+              foundSolution(newNewNode)
+              None
+            } else {
+              Some((newCompiler, Some(newNewNode), newNewSuccessors))
+            }
+          }
         }
-        val newNewNode = partialCircuit._2 match {
-          case Some(node) => node.addNode(newNode.get)._1
-          case None => newNode.get
-        }
-        (newCompiler, Some(newNewNode), newSuccessors)
+        Queue(newPartialCircuits: _*)
       }
     }
-    //println("nextCircuits finished")
-    Queue(answer: _*)
+
+  def breadthFirstTraverse(q: Queue[PartialCircuit]): Unit = if (!q.isEmpty) {
+    println("Breadth first search is running on a queue of size " + q.size)
+    val (partialCircuit, tail) = q.dequeue
+    breadthFirstTraverse(tail ++ nextCircuits(partialCircuit))
   }
 
-  // TODO (Paulius): it would be better to identify the solution earlier
-  /** (Lazily) produces a stream of circuits that compute the WFOMC of the
-    given theory */
-  def breadthFirstTraverse(q: Queue[PartialCircuit]): Stream[NNFNode] =
-    if (q.isEmpty) {
-      Stream.Empty
-    } else {
-      println("Breadth first search is running on a queue of size " + q.size)
-      val (partialCircuit, tail) = q.dequeue
-      partialCircuit match {
-        case (_, Some(node), Nil) => {
-          println("Found a circuit!")
-          node #:: breadthFirstTraverse(tail ++ nextCircuits(partialCircuit))
-        }
-        case partialCircuit =>
-          breadthFirstTraverse(tail ++ nextCircuits(partialCircuit))
-      }
-    }
+  def compilerBuilder = if (grounding) {
+    new MyGroundingCompiler(sizeHint)
+  } else {
+    new MyLiftedCompiler(sizeHint)
+  }
 
   /** A simple BFS mainly for testing purposes */
   override def compile(cnf: CNF): NNFNode = {
-    val maxSolutionCount = 1
     val initialQueue = Queue(applySinkRules(cnf, compilerBuilder))
-    val circuits = breadthFirstTraverse(initialQueue).take(maxSolutionCount)
+    try {
+      breadthFirstTraverse(initialQueue)
+    } catch {
+      case e: EndSearchException => {}
+    }
     circuits.foreach { _.showPDF(null, null) }
     circuits.head
   }

@@ -52,7 +52,7 @@ class DomainSize(
     } else if (n <= size) {
       new DomainSize(n, constants)
     } else {
-      throw new DomainSize.CantShrinkDomainException()
+      throw new DomainSize.CantShrinkDomainException
     }
   }
 

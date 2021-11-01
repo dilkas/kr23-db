@@ -80,6 +80,7 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: IndependentPartialGroundingNode")
       val (nl, el) = child.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val subscript = ((c.toString + """ \in """ + d) :: ineqs.map { c.toString + """ \neq """ + _.toString }.toList).mkString(""" \land """)
       val myNodes = if (compact) {
@@ -182,6 +183,7 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: CountingNode")
       val (nl, el) = child.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val myNodes = if (compact) {
         "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\displaystyle\bigexists{""" + subdomain + """}{ """ + subdomain + """ \subseteq """ + domain + """}$", shape=circle];""" + "\n"
@@ -272,6 +274,7 @@ class DomainRecursionNode(
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: DomainRecursionNode")
       val (n1, e1) = mixedChild.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val (n2, e2) = groundChild.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val myNodes = if (compact) {
@@ -366,6 +369,7 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: ImprovedDomainRecursionNode")
       val (n1, e1) = mixedChild.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val myNodes = if (compact) {
         "  " + getName(nameSpace) + """ [texlbl="""" + fontsize + """ $\land$", shape=circle];""" + "\n"

@@ -86,6 +86,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
                          compact: Boolean = false, depth: Int,
                          maxDepth: Int = Integer.MAX_VALUE):
       (String, String) = {
+    println("toDotNode: Ref")
     nameSpace.forceName(this, nameSpace.getName(nnfNode.get))
     ("", "")
   }
@@ -111,9 +112,11 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 
   override def updateFirst(child: NNFNode) = if (l.isEmpty) {
     l = Some(child)
+    println("And::updateFirst: added as left")
     true
   } else if (r.isEmpty) {
     r = Some(child)
+    println("And::updateFirst: added as right")
     true
   } else {
     false
@@ -152,6 +155,8 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: And for the following formula:")
+      println(cnf)
       val (nl, el) = l.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val (nr, er) = r.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val myNodes = if (compact) {
@@ -257,6 +262,7 @@ class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: Or")
       val (nl, el) = l.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val (nr, er) = r.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val myNodes = if (compact) {
@@ -381,6 +387,7 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: InclusionExclusion")
       val (n1, e1) = plus1.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val (n2, e2) = plus2.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
       val (n3, e3) = min.get.toDotNode(domainSizes, predicateWeights, nameSpace, compact, depth + 1, maxDepth)
@@ -486,6 +493,7 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
                          maxDepth: Int = Integer.MAX_VALUE): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
+      println("toDotNode: ConstraintRemovalNode")
       val (nl, el) = child.get.toDotNode(domainSizes, predicateWeights,
                                          nameSpace, compact, depth + 1,
                                          maxDepth)

@@ -70,8 +70,8 @@ abstract class IJCAI11Compiler(
   }
 
   def tryContradictionClause(cnf: CNF) = {
-    if (cnf.clauses.size == 1)
-      println("Ttesting if " + cnf.clauses.head + " is a contradiction")
+    // if (cnf.clauses.size == 1)
+    //   println("Ttesting if " + cnf.clauses.head + " is a contradiction")
     val isConditionalContradiction = cnf.clauses.size == 1 && cnf.clauses.head.isConditionalContradiction
     if (isConditionalContradiction) {
       println("\ncontradiction clause")
