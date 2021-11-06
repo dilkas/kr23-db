@@ -33,7 +33,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
           val domainMap: CNF.DomainMap, val explanation: String = "")
     extends NNFNode {
 
-  def myClone: NNFNode = new Ref(cnf, nnfNode, domainMap, explanation)
+  def simpleClone: NNFNode = new Ref(cnf, None, domainMap, explanation)
 
   override def directSuccessors = List(nnfNode)
 
@@ -100,7 +100,7 @@ class Ref(val cnf: CNF, var nnfNode: Option[NNFNode],
 class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
           val explanation: String = "") extends NNFNode {
 
-  def myClone: NNFNode = new And(cnf, l, r, explanation)
+  def simpleClone: NNFNode = new And(cnf, None, None, explanation)
 
   override def directSuccessors = List(l, r)
 
@@ -204,7 +204,7 @@ class And(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
 class Or(val cnf: CNF, var l: Option[NNFNode], var r: Option[NNFNode],
          val explanation: String = "") extends NNFNode {
 
-  def myClone: NNFNode = new Or(cnf, l, r, explanation)
+  def simpleClone: NNFNode = new Or(cnf, None, None, explanation)
 
   override def directSuccessors = List(l, r)
 
@@ -311,8 +311,8 @@ class InclusionExclusion(val cnf: CNF, var plus1: Option[NNFNode],
                          var plus2: Option[NNFNode], var min: Option[NNFNode],
                          val explanation: String = "") extends NNFNode {
 
-  def myClone: NNFNode = new InclusionExclusion(cnf, plus1, plus2, min,
-                                                explanation)
+  def simpleClone: NNFNode = new InclusionExclusion(cnf, None, None, None,
+                                                    explanation)
 
   override def directSuccessors = List(plus1, plus2, min)
 
@@ -431,8 +431,8 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
                             val explanation: String = "")
     extends ParametrisedNode {
 
-  def myClone: NNFNode = new ConstraintRemovalNode(cnf, child, domain, subdomain,
-                                                   explanation)
+  def simpleClone: NNFNode = new ConstraintRemovalNode(cnf, None, domain,
+                                                       subdomain, explanation)
 
   def canEqual(a: Any) = a.isInstanceOf[ConstraintRemovalNode]
 

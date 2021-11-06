@@ -32,8 +32,8 @@ class IndependentPartialGroundingNode(val cnf: CNF, var child: Option[NNFNode],
                                       val explanation: String = "")
     extends NNFNode {
 
-  def myClone: NNFNode =
-    new IndependentPartialGroundingNode(cnf, child, c, ineqs, d, explanation)
+  def simpleClone: NNFNode =
+    new IndependentPartialGroundingNode(cnf, None, c, ineqs, d, explanation)
 
   override def directSuccessors = List(child)
 
@@ -116,8 +116,8 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
   val domain: Domain, val subdomain: SubDomain,
   val explanation: String = "") extends ParametrisedNode {
 
-  def myClone: NNFNode = new CountingNode(cnf, child, domain, subdomain,
-                                          explanation)
+  def simpleClone: NNFNode = new CountingNode(cnf, None, domain, subdomain,
+                                              explanation)
 
   override def directSuccessors = List(child)
 
@@ -214,8 +214,8 @@ class DomainRecursionNode(
   var groundChild: Option[NNFNode], val c: Constant, val ineqs: Set[Constant],
   val domain: Domain, val explanation: String = "") extends NNFNode {
 
-  def myClone: NNFNode = new DomainRecursionNode(cnf, mixedChild, groundChild,
-                                                 c, ineqs, domain, explanation)
+  def simpleClone: NNFNode = new DomainRecursionNode(cnf, None, None, c, ineqs,
+                                                     domain, explanation)
 
   override def directSuccessors = List(mixedChild, groundChild)
 
@@ -320,9 +320,8 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
                                   val domain: Domain,
                                   val explanation: String = "") extends NNFNode {
 
-  def myClone: NNFNode =
-    new ImprovedDomainRecursionNode(cnf, mixedChild, c, ineqs, domain,
-                                    explanation)
+  def simpleClone: NNFNode =
+    new ImprovedDomainRecursionNode(cnf, None, c, ineqs, domain, explanation)
 
   override def directSuccessors = List(mixedChild)
 
@@ -347,8 +346,7 @@ class ImprovedDomainRecursionNode(val cnf: CNF, var mixedChild: Option[NNFNode],
   lazy val smooth = if (NNFNode.smoothingCache.contains(this)) {
     NNFNode.smoothingCache(this)
   } else {
-    val newNode = new ImprovedDomainRecursionNode(cnf, None, c, ineqs, domain,
-                                                  explanation)
+    val newNode = simpleClone
     NNFNode.smoothingCache(this) = newNode
     newNode.update(List(Some(mixedChild.get.smooth)))
     newNode

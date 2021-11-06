@@ -84,7 +84,21 @@ object NNFNode {
 abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
                          Set[PositiveUnitClause]()) {
 
-  def myClone: NNFNode
+  def useCache(function: NNFNode => NNFNode,
+               cache: mutable.HashMap[NNFNode, NNFNode],
+               constructor: => NNFNode): NNFNode =
+    if (cache.contains(this)) {
+      cache(this)
+    } else {
+      val newNode: NNFNode = constructor
+      cache(this) = newNode
+      newNode.update(directSuccessors.map(_.map(function)))
+      newNode
+    }
+
+  def simpleClone: NNFNode
+
+  def myClone: NNFNode = useCache(_.myClone, NNFNode.updateCache, simpleClone)
 
   def cnf: CNF
 
@@ -98,39 +112,26 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
 
   def updateFirst(child: NNFNode): Boolean = false
 
-  /** Returns a copy of the graph 'rooted' at this node, with newNode inserted
-    as the 'leftmost' direct successor of the predecessor. Uses updateCache. */
-  def addNode(newNode: NNFNode): (NNFNode, Boolean) =
-    if (NNFNode.updateCache.contains(this)) {
-      println("addNode: found in cache")
-      (NNFNode.updateCache(this), false)
-    } else {
-      val newThis = myClone
-      NNFNode.updateCache(this) = newThis
-
-      // first try to add the new node as a direct successor of this node
-      var added: Boolean = updateFirst(newNode)
+  /** Modify the circuit to insert newNode */
+  def addNode(newNode: NNFNode): Boolean = {
+    // first try to add the new node as a direct successor of this node
+    if (updateFirst(newNode)) {
       println("addNode: trying to add " + newNode.getClass.getSimpleName +
-                " as a successor of " + this.getClass.getSimpleName + ": " +
-                added)
-
-      newThis.update(
-        newThis.directSuccessors.map {
-          _ match {
-            case None => None
-            case Some(node) => if (!added) {
-              println("addNode: recursing from " + this.getClass.getSimpleName
-                        + " to " + node.getClass.getSimpleName)
-              val (successorCopy, somethingChanged) = node.addNode(newNode)
-              added |= somethingChanged
-              Some(successorCopy)
-            } else {
-              Some(node.myClone) // TODO (Paulius): this doesn't copy the successors of node
-            }
-          }
-        })
-      (newThis, added)
+                " as a successor of " + getClass.getSimpleName + ": true")
+      true
+    } else {
+      println("addNode: trying to add " + newNode.getClass.getSimpleName +
+                " as a successor of " + getClass.getSimpleName + ": false")
+      directSuccessors.foreach {
+        case Some(node) => {
+          println("addNode: recursing from " + this.getClass.getSimpleName
+                    + " to " + node.getClass.getSimpleName)
+          if (node.addNode(newNode)) return true
+        }
+      }
+      false
     }
+  }
 
   def size: Int
 

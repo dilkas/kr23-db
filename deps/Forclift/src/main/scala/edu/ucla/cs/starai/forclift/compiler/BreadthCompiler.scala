@@ -127,7 +127,6 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
       case (compiler, circuit, successors) => {
         val newPartialCircuits = applyRules(successors.head, compiler).flatMap {
           case (newCompiler, newNode, newSuccessors) => {
-            NNFNode.updateCache.clear()
             val newNewSuccessors = newSuccessors ++ successors.tail
 
             println("nextCircuits: after applying " + newNode.get.explanation +
@@ -143,8 +142,9 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
                 println("nextCircuits: adding " +
                           newNode.get.getClass.getSimpleName + " below " +
                           node.getClass.getSimpleName)
-                val (newCircuit, added) = node.myClone.addNode(newNode.get)
-                require(added)
+                NNFNode.updateCache.clear
+                val newCircuit = node.myClone
+                require(newCircuit.addNode(newNode.get))
                 newCircuit
               }
               case None => newNode.get
