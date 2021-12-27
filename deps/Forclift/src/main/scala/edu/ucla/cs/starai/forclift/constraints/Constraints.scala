@@ -44,7 +44,9 @@ final case class Constraints(
     val prime = 31
     var result = 1
     result = prime * result + ineqConstrs.size
-    result = prime * result + elemConstrs.size
+    result = prime * result + elemConstrs.variables.size
+    // println("Constraints::hashCode of " + this + " consists of " +
+    //           ineqConstrs.size + " and " + elemConstrs.variables.size)
     result
   }
 
@@ -53,6 +55,9 @@ final case class Constraints(
   def domains = elemConstrs.domains
   def domainsFor(variables: Set[Var]) = variables.map(elemConstrs(_))
   def domainFor(variable: Var) = elemConstrs(variable)
+
+  def variablesWithDomain(domain: Domain): List[Var] =
+    elemConstrs.variablesWithDomain(domain)
 
   def setDomain(variable: Var, domain: Domain): Constraints = {
     this.copy(elemConstrs = (elemConstrs + (variable -> domain)))

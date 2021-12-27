@@ -439,9 +439,11 @@ abstract class IJCAI11Compiler(
       val splitIndex = domain.nbSplits + 1
       val subdomain = domain.subdomain(""" \top """, """ \bot """, splitIndex.toString, splitIndex.toString, excludedConstants.toSet)
       val msg = "Atom counting on $" + singletonName + "$."
+
       val trueUnitClause = Clause(List(bestLit), List(), unitConstrs.setDomain(logVar, subdomain)).standardizeApart
       val falseUnitClause = Clause(List(), List(bestLit), unitConstrs.setDomain(logVar, subdomain.complement)).standardizeApart
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
+
       println("\n" + msg + " Before:")
       println(cnf)
       println("After:")
@@ -497,7 +499,7 @@ class IJCAI11LiftedCompiler(
     extends IJCAI11Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: IJCAI11LiftedCompiler =
-    new IJCAI11LiftedCompiler(sizeHint, nnfCache)
+    new IJCAI11LiftedCompiler(sizeHint, cloneCache)
 
 }
 
@@ -508,6 +510,6 @@ class IJCAI11GroundingCompiler(
     extends IJCAI11Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: IJCAI11GroundingCompiler =
-    new IJCAI11GroundingCompiler(sizeHint, nnfCache)
+    new IJCAI11GroundingCompiler(sizeHint, cloneCache)
 
 }

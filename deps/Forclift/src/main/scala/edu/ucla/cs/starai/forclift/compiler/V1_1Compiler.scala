@@ -89,7 +89,7 @@ class V1_1LiftedCompiler(
     extends V1_1Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: V1_1LiftedCompiler =
-    new V1_1LiftedCompiler(sizeHint, nnfCache)
+    new V1_1LiftedCompiler(sizeHint, cloneCache)
 
 }
 
@@ -100,6 +100,6 @@ class V1_1GroundingCompiler(
     extends V1_1Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: V1_1GroundingCompiler =
-    new V1_1GroundingCompiler(sizeHint, nnfCache)
+    new V1_1GroundingCompiler(sizeHint, cloneCache)
 
 }

@@ -45,7 +45,7 @@ class GroundingNode(val cnf: CNF, val explanation: String = "")
 
   def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    println("toDotNode: GroundingNode")
+    // println("toDotNode: GroundingNode")
     (("  " + getName(nameSpace) + """ [style="fill=red!40",texlbl="""" + fontsize + """ """ + cnf.toLatex() + """"];""" + "\n"), "")
   }
 
@@ -74,7 +74,7 @@ object TrueNode extends NNFNode {
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    println("toDotNode: TrueNode")
+    // println("toDotNode: TrueNode")
     (("  " + getName(nameSpace) + """ [style="fill=green!40",texlbl="""" + fontsize + """ $\top$"];""" + "\n"), "")
   }
 }
@@ -102,7 +102,7 @@ object FalseNode extends NNFNode {
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    println("toDotNode: FalseNode")
+    // println("toDotNode: FalseNode")
     (("  " + getName(nameSpace) + """ [style="fill=red!40",texlbl="""" + fontsize + """ $\bot$"];""" + "\n"), "")
   }
 }
@@ -127,7 +127,7 @@ class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val posit
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    println("toDotNode: ContradictionLeaf")
+    // println("toDotNode: ContradictionLeaf")
     (("  " + getName(nameSpace) + """ [style="fill=red!40",texlbl="""" + fontsize + """ """ + cnf.toLatex(true) + """"];""" + "\n"), "")
   }
 
@@ -162,7 +162,7 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false,
     depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    println("toDotNode: UnitLeaf for the formula: " + cnf)
+    // println("toDotNode: UnitLeaf for the formula: " + cnf)
     (("  " + getName(nameSpace) + """ [style="fill=green!20",texlbl="""" + fontsize + """ """ + cnf.toLatex(true) + """"];""" + "\n"), "")
   }
 
@@ -196,7 +196,7 @@ class SmoothingNode(val clause: PositiveUnitClause)
 
   override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
     nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    println("toDotNode: SmoothingNode")
+    // println("toDotNode: SmoothingNode")
     (("  " + getName(nameSpace) + """ [style="fill=blue!20",texlbl="""" + fontsize + """ """ + cnf.toLatex(true) + """"];""" + "\n"), "")
   }
 

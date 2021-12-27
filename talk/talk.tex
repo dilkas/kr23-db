@@ -4,7 +4,10 @@
 \usepackage[UKenglish]{isodate}
 \usepackage[style=verbose]{biblatex}
 \usepackage{amsmath}
+\usepackage{mathtools}
 \usepackage{tikz}
+
+\usetheme{CambridgeUS}
 
 \usetikzlibrary{shapes}
 \usetikzlibrary{arrows}
@@ -15,13 +18,64 @@
 \DeclareRobustCommand{\stirling}{\genfrac\{\}{0pt}{}}
 
 \author{Paulius Dilkas}
-\title{Empowering (Domain) Recursion in Symmetric Weighted First-Order Model Counting}
+\title[Empowering Domain Recursion]{Empowering Domain Recursion in Symmetric Weighted First-Order Model Counting}
 \date{}
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
 
 \maketitle
+
+\begin{frame}{Overview}
+  \begin{block}{Hypothesis}
+    Partial injections can be counted in polynomial time using (a modification of) \textsc{ForcLift}.
+  \end{block}
+  \begin{block}{Key Ideas \& Progress}
+    \begin{itemize}
+    \item[\textcolor{green}{100\%}] Support for cycles in circuits
+    \item[\textcolor{green}{95\%}] Transforming $X \ne x$ constraints into domain reductions $\Delta' \coloneqq \Delta \setminus \{ x \}$
+    \item[\textcolor{green}{95\%}] A less restrictive version of domain recursion
+    \item[\textcolor{orange}{90\%}] A hybrid search algorithm
+    \item[\textcolor{red}{0\%}] Complexity identification
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Search}
+  \begin{definition}
+    A \alert{partial solution} (i.e., a search node) is a tuple consisting of:
+    \begin{itemize}
+    \item a partial circuit, i.e., a \textsc{ForcLift}-style DAG,
+      \begin{itemize}
+      \item Each node type has a predefined out-degree.
+      \item Some of them may be `arcs to nothing'.
+      \end{itemize}
+    \item a cache (i.e., a formula $\to$ node hashmap), used to identify opportunities for recursion,
+    \item a list of formulas that still need to be compiled, listed in a particular order.
+    \end{itemize}
+  \end{definition}
+  % Sink and non-sink rules
+\end{frame}
+
+\begin{frame}{Search}
+  Some rules are applied in a greedy manner:
+  \begin{itemize}
+  \item identifying the current formula as something that's already been compiled using the cache;
+  \item sink nodes: tautologies, contradictions, unit clauses;
+  \item some formula-simplifying rules;
+  \item unit propagation.
+  \end{itemize}
+  And some rules are used to branch out into several possibilities:
+  \begin{itemize}
+  \item independent subtheories,
+  \item shattering,
+  \item ground decomposition,
+  \item inclusion-exclusion,
+  \item independent partial grounding,
+  \item counting,
+  \item (my version of) domain recursion.
+  \end{itemize}
+\end{frame}
 
 \begin{frame}{WFOMC: State of the Art}
   I'm excluding techniques that are restricted to two variables and purely

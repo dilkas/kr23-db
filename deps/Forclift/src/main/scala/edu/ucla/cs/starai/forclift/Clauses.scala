@@ -71,14 +71,22 @@ class Clause(
       : List[Var => Var] = that.allVariables.toList.permutations.flatMap {
     permutation => {
       val bijection = (allVariables.toList zip permutation).toMap
-      if (condition(bijection)) Some((variable: Var) => bijection(variable))
-      else None
+      // println(bijection)
+      if (condition(bijection)) {
+        Some((variable: Var) => bijection(variable))
+      } else {
+        None
+      }
     }
   }.toList
 
   override def equals(that: Any): Boolean = that match {
     case that: Clause => {
       if (hashCode != that.hashCode) {
+        // println("equals: comparing " + this + " and " + that +
+        //           " with different hash codes. Inequality constraints: " +
+        //           constrs.ineqConstrs.size + " and " +
+        //           that.constrs.ineqConstrs.size)
         false
       } else {
         def sameDomains(bijection: Map[Var, Var]): Boolean = bijection.forall {
@@ -104,7 +112,10 @@ class Clause(
         answer
       }
     }
-    case _ => false
+    case _ => {
+      // println("equals: different types")
+      false
+    }
   }
 
   def exactlyEquals(that: Any): Boolean = that match {
@@ -127,6 +138,8 @@ class Clause(
     result = prime * result + posLits.size
     result = prime * result + negLits.size
     result = prime * result + constrs.hashCode
+    // println("Clause::hashCode: clause " + this +
+    //           " has the following variables: " + constrs.elemConstrs.variables)
     result
   }
 
@@ -145,6 +158,9 @@ class Clause(
   def allVariables = constrVariables union literalVariables
 
   def domains = constrs.domains
+
+  def variablesWithDomain(domain: Domain): List[Var] =
+    constrs.variablesWithDomain(domain)
 
   def isUnitClause = atoms.size == 1
 
@@ -749,8 +765,26 @@ class PositiveUnitClause(
         atom.domains(constrs) == that.atom.domains(that.constrs)
     case _ => false
   }
+  // override def equals(that: Any): Boolean = {
+  //   println("PositiveUnitClause::equals is called")
+  //   super.equals(that)
+  // }
 
-  override def hashCode: Int = (atom.predicate, constrs).hashCode
+  override def hashCode: Int = {
+    // println("The hashcode of " + this + " consists of " +
+    //           atom.predicate.hashCode + " and " + constrs.hashCode)
+    // (atom.predicate, constrs).hashCode
+
+    // val prime = 31
+    // var result = 1
+    // result = prime * result + 1
+    // result = prime * result
+    // result = prime * result + constrs.hashCode
+    // // println("The hashcode of " + this + " is based on " + constrs.hashCode)
+    // result
+
+    super.hashCode
+  }
 
   def equivalent(other: PositiveUnitClause) = {
     val equivalent = ((this eq other) || (!this.independent(other) &&
@@ -760,11 +794,16 @@ class PositiveUnitClause(
     equivalent
   }
 
-  def inverseSubstitution(c: Constant, ineqs: Set[Constant], domain: Domain): PositiveUnitClause = {
+  def inverseSubstitution(c: Constant, ineqs: Set[Constant], domain: Domain)
+      : PositiveUnitClause = if (constants.contains(c)) {
     val v = new Var
     val newAtom = atom.inverseSubstitution(c, v)
     val newConstrs = constrs.inverseSubstitution(c, v, ineqs, domain)
+    // println("inverseSubstitution: " + constrs.elemConstrs.variables.size +
+    //           " -> " + newConstrs.elemConstrs.variables.size)
     new PositiveUnitClause(newAtom, newConstrs)
+  } else {
+    this
   }
 
   def reverseDomainSplitting(from: Domain, subDomain: SubDomain): PositiveUnitClause = {

@@ -61,6 +61,8 @@ trait Compiler {
     nnf.smoothWithPredicates(predicates, excluded)
   }
 
+  def foundSolution(circuit: NNFNode): Unit = {}
+
 }
 
 trait GroundingCompiler extends AbstractCompiler {
@@ -82,6 +84,26 @@ trait LiftedCompiler extends AbstractCompiler {
 abstract class AbstractCompiler(
   val nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
     new mutable.HashMap[Int, List[(CNF, NNFNode)]]) extends Compiler {
+
+  // None means that the inference rule doesn't apply. (None, _) means that a
+  // new node wasn't created but the theory was updated (we assume that in this
+  // case the list has exactly one element). In all other cases, the list holds
+  // theories that will be compiled into direct successors of the returned node.
+  type InferenceResult = Option[(Option[NNFNode], List[CNF])]
+  type InferenceRule = CNF => InferenceResult
+
+  def cloneCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] = nnfCache.map {
+    case (key, value) => {
+      val newValue = value.map {
+        case (formula, node) => {
+          // println(NNFNode.cloningCache.contains(node))
+          // println(NNFNode.cloningCache.size)
+          (formula, NNFNode.cloningCache(node))
+        }
+      }
+      (key, newValue)
+    }
+  }
 
   def myClone: AbstractCompiler
 
@@ -127,18 +149,38 @@ abstract class AbstractCompiler(
     }
   }
 
-  // None means that the inference rule doesn't apply. (None, _) means that a
-  // new node wasn't created but the theory was updated (we assume that in this
-  // case the list has exactly one element). In all other cases, the list holds
-  // theories that will be compiled into direct successors of the returned node.
-  type InferenceResult = Option[(Option[NNFNode], List[CNF])]
-  type InferenceRule = CNF => InferenceResult
-
   // NOTE: we assume that inferenceRules = sinkRules ++ nonSinkRules (possibly
   // in a different order)
   def sinkRules: List[InferenceRule]
   def nonSinkRules: List[InferenceRule]
   def inferenceRules: List[InferenceRule]
+
+  def applyIthRule(i: Int, cnf: CNF): InferenceResult = nonSinkRules(i)(cnf)
+
+  // The compiler stays the same because the search tree doesn't branch out
+  def applySinkRules(cnf: CNF): PartialCircuit = {
+    var rules = sinkRules
+    while (rules.nonEmpty) {
+      rules.head(cnf) match {
+        case None => rules = rules.tail
+        case Some((node, successors)) => {
+          node match {
+            case None => {
+              require(successors.size == 1)
+              return applySinkRules(successors.head)
+            }
+            case Some(nnf) => {
+              updateCache(cnf, nnf)
+              return new PartialCircuit(
+                this, Some(nnf), successors).
+                applySinkRulesToAllFormulas(List[CNF]())
+            }
+          }
+        }
+      }
+    }
+    new PartialCircuit(this, None, List(cnf))
+  }
 
   var nbCompilationSteps = 0;
 

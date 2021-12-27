@@ -101,6 +101,16 @@ final class ElemConstr(
     variables.map { this(_) }
   }
 
+  def variablesWithDomain(fixedDomain: Domain): List[Var] = flatMap {
+    case (variable, domain) => {
+      if (domain == fixedDomain) {
+        Some(variable)
+      } else {
+        None
+      }
+    }
+  }.toList
+
   def +(kv: (Var, Domain)): ElemConstr = this + (kv._1, kv._2)
 
   def +(variable: Var, domain: Domain): ElemConstr = {

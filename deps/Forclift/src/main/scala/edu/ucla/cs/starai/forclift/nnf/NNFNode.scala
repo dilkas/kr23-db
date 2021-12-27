@@ -76,29 +76,39 @@ object NNFNode {
 
   val conditionCache = new mutable.HashMap[(NNFNode, Set[Atom], Set[Atom]),
                                            NNFNode]
+  val cloningCache = new mutable.HashMap[NNFNode, NNFNode]
   val smoothingCache = new mutable.HashMap[NNFNode, NNFNode]
-  val updateCache = new mutable.HashMap[NNFNode, NNFNode]
 
 }
 
 abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
                          Set[PositiveUnitClause]()) {
 
-  def useCache(function: NNFNode => NNFNode,
-               cache: mutable.HashMap[NNFNode, NNFNode],
-               constructor: => NNFNode): NNFNode =
+  def useCache(cache: mutable.HashMap[NNFNode, NNFNode]): NNFNode =
     if (cache.contains(this)) {
+      // println("useCache: found " + getClass.getSimpleName + " in the cache")
       cache(this)
     } else {
-      val newNode: NNFNode = constructor
+      // println("useCache: constructing a copy of " + getClass.getSimpleName)
+      val newNode: NNFNode = simpleClone
       cache(this) = newNode
-      newNode.update(directSuccessors.map(_.map(function)))
+      // println("useCache: the type of the copy is " +
+      //           newNode.getClass.getSimpleName)
+      // println("useCache: there are " + directSuccessors.size +
+      //           " direct successors")
+      newNode.update(
+        directSuccessors.map { _.map { n => n.useCache(cache) } } )
+      // println("useCache: finished the construction of " + getClass.getSimpleName)
       newNode
     }
 
   def simpleClone: NNFNode
 
-  def myClone: NNFNode = useCache(_.myClone, NNFNode.updateCache, simpleClone)
+  def myClone: NNFNode = {
+    // println("NNFNode::myClone")
+    NNFNode.cloningCache.clear
+    useCache(NNFNode.cloningCache)
+  }
 
   def cnf: CNF
 
@@ -112,21 +122,25 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
 
   def updateFirst(child: NNFNode): Boolean = false
 
-  /** Modify the circuit to insert newNode */
-  def addNode(newNode: NNFNode): Boolean = {
-    // first try to add the new node as a direct successor of this node
-    if (updateFirst(newNode)) {
-      println("addNode: trying to add " + newNode.getClass.getSimpleName +
-                " as a successor of " + getClass.getSimpleName + ": true")
+  /** Modify the circuit to insert newNode. 'Visited' is used to avoid infinite
+    recursion caused by cycles in the circuit. */
+  def addNode(newNode: NNFNode, visited: Set[NNFNode] = Set[NNFNode]())
+      : Boolean = {
+    if (visited.contains(this)) {
+      false
+    } else if (updateFirst(newNode)) {
+      // first try to add the new node as a direct successor of this node
+      // println("addNode: trying to add " + newNode.getClass.getSimpleName +
+      //           " as a successor of " + getClass.getSimpleName + ": true")
       true
     } else {
-      println("addNode: trying to add " + newNode.getClass.getSimpleName +
-                " as a successor of " + getClass.getSimpleName + ": false")
+      // println("addNode: trying to add " + newNode.getClass.getSimpleName +
+      //           " as a successor of " + getClass.getSimpleName + ": false")
       directSuccessors.foreach {
         case Some(node) => {
-          println("addNode: recursing from " + this.getClass.getSimpleName
-                    + " to " + node.getClass.getSimpleName)
-          if (node.addNode(newNode)) return true
+          // println("addNode: recursing from " + this.getClass.getSimpleName
+          //           + " to " + node.getClass.getSimpleName)
+          if (node.addNode(newNode, visited + this)) return true
         }
       }
       false
@@ -145,6 +159,7 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
     // initialise variables for smoothing
     val postOrderVisitor = new PostOrderVisitor
     postOrderVisitor.visit(this)
+    //println("Variables in post order: " + postOrderVisitor.nodeOrder)
     val smoothingVariablesVisitor = new SmoothingVariablesVisitor(
       postOrderVisitor.nodeOrder)
     smoothingVariablesVisitor.updateVariables

@@ -56,7 +56,9 @@ abstract class MyCompiler(
         }
         val mixedCNF = new CNF(mixedClauses)
         val msg = "Improved domain recursion on $" + domain + "$"
-        println(msg)
+        println(msg + ". Before:")
+        println(mixedCNF)
+        println("After:")
         println(cnf + "\n")
         val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs,
                                                    domain, msg)
@@ -122,14 +124,15 @@ abstract class MyCompiler(
     tryConstraintRemoval)
 
   override def nonSinkRules: List[InferenceRule] = List(
-    tryIndependentSubtheories,
-    tryIndependentSubtheoriesAfterShattering,
-    tryGroundDecomposition,
-    tryInclusionExclusion,
-    tryShatter,
-    tryIndependentPartialGrounding,
-    tryCounting,
-    tryImprovedDomainRecursion)
+    tryIndependentSubtheories, // +1
+    tryIndependentSubtheoriesAfterShattering, // +1
+    tryGroundDecomposition, // +1
+    tryInclusionExclusion, // +2
+    tryShatter, // 0
+    tryIndependentPartialGrounding, // 0
+    tryCounting, // 0
+    tryImprovedDomainRecursion // 0
+  )
 
   override def inferenceRules: List[InferenceRule] = List(
     tryCache,
@@ -161,7 +164,7 @@ class MyLiftedCompiler(
     extends MyCompiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: MyLiftedCompiler =
-    new MyLiftedCompiler(sizeHint, nnfCache.clone)
+    new MyLiftedCompiler(sizeHint, cloneCache)
 
 }
 
@@ -172,6 +175,6 @@ class MyGroundingCompiler(
     extends MyCompiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: MyGroundingCompiler =
-    new MyGroundingCompiler(sizeHint, nnfCache.clone)
+    new MyGroundingCompiler(sizeHint, cloneCache)
 
 }

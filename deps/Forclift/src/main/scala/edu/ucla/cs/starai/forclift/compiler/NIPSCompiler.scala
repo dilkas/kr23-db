@@ -111,7 +111,7 @@ class NIPS11LiftedCompiler(
     extends NIPS11Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: NIPS11LiftedCompiler =
-    new NIPS11LiftedCompiler(sizeHint, nnfCache)
+    new NIPS11LiftedCompiler(sizeHint, cloneCache)
 
 }
 
@@ -122,6 +122,6 @@ class NIPS11GroundingCompiler(
     extends NIPS11Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: NIPS11GroundingCompiler =
-    new NIPS11GroundingCompiler(sizeHint, nnfCache)
+    new NIPS11GroundingCompiler(sizeHint, cloneCache)
 
 }
