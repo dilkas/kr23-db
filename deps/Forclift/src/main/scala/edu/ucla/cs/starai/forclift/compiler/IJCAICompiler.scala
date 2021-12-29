@@ -51,9 +51,9 @@ abstract class IJCAI11Compiler(
     val isPositiveUnit = cnf.isSingleton && cnf.clauses.head.isPositiveUnitClause && cnf.clauses.head.isUnconditional
     if (isPositiveUnit) {
       println("\npositive unit clause")
-      println(cnf.toString + "\n")
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, true)
+      println(cnf.toString + "\n")
       Some((Some(unitLeaf), List[CNF]()))
     } else None
   }
@@ -62,9 +62,9 @@ abstract class IJCAI11Compiler(
     val isPositiveUnit = cnf.isSingleton && cnf.clauses.head.isNegativeUnitClause && cnf.clauses.head.isUnconditional
     if (isPositiveUnit) {
       println("\nnegative unit clause")
-      println(cnf.toString + "\n")
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, false)
+      println(cnf.toString + "\n")
       Some((Some(unitLeaf), List[CNF]()))
     } else None
   }
@@ -75,9 +75,9 @@ abstract class IJCAI11Compiler(
     val isConditionalContradiction = cnf.clauses.size == 1 && cnf.clauses.head.isConditionalContradiction
     if (isConditionalContradiction) {
       println("\ncontradiction clause")
-      println(cnf.toString + "\n")
       val contradiction = cnf.clauses.head
       val contradictionLeaf = new ContradictionLeaf(cnf, contradiction.toContradictionClause, true)
+      println(cnf.toString + "\n")
       Some((Some(contradictionLeaf), List[CNF]()))
     } else None
   }
@@ -115,7 +115,6 @@ abstract class IJCAI11Compiler(
     val unitClauseOption = cnf.clauses.find { c => c.isNegativeUnitClause && c.isUnconditional }
     if (unitClauseOption.nonEmpty) {
       println("\nnegative unit propagation")
-      println(cnf.toString + "\n")
       val unitClause = unitClauseOption.get
       val unitLiteral = unitClause.atoms.head
       val otherClauses: List[Clause] = cnf.clauses filterNot (_ == unitClause)
@@ -124,6 +123,7 @@ abstract class IJCAI11Compiler(
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
+      println(cnf.toString + "\n")
       Some((Some(node), List(unitCNF, branchCnf)))
     } else None
   }
@@ -131,9 +131,9 @@ abstract class IJCAI11Compiler(
   def tryRemoveDoubleClauses(cnf: CNF): InferenceResult = {
     val newClauses = cnf.clauses.toSet.toList
     if (newClauses.size < cnf.clauses.size) {
-      val newCnf = new CNF(newClauses)
       println("\nremove double clauses. Before:")
       println(cnf + "\n")
+      val newCnf = new CNF(newClauses)
       println("After:")
       println(newCnf + "\n")
       Some((None, List(newCnf)))
@@ -162,12 +162,12 @@ abstract class IJCAI11Compiler(
     else {
       println("\nIndependent subtheories. Before:")
       println(cnf)
+      val msg = if (!afterShattering) "Independence." else "Independence after shattering."
+      val node = new And(cnf, None, None, msg)
       println("After 1:")
       println(new CNF(dep))
       println("After 2:")
       println(new CNF(indep) + "\n")
-      val msg = if (!afterShattering) "Independence." else "Independence after shattering."
-      val node = new And(cnf, None, None, msg)
       Some((Some(node), List(new CNF(dep), new CNF(indep))))
     }
   }
@@ -208,7 +208,6 @@ abstract class IJCAI11Compiler(
     val groundLiterals = countingCnf.clauses.flatMap { _.groundLiterals }
     if (groundLiterals.nonEmpty) {
       println("\nground decomposition")
-      println(cnf.toString + "\n")
       val groupedAtoms = groundLiterals.groupBy(a => a)
       val atomCounts = groupedAtoms.mapValues(list => list.size)
       val ordering = new Ordering[(Atom, Int)] {
@@ -221,6 +220,7 @@ abstract class IJCAI11Compiler(
       val falseBranch = cnf + Clause(List(), List(literal))
       val msg = "Shannon decomposition on $" + literal.toLatex(new VarNameSpace) + "$."
       val node = new Or(cnf, None, None, msg)
+      println(cnf.toString + "\n")
       Some((Some(node), List(trueBranch, falseBranch)))
     } else None
   }
@@ -229,7 +229,6 @@ abstract class IJCAI11Compiler(
     val decomposableClauseOption = cnf.clauses.find { _.independentLiterals.nonEmpty }
     if (decomposableClauseOption.nonEmpty) {
       println("\ninclusion-exclusion")
-      println(cnf.toString + "\n")
       val Some(clause) = decomposableClauseOption
       val otherClauses = cnf.clauses filterNot (_ == clause)
       val Some((cl1, cl2)) = clause.independentLiterals
@@ -238,6 +237,7 @@ abstract class IJCAI11Compiler(
       val minBranch = new CNF(cl1 :: cl2 :: otherClauses)
       val msg = "Inclusion-exclusion on $" + clause.toLatex() + "$."
       val node = new InclusionExclusion(cnf, None, None, None, msg)
+      println(cnf.toString + "\n")
       Some((Some(node), List(plus1Branch, plus2Branch, minBranch)))
     } else None
   }
@@ -287,6 +287,7 @@ abstract class IJCAI11Compiler(
       val finalChoice = searchChoices(chosenVariables,chosenClauses,multiRoots.sortBy(_.rootVars.size))
       if(finalChoice.isEmpty) return None
       else{
+        println("\nindependent partial grounding")
     	  val solution = finalChoice.get
     	  val rootVars = solution.values.toSet
 	      val rootVarDomains = rootVars.flatMap { rootVar =>
@@ -311,7 +312,6 @@ abstract class IJCAI11Compiler(
 	        (if (rootVarIneqs.isEmpty) "." else """, $ """ + rootVarIneqs.map { """X \neq """ + _.toString }.mkString(" , ") + " $."))
         val inversionNode = new IndependentPartialGroundingNode(
           cnf, None, constant, rootVarIneqs, rootVarDomain, msg)
-        println("\nindependent partial grounding")
         println(cnf.toString + "\n")
 	      Some((Some(inversionNode), List(invertedCNF)))
       }
@@ -413,6 +413,8 @@ abstract class IJCAI11Compiler(
       }
     }
     if (singletons.nonEmpty) {
+      println("\nAtom counting. Before:")
+      println(cnf)
       // the heuristic is: split on the atom with highest #occurences - domain size
       val groupedAtoms = singletons.map {
         case (clause1, lit1, constrs1) =>
@@ -444,12 +446,10 @@ abstract class IJCAI11Compiler(
       val falseUnitClause = Clause(List(), List(bestLit), unitConstrs.setDomain(logVar, subdomain.complement)).standardizeApart
       val childCNF = new CNF(trueUnitClause :: falseUnitClause :: cnf.clauses)
 
-      println("\n" + msg + " Before:")
-      println(cnf)
-      println("After:")
-      println(childCNF + "\n")
       val node = new CountingNode(cnf, None, domain, subdomain, msg)
       subdomain.setCause(node)
+      println("After:")
+      println(childCNF + "\n")
       Some((Some(node), List(childCNF)))
     } else None
   }

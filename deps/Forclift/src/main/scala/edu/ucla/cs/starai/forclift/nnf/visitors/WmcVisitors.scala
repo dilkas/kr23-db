@@ -46,6 +46,8 @@ trait WmcVisitor {
 
 object WmcVisitor {
 
+  val Verbose = false
+
   val latch = new CountDownLatch(1)
   val wmc = new AtomicReference[SignLogDouble]
 
@@ -58,7 +60,6 @@ object WmcVisitor {
   def apply(predicateWeights: PredicateWeights): WmcVisitor = {
     val hasNegativeWeight = predicateWeights.values.exists(w => w.negW < 0 ||
                                                              w.posW < 0)
-    println("apply: has negative weight: " + hasNegativeWeight)
     // NOTE: caching needs to be disabled for cycles to make sense
     if (hasNegativeWeight) {
       new SignLogDoubleWmc
@@ -88,9 +89,9 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
       nnf => executor.execute(new LogDoubleWmc(nnf, domainSizes,
                                                predicateWeights))
     }
-    executor.shutdown
     try {
       WmcVisitor.latch.await
+      executor.shutdownNow
     } catch {
       case e: InterruptedException => println(e)
     }
@@ -98,10 +99,14 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
   }
 
   def run {
-    val wmc = visit(circuit, (domainSizes, predicateWeights,
-                              WmcVisitor.ParameterMap.empty))
-    WmcVisitor.wmc.set(wmc)
-    WmcVisitor.latch.countDown
+    try {
+      val wmc = visit(circuit, (domainSizes, predicateWeights,
+                                WmcVisitor.ParameterMap.empty))
+      WmcVisitor.wmc.set(wmc)
+      WmcVisitor.latch.countDown
+    } catch {
+      case e: InterruptedException => {}
+    }
   }
 
   protected def visitDomainRecursion(dr: DomainRecursionNode,
@@ -117,7 +122,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
       val childchildWmc = visit(dr.mixedChild.get.child.get, params)
       val power = (maxSize * (maxSize - 1)) / 2
       val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
-      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
+      if (WmcVisitor.Verbose)
+        println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
       answer
     }
   }
@@ -128,12 +134,14 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) {
-      println("1 (improved domain recursion, base case)")
+      if (WmcVisitor.Verbose)
+        println("1 (improved domain recursion, base case)")
       one
     }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      println(s"$childchildWmc (improved domain recursion)")
+      if (WmcVisitor.Verbose)
+        println(s"$childchildWmc (improved domain recursion)")
       childchildWmc
     }
   }
@@ -144,7 +152,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = exists.domain.size(domainSizes, exists.excludedConstants)
     var logWeight = zero
-    println("exists/counting:")
+    if (WmcVisitor.Verbose)
+      println("exists/counting:")
     for (nbTrue <- 0 to maxSize) {
       val newDomainSizes = (domainSizes
                               + (exists.subdomain, nbTrue)
@@ -155,9 +164,11 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue)
       logWeight += binomialCoeff * childWeight
-      println(s" + $maxSize C $nbTrue * $childWeight")
+      if (WmcVisitor.Verbose)
+        println(s" + $maxSize C $nbTrue * $childWeight")
     }
-    println(s"= $logWeight")
+    if (WmcVisitor.Verbose)
+      println(s"= $logWeight")
     logWeight
   }
 
@@ -173,7 +184,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
       val child = visit(cr.child.get,
                         (newDomainSizes, predicateWeights,
                          parameterMap + (cr -> (domainSize - 1, 1))))
-      println(s"$child (constraint removal)")
+      if (WmcVisitor.Verbose)
+        println(s"$child (constraint removal)")
       child
     }
   }
@@ -188,7 +200,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
       one
     } else {
       val answer = childlwmc.pow(nbGroundings)
-      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      if (WmcVisitor.Verbose)
+        println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
       answer
     }
   }
@@ -200,7 +213,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val plus2lwmc = visit(ie.plus2.get, params)
     val minlwmc = visit(ie.min.get, params)
     val answer = plus1lwmc + plus2lwmc - minlwmc
-    println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
+    if (WmcVisitor.Verbose)
+      println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
     answer
   }
 
@@ -209,7 +223,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val llwmcc = visit(or.l.get, params)
     val rlwmcc = visit(or.r.get, params)
     val answer = llwmcc + rlwmcc
-    println(s"$llwmcc + $rlwmcc = $answer (or)")
+    if (WmcVisitor.Verbose)
+      println(s"$llwmcc + $rlwmcc = $answer (or)")
     answer
   }
 
@@ -221,7 +236,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     else {
       val rlwmcc = visit(and.r.get, params)
       val answer = llwmcc * rlwmcc
-      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      if (WmcVisitor.Verbose)
+        println(s"$llwmcc * $rlwmcc = $answer (and)")
       answer
     }
   }
@@ -233,11 +249,13 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
     val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights,
                                          parameterMap))
-    println(s"$answer (ref)")
+    if (WmcVisitor.Verbose)
+      println(s"$answer (ref)")
     answer
   } catch {
     case e: DomainSize.CantShrinkDomainException => {
-      println("1 (ref, base case)")
+      if (WmcVisitor.Verbose)
+        println("1 (ref, base case)")
       1
     }
   }
@@ -250,8 +268,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     val weight = weights.negWPlusPosWLogDouble
     val answer = weight.pow(nbGroundings)
-    println("Domain sizes when visiting the smoothing node: " + domainSizes)
-    println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
+    if (WmcVisitor.Verbose)
+      println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
     answer
   }
 
@@ -276,13 +294,14 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     } else if (leaf.positive) {
       val weight = weights.posWLogDouble
       val answer = weight.pow(nbGroundings)
-      println(s"$weight ^ $nbGroundings = $answer (positive leaf)")
+      if (WmcVisitor.Verbose)
+        println(s"$weight ^ $nbGroundings = $answer (positive leaf)")
       answer
     } else {
       val weight = weights.negWLogDouble
       val answer = weight.pow(nbGroundings)
-      println(s"$weight ^ $nbGroundings = $answer (negative leaf)")
-      println("weights: " + weights)
+      if (WmcVisitor.Verbose)
+        println(s"$weight ^ $nbGroundings = $answer (negative leaf)")
       answer
     }
   }
@@ -361,7 +380,8 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
     else {
       val rlwmcc = retrieveWmc(and.r.get, params)
       val answer = llwmcc * rlwmcc
-      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      if (WmcVisitor.Verbose)
+        println(s"$llwmcc * $rlwmcc = $answer (and)")
       answer
     }
   }
@@ -376,7 +396,8 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
       one
     } else {
       val answer = childlwmc.pow(nbGroundings)
-      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      if (WmcVisitor.Verbose)
+        println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
       answer
     }
   }
@@ -422,9 +443,9 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
       nnf => executor.execute(new SignLogDoubleWmc(nnf, domainSizes,
                                                    predicateWeights))
     }
-    executor.shutdown
     try {
       WmcVisitor.latch.await
+      executor.shutdownNow
     } catch {
       case e: InterruptedException => println(e)
     }
@@ -432,10 +453,14 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
   }
 
   def run {
-    val wmc = visit(circuit, (domainSizes, predicateWeights,
-                              WmcVisitor.ParameterMap.empty))
-    WmcVisitor.wmc.set(wmc)
-    WmcVisitor.latch.countDown
+    try {
+      val wmc = visit(circuit, (domainSizes, predicateWeights,
+                                WmcVisitor.ParameterMap.empty))
+      WmcVisitor.wmc.set(wmc)
+      WmcVisitor.latch.countDown
+    } catch {
+      case e: InterruptedException => {}
+    }
   }
 
   protected def visitDomainRecursion(
@@ -451,7 +476,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
       val childchildWmc = visit(dr.mixedChild.get.child.get, params)
       val power = (maxSize * (maxSize - 1)) / 2
       val answer = groundChildWmc.pow(maxSize) * childchildWmc.pow(power)
-      println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
+      if (WmcVisitor.Verbose)
+        println(s"$groundChildWmc ^ $maxSize * $childchildWmc ^ $power = $answer (domain recursion)")
       answer
     }
   }
@@ -462,12 +488,14 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) {
-      println("1 (improved domain recursion, base case)")
+      if (WmcVisitor.Verbose)
+        println("1 (improved domain recursion, base case)")
       one
     }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      println(s"$childchildWmc (improved domain recursion)")
+      if (WmcVisitor.Verbose)
+        println(s"$childchildWmc (improved domain recursion)")
       childchildWmc
     }
   }
@@ -488,9 +516,11 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
       val childWeight = visit(exists.child.get, newParams)
       val binomialCoeff = Binomial.coeff(maxSize, nbTrue).toSignDouble
       logWeight += binomialCoeff * childWeight
-      println(s" + $maxSize C $nbTrue * $childWeight")
+      if (WmcVisitor.Verbose)
+        println(s" + $maxSize C $nbTrue * $childWeight")
     }
-    println(s"= $logWeight")
+    if (WmcVisitor.Verbose)
+      println(s"= $logWeight")
     logWeight
   }
 
@@ -507,7 +537,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
       val child = visit(cr.child.get,
                         (newDomainSizes, predicateWeights,
                          parameterMap + (cr -> (domainSize - 1, 1))))
-      println(s"$child (constraint removal)")
+      if (WmcVisitor.Verbose)
+        println(s"$child (constraint removal)")
       child
     }
   }
@@ -522,7 +553,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
       one
     } else {
       val answer = childlwmc.pow(nbGroundings)
-      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      if (WmcVisitor.Verbose)
+        println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
       answer
     }
   }
@@ -534,7 +566,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     val plus2lwmc = visit(ie.plus2.get, params)
     val minlwmc = visit(ie.min.get, params)
     val answer = plus1lwmc + plus2lwmc - minlwmc
-    println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
+    if (WmcVisitor.Verbose)
+      println(s"$plus1lwmc + $plus2lwmc - $minlwmc = $answer (inclusion-exclusion)")
     answer
   }
 
@@ -544,7 +577,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     val llwmcc = visit(or.l.get, params)
     val rlwmcc = visit(or.r.get, params)
     val answer = llwmcc + rlwmcc
-    println(s"$llwmcc + $rlwmcc = $answer (or)")
+    if (WmcVisitor.Verbose)
+      println(s"$llwmcc + $rlwmcc = $answer (or)")
     answer
   }
 
@@ -556,7 +590,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     else {
       val rlwmcc = visit(and.r.get, params)
       val answer = llwmcc * rlwmcc
-      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      if (WmcVisitor.Verbose)
+        println(s"$llwmcc * $rlwmcc = $answer (and)")
       answer
     }
   }
@@ -567,11 +602,13 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
     val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
-    println(s"$answer (ref)")
+    if (WmcVisitor.Verbose)
+      println(s"$answer (ref)")
     answer
   } catch {
     case e: DomainSize.CantShrinkDomainException => {
-      println("1 (ref, base case)")
+      if (WmcVisitor.Verbose)
+        println("1 (ref, base case)")
       1
     }
   }
@@ -584,7 +621,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     val nbGroundings = leaf.clause.nbGroundings(domainSizes)
     val weight = weights.negWPlusPosW
     val answer = weight.pow(nbGroundings)
-    println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
+    if (WmcVisitor.Verbose)
+      println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
     answer
   }
 
@@ -609,12 +647,14 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     } else if (leaf.positive) {
       val weight = weights.posW
       val answer = weight.pow(nbGroundings)
-      println(s"$weight ^ $nbGroundings = $answer (positive leaf)")
+      if (WmcVisitor.Verbose)
+        println(s"$weight ^ $nbGroundings = $answer (positive leaf)")
       answer
     } else {
       val weight = weights.negW
       val answer = weight.pow(nbGroundings)
-      println(s"$weight ^ $nbGroundings = $answer (negative leaf)")
+      if (WmcVisitor.Verbose)
+        println(s"$weight ^ $nbGroundings = $answer (negative leaf)")
       answer
     }
   }
@@ -660,7 +700,8 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
     else {
       val rlwmcc = retrieveWmc(and.r.get, params)
       val answer = llwmcc * rlwmcc
-      println(s"$llwmcc * $rlwmcc = $answer (and)")
+      if (WmcVisitor.Verbose)
+        println(s"$llwmcc * $rlwmcc = $answer (and)")
       answer
     }
   }
@@ -675,7 +716,8 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
       one
     } else {
       val answer = childlwmc.pow(nbGroundings)
-      println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
+      if (WmcVisitor.Verbose)
+        println(s"$childlwmc ^ $nbGroundings = $answer (forall / independent partial grounding)")
       answer
     }
   }
@@ -935,12 +977,14 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
     val (domainSizes, predicateWeights, parameterMap) = params
     val maxSize = idr.domain.size(domainSizes, idr.ineqs)
     if (maxSize < 1) {
-      println("1 (improved domain recursion, base case)")
+      if (WmcVisitor.Verbose)
+        println("1 (improved domain recursion, base case)")
       one
     }
     else {
       val childchildWmc = visit(idr.mixedChild.get, params)
-      println(s"$childchildWmc (improved domain recursion)")
+      if (WmcVisitor.Verbose)
+        println(s"$childchildWmc (improved domain recursion)")
       childchildWmc
     }
   }
@@ -977,7 +1021,8 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
       val child = visit(cr.child.get,
                         (newDomainSizes, predicateWeights,
                          parameterMap + (cr -> (domainSize - 1, 1))))
-      println(s"$child (constraint removal)")
+      if (WmcVisitor.Verbose)
+        println(s"$child (constraint removal)")
       child
     }
   }
@@ -1043,11 +1088,13 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
     val (domainSizes, predicateWeights, parameterMap) = params
     val newDomainSizes = domainSizes.shrink(ref.domainMap, parameterMap)
     val answer = visit(ref.nnfNode.get, (newDomainSizes, predicateWeights, parameterMap))
-    println(s"$answer (ref)")
+    if (WmcVisitor.Verbose)
+      println(s"$answer (ref)")
     answer
   } catch {
     case e: DomainSize.CantShrinkDomainException => {
-      println("1 (ref, base case)")
+      if (WmcVisitor.Verbose)
+        println("1 (ref, base case)")
       1
     }
   }

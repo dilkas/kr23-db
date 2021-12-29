@@ -21,30 +21,34 @@ import edu.ucla.cs.starai.forclift.nnf._
 
 abstract class NnfVisitor[I,O] {
 
-  def visit(node: NNFNode, input: I): O = node match{
+  def visit(node: NNFNode, input: I): O =
+    if (WmcVisitor.latch.getCount() == 0) {
+      throw new InterruptedException
+    } else {
+      node match{
+        // Leaf Nodes
+        case leaf: UnitLeaf => visitUnitLeaf(leaf, input)
+        case leaf: SmoothingNode => visitSmoothingNode(leaf, input)
+        case leaf: ContradictionLeaf => visitContradictionLeaf(leaf, input)
+        case TrueNode => visitTrue(input)
+        case FalseNode => visitFalse(input)
+        case leaf: GroundingNode => visitGroundingNode(leaf, input)
 
-      // Leaf Nodes
-      case leaf: UnitLeaf => visitUnitLeaf(leaf, input)
-      case leaf: SmoothingNode => visitSmoothingNode(leaf, input)
-      case leaf: ContradictionLeaf => visitContradictionLeaf(leaf, input)
-      case TrueNode => visitTrue(input)
-      case FalseNode => visitFalse(input)
-      case leaf: GroundingNode => visitGroundingNode(leaf, input)
+        // Complex Nodes
+        case and: And => visitAndNode(and, input)
+        case or: Or => visitOrNode(or, input)
+        case ref: Ref => visitRefNode(ref, input)
+        case ie: InclusionExclusion => visitInclusionExclusionNode(ie, input)
+        case cr: ConstraintRemovalNode => visitConstraintRemovalNode(cr, input)
 
-      // Complex Nodes
-      case and: And => visitAndNode(and, input)
-      case or: Or => visitOrNode(or, input)
-      case ref: Ref => visitRefNode(ref, input)
-      case ie: InclusionExclusion => visitInclusionExclusionNode(ie, input)
-      case cr: ConstraintRemovalNode => visitConstraintRemovalNode(cr, input)
+        // First-Order Nodes
+        case forall: IndependentPartialGroundingNode => visitForallNode(forall, input)
+        case exists: CountingNode => visitExists(exists, input)
+        case dr: DomainRecursionNode => visitDomainRecursion(dr, input)
+        case idr: ImprovedDomainRecursionNode => visitImprovedDomainRecursion(idr, input)
 
-      // First-Order Nodes
-      case forall: IndependentPartialGroundingNode => visitForallNode(forall, input)
-      case exists: CountingNode => visitExists(exists, input)
-      case dr: DomainRecursionNode => visitDomainRecursion(dr, input)
-      case idr: ImprovedDomainRecursionNode => visitImprovedDomainRecursion(idr, input)
-
-      case _ => throw new IllegalArgumentException
+        case _ => throw new IllegalArgumentException
+      }
     }
 
   protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, input: I): O

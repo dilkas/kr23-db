@@ -52,6 +52,9 @@ abstract class NIPS11Compiler(
       assume(cnf.clauses.forall { clause =>
         clause.literalVariables.forall { clause.constrs.domainFor(_) == domain }
       }, "There is only one domain for all logical variables, if IPG failed.")
+
+      println("\ndomain recursion")
+
       val ineqs = cnf.clauses.head.constrs.ineqConstrs(cnf.clauses.head.literalVariables.head).collect { case c: Constant => c }
       val constant = groundingConstantFor(cnf, domain)
       val mixedClauses = cnf.clauses.flatMap { clause =>
@@ -83,13 +86,12 @@ abstract class NIPS11Compiler(
       val msg = "Domain recursion on $" + domain + "$"
       val mixedNnf = tryIndependentPartialGrounding(mixedCNF)
       assume(mixedNnf.nonEmpty) // property of DR?
-      println("\ndomain recursion")
-      println(cnf.toString + "\n")
       // NOTE: The code below is deprecated
       val node = new DomainRecursionNode(
         cnf,
         Some(mixedNnf.get._1.get.asInstanceOf[IndependentPartialGroundingNode]),
         None, constant, ineqs, domain, msg)
+      println(cnf.toString + "\n")
       Some((Some(node), List(groundCNF)))
     } else None
   }

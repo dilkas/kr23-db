@@ -14,7 +14,7 @@ object BreadthCompiler {
   val builderWithGrounding: Compiler.Builder =
     (sizeHint: Compiler.SizeHints) => new BreadthCompiler(sizeHint, true)
 
-  val numSolutions = 3
+  val numSolutions = 5
 
 }
 
