@@ -331,6 +331,7 @@ object CNF {
     // println(oldTheory)
     // println("WITH MAP")
     // println(partialMap)
+
     if (newTheory.size != oldTheory.size ||
           newTheory.hashCode != oldTheory.hashCode) {
       None

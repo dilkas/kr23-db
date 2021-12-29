@@ -64,6 +64,19 @@ class Clause(
                            (variable, if (domain == domain1) domain2
                                       else domain) }))
 
+  override def hashCode: Int =
+    (constants, predicates, posLits.size, negLits.size, constrs).hashCode
+  // {
+  //   val prime = 31
+  //   var result = 1
+  //   result = prime * result + posLits.size
+  //   result = prime * result + negLits.size
+  //   result = prime * result + constrs.hashCode
+  //   // println("Clause::hashCode: clause " + this +
+  //   //           " has the following variables: " + constrs.elemConstrs.variables)
+  //   result
+  // }
+
   def canEqual(a: Any) = a.isInstanceOf[Clause]
 
   def variableBijections(that: Clause,
@@ -128,19 +141,6 @@ class Clause(
       pos && neg && c
     }
     case _ => false
-  }
-
-  // the number of positive literals, the number of negative literals, the
-  // number of inequality constraints, and the number of variables
-  override def hashCode: Int = {
-    val prime = 31
-    var result = 1
-    result = prime * result + posLits.size
-    result = prime * result + negLits.size
-    result = prime * result + constrs.hashCode
-    // println("Clause::hashCode: clause " + this +
-    //           " has the following variables: " + constrs.elemConstrs.variables)
-    result
   }
 
   val atoms: List[Atom] = posLits ::: negLits
