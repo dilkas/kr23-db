@@ -23,11 +23,11 @@ class GreedyCompiler(sizeHint: Compiler.SizeHints =
     new MyLiftedCompiler(sizeHint)
   }
 
-  override def compile(cnf: CNF): NNFNode = {
+  override def compile(cnf: CNF): List[NNFNode] = {
     Compiler.checkCnfInput(cnf)
     var rules = compiler.inferenceRules
-    var nnf: NNFNode = null
-    while (nnf == null && rules.nonEmpty) {
+    var nnf: List[NNFNode] = List[NNFNode]()
+    while (nnf.isEmpty && rules.nonEmpty) {
       val tryRule = rules.head(cnf)
       if (tryRule.nonEmpty) {
         val (node, successors) = tryRule.get
@@ -35,16 +35,18 @@ class GreedyCompiler(sizeHint: Compiler.SizeHints =
           require(successors.size == 1)
           nnf = compile(successors.head)
         } else {
-          nnf = node.get
+          nnf = List(node.get)
           // the important bit
-          compiler.updateCache(cnf, nnf)
-          nnf.update(successors.map { successor => Some(compile(successor)) } )
+          compiler.updateCache(cnf, nnf.head)
+          nnf.head.update(successors.map {
+                            successor => Some(compile(successor).head)
+                          } )
         }
       }
       else rules = rules.tail
     }
-    if (nnf == null) {
-      nnf = compiler.cannotCompile(cnf)
+    if (nnf.isEmpty) {
+      nnf = List(compiler.cannotCompile(cnf))
     }
     nnf
   }

@@ -176,13 +176,17 @@ class LiftedLearning(
     if (verbose) println("Compiling partition function")
     val vocabularyPredicates = learnableClauses.map { _.res }.toSet
     assume((cnf.predicates ++ indepUnitPreds).subsetOf(vocabularyPredicates))
-    val circuit = compiler.compile(cnf).smoothWithPredicates(vocabularyPredicates)
+
+    // NOTE: this might be outdated
+    val circuit = compiler.compile(cnf).head.
+      smoothWithPredicates(vocabularyPredicates)
+
     //        circuit.showPDF(DomainSizes.empty, PredicateWeights.empty, false, maxDepth=7)
     if (verbose) {
       println("Partition function has size " + circuit.size)
       println("Partition function has order " + circuit.evalOrder)
     }
-    val zs = dbs.dbs.map { db => (db, new PrecompiledCNFCircuit(circuit)) }
+    val zs = dbs.dbs.map { db => (db, new PrecompiledCNFCircuit(List(circuit))) }
     // construct CNF holding theory and the most general atom of every res, so that every grounding is covered somewhere
     val allcoveringCNF = new CNF(vocabularyPredicates.map { _.toAtom }.toList ::: cnf.clauses)
     val queryClassesInCNF = allcoveringCNF.equiprobableClasses

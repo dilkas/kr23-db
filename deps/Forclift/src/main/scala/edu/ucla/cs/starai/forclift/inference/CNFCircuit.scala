@@ -34,6 +34,8 @@ abstract class CachingCNFCircuit {
 
   def smoothNNF: NNFNode
 
+  def smoothNNFs: List[NNFNode]
+
   private[this] var cachedWmcOption: Option[SignLogDouble] = None
 
   def hasCachedWmc = cachedWmcOption.nonEmpty
@@ -45,21 +47,32 @@ abstract class CachingCNFCircuit {
   def cacheWmc(domainSizes: DomainSizes, weights: PredicateWeights) = {
     require(cachedWmcOption.isEmpty)
     val wmcVisitor = WmcVisitor(weights)
-    val wmc = wmcVisitor.wmc(smoothNNF,domainSizes,weights)
+    val wmc = wmcVisitor.wmc(smoothNNFs, domainSizes, weights)
     cachedWmcOption = Some(wmc)
   }
 
 }
 
-class PrecompiledCNFCircuit(val smoothNNF: NNFNode) extends CachingCNFCircuit {
+class PrecompiledCNFCircuit(val smoothNNFs: List[NNFNode])
+    extends CachingCNFCircuit {
 
   def cnf = smoothNNF.cnf
+
+  def smoothNNF: NNFNode = smoothNNFs.head
 
 }
 
 class CNFCircuit(val compiler: Compiler, val cnf: CNF) extends CachingCNFCircuit {
 
-  lazy val smoothNNF = compiler.compile(cnf).smoothWithPredicates(cnf.predicates)
+  lazy val smoothNNFs = compiler.compile(cnf).map {
+    _.smoothWithPredicates(cnf.predicates)
+  }
+
+  lazy val smoothNNF = {
+    if (smoothNNFs.size > 1)
+      println("Warning: some of the circuits are being ignored")
+    smoothNNFs.head
+  }
 
 }
 

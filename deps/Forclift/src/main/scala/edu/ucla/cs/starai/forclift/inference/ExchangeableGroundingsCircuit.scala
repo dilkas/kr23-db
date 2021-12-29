@@ -27,7 +27,7 @@ import edu.ucla.cs.starai.forclift.util.SignLogDouble._
 class ExchangeableGroundingsCircuit(
     val queryClass: PositiveUnitClause, queryNNF: NNFNode,
     val zNNF: PrecompiledCNFCircuit, val domainSizes: DomainSizes)
-  extends PrecompiledCNFCircuit(queryNNF) {
+  extends PrecompiledCNFCircuit(List(queryNNF)) {
 
   val nbMarginals = {
     queryClass.nbGroundings(domainSizes)

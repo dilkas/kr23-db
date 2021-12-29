@@ -16,7 +16,10 @@
 
 package edu.ucla.cs.starai.forclift.nnf.visitors
 
+import java.util.concurrent._
+import java.util.concurrent.atomic.AtomicReference
 import scala.language.implicitConversions
+
 import edu.ucla.cs.starai.forclift.inference.DomainSize
 import edu.ucla.cs.starai.forclift.inference.DomainSizes
 import edu.ucla.cs.starai.forclift.inference.PredicateWeights
@@ -37,10 +40,14 @@ trait WmcVisitor {
   // NOTE: Duplicating this type info 2-3 times is still better than duplicating
   // it ~50 times.
   type ParameterMap = Map[ParametrisedNode, (Int, Int)]
-  def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble
+  def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
+          predicateWeights: PredicateWeights): SignLogDouble
 }
 
 object WmcVisitor {
+
+  val latch = new CountDownLatch(1)
+  val wmc = new AtomicReference[SignLogDouble]
 
   type ParameterMap = Map[ParametrisedNode, (Int, Int)]
 
@@ -49,8 +56,10 @@ object WmcVisitor {
   }
 
   def apply(predicateWeights: PredicateWeights): WmcVisitor = {
-    val hasNegativeWeight = predicateWeights.values.exists(w => w.negW < 0 || w.posW < 0)
-    // NOTE: caching needs to be disabled for loops to make sense
+    val hasNegativeWeight = predicateWeights.values.exists(w => w.negW < 0 ||
+                                                             w.posW < 0)
+    println("apply: has negative weight: " + hasNegativeWeight)
+    // NOTE: caching needs to be disabled for cycles to make sense
     if (hasNegativeWeight) {
       new SignLogDoubleWmc
       //new CachingSignLogDoubleWmc
@@ -62,16 +71,38 @@ object WmcVisitor {
 
 }
 
-protected class LogDoubleWmc
+protected class LogDoubleWmc(val circuit: NNFNode = null,
+                             val domainSizes: DomainSizes = null,
+                             val predicateWeights: PredicateWeights = null)
     extends NnfVisitor[(DomainSizes, PredicateWeights,
                         WmcVisitor.ParameterMap), LogDouble]
-    with WmcVisitor {
+    with Runnable with WmcVisitor {
 
   import edu.ucla.cs.starai.forclift.util.LogDouble._
 
-  def wmc(nnf: NNFNode, domainSizes: DomainSizes,
-          predicateWeights: PredicateWeights): SignLogDouble =
-    visit(nnf, (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty))
+  // TODO (Paulius): extract the following two functions to reduce duplication
+  def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
+          predicateWeights: PredicateWeights): SignLogDouble = {
+    val executor: ExecutorService = Executors.newFixedThreadPool(nnfs.size)
+    nnfs.foreach {
+      nnf => executor.execute(new LogDoubleWmc(nnf, domainSizes,
+                                               predicateWeights))
+    }
+    executor.shutdown
+    try {
+      WmcVisitor.latch.await
+    } catch {
+      case e: InterruptedException => println(e)
+    }
+    WmcVisitor.wmc.get
+  }
+
+  def run {
+    val wmc = visit(circuit, (domainSizes, predicateWeights,
+                              WmcVisitor.ParameterMap.empty))
+    WmcVisitor.wmc.set(wmc)
+    WmcVisitor.latch.countDown
+  }
 
   protected def visitDomainRecursion(dr: DomainRecursionNode,
                                      params: (DomainSizes, PredicateWeights,
@@ -251,6 +282,7 @@ protected class LogDoubleWmc
       val weight = weights.negWLogDouble
       val answer = weight.pow(nbGroundings)
       println(s"$weight ^ $nbGroundings = $answer (negative leaf)")
+      println("weights: " + weights)
       answer
     }
   }
@@ -313,9 +345,10 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
 
   val cache = new SoftMemCache[Key, LogDouble]
 
-  override def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble = {
+  override def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
+                   predicateWeights: PredicateWeights): SignLogDouble = {
     cache.clear()
-    super.wmc(nnf, domainSizes, predicateWeights)
+    super.wmc(nnfs, domainSizes, predicateWeights)
   }
 
   // only decomposition nodes can reduce the number of relevant domains!
@@ -373,17 +406,36 @@ protected class CachingLogDoubleWmc extends LogDoubleWmc {
 
 }
 
-protected class SignLogDoubleWmc
-    extends NnfVisitor[(DomainSizes, PredicateWeights, WmcVisitor.ParameterMap),
-                       SignLogDouble]
-    with WmcVisitor {
+protected class SignLogDoubleWmc(val circuit: NNFNode = null,
+                                 val domainSizes: DomainSizes = null,
+                                 val predicateWeights: PredicateWeights = null)
+    extends NnfVisitor[(DomainSizes, PredicateWeights,
+                        WmcVisitor.ParameterMap), SignLogDouble]
+    with Runnable with WmcVisitor {
 
   import edu.ucla.cs.starai.forclift.util.SignLogDouble._
 
-  def wmc(
-    nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights)
-      : SignLogDouble = {
-    visit(nnf, (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty))
+  def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
+          predicateWeights: PredicateWeights): SignLogDouble = {
+    val executor: ExecutorService = Executors.newFixedThreadPool(nnfs.size)
+    nnfs.foreach {
+      nnf => executor.execute(new SignLogDoubleWmc(nnf, domainSizes,
+                                                   predicateWeights))
+    }
+    executor.shutdown
+    try {
+      WmcVisitor.latch.await
+    } catch {
+      case e: InterruptedException => println(e)
+    }
+    WmcVisitor.wmc.get
+  }
+
+  def run {
+    val wmc = visit(circuit, (domainSizes, predicateWeights,
+                              WmcVisitor.ParameterMap.empty))
+    WmcVisitor.wmc.set(wmc)
+    WmcVisitor.latch.countDown
   }
 
   protected def visitDomainRecursion(
@@ -592,9 +644,10 @@ protected class CachingSignLogDoubleWmc extends SignLogDoubleWmc {
 
   val cache = new SoftMemCache[Key, SignLogDouble]
 
-  override def wmc(nnf: NNFNode, domainSizes: DomainSizes, predicateWeights: PredicateWeights): SignLogDouble = {
+  override def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
+                   predicateWeights: PredicateWeights): SignLogDouble = {
     cache.clear()
-    super.wmc(nnf, domainSizes, predicateWeights)
+    super.wmc(nnfs, domainSizes, predicateWeights)
   }
 
   // only decomposition nodes can reduce the number of relevant domains!
@@ -747,10 +800,11 @@ object VerifyWmcVisitor {
 
   class VerificationFailedException extends Exception
 
-  def verify(nnf: NNFNode, domainSizes: DomainSizes,
+  def verify(nnfs: List[NNFNode], domainSizes: DomainSizes,
              predicateWeights: PredicateWeights) {
-    (new VerifyWmcVisitor()).visit(nnf, (domainSizes, predicateWeights,
-                                         WmcVisitor.ParameterMap.empty))
+    require(nnfs.size == 1)
+    (new VerifyWmcVisitor()).visit(nnfs.head, (domainSizes, predicateWeights,
+                                               WmcVisitor.ParameterMap.empty))
   }
 
 }
@@ -834,13 +888,13 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
   val zero: BigInt = 0
   val one: BigInt = 1
 
-  def wmc(nnf: NNFNode, domainSizes: DomainSizes,
+  def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
           predicateWeights: PredicateWeights): SignLogDouble = {
     val normalization: LogDouble = LogDouble.doubleToLogDouble(decimalPrecision
     ).pow(numRandVars(domainSizes,predicateWeights))
     bigInt2SignLogDouble(
-      visit(nnf, (domainSizes, predicateWeights,
-                  WmcVisitor.ParameterMap.empty)))/normalization
+      visit(nnfs.head, (domainSizes, predicateWeights,
+                        WmcVisitor.ParameterMap.empty)))/normalization
   }
 
   def numRandVars(domainSizes: DomainSizes, predicateWeights: PredicateWeights): Int = {

@@ -27,6 +27,7 @@ object GroundCompiler {
 
 class GroundCompiler extends Compiler {
 
-  override def compile(cnf: CNF): NNFNode = new GroundingNode(cnf, "Ground Compiler.")
+  override def compile(cnf: CNF): List[NNFNode] =
+    List(new GroundingNode(cnf, "Ground Compiler."))
 
 }

@@ -47,18 +47,20 @@ object Compiler {
 
 trait Compiler {
 
-  def compile(cnf: CNF): NNFNode = {
+  def compile(cnf: CNF): List[NNFNode] = {
     throw new IllegalStateException("The compiler you are trying to use does " +
                                       "not implement the 'compile' method.")
   }
 
-  def compileSmooth(cnf: CNF): NNFNode = {
+  def compileSmooth(cnf: CNF): List[NNFNode] = {
     compileSmooth(cnf, cnf.predicates, Set.empty)
   }
 
-  def compileSmooth(cnf: CNF, predicates: Set[Predicate], excluded: Set[PositiveUnitClause] = Set.empty): NNFNode = {
-    val nnf = compile(cnf)
-    nnf.smoothWithPredicates(predicates, excluded)
+  def compileSmooth(cnf: CNF, predicates: Set[Predicate],
+                    excluded: Set[PositiveUnitClause] = Set.empty)
+      : List[NNFNode] = {
+    val nnfs = compile(cnf)
+    nnfs.map { _.smoothWithPredicates(predicates, excluded) }
   }
 
   def foundSolution(circuit: NNFNode): Unit = {}

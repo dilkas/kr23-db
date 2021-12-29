@@ -27,13 +27,17 @@ class CompilerWrapper(sizeHint: Compiler.SizeHints =
     new BreadthCompiler(sizeHint, grounding)
   }
 
-  override def compile(cnf: CNF): NNFNode = {
-    val nnf = compiler.compile(cnf)
-    val postOrderVisitor = new PostOrderVisitor
-    postOrderVisitor.visit(nnf)
-    val domainsVisitor = new DomainsVisitor(postOrderVisitor.nodeOrder)
-    domainsVisitor.updateDomains
-    nnf
+  override def compile(cnf: CNF): List[NNFNode] = {
+    val nnfs = compiler.compile(cnf)
+    nnfs.foreach {
+      nnf => {
+        val postOrderVisitor = new PostOrderVisitor
+        postOrderVisitor.visit(nnf)
+        val domainsVisitor = new DomainsVisitor(postOrderVisitor.nodeOrder)
+        domainsVisitor.updateDomains
+      }
+    }
+    nnfs
   }
 
 }

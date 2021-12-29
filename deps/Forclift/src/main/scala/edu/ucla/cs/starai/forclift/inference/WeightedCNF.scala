@@ -34,7 +34,7 @@ case class WeightedCNF(
   conditionedAtoms: List[PositiveUnitClause] = Nil,
   compilerBuilder: Compiler.Builder = Compiler.Builder.default
   ) {
-  
+
   def setCompiler(newCompiledBuilder: Compiler.Builder) = {
     WeightedCNF(cnf, domainSizes, predicateWeights, conditionedAtoms, newCompiledBuilder)
   }
@@ -66,7 +66,7 @@ case class WeightedCNF(
   
   lazy val logSmoothWmc: SignLogDouble = {
     //TODO test sign of weights and optimize
-    wmcVisitor.wmc(smoothNnf,domainSizes, predicateWeights)
+    wmcVisitor.wmc(smoothNnfs, domainSizes, predicateWeights)
   }
 
   lazy val logPropWmc: SignLogDouble = {
@@ -82,7 +82,7 @@ case class WeightedCNF(
   }
 
   def verifyLogWmc {
-	VerifyWmcVisitor.verify(smoothNnf,domainSizes, predicateWeights)
+	VerifyWmcVisitor.verify(smoothNnfs, domainSizes, predicateWeights)
     val correct = ((logSmoothPropWmc - logSmoothWmc).abs.logToDouble < 0.0000001
     				|| (logSmoothPropWmc.logToDouble - logSmoothWmc.logToDouble).abs < 0.0000001)
     if (!correct) {
@@ -139,23 +139,36 @@ case class WeightedCNF(
 
   lazy val toSmoothDimacsCNF: DimacsCNF = toSmoothDimacsCNFBuilder.toDimacsCNF
 
+  lazy val smoothNnfs = nnfs.map {
+    _.smoothWithPredicates(vocabularyPredicates, conditionedAtoms.toSet)
+  }
+
   lazy val smoothNnf = {
-    nnf.smoothWithPredicates(vocabularyPredicates, conditionedAtoms.toSet)
+    if (smoothNnfs.size > 1)
+      println("Warning: some of the circuits are being ignored")
+    smoothNnfs.head
   }
 
   def sizeHint(d: Domain) = domainSizes(d.root).size
 
+  lazy val nnfs = compilerBuilder(sizeHint).compile(cnf)
+
   lazy val nnf = {
-    val compiler = compilerBuilder(sizeHint)
-    compiler.compile(cnf)
+    if (nnfs.size > 1)
+      println("Warning: some of the circuits are being ignored")
+    nnfs.head
   }
 
-  def showNnfPdf(compact: Boolean, maxDepth: Int, file: String, verbose: Boolean = false) = {
-    nnf.showPDF(domainSizes, predicateWeights, compact, maxDepth = maxDepth, file = file, verbose = verbose)
+  def showNnfPdf(compact: Boolean, maxDepth: Int, file: String,
+                 verbose: Boolean = false) = nnfs.foreach {
+    _.showPDF(domainSizes, predicateWeights, compact, maxDepth = maxDepth,
+              file = file, verbose = verbose)
   }
 
-  def showSmoothNnfPdf(compact: Boolean, maxDepth: Int, file: String, verbose: Boolean = false) = {
-    smoothNnf.showPDF(domainSizes, predicateWeights, compact, maxDepth = maxDepth, file = file, verbose = verbose)
+  def showSmoothNnfPdf(compact: Boolean, maxDepth: Int, file: String,
+                       verbose: Boolean = false) = smoothNnfs.foreach {
+    _.showPDF(domainSizes, predicateWeights, compact, maxDepth = maxDepth,
+              file = file, verbose = verbose)
   }
 
   override def toString = List[Any](domainSizes, predicateWeights, cnf).mkString("\n")

@@ -78,7 +78,10 @@ sealed abstract class LearningFormula(
       val cnf = zCircuits.head._2.cnf ++ CNF(Clause(List(query), Nil))
       val startcompilingt = System.currentTimeMillis()
       if (verbose) println("Compiling circuit for " + queryClass)
-      val circuit = compiler.compile(cnf).smoothWithPredicates(vocabularyPredicates)
+
+      // NOTE: this might be outdated
+      val circuit = compiler.compile(cnf).head.smoothWithPredicates(vocabularyPredicates)
+
       if (verbose) {
         if(verbose) println("Compiling took " + (System.currentTimeMillis() - startcompilingt) + " ms")
         if(verbose) println("Query circuit has size " + circuit.size)

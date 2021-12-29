@@ -14,6 +14,8 @@ object BreadthCompiler {
   val builderWithGrounding: Compiler.Builder =
     (sizeHint: Compiler.SizeHints) => new BreadthCompiler(sizeHint, true)
 
+  val numSolutions = 3
+
 }
 
 class BreadthCompiler(sizeHint: Compiler.SizeHints =
@@ -30,7 +32,8 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
   override def foundSolution(circuit: NNFNode): Unit = {
     println("FOUND A SOLUTION")
     circuits = circuit :: circuits
-    if (circuits.size >= 3) throw new EndSearchException
+    if (circuits.size >= BreadthCompiler.numSolutions)
+      throw new EndSearchException
   }
 
   def breadthFirstTraverse(q: Queue[PartialCircuit]): Unit = if (!q.isEmpty) {
@@ -46,7 +49,7 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
   }
 
   /** A simple BFS mainly for testing purposes */
-  override def compile(cnf: CNF): NNFNode = {
+  override def compile(cnf: CNF): List[NNFNode] = {
     val compiler = compilerBuilder
     val initialQueue = Queue(compiler.applySinkRules(cnf))
     try {
@@ -55,7 +58,7 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
       case e: EndSearchException => {}
     }
     // circuits.foreach { _.showPDF(DomainSizes.empty, PredicateWeights.empty) }
-    circuits.head
+    circuits
   }
 
 }
