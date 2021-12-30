@@ -46,7 +46,10 @@ trait WmcVisitor {
 
 object WmcVisitor {
 
-  val Verbose = false
+  // the 'false' option is mostly for debugging purposes unless combined with numThreads = 1
+  val Parallel = false
+
+  val Verbose = true
 
   val latch = new CountDownLatch(1)
   val wmc = new AtomicReference[SignLogDouble]
@@ -81,22 +84,29 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
 
   import edu.ucla.cs.starai.forclift.util.LogDouble._
 
-  // TODO (Paulius): extract the following two functions to reduce duplication
+  // TODO (Paulius, later): extract the following two functions to reduce
+  // duplication
   def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
-          predicateWeights: PredicateWeights): SignLogDouble = {
-    val executor: ExecutorService = Executors.newFixedThreadPool(nnfs.size)
-    nnfs.foreach {
-      nnf => executor.execute(new LogDoubleWmc(nnf, domainSizes,
-                                               predicateWeights))
+          predicateWeights: PredicateWeights): SignLogDouble =
+    if (WmcVisitor.Parallel) {
+      val executor: ExecutorService = Executors.newFixedThreadPool(nnfs.size)
+      nnfs.foreach {
+        nnf => executor.execute(new LogDoubleWmc(nnf, domainSizes,
+                                                 predicateWeights))
+      }
+      try {
+        WmcVisitor.latch.await
+        executor.shutdownNow
+      } catch {
+        case e: InterruptedException => println(e)
+      }
+      WmcVisitor.wmc.get
+    } else {
+      nnfs.map {
+        nnf => visit(nnf, (domainSizes, predicateWeights,
+                           WmcVisitor.ParameterMap.empty))
+      }.head
     }
-    try {
-      WmcVisitor.latch.await
-      executor.shutdownNow
-    } catch {
-      case e: InterruptedException => println(e)
-    }
-    WmcVisitor.wmc.get
-  }
 
   def run {
     try {
@@ -168,7 +178,7 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
         println(s" + $maxSize C $nbTrue * $childWeight")
     }
     if (WmcVisitor.Verbose)
-      println(s"= $logWeight")
+      println(s"= $logWeight ($exists) \n")
     logWeight
   }
 
@@ -437,20 +447,26 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
   import edu.ucla.cs.starai.forclift.util.SignLogDouble._
 
   def wmc(nnfs: List[NNFNode], domainSizes: DomainSizes,
-          predicateWeights: PredicateWeights): SignLogDouble = {
-    val executor: ExecutorService = Executors.newFixedThreadPool(nnfs.size)
-    nnfs.foreach {
-      nnf => executor.execute(new SignLogDoubleWmc(nnf, domainSizes,
-                                                   predicateWeights))
+          predicateWeights: PredicateWeights): SignLogDouble =
+    if (WmcVisitor.Parallel) {
+      val executor: ExecutorService = Executors.newFixedThreadPool(nnfs.size)
+      nnfs.foreach {
+        nnf => executor.execute(new SignLogDoubleWmc(nnf, domainSizes,
+                                                     predicateWeights))
+      }
+      try {
+        WmcVisitor.latch.await
+        executor.shutdownNow
+      } catch {
+        case e: InterruptedException => println(e)
+      }
+      WmcVisitor.wmc.get
+    } else {
+      nnfs.map {
+        nnf => visit(nnf, (domainSizes, predicateWeights,
+                           WmcVisitor.ParameterMap.empty))
+      }.head
     }
-    try {
-      WmcVisitor.latch.await
-      executor.shutdownNow
-    } catch {
-      case e: InterruptedException => println(e)
-    }
-    WmcVisitor.wmc.get
-  }
 
   def run {
     try {
@@ -520,7 +536,7 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
         println(s" + $maxSize C $nbTrue * $childWeight")
     }
     if (WmcVisitor.Verbose)
-      println(s"= $logWeight")
+      println(s"= $logWeight ($exists)+\n")
     logWeight
   }
 

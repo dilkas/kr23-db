@@ -121,6 +121,8 @@ class CountingNode(val cnf: CNF, var child: Option[NNFNode],
 
   override def directSuccessors = List(child)
 
+  override lazy val hashCode: Int = cnf.hashCode
+
   def canEqual(a: Any) = a.isInstanceOf[CountingNode]
 
   override def equals(that: Any): Boolean = that match {

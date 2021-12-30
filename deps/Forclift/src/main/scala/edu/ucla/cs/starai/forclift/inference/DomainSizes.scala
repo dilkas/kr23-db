@@ -237,9 +237,10 @@ class DomainSizes(
              parameterMap: WmcVisitor.ParameterMap): DomainSizes = {
     // println("Shrinking domainMap:")
     // println(domainMap)
-    // println("Shrinking parameterMap:")
+    // println("Shrinking parameterMap (of size " + parameterMap.size + "):")
     // println(parameterMap)
     // println("==========")
+
     val newDomainSizes = map {
       case (domain, _) => {
         val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))

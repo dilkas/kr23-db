@@ -100,7 +100,7 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Counting (Unweighted) Functions: Currently Unliftable (1)}
+\begin{frame}{Counting Injections}
   %% \cite{stanley2011enumerative}
   %% \begin{block}{Functions $M \to N$ (let $|M| = m$ and $|N| = n$)}
   %%   Theory:
@@ -110,17 +110,17 @@
   %%   \end{align*}
   %%   Answer: $n^m$.
   %% \end{block}
-  \begin{block}{Injections}
-    Theory:
-    \begin{align*}
-      \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
-      \forall x \in M. \exists y \in N. &P(x, y) \\
-      \forall w, x \in M. \forall y \in N. &P(w, y) \land P(x, y) \Rightarrow w=x
-    \end{align*}
-    Answer: $n^{\underline{m}} = n \cdot (n-1)\cdots(n-m+1)$ if $m \le n$ and $0$ otherwise (for positive $m$ and $n$).
+  Theory:
+  \begin{align*}
+    \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
+    \forall x \in M. \exists y \in N. &P(x, y) \\
+    \forall w, x \in M. \forall y \in N. &P(w, y) \land P(x, y) \Rightarrow w=x
+  \end{align*}
+  Answer: $n^{\underline{m}} = n \cdot (n-1)\cdots(n-m+1)$ if $m \le n$ and $0$ otherwise (for positive $m$ and $n$).
+\end{frame}
 
-    \pause
-    \alert{Answer found by Forclift:}
+\begin{frame}
+  \begin{block}{One answer}
     \[
     f(m, n) = \sum_{k=0}^m \binom{m}{k}(-1)^{m-k}g(k, n),
     \]
@@ -132,7 +132,17 @@
       \sum_{l=0}^n [l < 2]g(k-1, n-l) & \text{otherwise.}
     \end{cases}
     \]
-    (exponential...)
+  \end{block}
+  \begin{block}{Another answer (almost found by Forclift)}
+    (The missing parts are highlighted) Same $f$ and...
+    \[
+    g(m, n) =
+    \begin{cases}
+      1 & \text{if } m = 0 \\
+      \alert{n+1} & \alert{\text{if } m = 1} \\
+      \sum_{k=0}^{\min\{n, 1\}} \sum_{l=0}^{\min\{n-k, 1\}} \alert{\frac{n!}{(n-m-l)!}} g(m-2, n-m-l) & \text{otherwise.}
+    \end{cases}
+    \]
   \end{block}
 \end{frame}
 

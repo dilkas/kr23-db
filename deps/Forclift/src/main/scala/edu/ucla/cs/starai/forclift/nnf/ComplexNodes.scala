@@ -434,10 +434,19 @@ class ConstraintRemovalNode(val cnf: CNF, var child: Option[NNFNode],
   def simpleClone: NNFNode = new ConstraintRemovalNode(cnf, None, domain,
                                                        subdomain, explanation)
 
+  override lazy val hashCode: Int = cnf.hashCode
+
   def canEqual(a: Any) = a.isInstanceOf[ConstraintRemovalNode]
 
   override def equals(that: Any): Boolean = that match {
-    case that: ConstraintRemovalNode => cnf == that.cnf
+    case that: ConstraintRemovalNode => {
+      // println("ConstraintRemovalNode::equals: comparing")
+      // println(this)
+      // println("AND")
+      // println(that)
+      // println("ARE THEY EQUAL: " + (cnf == that.cnf))
+      cnf == that.cnf
+    }
     case _ => false
   }
 
