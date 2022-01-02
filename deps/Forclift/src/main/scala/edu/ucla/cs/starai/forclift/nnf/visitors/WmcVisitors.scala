@@ -46,10 +46,11 @@ trait WmcVisitor {
 
 object WmcVisitor {
 
-  // the 'false' option is mostly for debugging purposes unless combined with numThreads = 1
-  val Parallel = false
+  // the 'false' option is mostly for debugging purposes unless combined with
+  // numThreads = 1
+  val Parallel = true
 
-  val Verbose = true
+  val Verbose = false
 
   val latch = new CountDownLatch(1)
   val wmc = new AtomicReference[SignLogDouble]
@@ -178,7 +179,7 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
         println(s" + $maxSize C $nbTrue * $childWeight")
     }
     if (WmcVisitor.Verbose)
-      println(s"= $logWeight ($exists) \n")
+      println(s"= $logWeight\n")
     logWeight
   }
 
@@ -279,7 +280,8 @@ protected class LogDoubleWmc(val circuit: NNFNode = null,
     val weight = weights.negWPlusPosWLogDouble
     val answer = weight.pow(nbGroundings)
     if (WmcVisitor.Verbose)
-      println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
+      println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf +
+                ")")
     answer
   }
 
@@ -536,7 +538,7 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
         println(s" + $maxSize C $nbTrue * $childWeight")
     }
     if (WmcVisitor.Verbose)
-      println(s"= $logWeight ($exists)+\n")
+      println(s"= $logWeight\n")
     logWeight
   }
 
@@ -638,7 +640,8 @@ protected class SignLogDoubleWmc(val circuit: NNFNode = null,
     val weight = weights.negWPlusPosW
     val answer = weight.pow(nbGroundings)
     if (WmcVisitor.Verbose)
-      println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf + ")")
+      println(s"$weight ^ $nbGroundings = $answer (smoothing for " + leaf.cnf +
+                ")")
     answer
   }
 

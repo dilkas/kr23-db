@@ -86,19 +86,21 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
 
   def useCache(cache: mutable.HashMap[NNFNode, NNFNode]): NNFNode =
     if (cache.contains(this)) {
-      // println("useCache: found " + getClass.getSimpleName + " in the cache")
+      println("useCache: found " + getClass.getSimpleName + " in the cache")
       cache(this)
     } else {
-      // println("useCache: constructing a copy of " + getClass.getSimpleName)
       val newNode: NNFNode = simpleClone
       cache(this) = newNode
-      // println("useCache: the type of the copy is " +
-      //           newNode.getClass.getSimpleName)
-      // println("useCache: there are " + directSuccessors.size +
-      //           " direct successors")
+
+      println("useCache: constructing a copy of " + getClass.getSimpleName +
+                " " + hashCode + ": " + newNode.hashCode)
+      println("useCache: there are " + directSuccessors.size +
+                " direct successors")
+
       newNode.update(
         directSuccessors.map { _.map { n => n.useCache(cache) } } )
-      // println("useCache: finished the construction of " + getClass.getSimpleName)
+      println("useCache: finished the construction of " +
+                getClass.getSimpleName + " " + hashCode)
       newNode
     }
 
@@ -122,29 +124,26 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
 
   def updateFirst(child: NNFNode): Boolean = false
 
-  /** Modify the circuit to insert newNode. 'Visited' is used to avoid infinite
-    recursion caused by cycles in the circuit. */
-  def addNode(newNode: NNFNode, visited: Set[NNFNode] = Set[NNFNode]())
-      : Boolean = {
-    if (visited.contains(this)) {
-      false
-    } else if (updateFirst(newNode)) {
-      // first try to add the new node as a direct successor of this node
-      // println("addNode: trying to add " + newNode.getClass.getSimpleName +
-      //           " as a successor of " + getClass.getSimpleName + ": true")
-      true
-    } else {
-      // println("addNode: trying to add " + newNode.getClass.getSimpleName +
-      //           " as a successor of " + getClass.getSimpleName + ": false")
-      directSuccessors.foreach {
-        case Some(node) => {
-          // println("addNode: recursing from " + this.getClass.getSimpleName
-          //           + " to " + node.getClass.getSimpleName)
-          if (node.addNode(newNode, visited + this)) return true
-        }
+  /** Modify the circuit to insert newNode at the first empty spot according to
+    inorder traversal. Ignoring Ref nodes turns the circuit into a tree. */
+  def addNode(newNode: NNFNode): Boolean = if (isInstanceOf[Ref]) {
+    false
+  } else {
+    println("addNode: trying to add " + newNode.getClass.getSimpleName +
+              " below " + getClass.getSimpleName)
+    directSuccessors.foreach {
+      case None => {
+        updateFirst(newNode)
+        println("addNode: added as a direct successor of " +
+                  getClass.getSimpleName)
+        return true
       }
-      false
+      case Some(node) => {
+        if (node.addNode(newNode)) return true
+      }
     }
+    println("addNode: giving up on " + getClass.getSimpleName)
+    false
   }
 
   def size: Int

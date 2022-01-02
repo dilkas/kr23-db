@@ -189,7 +189,7 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
     val allVars = ungroundedMixedChildvars ++ ungroundedGroundChildVars
     val returnValue = dr.variablesForSmoothing != allVars
     dr.variablesForSmoothing = allVars
-    // println("domain recursion: " + returnValue)
+    println("domain recursion: " + returnValue)
     returnValue
   }
 
@@ -199,16 +199,16 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
       _.inverseSubstitution(idr.c, idr.ineqs, idr.domain) }
     val returnValue = idr.variablesForSmoothing != allVars
 
-    // if (returnValue) {
-    //   println("visitImprovedDomainRecursion: the child is " +
-    //             idr.mixedChild.getClass.getSimpleName)
-    //   println("visitImprovedDomainRecursion: before the transformation: " +
-    //             idr.mixedChild.get.variablesForSmoothing)
-    //   println("visitImprovedDomainRecursion: after the transformation: " +
-    //             allVars)
-    //   println("visitImprovedDomainRecursion: replacing " +
-    //             idr.variablesForSmoothing + " with " + allVars)
-    // }
+    if (returnValue) {
+      println("visitImprovedDomainRecursion: the child is " +
+                idr.mixedChild.getClass.getSimpleName)
+      println("visitImprovedDomainRecursion: before the transformation: " +
+                idr.mixedChild.get.variablesForSmoothing)
+      println("visitImprovedDomainRecursion: after the transformation: " +
+                allVars)
+      println("visitImprovedDomainRecursion: replacing " +
+                idr.variablesForSmoothing + " with " + allVars)
+    }
 
     idr.variablesForSmoothing = allVars
     returnValue
@@ -220,9 +220,11 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
         _.reverseDomainSplitting(exists.domain, exists.subdomain) })
     val returnValue = exists.variablesForSmoothing != countedSubdomainParents
     exists.variablesForSmoothing = countedSubdomainParents
-    // println("exists/counting: " + returnValue + ". before: " +
-    //           exists.variablesForSmoothing + ", after: " +
-    //           countedSubdomainParents + ".")
+
+    println("exists/counting: " + returnValue + ". before: " +
+              exists.variablesForSmoothing + ", after: " +
+              countedSubdomainParents + ".")
+
     returnValue
   }
 
@@ -233,7 +235,9 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
         _.reverseDomainSplitting(cr.domain, cr.subdomain) })
     val returnValue = cr.variablesForSmoothing != countedSubdomainParents
     cr.variablesForSmoothing = countedSubdomainParents
-    // println("constraint removal: " + returnValue)
+
+    println("constraint removal: " + returnValue)
+
     returnValue
   }
 
@@ -244,7 +248,9 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
 
     val returnValue = forall.variablesForSmoothing != ungroundedChildVars
     forall.variablesForSmoothing = ungroundedChildVars
-    // println("forall / independent partial grounding: " + returnValue)
+
+    println("forall / independent partial grounding: " + returnValue)
+
     returnValue
   }
 
@@ -270,7 +276,9 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
     val bestOf3 = if (minVarsAll.size < bestOf2.size) minVarsAll else bestOf2
     val returnValue = ie.variablesForSmoothing != bestOf3
     ie.variablesForSmoothing = bestOf3
-    // println("inclusion-exclusion: " + returnValue)
+
+    println("inclusion-exclusion: " + returnValue)
+
     returnValue
   }
 
@@ -284,7 +292,9 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
     val thisVars = if (lVarsAll.size < rVarsAll.size) lVarsAll else rVarsAll
     val returnValue = or.variablesForSmoothing != thisVars
     or.variablesForSmoothing = thisVars
-    // println("or: " + returnValue)
+
+    println("or: " + returnValue)
+
     returnValue
   }
 
@@ -293,9 +303,9 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
       and.l.get.variablesForSmoothing union and.r.get.variablesForSmoothing
     val returnValue = and.variablesForSmoothing != thisVars
 
-    // println("and: " + returnValue + ". before: " + and.variablesForSmoothing +
-    //           ", after: " + thisVars + ". Hash codes equal: " +
-    //           (and.variablesForSmoothing.hashCode == thisVars.hashCode))
+    println("and: " + returnValue + ". before: " + and.variablesForSmoothing +
+              ", after: " + thisVars + ". Hash codes equal: " +
+              (and.variablesForSmoothing.hashCode == thisVars.hashCode))
     // for { x <- and.variablesForSmoothing;
     //       y <- thisVars} {
     //   println("and: is " + x + " equal to " + y + ": " + (x == y))
@@ -309,11 +319,11 @@ class SmoothingVariablesVisitor(val nodes: ListBuffer[NNFNode]) extends
     val returnValue = ref.variablesForSmoothing !=
       ref.nnfNode.get.variablesForSmoothing
 
-    // println("ref: " + returnValue + ". before: " + ref.variablesForSmoothing +
-    //           ", after: " + ref.nnfNode.get.variablesForSmoothing +
-    //           ". Hash codes equal: " +
-    //           (ref.variablesForSmoothing.hashCode ==
-    //              ref.nnfNode.get.variablesForSmoothing.hashCode))
+    println("ref: " + returnValue + ". before: " + ref.variablesForSmoothing +
+              ", after: " + ref.nnfNode.get.variablesForSmoothing +
+              ". Hash codes equal: " +
+              (ref.variablesForSmoothing.hashCode ==
+                 ref.nnfNode.get.variablesForSmoothing.hashCode))
     // for { x <- ref.variablesForSmoothing;
     //       y <- ref.nnfNode.get.variablesForSmoothing} {
     //   println("ref: is " + x + " equal to " + y + ": " + (x == y))

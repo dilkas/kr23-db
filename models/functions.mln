@@ -1,10 +1,10 @@
-a = {1,...,1}
-b = {1,...,1}
+a = {1,...,11}
+b = {1,...,11}
 
 p(a, b)
 
 p(x, y) ^ p(x, z) => y=z.
-forall x exist y p(x, y).
+//forall x exist y p(x, y).
 
 // injectivity
 p(w, y) ^ p(x, y) => w=x.

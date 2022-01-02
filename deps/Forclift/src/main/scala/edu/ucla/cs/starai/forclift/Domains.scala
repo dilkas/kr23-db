@@ -17,7 +17,7 @@
 package edu.ucla.cs.starai.forclift
 
 import edu.ucla.cs.starai.forclift.inference._
-import edu.ucla.cs.starai.forclift.nnf.ParametrisedNode
+import edu.ucla.cs.starai.forclift.nnf._
 import collection._
 
 sealed abstract class Domain {
@@ -41,6 +41,12 @@ sealed abstract class Domain {
   def constants(domainSizes: DomainSizes, excluded: Set[Constant]): List[Constant]
 
   def contains(c: Constant) = knownConstants.contains(c)
+
+  def isCausedByConstraintRemoval: Boolean = {
+    if (!isInstanceOf[SubDomain]) return false
+    val cause = asInstanceOf[SubDomain].cause
+    cause.isDefined && cause.get.isInstanceOf[ConstraintRemovalNode]
+  }
 
   def subdomain(
     superScript: String = "1",

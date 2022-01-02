@@ -50,10 +50,8 @@ abstract class IJCAI11Compiler(
     // otherwise do shannon decomposition to separate the conditions from the literals, to help with smoothing
     val isPositiveUnit = cnf.isSingleton && cnf.clauses.head.isPositiveUnitClause && cnf.clauses.head.isUnconditional
     if (isPositiveUnit) {
-      println("\npositive unit clause")
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, true)
-      println(cnf.toString + "\n")
       Some((Some(unitLeaf), List[CNF]()))
     } else None
   }
@@ -61,17 +59,13 @@ abstract class IJCAI11Compiler(
   def tryNegativeUnitClause(cnf: CNF) = {
     val isPositiveUnit = cnf.isSingleton && cnf.clauses.head.isNegativeUnitClause && cnf.clauses.head.isUnconditional
     if (isPositiveUnit) {
-      println("\nnegative unit clause")
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, false)
-      println(cnf.toString + "\n")
       Some((Some(unitLeaf), List[CNF]()))
     } else None
   }
 
   def tryContradictionClause(cnf: CNF) = {
-    // if (cnf.clauses.size == 1)
-    //   println("Ttesting if " + cnf.clauses.head + " is a contradiction")
     val isConditionalContradiction = cnf.clauses.size == 1 && cnf.clauses.head.isConditionalContradiction
     if (isConditionalContradiction) {
       println("\ncontradiction clause")
@@ -83,16 +77,8 @@ abstract class IJCAI11Compiler(
   }
 
   def tryPositiveUnitPropagation(cnf: CNF) = {
-    // println("Trying positive unit propagation on:")
-    // println(cnf)
     val unitClauseOption = cnf.clauses.find {
-      c => {
-        // println("Clause")
-        // println(c)
-        // println("is a positive unit clause: " + c.isPositiveUnitClause +
-        //           ", is unconditional: " + c.isUnconditional)
-        c.isPositiveUnitClause && c.isUnconditional
-      }
+      c => c.isPositiveUnitClause && c.isUnconditional
     }
     if (unitClauseOption.nonEmpty) {
       println("\nPositive unit propagation. Before:")

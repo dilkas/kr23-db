@@ -22,23 +22,23 @@ import scala.language.implicitConversions
  * This is a value class whose runtime type is Double -- no boxing/unboxing overhead
  */
 final class LogDouble(val v: Double) extends AnyVal with Ordered[LogDouble]{
-  
+
   @inline def isZero = v.isNegInfinity
   @inline def isOne = (v == 0)
   @inline def isNaN = v.isNaN
   @inline def isInfinite = v.isPosInfinity
   @inline def isNegInfinite = v.isNegInfinity
-  
+
   @inline def compare(that: LogDouble) =  if (this.v > that.v) 1 else if (this.v < that.v) -1 else 0
   // override Ordered for performance
   @inline override def < (that:LogDouble) = (this.v < that.v)
   @inline override def > (that:LogDouble) = (this.v > that.v)
   @inline override def <= (that:LogDouble) = (this.v <= that.v)
   @inline override def >= (that:LogDouble) = (this.v >= that.v)
-  
+
   // no equals or hashcode definitions allowed (defaults to proxy for v)
   // (see https://docs.google.com/document/d/10TQKgMiJTbVtkdRG53wsLYwWM2MkhtmdV25-NZvLLMA/edit?hl=en_US)
-  
+
   /**
    * http://lingpipe-blog.com/2009/06/25/log-sum-of-exponentials/
    * https://gist.github.com/scalala/Scalala/blob/master/src/main/scala/scalala/library/Numerics.scala
@@ -62,13 +62,19 @@ final class LogDouble(val v: Double) extends AnyVal with Ordered[LogDouble]{
     else if (this == that) LogDouble.zero
     else new LogDouble(this.v + math.log(1.0 - math.exp(that.v - this.v)))
   }
-  
+
   @inline def * (that: LogDouble): LogDouble = new LogDouble(this.v + that.v)
   @inline def / (that: LogDouble): LogDouble = new LogDouble(this.v - that.v)
-  
-  @inline def pow(exp: Int): LogDouble = new LogDouble(this.v * exp)
-  @inline def pow(exp: Long): LogDouble = new LogDouble(this.v * exp)
+
+  // A product of zero elements is always equal to one. This needs to be
+  // hardcoded. I'm not hardcoding it for the third function because I don't
+  // think it gets used in relevant situations.
+  @inline def pow(exp: Int): LogDouble = new LogDouble(if (exp == 0) 0
+                                                       else this.v * exp)
+  @inline def pow(exp: Long): LogDouble = new LogDouble(if (exp == 0) 0
+                                                        else this.v * exp)
   @inline def pow(exp: Double): LogDouble = new LogDouble(this.v * exp)
+
   @inline def root(exp: Int): LogDouble = {
     require(exp >= 0)
     new LogDouble(this.v / exp)
@@ -91,27 +97,27 @@ final class LogDouble(val v: Double) extends AnyVal with Ordered[LogDouble]{
   @inline def toFloat = math.exp(v).toFloat
   @inline def toDouble = math.exp(v)
   @inline def toSignDouble = new SignLogDouble(true,this)
-  
+
 }
 
 object LogDouble{
-  
+
    implicit def doubleToLogDouble(d: Double): LogDouble = {
      require(d >= 0) // math.log does not throw an exception
      new LogDouble(math.log(d))
    }
-   
+
    def fromLog(d: Double) = new LogDouble(d)
-   
+
 	// not safe! has to be manually
 	//   implicit def signLogDoubleToLogDouble(d: SignLogDouble): LogDouble = {
 	//     d.toLogDouble
    	//   }
-  
+
    val zero: LogDouble = 0
    val one: LogDouble = 1
    val NaN: LogDouble = new LogDouble(Double.NaN)
-   
+
 }
 
 
@@ -122,17 +128,17 @@ object LogDouble{
 final class SignLogDouble(_pos: Boolean, val ld: LogDouble) extends Ordered[SignLogDouble]{
 
   // be careful adding @inline in this class: can cause compiler to crash
-  
+
   // set -0 to 0
   val pos = (_pos || ld.isZero || ld.isNaN)
-  def neg = !pos  
-  
+  def neg = !pos
+
   def isZero = ld.isZero
   def isOne = (pos && ld.isOne)
   def isNaN = ld.isNaN
   def isInfinite = ld.isInfinite
-  
-  
+
+
   def compare(that: SignLogDouble) =  {
     if(this.pos && that.pos){
       if (this.ld > that.ld) 1 else if (this.ld < that.ld) -1 else 0
@@ -144,12 +150,12 @@ final class SignLogDouble(_pos: Boolean, val ld: LogDouble) extends Ordered[Sign
        if (this.ld > that.ld) -1 else if (this.ld < that.ld) 1 else 0
     }
   }
-  
+
   override def equals(other: Any) = other match {
  	   case that: SignLogDouble => (this.pos == that.pos) && (this.ld == that.ld)
  	   case _ => false
   }
-  
+
   override def hashCode = pos.hashCode * 47 + ld.hashCode
 
   def unary_- = new SignLogDouble(neg,ld)
@@ -174,35 +180,35 @@ final class SignLogDouble(_pos: Boolean, val ld: LogDouble) extends Ordered[Sign
        new SignLogDouble(false, this.ld + that.ld)
     }
   }
-  
+
   def - (that: SignLogDouble): SignLogDouble = {
     this + (-that)
   }
-  
+
   def * (that: SignLogDouble): SignLogDouble = {
     new SignLogDouble((this.pos == that.pos),(this.ld * that.ld))
   }
   def / (that: SignLogDouble): SignLogDouble = {
     new SignLogDouble((this.pos == that.pos),(this.ld / that.ld))
   }
-  
+
   def pow(exp: Int): SignLogDouble = {
     val newSign = (pos || (exp%2 == 0)) // positive number or even power
     new SignLogDouble(newSign,ld.pow(exp))
   }
-  
+
   def pow(exp: Long): SignLogDouble = {
     require(exp >= 0)
     val newSign = (pos || (exp%2 == 0)) // positive number or even power
     new SignLogDouble(newSign,ld.pow(exp))
   }
-  
+
   def root(exp: Long): SignLogDouble = {
     require(exp >= 0)
     require(this.pos)
     new SignLogDouble(true,ld.root(exp))
   }
-  
+
   def root(exp: Double): SignLogDouble = {
     require(exp >= 0)
     require(this.pos)
@@ -217,38 +223,38 @@ final class SignLogDouble(_pos: Boolean, val ld: LogDouble) extends Ordered[Sign
       new SignLogDouble(pos,ld.log)
     }
   }
-  
+
   def logToDouble: Double = {
     require(pos, s"Expected a positive number, got $ld")
     ld.logToDouble
   }
-  
+
   def exp: SignLogDouble = {
-    if(pos) new SignLogDouble(true,ld.exp) 
+    if(pos) new SignLogDouble(true,ld.exp)
     else (new SignLogDouble(true,ld.exp.inv))
   }
 
   override def toString = (if(pos) "" else "-") + ld
   def toDouble = if(pos) ld.toDouble else -ld.toDouble
   def toFloat = if(pos) ld.toFloat else -ld.toFloat
-  
+
 }
 
 object SignLogDouble{
-  
+
   import LogDouble._
-  
+
    implicit  def doubleToSignLogDouble(d: Double): SignLogDouble = {
      if(d<0) new SignLogDouble(false, -d)
      else new SignLogDouble(true, d)
    }
-  
+
    implicit def logDoubleToSignLogDouble(ld: LogDouble): SignLogDouble = {
      new SignLogDouble(true, ld)
    }
-  
+
    def fromLog(d: Double) = new SignLogDouble(true, LogDouble.fromLog(d))
-   
+
    val zero: SignLogDouble = 0
    val one: SignLogDouble = 1
    val NaN: SignLogDouble = new SignLogDouble(true, LogDouble.NaN)
@@ -258,7 +264,7 @@ object SignLogDouble{
 object KLD {
 
   import SignLogDouble._
-  
+
   def asymmetricKld(p: SignLogDouble, q: SignLogDouble): SignLogDouble = {
     if (p.isZero) {
       zero
@@ -275,7 +281,7 @@ object KLD {
     val r2 = asymmetricKld(q, p)
     (r1 + r2)
   }
-  
+
   def symmetricKld(p: SignLogDouble, q: SignLogDouble, r: SignLogDouble): SignLogDouble = {
     val r1 = symmetricKld(p, q)
     val r2 = symmetricKld(q, r)

@@ -36,7 +36,7 @@ class GreedyCompiler(sizeHint: Compiler.SizeHints =
           nnf = compile(successors.head)
         } else {
           nnf = List(node.get)
-          // the important bit
+          // TODO: is this line still necessary?
           compiler.updateCache(cnf, nnf.head)
           nnf.head.update(successors.map {
                             successor => Some(compile(successor).head)

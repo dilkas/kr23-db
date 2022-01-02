@@ -759,32 +759,26 @@ class PositiveUnitClause(
 
   /** Check if the predicates match, and each position is mapped to the same
     domain. In particular, we do not check if variables are the same. */
-  override def equals(that: Any): Boolean = that match {
-    case that: PositiveUnitClause => atom.samePredicates(that.atom) &&
-        constrs == that.constrs &&
-        atom.domains(constrs) == that.atom.domains(that.constrs)
-    case _ => false
-  }
-  // override def equals(that: Any): Boolean = {
-  //   println("PositiveUnitClause::equals is called")
-  //   super.equals(that)
+  // override def equals(that: Any): Boolean = that match {
+  //   case that: PositiveUnitClause => {
+  //     println("equals: comparing " + this + " to " + that)
+  //     println("equals: same predicates: " + atom.samePredicates(that.atom))
+  //     println("equals: same constraints: " + (constrs == that.constrs))
+  //     println("equals: same domains: " +
+  //               (atom.domains(constrs) == that.atom.domains(that.constrs)))
+
+  //     atom.samePredicates(that.atom) &&
+  //       constrs == that.constrs &&
+  //       atom.domains(constrs) == that.atom.domains(that.constrs)
+  //   }
+  //   case _ => false
   // }
-
-  override def hashCode: Int = {
-    // println("The hashcode of " + this + " consists of " +
-    //           atom.predicate.hashCode + " and " + constrs.hashCode)
-    // (atom.predicate, constrs).hashCode
-
-    // val prime = 31
-    // var result = 1
-    // result = prime * result + 1
-    // result = prime * result
-    // result = prime * result + constrs.hashCode
-    // // println("The hashcode of " + this + " is based on " + constrs.hashCode)
-    // result
-
-    super.hashCode
+  override def equals(that: Any): Boolean = {
+    // println("PositiveUnitClause::equals is called")
+    super.equals(that)
   }
+
+  override def hashCode: Int = super.hashCode
 
   def equivalent(other: PositiveUnitClause) = {
     val equivalent = ((this eq other) || (!this.independent(other) &&

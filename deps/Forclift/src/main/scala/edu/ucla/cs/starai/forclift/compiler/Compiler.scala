@@ -83,6 +83,8 @@ trait LiftedCompiler extends AbstractCompiler {
 
 }
 
+/** nnfCache maps hash codes of formulas to pairs of formulas and their circuit
+  nodes. */
 abstract class AbstractCompiler(
   val nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
     new mutable.HashMap[Int, List[(CNF, NNFNode)]]) extends Compiler {
@@ -98,8 +100,10 @@ abstract class AbstractCompiler(
     case (key, value) => {
       val newValue = value.map {
         case (formula, node) => {
-          // println(NNFNode.cloningCache.contains(node))
-          // println(NNFNode.cloningCache.size)
+          // println("Does cloningCache of size " + NNFNode.cloningCache.size +
+          //           " contain the " + node.getClass.getSimpleName + " " +
+          //           node.hashCode + ": " + NNFNode.cloningCache.contains(node))
+
           (formula, NNFNode.cloningCache(node))
         }
       }
@@ -111,8 +115,17 @@ abstract class AbstractCompiler(
 
   def updateCache(cnf: CNF, nnf: NNFNode) = {
     assume(nnf != null)
+
+    // println("updateCache: trying to add " + nnf.getClass.getSimpleName + " " +
+    //           nnf.hashCode)
+    // println("updateCache: hash code already exists: " +
+    //           nnfCache.contains(cnf.hashCode))
+    // println("updateCache: a cache entry for the same node exists: " +
+    //           (nnfCache.contains(cnf.hashCode) && nnfCache(cnf.hashCode).exists
+    //              { case (_, node) => node == nnf }))
+
     if (!nnfCache.contains(cnf.hashCode) || !nnfCache(cnf.hashCode).exists {
-          case (theory, _) => theory == cnf } )
+          case (_, node) => node == nnf } )
       nnfCache(cnf.hashCode) = (cnf, nnf) ::
         nnfCache.getOrElse(cnf.hashCode, List[(CNF, NNFNode)]())
   }
@@ -122,22 +135,33 @@ abstract class AbstractCompiler(
     // println(cnf)
     // println("tryCache: looking for " + cnf.hashCode + " among " +
     //           nnfCache.keySet.toList.sorted)
+
     if (!nnfCache.contains(cnf.hashCode)) {
       // println("tryCache: not found")
       None
     } else {
-      // println("tryCache: found")
-      nnfCache(cnf.hashCode).flatMap { case (theory, circuit) =>
-        CNF.identifyRecursion(cnf, theory) match {
-          case Some(recursion) => Some((circuit, recursion))
-          case None => None
-        } }.headOption match {
+      // println("tryCache: found. The bucket has " + nnfCache(cnf.hashCode).size +
+      //           " elements.")
+      nnfCache(cnf.hashCode).flatMap {
+        case (theory, circuit) => {
+          // println("tryCache: calling identifyRecursion on:")
+          // println(cnf)
+          // println("tryCache: AND")
+          // println(theory)
+
+          CNF.identifyRecursion(cnf, theory) match {
+            case Some(recursion) => Some((circuit, recursion))
+            case None => None
+          }} }.headOption match {
         case Some(results) => {
-          println("\nCache hit.")
-          println("Before:")
-          println(cnf)
-          println("After:")
-          println(results._1.cnf + "\n")
+          // println("\nCache hit.")
+          // println("Before:")
+          // println(cnf)
+          // println("After:")
+          // println(results._1.cnf)
+          // println("Domain map:")
+          // println(results._2)
+
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
           updateCache(cnf, node)
           // println("tryCache finished")
@@ -159,13 +183,19 @@ abstract class AbstractCompiler(
 
   def applyIthRule(i: Int, cnf: CNF): InferenceResult = nonSinkRules(i)(cnf)
 
-  // The compiler stays the same because the search tree doesn't branch out
   def applySinkRules(cnf: CNF): PartialCircuit = {
+    // println("applySinkRules: started on:")
+    // println(cnf)
     var rules = sinkRules
     while (rules.nonEmpty) {
+      // println("applySinkRules: attempting a new rule")
       rules.head(cnf) match {
-        case None => rules = rules.tail
+        case None => {
+          rules = rules.tail
+          // println("applySinkRules: the rule doesn't apply here")
+        }
         case Some((node, successors)) => {
+          // println("applySinkRules: successfully applied a rule")
           node match {
             case None => {
               require(successors.size == 1)
@@ -173,15 +203,36 @@ abstract class AbstractCompiler(
             }
             case Some(nnf) => {
               updateCache(cnf, nnf)
-              return new PartialCircuit(
-                this, Some(nnf), successors).
-                applySinkRulesToAllFormulas(List[CNF]())
+              val newSuccessors = applySinkRulesToAllFormulas(nnf, successors)
+              return new PartialCircuit(this, Some(nnf), newSuccessors)
             }
           }
         }
       }
     }
+    // println("applySinkRules: finished")
     new PartialCircuit(this, None, List(cnf))
+  }
+
+  /** Updates the circuit and returns a list of new formulas */
+  def applySinkRulesToAllFormulas(node: NNFNode,
+                                  formulas: List[CNF]): List[CNF] = {
+    require(formulas.size == node.directSuccessors.count(_.isEmpty))
+    val newFormulas = formulas.map { applySinkRules(_) } .flatMap {
+      partialCircuit => {
+        if (partialCircuit.circuit.isDefined) {
+
+          // println("applySinkRulesToAllFormulas: adding " +
+          //           partialCircuit.circuit.get.getClass.getSimpleName +
+          //           " as a direct successors of " + node.getClass.getSimpleName)
+
+          require(node.updateFirst(partialCircuit.circuit.get))
+        }
+        partialCircuit.formulas
+      }
+    }
+    // println("applySinkRulesToAllFormulas: finished")
+    newFormulas
   }
 
   var nbCompilationSteps = 0;

@@ -334,9 +334,13 @@ object CNF {
 
     if (newTheory.size != oldTheory.size ||
           newTheory.hashCode != oldTheory.hashCode) {
+      // println("identifyRecursion: finished 1")
       None
     } else if (oldTheory.isEmpty) {
-      postprocess(partialMap)
+      // println("identifyRecursion: started postprocessing")
+      val p = postprocess(partialMap)
+      // println("identifyRecursion: finished postprocessing")
+      p
     } else {
       for (clause1 <- oldTheory) {
         val updatedOldTheory = new CNF((oldTheory - clause1).toList)
@@ -370,6 +374,7 @@ object CNF {
           }
         }
       }
+      // println("identifyRecursion: finished 2")
       None
     }
   }

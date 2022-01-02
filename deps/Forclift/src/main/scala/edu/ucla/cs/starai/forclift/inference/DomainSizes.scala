@@ -235,11 +235,12 @@ class DomainSizes(
 
   def shrink(domainMap: CNF.DomainMap,
              parameterMap: WmcVisitor.ParameterMap): DomainSizes = {
+    // println("\n==========")
     // println("Shrinking domainMap:")
     // println(domainMap)
     // println("Shrinking parameterMap (of size " + parameterMap.size + "):")
     // println(parameterMap)
-    // println("==========")
+    // println("==========\n")
 
     val newDomainSizes = map {
       case (domain, _) => {

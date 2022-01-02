@@ -69,47 +69,67 @@ abstract class MyCompiler(
   }
 
   def tryConstraintRemoval(cnf: CNF): InferenceResult = {
-    println("\nConstraint removal. Before:")
-    println(cnf)
     for (originalClause <- cnf) {
       for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
         val originalDomain = originalClause.constrs.domainFor(variable)
-        for (term <- terms) {
-          term match {
-            case constant: Constant => {
-              // We have a "v != c" constraint. Does it apply to all variables
-              // from the same domain across all clauses? And does c occur in atoms?
-              // I.e., for each clause, for each variable, either domain is
-              // different or there is the same inequality constraint.
-              if (cnf.forall { clause => clause.atoms.forall { atom: Atom =>
-                                !atom.constants.contains(constant) } } &&
-                    cnf.forall { clause => clause.allVariables.forall {
-                                  variable: Var =>
-                                  clause.constrs.domainFor(variable) !=
-                                    originalDomain ||
-                                    clause.constrs.ineqConstrs(variable).
-                                    contains(constant) } }) {
-                val newDomain = originalDomain.subdomain(excludedConstants =
-                                                           Set(constant))
-                val newCnf = CNF(cnf.map { clause =>
-                                   clause.removeConstraints(originalDomain,
-                                                            constant).
-                                     replaceDomains(originalDomain,
-                                                    newDomain) }.toList: _*)
-                val node = new ConstraintRemovalNode(cnf, None, originalDomain,
-                                                     newDomain)
-                newDomain.setCause(node)
-                println("After:")
-                println(newCnf + "\n")
-                return Some((Some(node), List(newCnf)))
+        // Recursion that subtracts more than 1 from a domain size gets a bit
+        // complicated with multiple base cases, so we don't currently support
+        // it.
+        if (!originalDomain.isCausedByConstraintRemoval) {
+          for (term <- terms) {
+            term match {
+              case constant: Constant => {
+                // We have a "v != c" constraint. Does it apply to all
+                // variables from the same domain across all clauses? And does
+                // c occur in atoms? I.e., for each clause, for each variable,
+                // either domain is different or there is the same inequality
+                // constraint.
+                if (cnf.forall { clause => clause.atoms.forall { atom: Atom =>
+                                  !atom.constants.contains(constant) } } &&
+                      cnf.forall { clause => clause.allVariables.forall {
+                                    variable: Var =>
+                                    clause.constrs.domainFor(variable) !=
+                                      originalDomain ||
+                                      clause.constrs.ineqConstrs(variable).
+                                      contains(constant) } }) {
+                  val newIndex = (originalDomain.nbSplits + 1).toString
+                  val newDomain = originalDomain.subdomain(
+                    newIndex, newIndex, excludedConstants = Set(constant))
+                  val newCnf = CNF(cnf.map { clause =>
+                                     clause.removeConstraints(originalDomain,
+                                                              constant).
+                                       replaceDomains(originalDomain,
+                                                      newDomain) }.toList: _*)
+                  val node = new ConstraintRemovalNode(
+                    cnf, None, originalDomain, newDomain)
+                  newDomain.setCause(node)
+
+                  println("\nConstraint removal. Before:")
+                  println(cnf)
+                  println("Constraint removal. After:")
+                  println(newCnf + "\n")
+
+                  return Some((Some(node), List(newCnf)))
+                }
               }
+              case _ => {}
             }
-            case _ => {}
           }
         }
       }
     }
     None
+  }
+
+  def tryContradictionFilter(cnf: CNF) = {
+    val contradictionClauseOption = cnf.clauses.find {
+      c => c.isConditionalContradiction && c.isUnconditional
+    }
+    if (contradictionClauseOption.nonEmpty) {
+      Some((None, List(new CNF(List(contradictionClauseOption.get)))))
+    } else {
+      None
+    }
   }
 
   override def sinkRules: List[InferenceRule] = List(
@@ -118,15 +138,17 @@ abstract class MyCompiler(
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
+    tryContradictionFilter,
     tryTautologyClauseElimination,
-    //tryRemoveDoubleClauses, // revival
+    tryRemoveDoubleClauses,
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation,
-    tryConstraintRemoval)
+    tryConstraintRemoval,
+    tryIndependentSubtheories, // +1
+    tryIndependentSubtheoriesAfterShattering
+)
 
   override def nonSinkRules: List[InferenceRule] = List(
-    tryIndependentSubtheories, // +1
-    tryIndependentSubtheoriesAfterShattering, // +1
     tryGroundDecomposition, // +1
     tryInclusionExclusion, // +2
     tryShatter, // 0
@@ -141,10 +163,12 @@ abstract class MyCompiler(
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
-    //tryRemoveDoubleClauses, // revival
+    tryContradictionFilter, // new
+    tryTautologyClauseElimination,
+    tryRemoveDoubleClauses, // revival
     tryPositiveUnitPropagation,
     tryNegativeUnitPropagation,
-    tryTautologyClauseElimination,
+    tryConstraintRemoval, // new
     tryIndependentSubtheories,
     tryIndependentSubtheoriesAfterShattering,
     tryGroundDecomposition,
@@ -152,7 +176,6 @@ abstract class MyCompiler(
     tryShatter,
     tryIndependentPartialGrounding, // O(log(n))
     tryCounting, // O(n)
-    tryConstraintRemoval, // new
     tryImprovedDomainRecursion // new
   )
 
