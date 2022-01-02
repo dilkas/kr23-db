@@ -15,6 +15,14 @@ class PartialCircuit(val compiler: AbstractCompiler,
     new PartialCircuit(newCompiler, newCircuit, formulas)
   }
 
+  def add(node: NNFNode, newFormulas: List[CNF]): PartialCircuit =
+    if (circuit.isDefined) {
+      require(circuit.get.addNode(node))
+      new PartialCircuit(compiler, circuit, newFormulas ++ formulas.tail)
+    } else {
+      new PartialCircuit(compiler, Some(node), newFormulas ++ formulas.tail)
+    }
+
   // Make copies of the partial circuit as needed, add the resulting
   // subcircuits to them, and return full partial circuits
   def applyAllRules: Stream[PartialCircuit] = {
@@ -41,10 +49,7 @@ class PartialCircuit(val compiler: AbstractCompiler,
                   applySinkRulesToAllFormulas(node, successors)
                 println("applyAllRules is calling addNode to add " +
                           node.getClass.getSimpleName)
-                require(circuitCopy.circuit.get.addNode(node))
-                Some(new PartialCircuit(circuitCopy.compiler,
-                                        circuitCopy.circuit, newSuccessors ++
-                                          circuitCopy.formulas.tail))
+                Some(circuitCopy.add(node, newSuccessors))
               }
             }
           }

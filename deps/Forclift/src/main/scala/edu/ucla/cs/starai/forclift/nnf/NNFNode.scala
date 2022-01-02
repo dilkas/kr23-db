@@ -86,21 +86,21 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
 
   def useCache(cache: mutable.HashMap[NNFNode, NNFNode]): NNFNode =
     if (cache.contains(this)) {
-      println("useCache: found " + getClass.getSimpleName + " in the cache")
+      // println("useCache: found " + getClass.getSimpleName + " in the cache")
       cache(this)
     } else {
       val newNode: NNFNode = simpleClone
       cache(this) = newNode
 
-      println("useCache: constructing a copy of " + getClass.getSimpleName +
-                " " + hashCode + ": " + newNode.hashCode)
-      println("useCache: there are " + directSuccessors.size +
-                " direct successors")
+      // println("useCache: constructing a copy of " + getClass.getSimpleName +
+      //           " " + hashCode + ": " + newNode.hashCode)
+      // println("useCache: there are " + directSuccessors.size +
+      //           " direct successors")
 
       newNode.update(
         directSuccessors.map { _.map { n => n.useCache(cache) } } )
-      println("useCache: finished the construction of " +
-                getClass.getSimpleName + " " + hashCode)
+      // println("useCache: finished the construction of " +
+      //           getClass.getSimpleName + " " + hashCode)
       newNode
     }
 
@@ -129,20 +129,20 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
   def addNode(newNode: NNFNode): Boolean = if (isInstanceOf[Ref]) {
     false
   } else {
-    println("addNode: trying to add " + newNode.getClass.getSimpleName +
-              " below " + getClass.getSimpleName)
+    // println("addNode: trying to add " + newNode.getClass.getSimpleName +
+    //           " below " + getClass.getSimpleName)
     directSuccessors.foreach {
       case None => {
         updateFirst(newNode)
-        println("addNode: added as a direct successor of " +
-                  getClass.getSimpleName)
+        // println("addNode: added as a direct successor of " +
+        //           getClass.getSimpleName)
         return true
       }
       case Some(node) => {
         if (node.addNode(newNode)) return true
       }
     }
-    println("addNode: giving up on " + getClass.getSimpleName)
+    // println("addNode: giving up on " + getClass.getSimpleName)
     false
   }
 
