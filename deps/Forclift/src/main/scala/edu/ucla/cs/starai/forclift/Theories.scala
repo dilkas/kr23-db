@@ -255,13 +255,23 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
 object CNF {
 
-  type DomainMap = Map[Domain, (Domain, List[(ParametrisedNode, Boolean)])]
-
   def apply(clauses: Clause*) = new CNF(clauses.toList)
+
+  /** A history is a list of changes. Each change is a pair of: 1) a circuit
+    node n that created the domain, 2) and a Boolean that indicates which of
+    the two domains (introduced by n) is the relevant one ('true' means that
+    it's the secondary domain, i.e., the complement of the main one). */
+  type History = List[(ParametrisedNode, Boolean)]
+
+  /** This type describes the relationship between the domains of both (i.e.,
+    the new and the old) formulas. Each domain d of the new formula is mapped
+    to a domain d' of the old formula and a history that describe how d' became
+    d.  */
+  type DomainMap = Map[Domain, (Domain, History)]
 
   // The first element of each tuple is the domain to be compared, the second
   // element is its 'origin' domain, and the third element is its 'history'.
-  type State = Iterable[(Domain, Domain, List[(ParametrisedNode, Boolean)])]
+  type State = Iterable[(Domain, Domain, History)]
 
   final case class DomainNotMatchedException(
     private val message: String = "",
@@ -271,7 +281,7 @@ object CNF {
   def update(state: State): State = {
     val newStates = state.flatMap {
       case (domain: Domain, origin: Domain,
-            history: List[(ParametrisedNode, Boolean)]) =>
+            history: History) =>
         if (domain.isInstanceOf[SubDomain]) {
           val newHistory = (domain.asInstanceOf[SubDomain].getCause,
                             domain.isInstanceOf[ComplementDomain])
@@ -285,7 +295,7 @@ object CNF {
   }
 
   def findDomain(domain: Domain)(state: State)
-      : Option[(Domain, List[(ParametrisedNode, Boolean)])] =
+      : Option[(Domain, History)] =
     if (state.isEmpty) {
       throw DomainNotMatchedException()
     } else {
