@@ -47,8 +47,8 @@ trait WmcVisitor {
 object WmcVisitor {
 
   // the 'false' option is mostly for debugging purposes unless combined with
-  // numThreads = 1
-  val Parallel = true
+  // numSolutions = 1
+  val Parallel = false
 
   val Verbose = false
 

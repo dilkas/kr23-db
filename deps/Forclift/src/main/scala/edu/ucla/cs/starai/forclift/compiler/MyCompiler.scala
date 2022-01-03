@@ -24,7 +24,7 @@ abstract class MyCompiler(
     cnf.clauses.find { !_.literalVariables.isEmpty } match {
       case None => None
       case Some(suitableClause) => {
-        println("Improved domain recursion")
+        log("Improved domain recursion")
         val domain = suitableClause.constrs.domainFor(
           suitableClause.literalVariables.head)
         val ineqs = suitableClause.constrs.ineqConstrs(
@@ -56,13 +56,13 @@ abstract class MyCompiler(
           }
         }
         val mixedCNF = new CNF(mixedClauses)
-        println("Before:")
-        println(mixedCNF)
+        log("Before:")
+        log(mixedCNF.toString)
         val msg = "Improved domain recursion on $" + domain + "$"
         val node = new ImprovedDomainRecursionNode(cnf, None, constant, ineqs,
                                                    domain, msg)
-        println("After:")
-        println(cnf + "\n")
+        log("After:")
+        log(cnf + "\n")
         Some((Some(node), List(mixedCNF)))
       }
     }
@@ -104,10 +104,10 @@ abstract class MyCompiler(
                     cnf, None, originalDomain, newDomain)
                   newDomain.setCause(node)
 
-                  println("\nConstraint removal. Before:")
-                  println(cnf)
-                  println("Constraint removal. After:")
-                  println(newCnf + "\n")
+                  log("\nConstraint removal. Before:")
+                  log(cnf.toString)
+                  log("Constraint removal. After:")
+                  log(newCnf + "\n")
 
                   return Some((Some(node), List(newCnf)))
                 }

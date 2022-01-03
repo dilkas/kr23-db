@@ -1,6 +1,7 @@
 package edu.ucla.cs.starai.forclift.compiler
 
-import scala.collection.immutable.Queue
+import scala.collection.mutable.PriorityQueue
+import scala.collection.mutable.Queue
 
 import edu.ucla.cs.starai.forclift._
 import edu.ucla.cs.starai.forclift.inference._
@@ -14,7 +15,9 @@ object BreadthCompiler {
   val builderWithGrounding: Compiler.Builder =
     (sizeHint: Compiler.SizeHints) => new BreadthCompiler(sizeHint, true)
 
-  val numSolutions = 1
+  // Two limits on the extensiveness of search
+  val NumSolutions = 10
+  val MaxDepth = 4
 
 }
 
@@ -30,16 +33,10 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
   var circuits: List[NNFNode] = List[NNFNode]()
 
   override def foundSolution(circuit: NNFNode): Unit = {
-    println("FOUND A SOLUTION")
     circuits = circuit :: circuits
-    if (circuits.size >= BreadthCompiler.numSolutions)
+    println("FOUND " + circuits.size + " SOLUTION(S)")
+    if (circuits.size >= BreadthCompiler.NumSolutions)
       throw new EndSearchException
-  }
-
-  def breadthFirstTraverse(q: Queue[PartialCircuit]): Unit = if (!q.isEmpty) {
-    println("Breadth first search is running on a queue of size " + q.size)
-    val (partialCircuit, tail) = q.dequeue
-    breadthFirstTraverse(tail ++ partialCircuit.nextCircuits(this))
   }
 
   def compilerBuilder = if (grounding) {
@@ -48,12 +45,22 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     new MyLiftedCompiler(sizeHint)
   }
 
-  /** A simple BFS mainly for testing purposes */
+  /** A simple BFS */
   override def compile(cnf: CNF): List[NNFNode] = {
     val compiler = compilerBuilder
-    val initialQueue = Queue(compiler.applySinkRules(cnf))
+    val q = Queue(compiler.applySinkRules(cnf))
+    // val q = PriorityQueue(compiler.applySinkRules(cnf))(Ordering.by(_.priority))
+    var depth = 0
     try {
-      breadthFirstTraverse(initialQueue)
+      while (depth <= BreadthCompiler.MaxDepth) {
+        val partialCircuit = q.dequeue
+        if (partialCircuit.depth > depth) {
+          depth = partialCircuit.depth
+          println("depth: " + partialCircuit.depth)
+        }
+        if (depth <= BreadthCompiler.MaxDepth)
+          q ++= partialCircuit.nextCircuits(this)
+      }
     } catch {
       case e: EndSearchException => {}
     }

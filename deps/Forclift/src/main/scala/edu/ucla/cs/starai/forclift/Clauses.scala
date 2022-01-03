@@ -218,7 +218,8 @@ class Clause(
           reifiedOriginalMGU.find(_._2.contains(variable)).map { _._1 }.getOrElse {
             println(variable)
             println(reifiedOriginalMGU)
-            throw new IllegalStateException
+            variable // FIXME: this may not be the right thing to do here
+            // throw new IllegalStateException
             //                      // do not assume every var is in the atoms, there might be constraints on other variables!
             //                      variable
           }

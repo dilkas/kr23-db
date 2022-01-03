@@ -18,6 +18,8 @@ package edu.ucla.cs.starai.forclift.compiler
 
 import collection._
 
+import java.util.concurrent._
+
 import edu.ucla.cs.starai.forclift.nnf._
 import edu.ucla.cs.starai.forclift._
 
@@ -95,6 +97,11 @@ abstract class AbstractCompiler(
   // theories that will be compiled into direct successors of the returned node.
   type InferenceResult = Option[(Option[NNFNode], List[CNF])]
   type InferenceRule = CNF => InferenceResult
+
+  // val Timeout = 1 // s, for tryCache
+  val Verbose = false
+
+  def log(s: String) = if (Verbose) println(s)
 
   def cloneCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] = nnfCache.map {
     case (key, value) => {
@@ -174,6 +181,20 @@ abstract class AbstractCompiler(
       }
     }
   }
+
+  /* With support for timeout! */
+  // def tryCache(cnf: CNF): InferenceResult = {
+  //   val task = new FutureTask(new Callable[InferenceResult]() {
+  //     def call() = tryCache2(cnf)
+  //   })
+
+  //   try {
+  //     new Thread(task).start()
+  //     task.get(Timeout, TimeUnit.SECONDS)
+  //   } catch {
+  //     case _: TimeoutException => None
+  //   }
+  // }
 
   // NOTE: we assume that inferenceRules = sinkRules ++ nonSinkRules (possibly
   // in a different order)
