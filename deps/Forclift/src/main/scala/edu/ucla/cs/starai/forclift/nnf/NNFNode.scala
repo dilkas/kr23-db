@@ -123,8 +123,7 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
 
   def updateFirst(child: NNFNode): Boolean = false
 
-  /** Modify the circuit to insert newNode at the first empty spot according to
-    inorder traversal. Ignoring Ref nodes turns the circuit into a tree. */
+  /** Modify the circuit to insert newNode at the first empty spot. Ignoring Ref nodes turns the circuit into a tree. */
   def addNode(newNode: NNFNode): Boolean = if (isInstanceOf[Ref]) {
     false
   } else {
