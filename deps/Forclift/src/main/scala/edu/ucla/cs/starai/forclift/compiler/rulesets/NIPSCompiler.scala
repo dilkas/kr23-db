@@ -96,12 +96,8 @@ abstract class NIPS11Compiler(
     } else None
   }
 
-  override def nonSinkRules: List[InferenceRule] = {
-    super.nonSinkRules ::: List[InferenceRule](tryDomainRecursion)
-  }
-
-  override def inferenceRules: List[InferenceRule] = {
-    super.inferenceRules ::: List[InferenceRule](tryDomainRecursion)
+  override def nonGreedyRules: List[InferenceRule] = {
+    super.nonGreedyRules ::: List[InferenceRule](tryDomainRecursion)
   }
 
 }
@@ -111,8 +107,8 @@ class NIPS11LiftedCompiler(
   nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends NIPS11Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
-  def myClone: NIPS11LiftedCompiler =
-    new NIPS11LiftedCompiler(sizeHint, cloneCache)
+  def myClone(): NIPS11LiftedCompiler =
+    new NIPS11LiftedCompiler(sizeHint, cloneCache())
 
 }
 
@@ -121,7 +117,7 @@ class NIPS11GroundingCompiler(
   nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends NIPS11Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
-  def myClone: NIPS11GroundingCompiler =
-    new NIPS11GroundingCompiler(sizeHint, cloneCache)
+  def myClone(): NIPS11GroundingCompiler =
+    new NIPS11GroundingCompiler(sizeHint, cloneCache())
 
 }

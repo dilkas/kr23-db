@@ -440,41 +440,25 @@ abstract class IJCAI11Compiler(
     } else None
   }
 
-  def sinkRules: List[InferenceRule] = List(
+  def greedyRules: List[InferenceRule] = List(
     tryCache,
     tryTautology,
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
     tryPositiveUnitPropagation,
-    tryNegativeUnitPropagation)
+    tryNegativeUnitPropagation
+  )
 
-  def nonSinkRules: List[InferenceRule] = List(
+  def nonGreedyRules: List[InferenceRule] = List(
     tryIndependentSubtheories,
     tryIndependentSubtheoriesAfterShattering,
     tryGroundDecomposition,
     tryInclusionExclusion,
     tryShatter,
     tryIndependentPartialGrounding,
-    tryCounting)
-
-  def inferenceRules: List[InferenceRule] = List(
-    tryCache,
-    tryTautology,
-    tryContradictionClause,
-    tryPositiveUnitClause,
-    tryNegativeUnitClause,
-    tryPositiveUnitPropagation,
-    tryNegativeUnitPropagation,
-    //			tryRemoveDoubleClauses,
-    tryIndependentSubtheories,
-    tryIndependentSubtheoriesAfterShattering,
-    //			tryGroundDecompositionCountShattered,
-    tryGroundDecomposition,
-    tryInclusionExclusion,
-    tryShatter,
-    tryIndependentPartialGrounding,
-    tryCounting)
+    tryCounting
+  )
 
 }
 
@@ -483,17 +467,17 @@ class IJCAI11LiftedCompiler(
   nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends IJCAI11Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
-  def myClone: IJCAI11LiftedCompiler =
-    new IJCAI11LiftedCompiler(sizeHint, cloneCache)
+  def myClone(): IJCAI11LiftedCompiler =
+    new IJCAI11LiftedCompiler(sizeHint, cloneCache())
 
 }
 
 class IJCAI11GroundingCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: Compiler.Buckets = Compiler.Buckets
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends IJCAI11Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
-  def myClone: IJCAI11GroundingCompiler =
-    new IJCAI11GroundingCompiler(sizeHint, cloneCache)
+  def myClone(): IJCAI11GroundingCompiler =
+    new IJCAI11GroundingCompiler(sizeHint, cloneCache())
 
 }

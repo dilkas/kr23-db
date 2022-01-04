@@ -1,7 +1,6 @@
 package edu.ucla.cs.starai.forclift.compiler
 
-import scala.collection.mutable.PriorityQueue
-import scala.collection.mutable.Queue
+import scala.collection.mutable._
 
 import edu.ucla.cs.starai.forclift._
 import edu.ucla.cs.starai.forclift.compiler.rulesets._
@@ -22,16 +21,29 @@ object BreadthCompiler {
 
 }
 
-class BreadthCompiler(sizeHint: Compiler.SizeHints =
-                        Compiler.SizeHints.unknown(_),
-                      grounding: Boolean = false) extends Compiler {
+/** A variation of breadth-first search but with some rules applied in a greedy
+  * manner.
+  *
+  * Can easily be adjusted to use a priority queue with some kind of
+  * heuristics. Runs until either the required number of solution circuits is
+  * found or the maximum depth of the search tree is exhausted.
+  */
+class BreadthCompiler(
+    sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
+    grounding: Boolean = false
+) extends Compiler {
 
-  final case class EndSearchException(private val message: String = "",
-                                      private val cause: Throwable =
-                                        None.orNull)
-      extends Exception(message, cause)
+  /** Found solutions */
+  private[this] var circuits: List[NNFNode] = List[NNFNode]()
 
-  var circuits: List[NNFNode] = List[NNFNode]()
+  private[this] final case class EndSearchException(
+      private val message: String = "",
+      private val cause: Throwable = None.orNull
+  ) extends Exception(message, cause)
+
+  def compilerBuilder =
+    if (grounding) new MyGroundingCompiler(sizeHint)
+    else new MyLiftedCompiler(sizeHint)
 
   override def foundSolution(circuit: NNFNode): Unit = {
     circuits = circuit :: circuits
@@ -40,17 +52,12 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
       throw new EndSearchException
   }
 
-  def compilerBuilder = if (grounding) {
-    new MyGroundingCompiler(sizeHint)
-  } else {
-    new MyLiftedCompiler(sizeHint)
-  }
-
-  /** A simple BFS */
   override def compile(cnf: CNF): List[NNFNode] = {
     val compiler = compilerBuilder
-    val q = Queue(compiler.applySinkRules(cnf))
-    // val q = PriorityQueue(compiler.applySinkRules(cnf))(Ordering.by(_.priority))
+
+    val q = Queue(compiler.applyGreedyRules(cnf))
+    // val q = PriorityQueue(compiler.applyGreedyRules(cnf))(Ordering.by(_.priority))
+
     var depth = 0
     try {
       while (depth <= BreadthCompiler.MaxDepth) {
@@ -65,7 +72,6 @@ class BreadthCompiler(sizeHint: Compiler.SizeHints =
     } catch {
       case e: EndSearchException => {}
     }
-    // circuits.foreach { _.showPDF(DomainSizes.empty, PredicateWeights.empty) }
     circuits
   }
 

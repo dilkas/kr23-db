@@ -89,7 +89,7 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
       // println("useCache: found " + getClass.getSimpleName + " in the cache")
       cache(this)
     } else {
-      val newNode: NNFNode = simpleClone
+      val newNode: NNFNode = simpleClone()
       cache(this) = newNode
 
       // println("useCache: constructing a copy of " + getClass.getSimpleName +
@@ -97,18 +97,17 @@ abstract class NNFNode(var variablesForSmoothing: Set[PositiveUnitClause] =
       // println("useCache: there are " + directSuccessors.size +
       //           " direct successors")
 
-      newNode.update(
-        directSuccessors.map { _.map { n => n.useCache(cache) } } )
+      newNode.update(directSuccessors.map(_.map(n => n.useCache(cache))))
       // println("useCache: finished the construction of " +
       //           getClass.getSimpleName + " " + hashCode)
       newNode
     }
 
-  def simpleClone: NNFNode
+  def simpleClone(): NNFNode
 
-  def myClone: NNFNode = {
+  def myClone(): NNFNode = {
     // println("NNFNode::myClone")
-    NNFNode.cloningCache.clear
+    NNFNode.cloningCache.clear()
     useCache(NNFNode.cloningCache)
   }
 

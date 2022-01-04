@@ -42,34 +42,17 @@ abstract class V1_1Compiler(
     else Some((None, List(newCnf)))
   }
 
-  override def sinkRules: List[InferenceRule] = List(
+  override def greedyRules: List[InferenceRule] = List(
     tryCache,
     tryTautology,
     tryContradictionClause,
     tryPositiveUnitClause,
     tryNegativeUnitClause,
     tryPositiveUnitPropagation,
-    tryNegativeUnitPropagation)
+    tryNegativeUnitPropagation
+  )
 
-  override def nonSinkRules: List[InferenceRule] = List(
-    tryTautologyClauseElimination,
-    tryIndependentSubtheories,
-    tryIndependentSubtheoriesAfterShattering,
-    tryGroundDecomposition,
-    tryInclusionExclusion,
-    tryShatter,
-    tryIndependentPartialGrounding,
-    tryCounting,
-    tryDomainRecursion)
-
-  override def inferenceRules: List[InferenceRule] = List(
-    tryCache,
-    tryTautology,
-    tryContradictionClause,
-    tryPositiveUnitClause,
-    tryNegativeUnitClause,
-    tryPositiveUnitPropagation,
-    tryNegativeUnitPropagation,
+  override def nonGreedyRules: List[InferenceRule] = List(
     tryTautologyClauseElimination, // added wrt NIPS11
     tryIndependentSubtheories,
     tryIndependentSubtheoriesAfterShattering,
@@ -79,7 +62,8 @@ abstract class V1_1Compiler(
     tryIndependentPartialGrounding, // O(log(n))
     tryCounting, // O(n)
     tryDomainRecursion // is O(log(n)) now! But assumes no unary predicates
-    )
+  )
+
 }
 
 class V1_1LiftedCompiler(
@@ -87,8 +71,8 @@ class V1_1LiftedCompiler(
   nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends V1_1Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
-  def myClone: V1_1LiftedCompiler =
-    new V1_1LiftedCompiler(sizeHint, cloneCache)
+  def myClone(): V1_1LiftedCompiler =
+    new V1_1LiftedCompiler(sizeHint, cloneCache())
 
 }
 
@@ -97,7 +81,7 @@ class V1_1GroundingCompiler(
   nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends V1_1Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
-  def myClone: V1_1GroundingCompiler =
-    new V1_1GroundingCompiler(sizeHint, cloneCache)
+  def myClone(): V1_1GroundingCompiler =
+    new V1_1GroundingCompiler(sizeHint, cloneCache())
 
 }

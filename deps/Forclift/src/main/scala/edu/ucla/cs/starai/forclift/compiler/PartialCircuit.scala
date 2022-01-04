@@ -12,10 +12,10 @@ class PartialCircuit(val compiler: AbstractCompiler,
   lazy val priority: (Int, Int) = (-formulas.map(_.constants.size).max,
                                    -length)
 
-  def myClone: PartialCircuit = {
+  def myClone(): PartialCircuit = {
     // println("circuit is non-empty: " + circuit.isDefined)
-    val newCircuit = circuit.map(_.myClone)
-    val newCompiler = compiler.myClone
+    val newCircuit = circuit.map(_.myClone())
+    val newCompiler = compiler.myClone()
     new PartialCircuit(newCompiler, newCircuit, formulas, depth)
   }
 
@@ -35,9 +35,9 @@ class PartialCircuit(val compiler: AbstractCompiler,
     // println("applyAllRules: started")
     val cnf = formulas.head
     Compiler.checkCnfInput(cnf)
-    val circuits = (0 until compiler.nonSinkRules.size).toStream.flatMap {
+    val circuits = (0 until compiler.nonGreedyRules.size).toStream.flatMap {
       ruleIndex => {
-        val circuitCopy = myClone
+        val circuitCopy = myClone()
         circuitCopy.compiler.applyIthRule(ruleIndex, cnf) match {
           case None => None // the rule is not applicable
           case Some((node: Option[NNFNode], successors: List[CNF])) => {
@@ -53,7 +53,7 @@ class PartialCircuit(val compiler: AbstractCompiler,
               case Some(node) => {
                 circuitCopy.compiler.updateCache(cnf, node)
                 val newSuccessors = circuitCopy.compiler.
-                  applySinkRulesToAllFormulas(node, successors)
+                  applyGreedyRulesToAllFormulas(node, successors)
                 // println("applyAllRules is calling addNode to add " +
                 //           node.getClass.getSimpleName)
                 Some(circuitCopy.add(node, newSuccessors))

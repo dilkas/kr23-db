@@ -168,34 +168,7 @@ abstract class MyCompiler(
     }
   }
 
-  override def sinkRules: List[InferenceRule] =
-    List(
-      tryCache,
-      tryTautology,
-      tryContradictionClause,
-      tryPositiveUnitClause,
-      tryNegativeUnitClause,
-      tryContradictionFilter,
-      tryTautologyClauseElimination,
-      tryRemoveDoubleClauses,
-      tryPositiveUnitPropagation,
-      tryNegativeUnitPropagation,
-      tryConstraintRemoval,
-      tryIndependentSubtheories, // +1
-      tryIndependentSubtheoriesAfterShattering
-    )
-
-  override def nonSinkRules: List[InferenceRule] =
-    List(
-      tryGroundDecomposition, // +1
-      tryInclusionExclusion, // +2
-      tryShatter, // 0
-      tryIndependentPartialGrounding, // 0
-      tryCounting, // 0
-      tryImprovedDomainRecursion // 0
-    )
-
-  override def inferenceRules: List[InferenceRule] =
+  override def greedyRules: List[InferenceRule] =
     List(
       tryCache,
       tryTautology,
@@ -204,18 +177,22 @@ abstract class MyCompiler(
       tryNegativeUnitClause,
       tryContradictionFilter, // new
       tryTautologyClauseElimination,
-      tryRemoveDoubleClauses, // revival
+      tryRemoveDoubleClauses, // revived
       tryPositiveUnitPropagation,
       tryNegativeUnitPropagation,
       tryConstraintRemoval, // new
-      tryIndependentSubtheories,
-      tryIndependentSubtheoriesAfterShattering,
-      tryGroundDecomposition,
-      tryInclusionExclusion,
-      tryShatter,
-      tryIndependentPartialGrounding, // O(log(n))
-      tryCounting, // O(n)
-      tryImprovedDomainRecursion // new
+      tryIndependentSubtheories, // +1
+      tryIndependentSubtheoriesAfterShattering
+    )
+
+  override def nonGreedyRules: List[InferenceRule] =
+    List(
+      tryGroundDecomposition, // +1
+      tryInclusionExclusion, // +2
+      tryShatter, // 0
+      tryIndependentPartialGrounding, // 0
+      tryCounting, // 0
+      tryImprovedDomainRecursion // 0, new
     )
 
 }
@@ -226,8 +203,8 @@ class MyLiftedCompiler(
 ) extends MyCompiler(sizeHint, nnfCache)
     with LiftedCompiler {
 
-  def myClone: MyLiftedCompiler =
-    new MyLiftedCompiler(sizeHint, cloneCache)
+  def myClone(): MyLiftedCompiler =
+    new MyLiftedCompiler(sizeHint, cloneCache())
 
 }
 
@@ -237,7 +214,7 @@ class MyGroundingCompiler(
 ) extends MyCompiler(sizeHint, nnfCache)
     with GroundingCompiler {
 
-  def myClone: MyGroundingCompiler =
-    new MyGroundingCompiler(sizeHint, cloneCache)
+  def myClone(): MyGroundingCompiler =
+    new MyGroundingCompiler(sizeHint, cloneCache())
 
 }

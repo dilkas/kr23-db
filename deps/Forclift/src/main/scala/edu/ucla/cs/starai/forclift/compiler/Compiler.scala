@@ -25,6 +25,7 @@ import edu.ucla.cs.starai.forclift._
 
 object Compiler {
 
+  /** The data type of nnfCache: a Map that acts as a collection of buckets. */
   type Buckets = mutable.HashMap[Int, List[(CNF, NNFNode)]]
 
   object Builder {
@@ -43,30 +44,43 @@ object Compiler {
   type SizeHints = (Domain => Int)
 
   def checkCnfInput(cnf: CNF) {
-    require(!cnf.domains.contains(Universe), s"Cannot compile CNFs containing the universe domain: $cnf")
-    require(!cnf.domains.contains(EmptyDomain), s"Cannot compile CNFs containing the empty domain: $cnf")
+    require(
+      !cnf.domains.contains(Universe),
+      s"Cannot compile CNFs containing the universe domain: $cnf"
+    )
+    require(
+      !cnf.domains.contains(EmptyDomain),
+      s"Cannot compile CNFs containing the empty domain: $cnf"
+    )
   }
 
 }
 
+/** Compilation methods can now return a list of solutions. */
 trait Compiler {
 
   def compile(cnf: CNF): List[NNFNode] = {
-    throw new IllegalStateException("The compiler you are trying to use does " +
-                                      "not implement the 'compile' method.")
+    throw new IllegalStateException(
+      "The compiler you are trying to use does " +
+        "not implement the 'compile' method."
+    )
   }
 
   def compileSmooth(cnf: CNF): List[NNFNode] = {
     compileSmooth(cnf, cnf.predicates, Set.empty)
   }
 
-  def compileSmooth(cnf: CNF, predicates: Set[Predicate],
-                    excluded: Set[PositiveUnitClause] = Set.empty)
-      : List[NNFNode] = {
+  def compileSmooth(
+      cnf: CNF,
+      predicates: Set[Predicate],
+      excluded: Set[PositiveUnitClause] = Set.empty
+  ): List[NNFNode] = {
     val nnfs = compile(cnf)
-    nnfs.map { _.smoothWithPredicates(predicates, excluded) }
+    nnfs.map(_.smoothWithPredicates(predicates, excluded))
   }
 
+  /** Used by BreadthCompiler to announce each solution as soon as it's found.
+    */
   def foundSolution(circuit: NNFNode): Unit = {}
 
 }
@@ -82,45 +96,82 @@ trait GroundingCompiler extends AbstractCompiler {
 trait LiftedCompiler extends AbstractCompiler {
 
   override def cannotCompile(cnf: CNF): NNFNode = {
-    throw new IllegalArgumentException("Cannot compile " + cnf + " without grounding.")
+    throw new IllegalArgumentException(
+      "Cannot compile " + cnf + " without grounding."
+    )
   }
 
 }
 
-/** nnfCache maps hash codes of formulas to pairs of formulas and their circuit nodes. It is used to identify formulas potentially suitable for a Ref node, i.e., to add additional arcs to the circuit that make it no longer a tree. */
-abstract class AbstractCompiler(val nnfCache: Compiler.Buckets =
-                                  new Compiler.Buckets) extends Compiler {
+/** The parent class of all compilers.
+  *
+  * Implements tryCache and some of the code used to apply rules to formulas
+  * (the rest is in PartialCircuit).
+  * @param nnfCache maps hash codes of formulas to pairs of formulas and their
+  *                 circuit nodes. It is used to identify formulas potentially
+  *                 suitable for a Ref node, i.e., to add additional arcs to
+  *                 the circuit that make it no longer a tree.
+  */
+abstract class AbstractCompiler(
+    val nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends Compiler {
 
-  // None means that the inference rule doesn't apply. (None, _) means that a
-  // new node wasn't created but the theory was updated (we assume that in this
-  // case the list has exactly one element). In all other cases, the list holds
-  // theories that will be compiled into direct successors of the returned node.
-  type InferenceResult = Option[(Option[NNFNode], List[CNF])]
-  type InferenceRule = CNF => InferenceResult
+  // ============================== TYPES ====================================
 
-  // val Timeout = 1 // s, for tryCache
-  val Verbose = false
+  /** The result type of applying an inference rule to a formula.
+    *
+    * None means that the inference rule doesn't apply. (None, _) means that a
+    * new node wasn't created but the formula was updated (we assume that in
+    * this case the list of successor formulas has exactly one element). In all
+    * other cases, the list holds formulas that will be compiled into direct
+    * successors of the returned circuit node.
+    */
+  protected type InferenceResult = Option[(Option[NNFNode], List[CNF])]
 
-  def log(s: String) = if (Verbose) println(s)
+  protected type InferenceRule = CNF => InferenceResult
 
-  def cloneCache: Compiler.Buckets = nnfCache.map {
-    case (key, value) => {
-      val newValue = value.map {
-        case (formula, node) => {
-          // println("Does cloningCache of size " + NNFNode.cloningCache.size +
-          //           " contain the " + node.getClass.getSimpleName + " " +
-          //           node.hashCode + ": " + NNFNode.cloningCache.contains(node))
+  // ============================== DATA ======================================
 
-          (formula, NNFNode.cloningCache(node))
+  /** A hacky way to turn a bunch of println statements on and off. */
+  private[this] val Verbose = false
+
+  // ============================== MISC METHODS ==============================
+
+  /** The main purpose of myClone is to call cloneCache. */
+  def myClone(): AbstractCompiler
+
+  /** Used to log what compilation rules are being applied and how they change
+    * the formula. */
+  protected def log(s: String): Unit = if (Verbose) println(s)
+
+  def cannotCompile(cnf: CNF): NNFNode
+
+  // ============================== CACHE MANAGEMENT ==========================
+
+  /** The Compiler (nnfCache) part of the cloning process that starts in
+    * PartialCircuit.
+    *
+    * Replaces references to circuit nodes in nnfCache with their new
+    * alternatives as defined in NNFNode.cloningCache. Assumes that
+    * NNFNode.cloningCache is already populated.
+    */
+  protected def cloneCache(): Compiler.Buckets =
+    nnfCache.map {
+      case (key, value) => {
+        val newValue = value.map {
+          case (formula, node) => {
+            // println("Does cloningCache of size " + NNFNode.cloningCache.size +
+            //           " contain the " + node.getClass.getSimpleName + " " +
+            //           node.hashCode + ": " + NNFNode.cloningCache.contains(node))
+            (formula, NNFNode.cloningCache(node))
+          }
         }
+        (key, newValue)
       }
-      (key, newValue)
     }
-  }
 
-  def myClone: AbstractCompiler
-
-  def updateCache(cnf: CNF, nnf: NNFNode) = {
+  /** Put the (cnf, nnf) pair in nnfCache. */
+  def updateCache(cnf: CNF, nnf: NNFNode): Unit = {
     assume(nnf != null)
 
     // println("updateCache: trying to add " + nnf.getClass.getSimpleName + " " +
@@ -131,14 +182,25 @@ abstract class AbstractCompiler(val nnfCache: Compiler.Buckets =
     //           (nnfCache.contains(cnf.hashCode) && nnfCache(cnf.hashCode).exists
     //              { case (_, node) => node == nnf }))
 
-    if (!nnfCache.contains(cnf.hashCode) || !nnfCache(cnf.hashCode).exists {
-          case (_, node) => node == nnf } )
+    if (
+      !nnfCache.contains(cnf.hashCode) || !nnfCache(cnf.hashCode).exists {
+        case (_, node) => node == nnf
+      }
+    ) {
       nnfCache(cnf.hashCode) = (cnf, nnf) ::
         nnfCache.getOrElse(cnf.hashCode, List[(CNF, NNFNode)]())
+    }
   }
 
+  /** An inference rule for creating Ref nodes, i.e., arcs that deviate from
+    * the otherwise tree-like structure of the circuit.
+    *
+    * Uses nnfCache and CNF.identifyRecursion to find an already-discovered
+    * formula compatible with the input one. Can be computationally costly for
+    * even moderate size formulas.
+    */
   def tryCache(cnf: CNF): InferenceResult = {
-    // println("tryCache started for theory:")
+    // println("tryCache started for formula:")
     // println(cnf)
     // println("tryCache: looking for " + cnf.hashCode + " among " +
     //           nnfCache.keySet.toList.sorted)
@@ -150,16 +212,18 @@ abstract class AbstractCompiler(val nnfCache: Compiler.Buckets =
       // println("tryCache: found. The bucket has " + nnfCache(cnf.hashCode).size +
       //           " elements.")
       nnfCache(cnf.hashCode).flatMap {
-        case (theory, circuit) => {
+        case (formula, circuit) => {
           // println("tryCache: calling identifyRecursion on:")
           // println(cnf)
           // println("tryCache: AND")
-          // println(theory)
+          // println(formula)
 
-          CNF.identifyRecursion(cnf, theory) match {
+          CNF.identifyRecursion(cnf, formula) match {
             case Some(recursion) => Some((circuit, recursion))
-            case None => None
-          }} }.headOption match {
+            case None            => None
+          }
+        }
+      }.headOption match {
         case Some(results) => {
           // println("\nCache hit.")
           // println("Before:")
@@ -182,10 +246,16 @@ abstract class AbstractCompiler(val nnfCache: Compiler.Buckets =
     }
   }
 
-  /* With support for timeout! */
-  // def tryCache(cnf: CNF): InferenceResult = {
+  /* A wrapper for tryCache that adds a timeout feature.
+   *
+   * To use it, uncomment the code below, set the desired timeout value, and
+   * replace tryCache with tryCache2 in the relevant list of inference rules
+   * (e.g., in MyCompiler).
+   */
+  // val Timeout = 1 // s, for tryCache
+  // def tryCache2(cnf: CNF): InferenceResult = {
   //   val task = new FutureTask(new Callable[InferenceResult]() {
-  //     def call() = tryCache2(cnf)
+  //     def call() = tryCache(cnf)
   //   })
 
   //   try {
@@ -196,68 +266,78 @@ abstract class AbstractCompiler(val nnfCache: Compiler.Buckets =
   //   }
   // }
 
-  // NOTE: we assume that inferenceRules = sinkRules ++ nonSinkRules (possibly
-  // in a different order)
-  def sinkRules: List[InferenceRule]
-  def nonSinkRules: List[InferenceRule]
-  def inferenceRules: List[InferenceRule]
+  // ============================== INFERENCE RULES ===========================
 
-  def applyIthRule(i: Int, cnf: CNF): InferenceResult = nonSinkRules(i)(cnf)
+  /** Rules that should be applied as soon as possible. */
+  def greedyRules: List[InferenceRule]
 
-  def applySinkRules(cnf: CNF): PartialCircuit = {
-    // println("applySinkRules: started on:")
+  /** Rules that are treated as decisions in the search for a circuit. */
+  def nonGreedyRules: List[InferenceRule]
+
+  def inferenceRules: List[InferenceRule] = greedyRules ++ nonGreedyRules
+
+  /** Applies the i-th non-greedy inference rule to the given formula. */
+  def applyIthRule(i: Int, cnf: CNF): InferenceResult = nonGreedyRules(i)(cnf)
+
+  /** Constructs the maximal PartialCircuit that can be built using only greedy
+    * rules.
+    */
+  def applyGreedyRules(cnf: CNF): PartialCircuit = {
+    // println("applyGreedyRules: started on:")
     // println(cnf)
-    var rules = sinkRules
+    var rules = greedyRules
     while (rules.nonEmpty) {
-      // println("applySinkRules: attempting a new rule")
+      // println("applyGreedyRules: attempting a new rule")
       rules.head(cnf) match {
         case None => {
           rules = rules.tail
-          // println("applySinkRules: the rule doesn't apply here")
+          // println("applyGreedyRules: the rule doesn't apply here")
         }
         case Some((node, successors)) => {
-          // println("applySinkRules: successfully applied a rule")
+          // println("applyGreedyRules: successfully applied a rule")
           node match {
             case None => {
               require(successors.size == 1)
-              return applySinkRules(successors.head)
+              return applyGreedyRules(successors.head)
             }
             case Some(nnf) => {
               updateCache(cnf, nnf)
-              val newSuccessors = applySinkRulesToAllFormulas(nnf, successors)
+              val newSuccessors = applyGreedyRulesToAllFormulas(nnf, successors)
               return new PartialCircuit(this, Some(nnf), newSuccessors)
             }
           }
         }
       }
     }
-    // println("applySinkRules: finished")
+    // println("applyGreedyRules: finished")
     new PartialCircuit(this, None, List(cnf))
   }
 
-  /** Updates the circuit and returns a list of new formulas */
-  def applySinkRulesToAllFormulas(node: NNFNode,
-                                  formulas: List[CNF]): List[CNF] = {
+  /** Runs applyGreedyRules on all the given formulas, adding the resulting
+    * subcircuits as direct successors of the input node and returning new
+    * successor formulas that were created in the process.
+    */
+  def applyGreedyRulesToAllFormulas(
+      node: NNFNode,
+      formulas: List[CNF]
+  ): List[CNF] = {
     require(formulas.size == node.directSuccessors.count(_.isEmpty))
-    val newFormulas = formulas.map { applySinkRules(_) } .flatMap {
-      partialCircuit => {
-        if (partialCircuit.circuit.isDefined) {
+    val newFormulas = formulas.map { applyGreedyRules(_) }.flatMap {
+      partialCircuit =>
+        {
+          if (partialCircuit.circuit.isDefined) {
 
-          // println("applySinkRulesToAllFormulas: adding " +
-          //           partialCircuit.circuit.get.getClass.getSimpleName +
-          //           " as a direct successors of " + node.getClass.getSimpleName)
+            // println("applyGreedyRulesToAllFormulas: adding " +
+            //           partialCircuit.circuit.get.getClass.getSimpleName +
+            //           " as a direct successors of " + node.getClass.getSimpleName)
 
-          require(node.updateFirst(partialCircuit.circuit.get))
+            require(node.updateFirst(partialCircuit.circuit.get))
+          }
+          partialCircuit.formulas
         }
-        partialCircuit.formulas
-      }
     }
-    // println("applySinkRulesToAllFormulas: finished")
+    // println("applyGreedyRulesToAllFormulas: finished")
     newFormulas
   }
-
-  var nbCompilationSteps = 0;
-
-  def cannotCompile(cnf: CNF): NNFNode
 
 }
