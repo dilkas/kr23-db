@@ -44,7 +44,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
   def toLatex(showRootDomains: Boolean = false): String = {
     if (clauses.isEmpty) """$\top$"""
     else {
-      clauses.map { _.toLatex(showRootDomains) }.mkString("""$\begin{array}{c} """, """ \\ """, """ \end{array}$""")
+      clauses
+        .map { _.toLatex(showRootDomains) }
+        .mkString("""$\begin{array}{c} """, """ \\ """, """ \end{array}$""")
     }
   }
 
@@ -58,7 +60,8 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
     else new CNF(tautologyFreeClauses)
   }
 
-  def toPositiveUnitClauses: Set[PositiveUnitClause] = clauses.flatMap { _.toPositiveUnitClauses }.toSet
+  def toPositiveUnitClauses: Set[PositiveUnitClause] =
+    clauses.flatMap { _.toPositiveUnitClauses }.toSet
 
   lazy val distinctPositiveUnitClauses = {
     val allCAtoms = clauses.flatMap { _.toPositiveUnitClauses }
@@ -70,7 +73,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
   def equiprobableClasses = {
     val coShatteredThis = coShatter
-    val allCAtoms = coShatteredThis.clauses.flatMap { _.toPositiveUnitClauses.map(_.removeExternalConstraints) }
+    val allCAtoms = coShatteredThis.clauses.flatMap {
+      _.toPositiveUnitClauses.map(_.removeExternalConstraints)
+    }
     disjoin(allCAtoms)
   }
 
@@ -82,7 +87,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
     shatterIneqs.shatterDomains
   }
 
-  private[this] final def disjoin(cAtoms: List[PositiveUnitClause]): List[PositiveUnitClause] = {
+  private[this] final def disjoin(
+      cAtoms: List[PositiveUnitClause]
+  ): List[PositiveUnitClause] = {
     val atomsByPredicate = cAtoms.groupBy { _.atom.predicate }
     atomsByPredicate.values.flatMap { predAtoms =>
       val uniqueStringAtoms = predAtoms.map { a => (a.toString -> a) }.toMap
@@ -90,14 +97,19 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
     }.toList
   }
 
-  private[this] final def disjoinHard(cAtoms: List[PositiveUnitClause]): List[PositiveUnitClause] = cAtoms match {
-    case Nil => Nil
-    case cAtom :: restAtoms => {
-      val standerdizedAtom = cAtom.standardizeApart
-      standerdizedAtom :: disjoin(restAtoms.filterNot(standerdizedAtom.equivalent(_)))
-    }
+  private[this] final def disjoinHard(
+      cAtoms: List[PositiveUnitClause]
+  ): List[PositiveUnitClause] =
+    cAtoms match {
+      case Nil => Nil
+      case cAtom :: restAtoms => {
+        val standerdizedAtom = cAtom.standardizeApart
+        standerdizedAtom :: disjoin(
+          restAtoms.filterNot(standerdizedAtom.equivalent(_))
+        )
+      }
 
-  }
+    }
 
   final def shatterIneqs: CNF = {
     var cAtoms = distinctPositiveUnitClauses
@@ -113,14 +125,18 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       for (clause <- clauses) {
         var shClause = List(clause)
         for (cAtom <- cAtoms) {
-          val shatteredForCAtom = shClause.flatMap { _.shatter(cAtom.atom, cAtom.constrs) }
+          val shatteredForCAtom = shClause.flatMap {
+            _.shatter(cAtom.atom, cAtom.constrs)
+          }
           shClause = shatteredForCAtom
         }
         if (shClause.size > 1) {
           // something was shattered
           somethingOnceChanged = true
           somethingChanged = true
-          nextCAtoms = shClause.flatMap { _.toPositiveUnitClauses } ::: nextCAtoms
+          nextCAtoms = shClause.flatMap {
+            _.toPositiveUnitClauses
+          } ::: nextCAtoms
         } else {
           assume(shClause.head == clause)
         }
@@ -128,7 +144,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       }
       // now remove cAtoms and try again shattering the newly introduced ones
       clauses = shClauses
-      cAtoms = disjoin(nextCAtoms.filter { next => !cAtoms.exists { next.subsumes(_) } })
+      cAtoms = disjoin(nextCAtoms.filter { next =>
+        !cAtoms.exists { next.subsumes(_) }
+      })
     } while (somethingChanged)
     if (clauses.exists { _.needsIneqDomainShattering }) {
       (new CNF(clauses.flatMap { _.shatterIneqDomains })).shatterIneqs
@@ -152,13 +170,17 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       for (clause <- clauses) {
         var shClause = List(clause)
         for (cAtom <- cAtoms) {
-          shClause = shClause.flatMap { _.shatterDomains(cAtom.atom, cAtom.constrs) }
+          shClause = shClause.flatMap {
+            _.shatterDomains(cAtom.atom, cAtom.constrs)
+          }
         }
         if (shClause.size > 1) {
           // something was shattered
           somethingOnceChanged = true
           somethingChanged = true
-          nextCAtoms = shClause.flatMap { _.toPositiveUnitClauses } ::: nextCAtoms
+          nextCAtoms = shClause.flatMap {
+            _.toPositiveUnitClauses
+          } ::: nextCAtoms
         } else {
           assume(shClause.head == clause)
         }
@@ -166,7 +188,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
       }
       // now remove cAtoms and try again shattering the newly introduced ones
       clauses = shClauses
-      cAtoms = disjoin(nextCAtoms.filter { next => !cAtoms.exists { next.subsumes(_) } })
+      cAtoms = disjoin(nextCAtoms.filter { next =>
+        !cAtoms.exists { next.subsumes(_) }
+      })
     } while (somethingChanged)
     if (clauses.exists { _.needsIneqDomainShattering }) {
       (new CNF(clauses.flatMap { _.shatterIneqDomains })).shatterDomains
@@ -190,34 +214,53 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
         clauses.flatMap { _.condition(true, posLit.atom, posLit.constrs) }
       case negLit: NegativeUnitClause =>
         clauses.flatMap { _.condition(false, negLit.atom, negLit.constrs) }
-      case _ => throw new IllegalStateException("Clause not positive or negative")
+      case _ =>
+        throw new IllegalStateException("Clause not positive or negative")
     }
     new CNF(conditionedClauses)
   }
 
   def simplify(ignoredClauses: Set[Clause] = Set.empty): CNF = {
     val propagatableUnitClauses = clauses.filter { propClause =>
-      !ignoredClauses(propClause) && propClause.isUnitClause && clauses.exists { clause =>
-        !(clause eq propClause) && !propClause.independent(clause)
+      !ignoredClauses(propClause) && propClause.isUnitClause && clauses.exists {
+        clause =>
+          !(clause eq propClause) && !propClause.independent(clause)
       }
     }
     if (propagatableUnitClauses.nonEmpty) {
-      def propagate(unitClauses: List[Clause], theory: List[Clause]): (List[Clause], List[Clause]) = unitClauses match {
-        case Nil => (Nil, theory)
-        case unitClause :: otherUnitClauses => {
-          val unitLiteral = unitClause.atoms.head
-          val otherClauses: List[Clause] = theory filterNot (_ == unitClause)
-          val propagatedClauses = otherClauses.flatMap { clause =>
-            val conditionedClause = clause.condition(unitClause.isPositiveUnitClause, unitLiteral, unitClause.constrs)
-            conditionedClause
-          }.toList
-          val propagatedOtherUnitClauses = otherUnitClauses.flatMap { _.condition(unitClause.isPositiveUnitClause, unitLiteral, unitClause.constrs) }
-          val (propagatedUnitClauses, simplifiedRest) = propagate(propagatedOtherUnitClauses, propagatedClauses)
-          (unitClause :: propagatedUnitClauses, simplifiedRest)
+      def propagate(
+          unitClauses: List[Clause],
+          theory: List[Clause]
+      ): (List[Clause], List[Clause]) =
+        unitClauses match {
+          case Nil => (Nil, theory)
+          case unitClause :: otherUnitClauses => {
+            val unitLiteral = unitClause.atoms.head
+            val otherClauses: List[Clause] = theory filterNot (_ == unitClause)
+            val propagatedClauses = otherClauses.flatMap { clause =>
+              val conditionedClause = clause.condition(
+                unitClause.isPositiveUnitClause,
+                unitLiteral,
+                unitClause.constrs
+              )
+              conditionedClause
+            }.toList
+            val propagatedOtherUnitClauses = otherUnitClauses.flatMap {
+              _.condition(
+                unitClause.isPositiveUnitClause,
+                unitLiteral,
+                unitClause.constrs
+              )
+            }
+            val (propagatedUnitClauses, simplifiedRest) =
+              propagate(propagatedOtherUnitClauses, propagatedClauses)
+            (unitClause :: propagatedUnitClauses, simplifiedRest)
+          }
         }
-      }
-      val (propagated, simplifiedRest) = propagate(propagatableUnitClauses, clauses)
-      val newCnf = (new CNF(propagated ++ simplifiedRest)).simplify(ignoredClauses ++ propagated)
+      val (propagated, simplifiedRest) =
+        propagate(propagatableUnitClauses, clauses)
+      val newCnf = (new CNF(propagated ++ simplifiedRest))
+        .simplify(ignoredClauses ++ propagated)
       newCnf
     } else this
   }
@@ -226,16 +269,20 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
   def dependent(other: Clause) = !independent(other)
 
   def independentSubtheories: List[CNF] = {
-    def partition(depClauses: List[Clause], indepClauses: List[Clause]): (List[Clause], List[Clause]) = {
+    def partition(
+        depClauses: List[Clause],
+        indepClauses: List[Clause]
+    ): (List[Clause], List[Clause]) = {
       if (indepClauses.isEmpty) (depClauses, Nil)
-      else depClauses match {
-        case clause :: rest => {
-          val (indep, dep) = indepClauses.partition(clause.independent(_))
-          val (depAll, indepAll) = partition(rest ++ dep, indep)
-          (clause :: depAll, indepAll)
+      else
+        depClauses match {
+          case clause :: rest => {
+            val (indep, dep) = indepClauses.partition(clause.independent(_))
+            val (depAll, indepAll) = partition(rest ++ dep, indep)
+            (clause :: depAll, indepAll)
+          }
+          case Nil => (Nil, indepClauses)
         }
-        case Nil => (Nil, indepClauses)
-      }
     }
     val (dep, indep) = partition(List(clauses.head), clauses.tail)
     if (indep.isEmpty) List(this)
@@ -253,117 +300,150 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
 }
 
+/** Most of this object is the implementation of identifyRecursion. */
 object CNF {
 
   def apply(clauses: Clause*) = new CNF(clauses.toList)
 
-  /** A history is a list of changes. Each change is a pair of: 1) a circuit
-    node n that created the domain, 2) and a Boolean that indicates which of
-    the two domains (introduced by n) is the relevant one ('true' means that
-    it's the secondary domain, i.e., the complement of the main one). */
-  type History = List[(ParametrisedNode, Boolean)]
+  /** A history is a list of changes.
+    *
+    * Each change is a pair of:
+    * 1) a circuit node n that created the domain,
+    * 2) and a Boolean that indicates which of the two domains (introduced by n)
+    * is the relevant one ('true' means that it's the secondary domain, i.e.,
+    * the complement of the main one).
+    */
+  private[this] type History = List[(ParametrisedNode, Boolean)]
 
-  /** This type describes the relationship between the domains of both (i.e.,
-    the new and the old) formulas. Each domain d of the new formula is mapped
-    to a domain d' of the old formula and a history that describe how d' became
-    d.  */
+  /** Describes the relationship between the domains of both (i.e., the new and
+    * the old) formulas.
+    *
+    * Each domain d of the new formula is mapped to a domain d' of the old
+    * formula and a history that describe how d' became d.
+    */
   type DomainMap = Map[Domain, (Domain, History)]
 
-  // The first element of each tuple is the domain to be compared, the second
-  // element is its 'origin' domain, and the third element is its 'history'.
-  type State = Iterable[(Domain, Domain, History)]
+  /** The state that is being iterated over while trying to identify domains of
+    * the new formula as subdomains of the old formula.
+
+    * The first element of each tuple is the domain to be compared, the second
+    * element is its origin domain, and the third element is its history.
+    */
+  private[this] type State = Iterable[(Domain, Domain, History)]
 
   final case class DomainNotMatchedException(
-    private val message: String = "",
-    private val cause: Throwable = None.orNull) extends
-      Exception(message, cause)
+      private val message: String = "",
+      private val cause: Throwable = None.orNull
+  ) extends Exception(message, cause)
 
-  def update(state: State): State = {
-    val newStates = state.flatMap {
-      case (domain: Domain, origin: Domain,
-            history: History) =>
+  /** Updates/iterates the state by replacing each domain by its parent domain
+    * and updating the corresponding history to reflect this change.
+    */
+  private[this] def update(state: State): State = {
+    val newState = state.flatMap {
+      case (domain: Domain, origin: Domain, history: History) =>
         if (domain.isInstanceOf[SubDomain]) {
-          val newHistory = (domain.asInstanceOf[SubDomain].getCause,
-                            domain.isInstanceOf[ComplementDomain])
-          List((domain.parents.head, origin, newHistory :: history))
+          val newHistory = (
+            domain.asInstanceOf[SubDomain].getCause,
+            domain.isInstanceOf[ComplementDomain]
+          )
+          Some((domain.parents.head, origin, newHistory :: history))
         } else {
-          List()
+          None
         }
     }
     //println("Updated state to " + newStates)
-    newStates
+    newState
   }
 
-  def findDomain(domain: Domain)(state: State)
-      : Option[(Domain, History)] =
+  /** Finds the given domain in the given state and returns the other two state
+    * fields (origin and history).
+    */
+  private[this] def findDomain(
+      domain: Domain
+  )(state: State): Option[(Domain, History)] =
     if (state.isEmpty) {
       throw DomainNotMatchedException()
     } else {
       state.find { _._1 == domain } match {
         case Some((_, origin, history)) => Some(origin, history)
-        case None => None
+        case None                       => None
       }
     }
 
-  /** If possible, identify the values in the map as subsets of some of the
-    keys. */
-  def postprocess(domainMap: Map[Domain, Domain]): Option[DomainMap] = {
-    // println("Postprocessing " + domainMap)
+  /** Tries to identify the values in the domainMap as subdomains of some of the
+    * keys.
+    */
+  private[this] def postprocess(
+      domainMap: Map[Domain, Domain]
+  ): Option[DomainMap] =
     try {
       Some(domainMap.map {
-             case (d1, d2) => {
-               lazy val stateStream: Stream[State] = domainMap.values.map {
-                 d: Domain => (d, d, List()) } #:: stateStream.map(update)
-               stateStream.flatMap(findDomain(d1)).headOption match {
-                 case Some(d) => (d1, d)
-                 case None => throw DomainNotMatchedException()
-               }
-             } }.toMap)
+        case (d1, d2) => {
+          lazy val stateStream: Stream[State] = List((d2, d2, List())) #::
+            stateStream.map(update)
+          stateStream.flatMap(findDomain(d1)).headOption match {
+            case Some(d) => (d1, d)
+            case None    => throw DomainNotMatchedException()
+          }
+        }
+      }.toMap)
     } catch {
       case c: DomainNotMatchedException => {
         // println("Postprocessing failed")
         None
       }
     }
-  }
 
-  // NewTheory is the theory that corresponds to the new circuit node which is
-  // being added whereas oldTheory is the theory for an already-existing node.
-  // PartialMap maps domains of oldTheory to domains of newTheory. Before
-  // returning this map, we express all domains of newTheory that appear in
-  // partialMap as (subsets of) domains of oldTheory.
-  def identifyRecursion(newTheory: CNF, oldTheory: CNF,
-                        partialMap: Map[Domain, Domain] = Map.empty)
-      : Option[DomainMap] = {
-    // println("identifyRecursion started between theories")
-    // println(newTheory)
+  /** Tries to identify newFormula as oldFormula but with some domains replaced
+    * by their subdomains, irrespective of variable names.
+    *
+    * @param newFormula the formula that corresponds to the new circuit node
+    *        which is being added
+    * @param oldFormula the formula for an already-existing node
+    * @param partialMap maps domains of oldFormula to domains of newFormula
+    *
+    * Before returning the completed version of partialMap, we express all
+    * domains of newFormula that appear in partialMap as subdomains of the
+    * domains of oldFormula.
+    */
+  def identifyRecursion(
+      newFormula: CNF,
+      oldFormula: CNF,
+      partialMap: Map[Domain, Domain] = Map.empty
+  ): Option[DomainMap] = {
+    // println("identifyRecursion started between formulas")
+    // println(newFormula)
     // println("AND")
-    // println(oldTheory)
+    // println(oldFormula)
     // println("WITH MAP")
     // println(partialMap)
 
-    if (newTheory.size != oldTheory.size ||
-          newTheory.hashCode != oldTheory.hashCode) {
+    if (
+      newFormula.size != oldFormula.size ||
+      newFormula.hashCode != oldFormula.hashCode
+    ) {
       // println("identifyRecursion: finished 1")
       None
-    } else if (oldTheory.isEmpty) {
+    } else if (oldFormula.isEmpty) {
       // println("identifyRecursion: started postprocessing")
       val p = postprocess(partialMap)
       // println("identifyRecursion: finished postprocessing")
       p
     } else {
-      for (clause1 <- oldTheory) {
-        val updatedOldTheory = new CNF((oldTheory - clause1).toList)
-        for (clause2 <- newTheory.filter { _.hashCode == clause1.hashCode } ) {
-          val updatedNewTheory = new CNF((newTheory - clause2).toList)
+      for (clause1 <- oldFormula) {
+        val updatedOldFormula = new CNF((oldFormula - clause1).toList)
+        for (clause2 <- newFormula.filter { _.hashCode == clause1.hashCode }) {
+          val updatedNewFormula = new CNF((newFormula - clause2).toList)
 
-          def myFilter(bijection: Map[Var, Var]): Boolean = bijection.forall {
-            case (v1, v2) => {
-              val d1 = clause1.constrs.domainFor(v1)
+          def myFilter(bijection: Map[Var, Var]): Boolean =
+            bijection.forall {
+              case (v1, v2) => {
+                val d1 = clause1.constrs.domainFor(v1)
                 !partialMap.contains(d1) ||
                 partialMap(d1) == clause2.constrs.domainFor(v2)
+              }
             }
-          }
 
           val bijections = clause1.variableBijections(clause2, myFilter)
           // println("found " + bijections.size + " bijections")
@@ -371,13 +451,19 @@ object CNF {
             bijection <- bijections
             if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
-            val updatedMap = partialMap ++ clause1.allVariables.map {
-              v => {
-                (clause1.constrs.domainFor(v),
-                 clause2.constrs.domainFor(bijection(v)))
-              } }
-            val recursion = identifyRecursion(updatedNewTheory,
-                                              updatedOldTheory, updatedMap)
+            val updatedMap = partialMap ++ clause1.allVariables.map { v =>
+              {
+                (
+                  clause1.constrs.domainFor(v),
+                  clause2.constrs.domainFor(bijection(v))
+                )
+              }
+            }
+            val recursion = identifyRecursion(
+              updatedNewFormula,
+              updatedOldFormula,
+              updatedMap
+            )
             if (recursion.isDefined) {
               return recursion
             }

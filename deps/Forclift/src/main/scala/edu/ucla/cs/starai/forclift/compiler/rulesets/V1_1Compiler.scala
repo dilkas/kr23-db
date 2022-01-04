@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package edu.ucla.cs.starai.forclift.compiler
+package edu.ucla.cs.starai.forclift.compiler.rulesets
 
 import collection._
 import edu.ucla.cs.starai.forclift._
+import edu.ucla.cs.starai.forclift.compiler._
 import edu.ucla.cs.starai.forclift.nnf._
 
 object V1_1Compiler {
@@ -32,9 +33,8 @@ object V1_1Compiler {
 
 abstract class V1_1Compiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends NIPS11Compiler(sizeHint, nnfCache) {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends NIPS11Compiler(sizeHint, nnfCache) {
 
   def tryTautologyClauseElimination(cnf: CNF) = {
     val newCnf = cnf.removeTautologies
@@ -84,9 +84,8 @@ abstract class V1_1Compiler(
 
 class V1_1LiftedCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends V1_1Compiler(sizeHint, nnfCache) with LiftedCompiler {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends V1_1Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: V1_1LiftedCompiler =
     new V1_1LiftedCompiler(sizeHint, cloneCache)
@@ -95,9 +94,8 @@ class V1_1LiftedCompiler(
 
 class V1_1GroundingCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends V1_1Compiler(sizeHint, nnfCache) with GroundingCompiler {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends V1_1Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: V1_1GroundingCompiler =
     new V1_1GroundingCompiler(sizeHint, cloneCache)

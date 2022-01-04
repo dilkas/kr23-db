@@ -17,7 +17,6 @@ E := E + {(node, nnf)}
 
 TODO:
 tryImprovedDomainRecursion, tryConstraintRemoval
-Theories.scala: DomainMap, update, findDomain, postprocess, identifyRecursion
 Ref()
 PostOrderVisitor
 DomainsVisitor

@@ -1,6 +1,7 @@
 package edu.ucla.cs.starai.forclift.compiler
 
 import edu.ucla.cs.starai.forclift._
+import edu.ucla.cs.starai.forclift.compiler.rulesets._
 import edu.ucla.cs.starai.forclift.nnf._
 
 object GreedyCompiler {

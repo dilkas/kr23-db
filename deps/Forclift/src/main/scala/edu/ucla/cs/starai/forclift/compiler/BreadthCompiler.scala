@@ -4,6 +4,7 @@ import scala.collection.mutable.PriorityQueue
 import scala.collection.mutable.Queue
 
 import edu.ucla.cs.starai.forclift._
+import edu.ucla.cs.starai.forclift.compiler.rulesets._
 import edu.ucla.cs.starai.forclift.inference._
 import edu.ucla.cs.starai.forclift.nnf._
 

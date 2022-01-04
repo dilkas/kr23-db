@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package edu.ucla.cs.starai.forclift.compiler
+package edu.ucla.cs.starai.forclift.compiler.rulesets
 
 import collection._
+import edu.ucla.cs.starai.forclift.compiler._
 import edu.ucla.cs.starai.forclift.nnf._
 import edu.ucla.cs.starai.forclift._
 
@@ -32,9 +33,8 @@ object NIPS11Compiler {
 
 abstract class NIPS11Compiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends IJCAI11Compiler(sizeHint, nnfCache) {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends IJCAI11Compiler(sizeHint, nnfCache) {
 
   def tryDomainRecursion(cnf: CNF) = {
     assume(cnf.clauses.forall { _.singletonLiterals.isEmpty })
@@ -108,9 +108,8 @@ abstract class NIPS11Compiler(
 
 class NIPS11LiftedCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends NIPS11Compiler(sizeHint, nnfCache) with LiftedCompiler {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends NIPS11Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: NIPS11LiftedCompiler =
     new NIPS11LiftedCompiler(sizeHint, cloneCache)
@@ -119,9 +118,8 @@ class NIPS11LiftedCompiler(
 
 class NIPS11GroundingCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends NIPS11Compiler(sizeHint, nnfCache) with GroundingCompiler {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends NIPS11Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: NIPS11GroundingCompiler =
     new NIPS11GroundingCompiler(sizeHint, cloneCache)

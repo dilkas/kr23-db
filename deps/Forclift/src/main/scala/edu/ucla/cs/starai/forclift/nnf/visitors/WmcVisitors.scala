@@ -48,7 +48,7 @@ object WmcVisitor {
 
   // the 'false' option is mostly for debugging purposes unless combined with
   // numSolutions = 1
-  val Parallel = false
+  val Parallel = true
 
   val Verbose = false
 

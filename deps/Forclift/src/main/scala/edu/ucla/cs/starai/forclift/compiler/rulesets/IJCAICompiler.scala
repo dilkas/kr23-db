@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package edu.ucla.cs.starai.forclift.compiler
+package edu.ucla.cs.starai.forclift.compiler.rulesets
 
 import collection._
 import edu.ucla.cs.starai.forclift._
+import edu.ucla.cs.starai.forclift.compiler._
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import edu.ucla.cs.starai.forclift.nnf._
 import constraints._
@@ -34,9 +35,8 @@ object IJCAI11Compiler {
 
 abstract class IJCAI11Compiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends AbstractCompiler(nnfCache) {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends AbstractCompiler(nnfCache) {
 
   def tryTautology(cnf: CNF) = {
     if (cnf.isTautology) {
@@ -480,9 +480,8 @@ abstract class IJCAI11Compiler(
 
 class IJCAI11LiftedCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends IJCAI11Compiler(sizeHint, nnfCache) with LiftedCompiler {
+  nnfCache: Compiler.Buckets = new Compiler.Buckets
+) extends IJCAI11Compiler(sizeHint, nnfCache) with LiftedCompiler {
 
   def myClone: IJCAI11LiftedCompiler =
     new IJCAI11LiftedCompiler(sizeHint, cloneCache)
@@ -491,9 +490,8 @@ class IJCAI11LiftedCompiler(
 
 class IJCAI11GroundingCompiler(
   sizeHint: Compiler.SizeHints = Compiler.SizeHints.unknown(_),
-  nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]])
-    extends IJCAI11Compiler(sizeHint, nnfCache) with GroundingCompiler {
+  nnfCache: Compiler.Buckets = Compiler.Buckets
+) extends IJCAI11Compiler(sizeHint, nnfCache) with GroundingCompiler {
 
   def myClone: IJCAI11GroundingCompiler =
     new IJCAI11GroundingCompiler(sizeHint, cloneCache)

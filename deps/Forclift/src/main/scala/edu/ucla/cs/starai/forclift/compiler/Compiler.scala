@@ -25,6 +25,8 @@ import edu.ucla.cs.starai.forclift._
 
 object Compiler {
 
+  type Buckets = mutable.HashMap[Int, List[(CNF, NNFNode)]]
+
   object Builder {
     val default: Builder = CompilerWrapper.builder
     val defaultWithGrounding: Builder = CompilerWrapper.builderWithGrounding
@@ -85,11 +87,9 @@ trait LiftedCompiler extends AbstractCompiler {
 
 }
 
-/** nnfCache maps hash codes of formulas to pairs of formulas and their circuit
-  nodes. */
-abstract class AbstractCompiler(
-  val nnfCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] =
-    new mutable.HashMap[Int, List[(CNF, NNFNode)]]) extends Compiler {
+/** nnfCache maps hash codes of formulas to pairs of formulas and their circuit nodes. It is used to identify formulas potentially suitable for a Ref node, i.e., to add additional arcs to the circuit that make it no longer a tree. */
+abstract class AbstractCompiler(val nnfCache: Compiler.Buckets =
+                                  new Compiler.Buckets) extends Compiler {
 
   // None means that the inference rule doesn't apply. (None, _) means that a
   // new node wasn't created but the theory was updated (we assume that in this
@@ -103,7 +103,7 @@ abstract class AbstractCompiler(
 
   def log(s: String) = if (Verbose) println(s)
 
-  def cloneCache: mutable.HashMap[Int, List[(CNF, NNFNode)]] = nnfCache.map {
+  def cloneCache: Compiler.Buckets = nnfCache.map {
     case (key, value) => {
       val newValue = value.map {
         case (formula, node) => {
