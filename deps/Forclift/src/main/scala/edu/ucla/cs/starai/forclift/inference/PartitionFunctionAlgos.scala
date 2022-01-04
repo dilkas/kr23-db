@@ -24,18 +24,18 @@ import edu.ucla.cs.starai.forclift.util.Timer
 import edu.ucla.cs.starai.forclift.util.SignLogDouble
 
 trait PartitionFunctionAlgorithm{
-   
+
   def verbose: Boolean
-  
+
   /**
    * Output partition function
    */
   def computePartitionFunction(wcnf: WeightedCNF): SignLogDouble
-  
+
 }
 
 class PartitionFunctionExact(
-    override val verbose: Boolean = false) 
+    override val verbose: Boolean = false)
     extends PartitionFunctionAlgorithm {
 
   /**
@@ -44,7 +44,7 @@ class PartitionFunctionExact(
   def computePartitionFunction(wcnf: WeightedCNF): SignLogDouble = {
 
     println(s"Running first-order knowledge compilation")
-    
+
     if(verbose){
       Timer{
         wcnf.smoothNnf
@@ -52,10 +52,10 @@ class PartitionFunctionExact(
       println("evidence nnf size = " + wcnf.nnf.size)
       println("evidence smooth nnf size = " + wcnf.smoothNnf.size)
     }
-       
+
     val wmc = wcnf.logSmoothWmc
     println(s"Z = $wmc = ${wmc.toDouble}")
-      
+
     wmc
   }
 
@@ -63,7 +63,7 @@ class PartitionFunctionExact(
 
 
 class PartitionFunctionC2D(
-    override val verbose: Boolean = false) 
+    override val verbose: Boolean = false)
     extends PartitionFunctionAlgorithm {
 
   /**
@@ -74,7 +74,7 @@ class PartitionFunctionC2D(
       println(s"Running C2D (propositonal inference)")
       val wmc = wcnf.logSmoothPropWmc
       println(s"Z = $wmc = ${wmc.toDouble}")
-      
+
       wmc
   }
 

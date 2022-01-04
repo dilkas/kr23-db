@@ -54,12 +54,12 @@ java -jar forclift.jar -q "smokes(Guy)" ./models/friendsmoker.mln
 
   try {
     argumentParser.parse(args)
-    
+
     debugCLI.runDebugging(inputCLI)
     inferenceCLI.runInference()
     learningCLI.runLearning()
     outputCLI.runOutput()
-    
+
   } catch {
     case e: ArgotUsageException =>
       println(e.message)

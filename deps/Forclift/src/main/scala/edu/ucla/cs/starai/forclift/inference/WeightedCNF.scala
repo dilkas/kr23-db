@@ -59,11 +59,11 @@ case class WeightedCNF(
     val newCnf = cnf + clause
     WeightedCNF(newCnf, domainSizes, predicateWeights, conditionedAtoms, compilerBuilder)
   }
-  
+
   def vocabularyPredicates = cnf.predicates union predicateWeights.predicates
 
   lazy val wmcVisitor = WmcVisitor(predicateWeights)
-  
+
   lazy val logSmoothWmc: SignLogDouble = {
     //TODO test sign of weights and optimize
     wmcVisitor.wmc(smoothNnfs, domainSizes, predicateWeights)
