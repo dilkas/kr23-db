@@ -16,7 +16,6 @@ V := V + {node}
 E := E + {(node, nnf)}
 
 TODO:
-tryImprovedDomainRecursion, tryConstraintRemoval
 Ref()
 PostOrderVisitor
 DomainsVisitor

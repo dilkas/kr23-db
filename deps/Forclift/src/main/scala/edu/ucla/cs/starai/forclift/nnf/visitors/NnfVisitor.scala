@@ -19,52 +19,68 @@ package edu.ucla.cs.starai.forclift.nnf.visitors
 import scala.language.implicitConversions
 import edu.ucla.cs.starai.forclift.nnf._
 
-abstract class NnfVisitor[I,O] {
+abstract class NnfVisitor[I, O] {
 
+  /** Dispatches to the appropriate visitor method.
+    *
+    * Throws an InterruptedException if another thread has computed the answer
+    * first.
+    */
   def visit(node: NNFNode, input: I): O =
     if (WmcVisitor.latch.getCount() == 0) {
       throw new InterruptedException
     } else {
-      node match{
+      node match {
         // Leaf Nodes
-        case leaf: UnitLeaf => visitUnitLeaf(leaf, input)
-        case leaf: SmoothingNode => visitSmoothingNode(leaf, input)
+        case leaf: UnitLeaf          => visitUnitLeaf(leaf, input)
+        case leaf: SmoothingNode     => visitSmoothingNode(leaf, input)
         case leaf: ContradictionLeaf => visitContradictionLeaf(leaf, input)
-        case TrueNode => visitTrue(input)
-        case FalseNode => visitFalse(input)
-        case leaf: GroundingNode => visitGroundingNode(leaf, input)
+        case TrueNode                => visitTrue(input)
+        case FalseNode               => visitFalse(input)
+        case leaf: GroundingNode     => visitGroundingNode(leaf, input)
 
         // Complex Nodes
-        case and: And => visitAndNode(and, input)
-        case or: Or => visitOrNode(or, input)
-        case ref: Ref => visitRefNode(ref, input)
-        case ie: InclusionExclusion => visitInclusionExclusionNode(ie, input)
+        case and: And                  => visitAndNode(and, input)
+        case or: Or                    => visitOrNode(or, input)
+        case ref: Ref                  => visitRefNode(ref, input)
+        case ie: InclusionExclusion    => visitInclusionExclusionNode(ie, input)
         case cr: ConstraintRemovalNode => visitConstraintRemovalNode(cr, input)
 
         // First-Order Nodes
-        case forall: IndependentPartialGroundingNode => visitForallNode(forall, input)
-        case exists: CountingNode => visitExists(exists, input)
+        case forall: IndependentPartialGroundingNode =>
+          visitForallNode(forall, input)
+        case exists: CountingNode    => visitExists(exists, input)
         case dr: DomainRecursionNode => visitDomainRecursion(dr, input)
-        case idr: ImprovedDomainRecursionNode => visitImprovedDomainRecursion(idr, input)
+        case idr: ImprovedDomainRecursionNode =>
+          visitImprovedDomainRecursion(idr, input)
 
         case _ => throw new IllegalArgumentException
       }
     }
 
-  protected def visitConstraintRemovalNode(cr: ConstraintRemovalNode, input: I): O
+  protected def visitAndNode(and: And, input: I): O
+  protected def visitConstraintRemovalNode(
+      cr: ConstraintRemovalNode,
+      input: I
+  ): O
+  protected def visitContradictionLeaf(leaf: ContradictionLeaf, input: I): O
   protected def visitDomainRecursion(dr: DomainRecursionNode, input: I): O
-  protected def visitImprovedDomainRecursion(idr: ImprovedDomainRecursionNode, input: I): O
   protected def visitExists(exists: CountingNode, input: I): O
-  protected def visitForallNode(forall: IndependentPartialGroundingNode, input: I): O
+  protected def visitFalse(input: I): O
+  protected def visitForallNode(
+      forall: IndependentPartialGroundingNode,
+      input: I
+  ): O
+  protected def visitGroundingNode(leaf: GroundingNode, input: I): O
+  protected def visitImprovedDomainRecursion(
+      idr: ImprovedDomainRecursionNode,
+      input: I
+  ): O
   protected def visitInclusionExclusionNode(ie: InclusionExclusion, input: I): O
   protected def visitOrNode(or: Or, input: I): O
-  protected def visitAndNode(and: And, input: I): O
   protected def visitRefNode(ref: Ref, input: I): O
   protected def visitSmoothingNode(leaf: SmoothingNode, input: I): O
-  protected def visitContradictionLeaf(leaf: ContradictionLeaf, input: I): O
-  protected def visitUnitLeaf(leaf: UnitLeaf, input: I): O
-  protected def visitGroundingNode(leaf: GroundingNode, input: I): O
-  protected def visitFalse(input: I): O
   protected def visitTrue(input: I): O
+  protected def visitUnitLeaf(leaf: UnitLeaf, input: I): O
 
 }

@@ -31,35 +31,52 @@ import breeze.math._
 class GroundingNode(val cnf: CNF, val explanation: String = "")
     extends NNFNode(NNFNode.removeSubsumed(cnf.toPositiveUnitClauses)) {
 
-  def simpleClone(): NNFNode = new GroundingNode(cnf, explanation)
-
-  def size = 1
+  def condition(pos: Set[Atom], neg: Set[Atom]): NNFNode =
+    throw new UnsupportedOperationException
 
   lazy val domains = cnf.domains
 
   def evalOrder = throw new UnsupportedOperationException
 
+  def simpleClone(): NNFNode = new GroundingNode(cnf, explanation)
+
   def smooth = this
 
-  def condition(pos: Set[Atom], neg: Set[Atom]): NNFNode = throw new UnsupportedOperationException
+  def size = 1
 
-  def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+  def toDotNode(
+      domainSizes: DomainSizes,
+      predicateWeights: PredicateWeights,
+      nameSpace: NameSpace[NNFNode, String],
+      compact: Boolean = false,
+      depth: Int,
+      maxDepth: Int = Integer.MAX_VALUE
+  ): (String, String) = {
     // println("toDotNode: GroundingNode")
-    (("  " + getName(nameSpace) + """ [style="fill=red!40",texlbl="""" + fontsize + """ """ + cnf.toLatex() + """"];""" + "\n"), "")
+    (
+      ("  " + getName(
+        nameSpace
+      ) + """ [style="fill=red!40",texlbl="""" + fontsize + """ """ + cnf
+        .toLatex() + """"];""" + "\n"),
+      ""
+    )
   }
 
 }
 
 object TrueNode extends NNFNode {
 
-  def simpleClone(): NNFNode = this
-
-  def size = 1
+  val cnf = CNF()
 
   lazy val domains = Set.empty[Domain]
 
   def evalOrder = 0
+
+  def explanation: String = ""
+
+  def simpleClone(): NNFNode = this
+
+  def size = 1
 
   val smooth = this
 
@@ -68,55 +85,78 @@ object TrueNode extends NNFNode {
     this
   }
 
-  val cnf = CNF()
-
-  def explanation: String = ""
-
-  override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+  override def toDotNode(
+      domainSizes: DomainSizes,
+      predicateWeights: PredicateWeights,
+      nameSpace: NameSpace[NNFNode, String],
+      compact: Boolean = false,
+      depth: Int,
+      maxDepth: Int = Integer.MAX_VALUE
+  ): (String, String) = {
     // println("toDotNode: TrueNode")
-    (("  " + getName(nameSpace) + """ [style="fill=green!40",texlbl="""" + fontsize + """ $\top$"];""" + "\n"), "")
+    (
+      ("  " + getName(
+        nameSpace
+      ) + """ [style="fill=green!40",texlbl="""" + fontsize + """ $\top$"];""" + "\n"),
+      ""
+    )
   }
 }
 
 object FalseNode extends NNFNode {
 
-  def simpleClone(): NNFNode = this
-
-  def size = 1
+  val cnf = CNF()
 
   lazy val domains = Set.empty[Domain]
 
   def evalOrder = 0
 
-  val smooth = this
-
-  def condition(pos: Set[Atom], neg: Set[Atom]) = {
-    NNFNode.conditionCache((this, pos, neg)) = this
-    this
-  }
-
-  val cnf = CNF()
-
   def explanation: String = ""
 
-  override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
-    // println("toDotNode: FalseNode")
-    (("  " + getName(nameSpace) + """ [style="fill=red!40",texlbl="""" + fontsize + """ $\bot$"];""" + "\n"), "")
-  }
-}
-
-class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val positive: Boolean, val explanation: String = "") extends NNFNode {
-
-  def simpleClone(): NNFNode = new ContradictionLeaf(cnf, clause, positive,
-                                                     explanation)
+  def simpleClone(): NNFNode = this
 
   def size = 1
 
-  def evalOrder = 0
+  val smooth = this
+
+  def condition(pos: Set[Atom], neg: Set[Atom]) = {
+    NNFNode.conditionCache((this, pos, neg)) = this
+    this
+  }
+
+  override def toDotNode(
+      domainSizes: DomainSizes,
+      predicateWeights: PredicateWeights,
+      nameSpace: NameSpace[NNFNode, String],
+      compact: Boolean = false,
+      depth: Int,
+      maxDepth: Int = Integer.MAX_VALUE
+  ): (String, String) = {
+    // println("toDotNode: FalseNode")
+    (
+      ("  " + getName(
+        nameSpace
+      ) + """ [style="fill=red!40",texlbl="""" + fontsize + """ $\bot$"];""" + "\n"),
+      ""
+    )
+  }
+}
+
+class ContradictionLeaf(
+    val cnf: CNF,
+    val clause: ContradictionClause,
+    val positive: Boolean,
+    val explanation: String = ""
+) extends NNFNode {
 
   lazy val domains = clause.domains
+
+  def evalOrder = 0
+
+  def simpleClone(): NNFNode =
+    new ContradictionLeaf(cnf, clause, positive, explanation)
+
+  def size = 1
 
   val smooth = this
 
@@ -125,27 +165,47 @@ class ContradictionLeaf(val cnf: CNF, val clause: ContradictionClause, val posit
     this
   }
 
-  override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+  override def toDotNode(
+      domainSizes: DomainSizes,
+      predicateWeights: PredicateWeights,
+      nameSpace: NameSpace[NNFNode, String],
+      compact: Boolean = false,
+      depth: Int,
+      maxDepth: Int = Integer.MAX_VALUE
+  ): (String, String) = {
     // println("toDotNode: ContradictionLeaf")
-    (("  " + getName(nameSpace) + """ [style="fill=red!40",texlbl="""" + fontsize + """ """ + cnf.toLatex(true) + """"];""" + "\n"), "")
+    (
+      ("  " + getName(
+        nameSpace
+      ) + """ [style="fill=red!40",texlbl="""" + fontsize + """ """ + cnf
+        .toLatex(true) + """"];""" + "\n"),
+      ""
+    )
   }
 
 }
 
-class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
-               val explanation: String = "")
-    extends NNFNode(Set(clause.toPositiveUnitClause)) {
+class UnitLeaf(
+    val cnf: CNF,
+    val clause: UnitClause,
+    val positive: Boolean,
+    val explanation: String = ""
+) extends NNFNode(Set(clause.toPositiveUnitClause)) {
 
-  require(clause.isUnconditional, "Unit leafs have to be unconditional for smoothing to be correct: "+clause)
+  require(
+    clause.isUnconditional,
+    "Unit leafs have to be unconditional for smoothing to be correct: " + clause
+  )
+
+  lazy val domains = clause.domains
+
+  def evalOrder = 0
 
   def simpleClone(): NNFNode = new UnitLeaf(cnf, clause, positive, explanation)
 
   def size = 1
 
-  def evalOrder = 0
-
-  lazy val domains = clause.domains
+  val smooth = this
 
   def condition(pos: Set[Atom], neg: Set[Atom]) = {
     val returnValue = if (clause.atom.isGround) {
@@ -157,13 +217,22 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
     returnValue
   }
 
-  val smooth = this
-
-  override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false,
-    depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+  override def toDotNode(
+      domainSizes: DomainSizes,
+      predicateWeights: PredicateWeights,
+      nameSpace: NameSpace[NNFNode, String],
+      compact: Boolean = false,
+      depth: Int,
+      maxDepth: Int = Integer.MAX_VALUE
+  ): (String, String) = {
     // println("toDotNode: UnitLeaf for the formula: " + cnf)
-    (("  " + getName(nameSpace) + """ [style="fill=green!20",texlbl="""" + fontsize + """ """ + cnf.toLatex(true) + """"];""" + "\n"), "")
+    (
+      ("  " + getName(
+        nameSpace
+      ) + """ [style="fill=green!20",texlbl="""" + fontsize + """ """ + cnf
+        .toLatex(true) + """"];""" + "\n"),
+      ""
+    )
   }
 
 }
@@ -171,17 +240,19 @@ class UnitLeaf(val cnf: CNF, val clause: UnitClause, val positive: Boolean,
 class SmoothingNode(val clause: PositiveUnitClause)
     extends NNFNode(Set(clause.toPositiveUnitClause)) {
 
-  def simpleClone(): NNFNode = new SmoothingNode(clause)
-
-  def size = 1
+  lazy val cnf = CNF(
+    Clause(List(clause.atom), List(clause.atom), clause.constrs)
+  )
 
   lazy val domains = clause.domains
 
   def evalOrder = 0
 
-  lazy val cnf = CNF(Clause(List(clause.atom), List(clause.atom), clause.constrs))
-
   def explanation = ""
+
+  def simpleClone(): NNFNode = new SmoothingNode(clause)
+
+  def size = 1
 
   val smooth = this
 
@@ -194,10 +265,22 @@ class SmoothingNode(val clause: PositiveUnitClause)
     returnValue
   }
 
-  override def toDotNode(domainSizes: DomainSizes, predicateWeights: PredicateWeights,
-    nameSpace: NameSpace[NNFNode, String], compact: Boolean = false, depth: Int, maxDepth: Int = Integer.MAX_VALUE): (String, String) = {
+  override def toDotNode(
+      domainSizes: DomainSizes,
+      predicateWeights: PredicateWeights,
+      nameSpace: NameSpace[NNFNode, String],
+      compact: Boolean = false,
+      depth: Int,
+      maxDepth: Int = Integer.MAX_VALUE
+  ): (String, String) = {
     // println("toDotNode: SmoothingNode")
-    (("  " + getName(nameSpace) + """ [style="fill=blue!20",texlbl="""" + fontsize + """ """ + cnf.toLatex(true) + """"];""" + "\n"), "")
+    (
+      ("  " + getName(
+        nameSpace
+      ) + """ [style="fill=blue!20",texlbl="""" + fontsize + """ """ + cnf
+        .toLatex(true) + """"];""" + "\n"),
+      ""
+    )
   }
 
 }
