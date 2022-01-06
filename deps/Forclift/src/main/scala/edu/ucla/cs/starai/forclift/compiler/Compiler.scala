@@ -142,7 +142,7 @@ abstract class AbstractCompiler(
 
   /** Used to log what compilation rules are being applied and how they change
     * the formula. */
-  protected def log(s: String): Unit = if (Verbose) println(s)
+  @inline protected final def log(s: => Any): Unit = if (Verbose) println(s)
 
   def cannotCompile(cnf: CNF): NNFNode
 

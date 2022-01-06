@@ -30,7 +30,15 @@ class CompilerWrapper(
     * constructor/method arguments would require changing lots of unrelated
     * pieces of code.
     */
-  val greedy: Boolean = Try(sys.env.get("GREEDY").get.toBoolean).getOrElse(true)
+  lazy val greedy: Boolean = {
+    val g = Try(sys.env.get("GREEDY").get.toBoolean).getOrElse(true)
+    if (g) {
+      println("Starting greedy search")
+    } else {
+      println("Starting breadth-first search")
+    }
+    g
+  }
 
   lazy val compiler = if (greedy) {
     new GreedyCompiler(sizeHint, grounding)
@@ -48,7 +56,7 @@ class CompilerWrapper(
         val postOrderVisitor = new PostOrderVisitor
         postOrderVisitor.visit(nnf)
         val domainsVisitor = new DomainsVisitor(postOrderVisitor.nodeOrder)
-        domainsVisitor.updateDomains
+        domainsVisitor.updateDomains()
       }
     }
     nnfs
