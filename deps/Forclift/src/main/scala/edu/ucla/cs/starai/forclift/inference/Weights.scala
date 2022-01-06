@@ -76,7 +76,7 @@ final case class WeightsFromLog(val posW: SignLogDouble, val negW: SignLogDouble
 
 class PredicateWeights(val self: Map[Predicate, Weights] = Map.empty) extends MapProxy[Predicate, Weights] {
 
-  // println("Initializing a predicate weight map: " + toString)
+  // println("Initialising a predicate weight map: " + toString)
 
   override def toString = self.iterator.map {
     case (p, w) =>
@@ -114,7 +114,8 @@ class PredicateWeights(val self: Map[Predicate, Weights] = Map.empty) extends Ma
 
 object PredicateWeights {
 
-  val empty = new PredicateWeights(Map.empty.withDefaultValue(WeightsFromExp(1, 1)))
+  val empty = new PredicateWeights(
+    Map.empty.withDefaultValue(WeightsFromExp(1, 1)))
 
   implicit def map2PredicateWeights(self: Map[Predicate, Weights]): PredicateWeights = new PredicateWeights(self)
 
