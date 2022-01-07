@@ -129,7 +129,7 @@ abstract class MyCompiler(
                   )
                   val newCnf = CNF(cnf.map { clause =>
                     clause
-                      .removeConstraints(originalDomain, constant)
+                      .removeConstraints(constant)
                       .replaceDomains(originalDomain, newDomain)
                   }.toList: _*)
                   val node = new ConstraintRemovalNode(
