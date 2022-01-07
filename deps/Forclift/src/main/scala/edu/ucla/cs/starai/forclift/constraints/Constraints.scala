@@ -29,69 +29,127 @@ object Constraints {
 }
 
 final case class Constraints(
-  ineqConstrs: IneqConstr = IneqConstr.empty,
-  elemConstrs: ElemConstr = ElemConstr.empty) {
+    ineqConstrs: IneqConstr = IneqConstr.empty,
+    elemConstrs: ElemConstr = ElemConstr.empty
+) {
 
-  def canEqual(a: Any) = a.isInstanceOf[Constraints]
-
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: Constraints => ineqConstrs == that.ineqConstrs
-      case _ => false
-    }
-
-  override def hashCode: Int = {
-    val prime = 31
-    var result = 1
-    result = prime * result + ineqConstrs.size
-    result = prime * result + elemConstrs.variables.size
-    // println("Constraints::hashCode of " + this + " consists of " +
-    //           ineqConstrs.size + " and " + elemConstrs.variables.size)
-    result
-  }
-
-  def constants = ineqConstrs.constants
-
-  def domains = elemConstrs.domains
-  def domainsFor(variables: Set[Var]) = variables.map(elemConstrs(_))
-  def domainFor(variable: Var) = elemConstrs(variable)
-
-  def variablesWithDomain(domain: Domain): List[Var] =
-    elemConstrs.variablesWithDomain(domain)
-
-  def setDomain(variable: Var, domain: Domain): Constraints = {
-    this.copy(elemConstrs = (elemConstrs + (variable -> domain)))
-  }
-
-  def project(variables: Set[Var]) = {
-    copy(ineqConstrs = ineqConstrs.project(variables),
-      elemConstrs = elemConstrs.project(variables))
-  }
-
-  def differentFrom(variables: Set[Var]) = ineqConstrs.differentFromVars(variables)
-
-  def differentConstants(v: Var): Set[Constant] = ineqConstrs(v).collect { case c: Constant => c }
+  // ========================= ONE-LINERS =====================================
 
   def addInequality(v: Var, a: Term): Constraints = {
     this.copy(ineqConstrs = ineqConstrs.+(v, a))
-  }
-
-  def addInequalities(va: List[(Var, Term)]): Constraints = {
-    val ineqConstrClone = va.foldLeft { ineqConstrs } { (r, c) => r.+(c._1, c._2) }
-    this.copy(ineqConstrs = ineqConstrClone)
-  }
-
-  def substitute(substitution: Var => Term): Constraints = {
-    this.copy(
-      ineqConstrs = ineqConstrs.substitute(substitution),
-      elemConstrs = elemConstrs.substitute(substitution))
   }
 
   def canBeEqual(x: Var, y: Var): Boolean = {
     !ineqConstrs(x).contains(y) && !elemConstrs(x).disjoint(elemConstrs(y))
   }
 
+  def conflictsWith(eqClasses: List[EquivalenceClass]): Boolean = {
+    ineqConstrs.conflictsWith(eqClasses) || elemConstrs.conflictsWith(eqClasses)
+  }
+
+  def constants = ineqConstrs.constants
+
+  def differentConstants(eqClass: EquivalenceClass) =
+    differentTerms(eqClass).collect { case c: Constant => c };
+
+  def differentConstants(v: Var): Set[Constant] =
+    ineqConstrs(v).collect { case c: Constant => c }
+
+  def differentFrom(variables: Set[Var]) =
+    ineqConstrs.differentFromVars(variables)
+
+  def differentTerms(eqClass: EquivalenceClass) =
+    ineqConstrs.differentFromTerms(eqClass);
+
+  def differentVars(eqClass: EquivalenceClass) =
+    differentTerms(eqClass).collect { case v: Var => v };
+
+  def domains = elemConstrs.domains
+
+  def domainFor(variable: Var) = elemConstrs(variable)
+
+  def domainsFor(variables: Set[Var]) = variables.map(elemConstrs(_))
+
+  def project(variables: Set[Var]) = {
+    copy(
+      ineqConstrs = ineqConstrs.project(variables),
+      elemConstrs = elemConstrs.project(variables)
+    )
+  }
+
+  def setDomain(variable: Var, domain: Domain): Constraints = {
+    this.copy(elemConstrs = (elemConstrs + (variable -> domain)))
+  }
+
+  def substitute(substitution: Var => Term): Constraints = {
+    this.copy(
+      ineqConstrs = ineqConstrs.substitute(substitution),
+      elemConstrs = elemConstrs.substitute(substitution)
+    )
+  }
+
   lazy val variables = elemConstrs.variables ++ ineqConstrs.variables
+
+  def variablesWithDomain(domain: Domain): List[Var] =
+    elemConstrs.variablesWithDomain(domain)
+
+  // ========================= EQUALITY CHECKING ==============================
+
+  def canEqual(a: Any) = a.isInstanceOf[Constraints]
+
+  /** Equality is based on the number of variables and the comparison of
+    * inequality constraints.
+    */
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: Constraints =>
+        elemConstrs.variables.size ==
+          that.elemConstrs.variables.size && ineqConstrs == that.ineqConstrs
+      case _ => false
+    }
+
+  /** Efficiency of evaluation is very important here. */
+  override lazy val hashCode: Int =
+    31 * (31 + ineqConstrs.size) + elemConstrs.variables.size
+
+  // ========================= MISCELLANEOUS ==================================
+
+  def addInequalities(va: List[(Var, Term)]): Constraints = {
+    val ineqConstrClone = va.foldLeft { ineqConstrs } { (r, c) =>
+      r.+(c._1, c._2)
+    }
+    this.copy(ineqConstrs = ineqConstrClone)
+  }
+
+  def addMissingConstraints(
+      variables: Set[Var],
+      literals: Seq[Atom]
+  ): Constraints = {
+    val newElemConstrs: ElemConstr = {
+      val missingVars = variables -- elemConstrs.variables
+      val missingDomains = missingVars.map { v =>
+        val atom = literals.find { _.args.contains(v) }.get
+        (v -> atom.domain(v))
+      }
+      new ElemConstr(elemConstrs ++ missingDomains)
+    }
+    val newIneqConstrs: IneqConstr = {
+      //CHECK causes inequality shattering with non-root domains, which is not
+      // supported by the implementation
+      ineqConstrs.removeRedundant(newElemConstrs)
+    }
+    new Constraints(newIneqConstrs, newElemConstrs)
+  }
+
+  // performance optimisation
+  lazy val domainsWithExclusions = elemConstrs.iterator.map {
+    case (v, d) =>
+      val excludedConstants = ineqConstrs(v).collect { case c: Constant => c }
+      val excludedLogVars: Int = ineqConstrs(v).count { t =>
+        t.isInstanceOf[Var] && t.hashCode > v.hashCode
+      }
+      (excludedConstants, excludedLogVars, d)
+  }.toList
 
   def join(other: Constraints): Constraints = {
     if (this eq other) this
@@ -102,45 +160,43 @@ final case class Constraints(
     }
   }
 
-  def conflictsWith(eqClasses: List[EquivalenceClass]): Boolean = {
-    ineqConstrs.conflictsWith(eqClasses) || elemConstrs.conflictsWith(eqClasses)
-  }
-
-  def differentTerms(eqClass: EquivalenceClass) = ineqConstrs.differentFromTerms(eqClass);
-
-  def differentVars(eqClass: EquivalenceClass) = differentTerms(eqClass).collect { case v: Var => v };
-  def differentConstants(eqClass: EquivalenceClass) = differentTerms(eqClass).collect { case c: Constant => c };
-
-  def addMissingConstraints(variables: Set[Var], literals: Seq[Atom]): Constraints = {
-    val newElemConstrs: ElemConstr = {
-      val missingVars = variables -- elemConstrs.variables
-      val missingDomains = missingVars.map { v =>
-        val atom = literals.find { _.args.contains(v) }.get
-        (v -> atom.domain(v))
-      }
-      new ElemConstr(elemConstrs ++ missingDomains)
-    }
-    val newIneqConstrs: IneqConstr = {
-      //CHECK causes inequality shattering with non-root domains, which is not supported by the implementation
-      ineqConstrs.removeRedundant(newElemConstrs)
-    }
-    new Constraints(newIneqConstrs, newElemConstrs)
-  }
-
   /**
-   * Shatter inequalities so that both sides have the same set of groundings
-   */
+    * Shatter inequalities so that both sides have the same set of groundings
+    */
   lazy val needsIneqDomainShattering: Boolean = {
     ineqConstrs.exists {
       case (variable, terms) =>
         val variableDomain = elemConstrs(variable)
         terms.exists {
-          case v: Var => (
-            elemConstrs(v).subDomain(variableDomain) ||
-            ineqConstrs(v).exists { vineq => vineq != variable && !terms.contains(vineq) })
+          case v: Var =>
+            (elemConstrs(v).subDomain(variableDomain) ||
+              ineqConstrs(v).exists { vineq =>
+                vineq != variable && !terms.contains(vineq)
+              })
           case _ => false
         }
     }
+  }
+
+  def ineqDomainShatteringVarTermPair: Option[(Var, Term)] = {
+    var v1: Var = null
+    var t2: Term = null
+    val found: Boolean = ineqConstrs.exists {
+      case (variable, terms) =>
+        terms.exists {
+          case v: Var =>
+            val termOption = ineqConstrs(v).find { vineq =>
+              vineq != variable && !terms.contains(vineq)
+            }
+            if (termOption.nonEmpty) {
+              v1 = variable
+              t2 = termOption.get
+            }
+            termOption.nonEmpty
+          case _ => false
+        }
+    }
+    if (found) Some(v1, t2) else None
   }
 
   def ineqDomainShatteringVarVarPair: Option[(Var, Var)] = {
@@ -162,65 +218,65 @@ final case class Constraints(
     if (found) Some(v1, v2) else None
   }
 
-  def ineqDomainShatteringVarTermPair: Option[(Var, Term)] = {
-    var v1: Var = null
-    var t2: Term = null
-    val found: Boolean = ineqConstrs.exists {
-      case (variable, terms) =>
-        terms.exists {
-          case v: Var =>
-            val termOption = ineqConstrs(v).find { vineq => vineq != variable && !terms.contains(vineq) }
-            if (termOption.nonEmpty) {
-              v1 = variable
-              t2 = termOption.get
-            }
-            termOption.nonEmpty
-          case _ => false
-        }
-    }
-    if (found) Some(v1, t2) else None
-  }
-
   // Functions used for smoothing
 
-  def inverseSubstitution(c: Constant, v: Var, ineqs: Set[Constant], domain: Domain): Constraints = {
-    val newIneqConstrs = ineqs.foldLeft(ineqConstrs.inverseSubstitution(c, v)) { _.+(v, _) }
+  def inverseSubstitution(
+      c: Constant,
+      v: Var,
+      ineqs: Set[Constant],
+      domain: Domain
+  ): Constraints = {
+    val newIneqConstrs = ineqs.foldLeft(ineqConstrs.inverseSubstitution(c, v)) {
+      _.+(v, _)
+    }
     val newElemConstrs = elemConstrs + (v -> domain)
     copy(ineqConstrs = newIneqConstrs, elemConstrs = newElemConstrs)
   }
 
-  def reverseDomainSplitting(from: Domain, subdomain: SubDomain): Constraints = {
+  def reverseDomainSplitting(
+      from: Domain,
+      subdomain: SubDomain
+  ): Constraints = {
     val newElemConstrs = elemConstrs.mapDomains({ d =>
       if (d == subdomain || d == subdomain.complement) from else d
     })
-    // don't forget to account for inequality constraints that might have been removed because they are trivial
+    // don't forget to account for inequality constraints that might have been
+    // removed because they are trivial
     val subdomainVars = variables.filter { elemConstrs(_) == subdomain }
-    val subdomainComplementVars = variables.filter { elemConstrs(_) == subdomain.complement }
-    val missingIneqs = subdomainVars.flatMap { v1 => subdomainComplementVars.map { v2 => (v1, v2) } }
-    val newIneqConstrs = missingIneqs.foldLeft(ineqConstrs) { (ineqC, pair) => ineqC.+(pair._1, pair._2) }
+    val subdomainComplementVars = variables.filter {
+      elemConstrs(_) == subdomain.complement
+    }
+    val missingIneqs = subdomainVars.flatMap { v1 =>
+      subdomainComplementVars.map { v2 => (v1, v2) }
+    }
+    val newIneqConstrs = missingIneqs.foldLeft(ineqConstrs) { (ineqC, pair) =>
+      ineqC.+(pair._1, pair._2)
+    }
     copy(ineqConstrs = newIneqConstrs, elemConstrs = newElemConstrs)
   }
 
-  // split because the handling of inequality constraints between variables only works when they have the same domain
-  // method critical for performance
+  // split because the handling of inequality constraints between variables
+  // only works when they have the same domain method critical for performance
   def hasSolutionAssumingShatteredDomains(domainSizes: DomainSizes): Boolean = {
     assume(!needsIneqDomainShattering)
-    var dims: List[(collection.Set[Constant], Int, Domain)] = domainsWithExclusions
+    var dims: List[(collection.Set[Constant], Int, Domain)] =
+      domainsWithExclusions
     while (dims.nonEmpty) {
       val dim = dims.head
       val domainSize: Int = dim._3.size(domainSizes, dim._1)
-      if(domainSize == dim._2) return false
+      if (domainSize == dim._2) return false
       dims = dims.tail
     }
     return true
   }
 
-  // split because the handling of inequality constraints between variables only works when they have the same domain
-  // method critical for performance
+  // split because the handling of inequality constraints between variables
+  // only works when they have the same domain method critical for performance
   def nbGroundingsAssumingShatteredDomains(domainSizes: DomainSizes): GInt = {
     assume(!needsIneqDomainShattering)
     var nbGroundings: GInt = 1
-    var dims: List[(collection.Set[Constant], Int, Domain)] = domainsWithExclusions
+    var dims: List[(collection.Set[Constant], Int, Domain)] =
+      domainsWithExclusions
     while (dims.nonEmpty) {
       val dim = dims.head
       val domainSize: Int = dim._3.size(domainSizes, dim._1)
@@ -236,17 +292,12 @@ final case class Constraints(
     nbGroundings
   }
 
-  // performance optimisation
-  lazy val domainsWithExclusions = elemConstrs.iterator.map {
-    case (v, d) =>
-      val excludedConstants = ineqConstrs(v).collect { case c: Constant => c }
-      val excludedLogVars: Int = ineqConstrs(v).count { t => t.isInstanceOf[Var] && t.hashCode > v.hashCode }
-      (excludedConstants, excludedLogVars, d)
-  }.toList
+  // ========================= OUTPUT =========================================
 
   def toLatex(nameSpace: VarNameSpace, showRootDomains: Boolean = false) = {
     val ineqConstrStr = ineqConstrs.toString(nameSpace, """ \neq """)
-    val elemConstrStr = elemConstrs.toString(nameSpace, """ \in """, showRootDomains)
+    val elemConstrStr =
+      elemConstrs.toString(nameSpace, """ \in """, showRootDomains)
     List(ineqConstrStr, elemConstrStr).filter { _.nonEmpty }.mkString(", ")
   }
 

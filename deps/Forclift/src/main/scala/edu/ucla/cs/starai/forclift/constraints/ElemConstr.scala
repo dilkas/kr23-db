@@ -23,35 +23,62 @@ import edu.ucla.cs.starai.forclift._
 import util._
 import util.extracollection._
 
-//TODO move to Var
-final class ElemConstr(
-  final val self: Map[Var, Domain] = Map()) extends MapProxy[Var, Domain] {
+final class ElemConstr(final val self: Map[Var, Domain] = Map())
+    extends MapProxy[Var, Domain] {
 
-  def variables = keySet
+  // ========================= ONE-LINERS =====================================
+
+  def +(kv: (Var, Domain)): ElemConstr = this + (kv._1, kv._2)
+
+  def +(variable: Var, domain: Domain): ElemConstr = {
+    new ElemConstr(self + (variable -> domain))
+  }
 
   lazy val domains = values.toSet
 
+  def domains(variables: Set[Var]): Set[Domain] = {
+    variables.map { this(_) }
+  }
+
   override lazy val hashCode = super.hashCode
+
+  def mapDomains(f: Domain => Domain): ElemConstr = {
+    new ElemConstr(self.mapValues(f))
+  }
+
+  def project(variables: Set[Var]): ElemConstr = {
+    new ElemConstr(self.filterKeys(variables(_)).toMap)
+  }
 
   def sharedDomain(eqClass: EquivalenceClass): Domain = {
     domains(eqClass.variables).reduceLeft { _ intersect _ }
   }
 
-  //	def sharedDomain(constrs: Constraints): Domain = {
-  //	  sharedDomain(constrs.elemConstrs)
-  //	}
+  def variables = keySet
+
+  // ========================= EVERYTHING ELSE ================================
 
   def conflictsWith(eqClasses: List[EquivalenceClass]): Boolean = {
     for (eqClass <- eqClasses) {
       val variableSharedDomain = sharedDomain(eqClass)
-      if (variableSharedDomain == EmptyDomain
+      if (
+        variableSharedDomain == EmptyDomain
         || eqClass.constants.exists {
           _.domain.exists { _.disjoint(variableSharedDomain) }
-        }) {
+        }
+      ) {
         return true;
       }
     }
     return false;
+  }
+
+  def join(other: ElemConstr): ElemConstr = {
+    if (this eq other) this
+    else {
+      val joinedMaps: Map[Var, Domain] = this ++ other
+      new ElemConstr(joinedMaps)
+    }
   }
 
   def substitute(substitution: Var.Substitution): ElemConstr = {
@@ -60,7 +87,6 @@ final class ElemConstr(
     for ((term, domain) <- this) {
       term.substitute(substitution) match {
         case subsVar: Var => {
-          //assume(!clone.contains(subsVar) || clone(subsVar) == domain, "Cannot merge two variables with different domains.")
           if (clone.contains(subsVar) && clone(subsVar) != domain) {
             //take the intersection when two elem constraints are merged
             clone += (subsVar -> clone(subsVar).intersect(domain))
@@ -72,60 +98,34 @@ final class ElemConstr(
     new ElemConstr(clone.toMap)
   }
 
-  def mapDomains(f: Domain => Domain): ElemConstr = {
-    new ElemConstr(self.mapValues(f))
-  }
-
-  //	def shatterDomain(from: Domain, to1: Domain, to2: Domain): List[ElemConstr] = {
-  //		find{case (variable,domain) => (domain == from)}.map{ case (variable,domain) =>
-  //			val this1 = new ElemConstr(this + (variable->to1))
-  //			val this2 = new ElemConstr(this + (variable->to2))
-  //			this1.shatterDomain(from, to1, to2) ::: this2.shatterDomain(from, to1, to2)
-  //		}.getOrElse(List(this))
-  //	}
-
-  def project(variables: Set[Var]): ElemConstr = {
-    new ElemConstr(self.filterKeys(variables(_)).toMap)
-  }
-
-  def join(other: ElemConstr): ElemConstr = {
-    if (this eq other) this
-    else {
-      //assume(!this.exists{case (k,_) => other.contains(k)}) // commented because of shattering with other atom in same clause
-      val joinedMaps: Map[Var, Domain] = this ++ other
-      new ElemConstr(joinedMaps)
-    }
-  }
-
-  def domains(variables: Set[Var]): Set[Domain] = {
-    variables.map { this(_) }
-  }
-
-  def variablesWithDomain(fixedDomain: Domain): List[Var] = flatMap {
-    case (variable, domain) => {
-      if (domain == fixedDomain) {
-        Some(variable)
-      } else {
-        None
-      }
-    }
-  }.toList
-
-  def +(kv: (Var, Domain)): ElemConstr = this + (kv._1, kv._2)
-
-  def +(variable: Var, domain: Domain): ElemConstr = {
-    new ElemConstr(self + (variable -> domain))
-  }
-
   override def toString = toString(ToStringNameSpace)
 
-  def toString(nameSpace: NameSpace[Var, String], elemSymbol: String = " ∈ ", showRootDomains: Boolean = false) = {
-    filter(showRootDomains || !_._2.isInstanceOf[RootDomain]).map {
-      case (v, domain) =>
-        val vName = nameSpace.getName(v)
-        vName + elemSymbol + domain
-    }.toArray.sorted.mkString(", ")
+  def toString(
+      nameSpace: NameSpace[Var, String],
+      elemSymbol: String = " ∈ ",
+      showRootDomains: Boolean = false
+  ) = {
+    filter(showRootDomains || !_._2.isInstanceOf[RootDomain])
+      .map {
+        case (v, domain) =>
+          val vName = nameSpace.getName(v)
+          vName + elemSymbol + domain
+      }
+      .toArray
+      .sorted
+      .mkString(", ")
   }
+
+  def variablesWithDomain(fixedDomain: Domain): List[Var] =
+    flatMap {
+      case (variable, domain) => {
+        if (domain == fixedDomain) {
+          Some(variable)
+        } else {
+          None
+        }
+      }
+    }.toList
 
 }
 
