@@ -225,13 +225,13 @@ abstract class AbstractCompiler(
         }
       }.headOption match {
         case Some(results) => {
-          // println("\nCache hit.")
-          // println("Before:")
-          // println(cnf)
-          // println("After:")
-          // println(results._1.cnf)
-          // println("Domain map:")
-          // println(results._2)
+          log("\nCache hit.")
+          log("Before:")
+          log(cnf)
+          log("After:")
+          log(results._1.cnf)
+          log("Domain map:")
+          log(results._2 + "\n")
 
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
           updateCache(cnf, node)

@@ -371,29 +371,11 @@ object CNF {
       }
     }
 
-  /** Tries to identify the values in the domainMap as subdomains of some of the
-    * keys.
-    */
-  private[this] def postprocess(
-      domainMap: Map[Domain, Domain]
-  ): Option[DomainMap] =
-    try {
-      Some(domainMap.map {
-        case (d1, d2) => {
-          lazy val stateStream: Stream[State] = List((d2, d2, List())) #::
-            stateStream.map(update)
-          stateStream.flatMap(findDomain(d1)).headOption match {
-            case Some(d) => (d1, d)
-            case None    => throw DomainNotMatchedException()
-          }
-        }
-      }.toMap)
-    } catch {
-      case c: DomainNotMatchedException => {
-        // println("Postprocessing failed")
-        None
-      }
-    }
+  private[this] def findHistory(d1: Domain, d2: Domain): History = {
+    lazy val stateStream: Stream[State] = List((d2, d2, List())) #::
+      stateStream.map(update)
+    stateStream.flatMap(findDomain(d1)).head._2
+  }
 
   /** Tries to identify newFormula as oldFormula but with some domains replaced
     * by their subdomains, irrespective of variable names.
@@ -410,30 +392,19 @@ object CNF {
   def identifyRecursion(
       newFormula: CNF,
       oldFormula: CNF,
-      partialMap: Map[Domain, Domain] = Map.empty
+      partialMap: DomainMap = Map.empty
   ): Option[DomainMap] = {
-    // println("identifyRecursion started between formulas")
-    // println(newFormula)
-    // println("AND")
-    // println(oldFormula)
-    // println("WITH MAP")
-    // println(partialMap)
-
     if (
       newFormula.size != oldFormula.size ||
       newFormula.hashCode != oldFormula.hashCode
     ) {
-      // println("identifyRecursion: finished 1")
       None
     } else if (oldFormula.isEmpty) {
-      // println("identifyRecursion: started postprocessing")
-      val p = postprocess(partialMap)
-      // println("identifyRecursion: finished postprocessing")
-      p
+      Some(partialMap)
     } else {
       for (clause1 <- oldFormula) {
         val updatedOldFormula = new CNF((oldFormula - clause1).toList)
-        for (clause2 <- newFormula.filter { _.hashCode == clause1.hashCode }) {
+        for (clause2 <- newFormula.filter(_.hashCode == clause1.hashCode)) {
           val updatedNewFormula = new CNF((newFormula - clause2).toList)
 
           def myFilter(bijection: Map[Var, Var]): Boolean =
@@ -441,36 +412,37 @@ object CNF {
               case (v1, v2) => {
                 val d1 = clause1.constrs.domainFor(v1)
                 !partialMap.contains(d1) ||
-                partialMap(d1) == clause2.constrs.domainFor(v2)
+                partialMap(d1)._1 == clause2.constrs.domainFor(v2)
               }
             }
 
           val bijections = clause1.variableBijections(clause2, myFilter)
-          // println("found " + bijections.size + " bijections")
           for {
             bijection <- bijections
             if clause1.substitute(bijection).exactlyEquals(clause2)
           } {
-            val updatedMap = partialMap ++ clause1.allVariables.map { v =>
-              {
-                (
-                  clause1.constrs.domainFor(v),
-                  clause2.constrs.domainFor(bijection(v))
-                )
+            try {
+              val updatedMap = partialMap ++ clause1.allVariables.map { v =>
+                {
+                  val d1 = clause1.constrs.domainFor(v)
+                  val d2 = clause2.constrs.domainFor(bijection(v))
+                  (d1, (d2, findHistory(d1, d2)))
+                }
               }
-            }
-            val recursion = identifyRecursion(
-              updatedNewFormula,
-              updatedOldFormula,
-              updatedMap
-            )
-            if (recursion.isDefined) {
-              return recursion
+              val recursion = identifyRecursion(
+                updatedNewFormula,
+                updatedOldFormula,
+                updatedMap
+              )
+              if (recursion.isDefined) {
+                return recursion
+              }
+            } catch {
+              case e: DomainNotMatchedException => {}
             }
           }
         }
       }
-      // println("identifyRecursion: finished 2")
       None
     }
   }

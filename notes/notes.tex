@@ -1,0 +1,94 @@
+\documentclass{article}
+\usepackage[UKenglish]{babel}
+\usepackage[UKenglish]{isodate}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{oz}
+\usepackage[ruled,vlined]{algorithm2e}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+
+\DeclareMathOperator{\Imm}{Im}
+\DeclareMathOperator{\Doms}{Doms}
+\DeclareMathOperator{\Vars}{Vars}
+\DeclareMathOperator{\WMC}{WMC}
+
+\title{Empowering Domain Recursion in Symmetric Weighted First-Order Model Counting}
+
+\begin{document}
+\maketitle
+
+\section{Basic Definitions}
+% TODO (later): maybe mathcal instead of mathscr
+
+\paragraph{Things I might need to explain.}
+\begin{itemize}
+\item notation: $\Imm$
+\item atom
+\item inequality constraint
+\item $\Vars$, $\Vars(c) = \Vars(P) \cup \Vars(N) \cup \Vars(C)$
+\item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
+\item the hash codes of clauses and formulas. Introduce the $\#$ notation.
+\item substitution
+\item (strict) equality of clauses. It's important to mention that we check the number of variables but not their domains.
+\item size of a domain, how each domain is partitioned into two, and how we iterate over all possible integer partitions of length two.
+\item maybe: endomorphism, notation for partial function, notation for powerset
+\end{itemize}
+
+Let $\mathscr{V}$ be the set of circuit nodes.
+
+TODO: merge $\kappa$ and $\iota$ into one.
+
+\begin{definition}
+  A \emph{domain} is a set with elements not used anywhere else.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathscr{D}$ be the set of all domains (note that this set expands during compilation).
+
+  We now define two partial maps $\pi$ and $\kappa$ with the same domain $\dom(\pi) = \dom(\kappa) \subset \mathscr{D}$. First, let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mathscr{D}$ that denotes the \emph{parent} relation, i.e., if $\pi(d) = e$ for some $d, e \in \mathscr{D}$, then we call $e$ the parent (domain) of $d$, and $e$ a child of $d$. Intuitively, $\pi$ arranges all domains into a forest. Second, let $\kappa\colon \mathscr{D} \pfun \mathscr{V}$ be a partial map that assigns a \emph{cause node} to all non-root domains. Third, let $\iota\colon \mathscr{D} \pfun \{\, 0, 1 \,\}$ unambiguously order the children of any internal node, i.e., $\iota(d) \ne \iota(e)$ whenever $\pi(d) = \pi(e)$ for any $d, e \in \mathscr{D}$.\footnote{Here, each internal node has at most two children.}
+\end{definition}
+
+\begin{definition}
+  A \emph{clause} is a triple $c = (P, N, C, \delta)$, where $P$ and $N$ are sets of atoms interpreted as positive and negative literals respectively, $C$ is a set of inequality constraints, and $\delta\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (P', N', C', \delta')$ are \emph{equivalent} (written $c \equiv d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$.
+\end{definition}
+
+A \emph{formula} is a set of clauses.
+
+\section{Identifying Possibilities for Recursion}
+
+For succinctness, let $\mathscr{S} = \mathscr{D} \times \mathscr{D} \times 2^{\mathscr{V} \times \{\, 0, 1 \,\}}$. TODO: explain the idea.
+
+Let $\nu\colon \mathscr{S} \to 2^{\mathscr{S}}$ be a map defined as
+\[
+\nu(a, b, S) =
+\begin{cases}
+  \{\,(\pi(a), b, S \cup \{\, \kappa(a) \,\})\,\} & \text{if } a \in \dom(\pi) \\
+  \emptyset & \text{if } a \not\in \dom(\pi)
+\end{cases}
+\]
+for all $(a, b, S) \in \mathscr{S}$. Furthermore, let $\nu'\colon 2^{\mathscr{S}} \to 2^{\mathscr{S}}$ be an endomorphism defined as $\nu'(S) = \bigcup_{s \in S} \nu(s)$ for all $S \subseteq \mathscr{S}$.
+
+% TODO: postprocess will be part of the main algorithm.
+\begin{algorithm}
+  \caption{A recursive function for checking whether one can reuse the circuit for computing $\WMC(\psi)$ to compute $\WMC(\phi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
+  \SetKwProg{Fn}{Function}{:}{}
+  \SetKwFunction{identifyRecursion}{identifyRecursion}
+  \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$}}{
+    \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{TODO: none}
+    \uElseIf{$\phi = \emptyset$}{
+      TODO
+    }
+    \Else{
+      TODO
+    }
+  }
+\end{algorithm}
+
+\begin{example}
+  % TODO: Need a good example.
+  Let...
+\end{example}
+
+\end{document}
