@@ -54,25 +54,34 @@ class BreadthCompiler(
 
   override def compile(cnf: CNF): List[NNFNode] = {
     val compiler = compilerBuilder
+    val initialCircuit = compiler.applyGreedyRules(cnf)
 
-    val q = Queue(compiler.applyGreedyRules(cnf))
-    // val q = PriorityQueue(compiler.applyGreedyRules(cnf))(Ordering.by(_.priority))
-
-    var depth = 0
-    try {
-      while (depth <= BreadthCompiler.MaxDepth) {
-        val partialCircuit = q.dequeue
-        if (partialCircuit.depth > depth) {
-          depth = partialCircuit.depth
-          println("depth: " + partialCircuit.depth)
+    if (initialCircuit.formulas.isEmpty) {
+      foundSolution(initialCircuit.circuit.get)
+    } else {
+      val q = Queue(initialCircuit)
+      // val q = PriorityQueue(compiler.applyGreedyRules(cnf))(Ordering.by(_.priority))
+      var depth = 0
+      try {
+        while (depth <= BreadthCompiler.MaxDepth) {
+          val partialCircuit = q.dequeue
+          if (partialCircuit.depth > depth) {
+            depth = partialCircuit.depth
+            println("depth: " + partialCircuit.depth)
+          }
+          if (depth <= BreadthCompiler.MaxDepth)
+            q ++= partialCircuit.nextCircuits(this)
         }
-        if (depth <= BreadthCompiler.MaxDepth)
-          q ++= partialCircuit.nextCircuits(this)
+      } catch {
+        case e: EndSearchException => {}
       }
-    } catch {
-      case e: EndSearchException => {}
     }
-    circuits
+
+    if (!circuits.isEmpty) {
+      circuits
+    } else {
+      List(compiler.cannotCompile(cnf))
+    }
   }
 
 }

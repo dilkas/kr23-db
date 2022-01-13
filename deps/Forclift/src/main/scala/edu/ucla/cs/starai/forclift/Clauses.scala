@@ -274,14 +274,8 @@ class Clause(
             .getOrElse {
               println(variable)
               println(reifiedOriginalMGU)
-
-              // FIXME: Returning 'variable' instead of throwing an exception
-              // allows Forclift to handle more formulas and run longer, but
-              // either way shattering is still incomplete/buggy. No idea if
-              // returning 'variable' leads to incorrect formula
-              // transformations.
-              variable
-              // throw new IllegalStateException
+              // variable
+              throw new IllegalStateException
 
               // do not assume every var is in the atoms, there might be
               // constraints on other variables!

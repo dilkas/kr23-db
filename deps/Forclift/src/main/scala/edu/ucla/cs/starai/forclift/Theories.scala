@@ -336,45 +336,15 @@ object CNF {
       private val cause: Throwable = None.orNull
   ) extends Exception(message, cause)
 
-  /** Updates/iterates the state by replacing each domain by its parent domain
-    * and updating the corresponding history to reflect this change.
-    */
-  private[this] def update(state: State): State = {
-    val newState = state.flatMap {
-      case (domain: Domain, origin: Domain, history: History) =>
-        if (domain.isInstanceOf[SubDomain]) {
-          val newHistory = (
-            domain.asInstanceOf[SubDomain].getCause,
-            domain.isInstanceOf[ComplementDomain]
-          )
-          Some((domain.parents.head, origin, newHistory :: history))
-        } else {
-          None
-        }
-    }
-    //println("Updated state to " + newStates)
-    newState
-  }
-
-  /** Finds the given domain in the given state and returns the other two state
-    * fields (origin and history).
-    */
-  private[this] def findDomain(
-      domain: Domain
-  )(state: State): Option[(Domain, History)] =
-    if (state.isEmpty) {
-      throw DomainNotMatchedException()
-    } else {
-      state.find { _._1 == domain } match {
-        case Some((_, origin, history)) => Some(origin, history)
-        case None                       => None
-      }
-    }
-
   private[this] def findHistory(d1: Domain, d2: Domain): History = {
-    lazy val stateStream: Stream[State] = List((d2, d2, List())) #::
-      stateStream.map(update)
-    stateStream.flatMap(findDomain(d1)).head._2
+    var history = List[(ParametrisedNode, Boolean)]()
+    var d = d2
+    while (d.isInstanceOf[SubDomain] && d != d1) {
+      history = (d.asInstanceOf[SubDomain].getCause,
+                  d.isInstanceOf[ComplementDomain]) :: history
+      d = d.parents.head
+    }
+    if (d == d1) history else throw DomainNotMatchedException()
   }
 
   /** Tries to identify newFormula as oldFormula but with some domains replaced
@@ -394,13 +364,13 @@ object CNF {
       oldFormula: CNF,
       partialMap: DomainMap = Map.empty
   ): Option[DomainMap] = {
-    if (
+    if (oldFormula.isEmpty && newFormula.isEmpty) {
+      Some(partialMap)
+    } else if (
       newFormula.size != oldFormula.size ||
       newFormula.hashCode != oldFormula.hashCode
     ) {
       None
-    } else if (oldFormula.isEmpty) {
-      Some(partialMap)
     } else {
       for (clause1 <- oldFormula) {
         val updatedOldFormula = new CNF((oldFormula - clause1).toList)
@@ -442,6 +412,7 @@ object CNF {
             }
           }
         }
+        return None
       }
       None
     }

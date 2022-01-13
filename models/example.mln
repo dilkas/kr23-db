@@ -1,4 +1,4 @@
-person = {1,2,3}
+person = {1,...,10}
 
 r(person,person)
 s(person,person)

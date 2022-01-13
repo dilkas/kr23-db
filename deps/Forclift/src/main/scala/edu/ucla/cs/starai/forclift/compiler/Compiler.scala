@@ -133,7 +133,7 @@ abstract class AbstractCompiler(
   // ============================== DATA ======================================
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  private[this] val Verbose = false
+  private[this] val Verbose = true
 
   // ============================== MISC METHODS ==============================
 
@@ -211,7 +211,7 @@ abstract class AbstractCompiler(
     } else {
       // println("tryCache: found. The bucket has " + nnfCache(cnf.hashCode).size +
       //           " elements.")
-      nnfCache(cnf.hashCode).flatMap {
+      nnfCache(cnf.hashCode).toStream.map {
         case (formula, circuit) => {
           // println("tryCache: calling identifyRecursion on:")
           // println(cnf)
@@ -223,7 +223,7 @@ abstract class AbstractCompiler(
             case None            => None
           }
         }
-      }.headOption match {
+      }.collectFirst { case Some(x) => x } match {
         case Some(results) => {
           log("\nCache hit.")
           log("Before:")
@@ -277,39 +277,44 @@ abstract class AbstractCompiler(
   def inferenceRules: List[InferenceRule] = greedyRules ++ nonGreedyRules
 
   /** Applies the i-th non-greedy inference rule to the given formula. */
-  def applyIthRule(i: Int, cnf: CNF): InferenceResult = nonGreedyRules(i)(cnf)
+  def applyIthRule(i: Int, cnf: CNF): InferenceResult = try {
+    nonGreedyRules(i)(cnf)
+  } catch {
+    // This works around some bugs related to shattering
+    case e: IllegalStateException => None
+  }
 
   /** Constructs the maximal PartialCircuit that can be built using only greedy
     * rules.
     */
   def applyGreedyRules(cnf: CNF): PartialCircuit = {
-    // println("applyGreedyRules: started on:")
-    // println(cnf)
     var rules = greedyRules
     while (rules.nonEmpty) {
-      // println("applyGreedyRules: attempting a new rule")
-      rules.head(cnf) match {
-        case None => {
-          rules = rules.tail
-          // println("applyGreedyRules: the rule doesn't apply here")
-        }
-        case Some((node, successors)) => {
-          // println("applyGreedyRules: successfully applied a rule")
-          node match {
-            case None => {
-              require(successors.size == 1)
-              return applyGreedyRules(successors.head)
-            }
-            case Some(nnf) => {
-              updateCache(cnf, nnf)
-              val newSuccessors = applyGreedyRulesToAllFormulas(nnf, successors)
-              return new PartialCircuit(this, Some(nnf), newSuccessors)
+      try {
+        rules.head(cnf) match {
+          case None => {
+            rules = rules.tail
+          }
+          case Some((node, successors)) => {
+            node match {
+              case None => {
+                require(successors.size == 1)
+                  return applyGreedyRules(successors.head)
+                }
+              case Some(nnf) => {
+                updateCache(cnf, nnf)
+                val newSuccessors = applyGreedyRulesToAllFormulas(nnf,
+                                                                  successors)
+                return new PartialCircuit(this, Some(nnf), newSuccessors)
+              }
             }
           }
         }
+      } catch {
+        // This works around a bug in the implementation of shattering
+        case e: IllegalStateException => rules = rules.tail
       }
     }
-    // println("applyGreedyRules: finished")
     new PartialCircuit(this, None, List(cnf))
   }
 
@@ -322,21 +327,15 @@ abstract class AbstractCompiler(
       formulas: List[CNF]
   ): List[CNF] = {
     require(formulas.size == node.directSuccessors.count(_.isEmpty))
-    val newFormulas = formulas.map { applyGreedyRules(_) }.flatMap {
+    val newFormulas = formulas.map(applyGreedyRules(_)).flatMap {
       partialCircuit =>
         {
           if (partialCircuit.circuit.isDefined) {
-
-            // println("applyGreedyRulesToAllFormulas: adding " +
-            //           partialCircuit.circuit.get.getClass.getSimpleName +
-            //           " as a direct successors of " + node.getClass.getSimpleName)
-
             require(node.updateFirst(partialCircuit.circuit.get))
           }
           partialCircuit.formulas
         }
     }
-    // println("applyGreedyRulesToAllFormulas: finished")
     newFormulas
   }
 
