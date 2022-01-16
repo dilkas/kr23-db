@@ -170,6 +170,8 @@ class CountingNode(
 
   def excludedConstants = subdomain.excludedConstants
 
+  def mainIntroducedDomain: Domain = subdomain
+
   def simpleClone(): NNFNode =
     new CountingNode(cnf, None, domain, subdomain, explanation)
 
@@ -177,15 +179,15 @@ class CountingNode(
 
   // ========================= EQUALITY =======================================
 
-  override lazy val hashCode: Int = cnf.hashCode
+  // override lazy val hashCode: Int = cnf.hashCode
 
-  def canEqual(a: Any) = a.isInstanceOf[CountingNode]
+  // def canEqual(a: Any) = a.isInstanceOf[CountingNode]
 
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: CountingNode => cnf == that.cnf
-      case _                  => false
-    }
+  // override def equals(that: Any): Boolean =
+  //   that match {
+  //     case that: CountingNode => cnf == that.cnf
+  //     case _                  => false
+  //   }
 
   // ========================= EVERYTHING ELSE ================================
 
@@ -534,7 +536,7 @@ class ImprovedDomainRecursionNode(
   ): (String, String) =
     if (depth >= maxDepth) cutoff(nameSpace, compact)
     else {
-      println("toDotNode: ImprovedDomainRecursionNode")
+      // println("toDotNode: ImprovedDomainRecursionNode")
       val (n1, e1) = mixedChild.get.toDotNode(
         domainSizes,
         predicateWeights,

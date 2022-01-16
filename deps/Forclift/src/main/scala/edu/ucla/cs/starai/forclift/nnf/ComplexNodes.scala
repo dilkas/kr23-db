@@ -93,8 +93,8 @@ class Ref(
       depth: Int,
       maxDepth: Int = Integer.MAX_VALUE
   ): (String, String) = {
-    // println("toDotNode: Ref")
-    nameSpace.forceName(this, nameSpace.getName(nnfNode.get))
+    nameSpace.getName(nnfNode.get)
+    //nameSpace.forceName(this, nameSpace.getName(nnfNode.get))
     ("", "")
   }
 
@@ -128,6 +128,8 @@ class ConstraintRemovalNode(
 
   lazy val evalOrder = child.get.evalOrder + 1
 
+  def mainIntroducedDomain: Domain = subdomain
+
   def simpleClone(): NNFNode =
     new ConstraintRemovalNode(cnf, None, domain, subdomain, explanation)
 
@@ -135,22 +137,22 @@ class ConstraintRemovalNode(
 
   // ========================= EQUALITY =======================================
 
-  override lazy val hashCode: Int = cnf.hashCode
+  // override lazy val hashCode: Int = cnf.hashCode
 
-  def canEqual(a: Any) = a.isInstanceOf[ConstraintRemovalNode]
+  // def canEqual(a: Any) = a.isInstanceOf[ConstraintRemovalNode]
 
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: ConstraintRemovalNode => {
-        // println("ConstraintRemovalNode::equals: comparing")
-        // println(this)
-        // println("AND")
-        // println(that)
-        // println("ARE THEY EQUAL: " + (cnf == that.cnf))
-        cnf == that.cnf
-      }
-      case _ => false
-    }
+  // override def equals(that: Any): Boolean =
+  //   that match {
+  //     case that: ConstraintRemovalNode => {
+  //       println("ConstraintRemovalNode::equals: comparing")
+  //       println(this)
+  //       println("AND")
+  //       println(that)
+  //       println("ARE THEY EQUAL: " + (cnf == that.cnf))
+  //       cnf == that.cnf
+  //     }
+  //     case _ => false
+  //   }
 
   // ========================= EVERYTHING ELSE ================================
 

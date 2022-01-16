@@ -176,21 +176,17 @@ class Clause(
       }
     }
 
-  /** A more rigid version of equality.
-    *
-    * The only relaxation we make is that the order in which literals are
-    * ordered is immaterial. Used both in equals() and in
-    * CNF::identifyRecursion().
-    */
   def exactlyEquals(that: Any): Boolean =
     that match {
       case that: Clause => {
-        val pos = posLits.toSet == that.posLits.toSet
-        val neg = negLits.toSet == that.negLits.toSet
-        val c = constrs == that.constrs
-        // println("exactlyEquals: positive literals: " + pos +
-        //           ", negative literals: " + neg + ", constraints: " + c)
-        pos && neg && c
+        // println("Clause::exactlyEquals: posLits: " +
+        //           (posLits.toSet == that.posLits.toSet))
+        // println("Clause::exactlyEquals: negLits: " +
+        //           (negLits.toSet == that.negLits.toSet))
+        // println("Clause::exactlyEquals: constrs: " + (constrs == that.constrs))
+
+        posLits.toSet == that.posLits.toSet &&
+          negLits.toSet == that.negLits.toSet && constrs == that.constrs
       }
       case _ => false
     }
@@ -223,9 +219,27 @@ class Clause(
     that.allVariables.toList.permutations.flatMap { permutation =>
       {
         val bijection = (allVariables.toList zip permutation).toMap
-        // println(bijection)
         if (condition(bijection)) {
           Some((variable: Var) => bijection(variable))
+        } else {
+          None
+        }
+      }
+    }.toList
+
+  def variableAndDomainBijections(
+    that: Clause,
+    condition: Map[Var, Var] => Boolean = (_ => true)
+  ): List[(Var => Var, Domain => Domain)] =
+    that.allVariables.toList.permutations.flatMap { permutation =>
+      {
+        val bijection = (allVariables.toList zip permutation).toMap
+        if (condition(bijection)) {
+          val domains1 = allVariables.toList.map(constrs.domainFor(_))
+          val domains2 = permutation.map(that.constrs.domainFor(_))
+          val domainBijection = (domains1 zip domains2).toMap
+          Some(((variable: Var) => bijection(variable),
+                (domain: Domain) => domainBijection(domain)))
         } else {
           None
         }
@@ -777,6 +791,9 @@ class Clause(
       )
     )
 
+  def substituteDomains(substitution: Domain => Domain): Clause =
+    Clause(posLits, negLits, constrs.substituteDomains(substitution))
+
   def standardizeApart = {
     val map = new mutable.HashMap[Var, Var]()
     substitute(v => {
@@ -991,8 +1008,6 @@ class PositiveUnitClause(
       val v = new Var
       val newAtom = atom.inverseSubstitution(c, v)
       val newConstrs = constrs.inverseSubstitution(c, v, ineqs, domain)
-      // println("inverseSubstitution: " + constrs.elemConstrs.variables.size +
-      //           " -> " + newConstrs.elemConstrs.variables.size)
       new PositiveUnitClause(newAtom, newConstrs)
     } else {
       this

@@ -81,12 +81,17 @@ final case class Constraints(
     this.copy(elemConstrs = (elemConstrs + (variable -> domain)))
   }
 
-  def substitute(substitution: Var => Term): Constraints = {
+  def substitute(substitution: Var => Term): Constraints =
     this.copy(
       ineqConstrs = ineqConstrs.substitute(substitution),
       elemConstrs = elemConstrs.substitute(substitution)
     )
-  }
+
+  def substituteDomains(substitution: Domain => Domain): Constraints =
+    this.copy(
+      ineqConstrs = ineqConstrs,
+      elemConstrs = elemConstrs.mapDomains(substitution)
+    )
 
   lazy val variables = elemConstrs.variables ++ ineqConstrs.variables
 
@@ -103,8 +108,9 @@ final case class Constraints(
   override def equals(that: Any): Boolean =
     that match {
       case that: Constraints =>
-        elemConstrs.variables.size ==
-          that.elemConstrs.variables.size && ineqConstrs == that.ineqConstrs
+        // elemConstrs.variables.size ==
+        //   that.elemConstrs.variables.size && ineqConstrs == that.ineqConstrs
+        elemConstrs == that.elemConstrs && ineqConstrs == that.ineqConstrs
       case _ => false
     }
 

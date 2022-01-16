@@ -76,7 +76,7 @@ trait WmcVisitor {
 object WmcVisitor {
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  protected val Verbose = false
+  protected val Verbose = true
 
   /** Same as in the WmcVisitor trait.
     *
@@ -181,12 +181,20 @@ trait MyRunnable[O]
       }
       WmcVisitor.wmc.get
     } else {
-      nnfs.map { nnf =>
-        visitWrapper(
-          nnf,
-          (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
-        )
-      }.head
+      println("Computing " + nnfs.size + " answers\n")
+      val answers = nnfs.map {
+        nnf => {
+          val answer = Timer {
+            visitWrapper(
+              nnf,
+              (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+            )
+          }("Circuit evaluation took " + _ + " ms")
+          println("Answer: " + answer.toDouble)
+          answer
+        }
+      }
+      answers.head
     }
 
   /** The beginning of a WMC-computing thread.

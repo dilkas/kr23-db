@@ -95,7 +95,11 @@ object NNFNode {
 /** A ParametrisedNode is either a CountingNode or a ConstraintRemovalNode,
   * i.e., a node that causes new domains to be introduced.
   */
-abstract class ParametrisedNode() extends NNFNode {}
+abstract class ParametrisedNode() extends NNFNode {
+
+  def mainIntroducedDomain: Domain
+
+}
 
 /** A circuit node.
   *
@@ -185,6 +189,9 @@ abstract class NNFNode(
 
       // println("myClone: constructing a copy of " + getClass.getSimpleName +
       //           " " + hashCode + ": " + newNode.hashCode)
+      // if (isInstanceOf[ConstraintRemovalNode]) {
+      //   println("\n" + asInstanceOf[ConstraintRemovalNode] + "\n")
+      // }
       // println("myClone: there are " + directSuccessors.size +
       //           " direct successors")
 
@@ -208,7 +215,6 @@ abstract class NNFNode(
     // initialise variables for smoothing
     val postOrderVisitor = new PostOrderVisitor
     postOrderVisitor.visit(this)
-    //println("Variables in post order: " + postOrderVisitor.nodeOrder)
     val smoothingVariablesVisitor = new SmoothingVariablesVisitor(
       postOrderVisitor.nodeOrder
     )
@@ -219,6 +225,11 @@ abstract class NNFNode(
     val missing = allVars.flatMap {
       _.minus(variablesForSmoothing union excluded)
     }
+    // println("smoothWithPredicates: allVars: " + allVars)
+    // println("smoothWithPredicates: variablesForSmoothing: " + variablesForSmoothing)
+    // println("smoothWithPredicates: missing: " + missing.toList)
+    // println("smoothWithPredicates: after makeDisjoint: " +
+    //           makeDisjoint(missing.toList))
     thisSmoothed.smoothWith(makeDisjoint(missing.toList).toSet)
   }
 
@@ -228,6 +239,7 @@ abstract class NNFNode(
       assume(atoms.forall { atom1 =>
         atoms.forall { atom2 => (atom1 eq atom2) || atom1.independent(atom2) }
       })
+      // println("Adding a smoothing node for clause: " + clause)
       new And(
         branch.cnf,
         Some(new SmoothingNode(clause)),

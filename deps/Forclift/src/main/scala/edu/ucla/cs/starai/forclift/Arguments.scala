@@ -54,6 +54,14 @@ case class Constant(val value: Any) extends Term {
     this
   }
 
+  def canEqual(a: Any) = a.isInstanceOf[Constant]
+
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: Constant => value == that.value
+      case _              => false
+    }
+
   override val hashCode = value.hashCode
 
   def domain = _domain

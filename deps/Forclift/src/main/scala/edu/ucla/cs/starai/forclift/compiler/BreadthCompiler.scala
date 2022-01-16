@@ -16,8 +16,8 @@ object BreadthCompiler {
     (sizeHint: Compiler.SizeHints) => new BreadthCompiler(sizeHint, true)
 
   // Two limits on the extensiveness of search
-  val NumSolutions = 10
-  val MaxDepth = 4
+  val NumSolutions = 4
+  val MaxDepth = 6
 
 }
 
@@ -63,7 +63,7 @@ class BreadthCompiler(
       // val q = PriorityQueue(compiler.applyGreedyRules(cnf))(Ordering.by(_.priority))
       var depth = 0
       try {
-        while (depth <= BreadthCompiler.MaxDepth) {
+        while (depth <= BreadthCompiler.MaxDepth && q.nonEmpty) {
           val partialCircuit = q.dequeue
           if (partialCircuit.depth > depth) {
             depth = partialCircuit.depth

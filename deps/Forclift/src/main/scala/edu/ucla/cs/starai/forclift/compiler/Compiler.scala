@@ -202,9 +202,6 @@ abstract class AbstractCompiler(
   def tryCache(cnf: CNF): InferenceResult = {
     // println("tryCache started for formula:")
     // println(cnf)
-    // println("tryCache: looking for " + cnf.hashCode + " among " +
-    //           nnfCache.keySet.toList.sorted)
-
     if (!nnfCache.contains(cnf.hashCode)) {
       // println("tryCache: not found")
       None

@@ -278,11 +278,13 @@ class DomainSizes(
     val newDomainSizes = map {
       case (domain, _) => {
         val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))
-        val newSize = history.map {
-          case (node, complement) =>
-            if (complement) parameterMap(node)._2 else parameterMap(node)._1
-        }.sum
-        (domain, self(newDomain).reduceSize(newSize))
+        // val newSize = history.map {
+        //   case (node, complement) =>
+        //     if (complement) self(node.mainIntroducedDomain.complement).size
+        //     else self(node.mainIntroducedDomain).size
+        // }.sum
+        //(domain, self(domain).reduceSize(self(newDomain).size))
+        (domain, self(newDomain))
       }
     }
     new DomainSizes(newDomainSizes.toMap)

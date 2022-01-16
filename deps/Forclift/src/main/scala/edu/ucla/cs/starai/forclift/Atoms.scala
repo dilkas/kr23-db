@@ -87,7 +87,13 @@ final case class Atom(val predicate: Predicate, val args: Term*) {
   /** Nothing special about this definition of equality. */
   override def equals(that: Any): Boolean =
     that match {
-      case that: Atom => predicate == that.predicate && args == that.args
+      case that: Atom => {
+        // println("Atom::equals: comparing " + this + " and " + that)
+        // println("Atom::equals: predicates equal: " +
+        //           (predicate == that.predicate) + ", args equal: " +
+        //           (args == that.args))
+        predicate == that.predicate && args == that.args
+      }
       case _          => false
     }
 

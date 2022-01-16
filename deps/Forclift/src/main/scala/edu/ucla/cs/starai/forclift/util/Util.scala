@@ -59,25 +59,25 @@ object XNameSpace extends NameSpace[Any, String] {
 }
 
 object Timer{
-  
+
   def apply[A](f: => A)(output: Long => String): A = {
     val start = System.currentTimeMillis()
     val ret = f
     println(output(System.currentTimeMillis()-start))
     ret
   }
-  
+
 }
 
 object Output{
-    
+
   def writeToFile(file: File, content:String, report: String = ""){
     val out = new FileWriter(file)
     out.write(content)
     if(report.nonEmpty) println(report);
     out.close
   }
-  
+
 }
 
 object CacheStats {
@@ -104,7 +104,7 @@ object CacheStats {
 }
 
 object Resource{
-  
+
   def fromFile(p: String): BufferedSource =
     Option(getClass.getResourceAsStream(p)).map(scala.io.Source.fromInputStream)
       .getOrElse(throw new FileNotFoundException("Resource " + p))

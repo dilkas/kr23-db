@@ -386,17 +386,22 @@ object CNF {
               }
             }
 
-          val bijections = clause1.variableBijections(clause2, myFilter)
+          val bijections = clause1.variableAndDomainBijections(clause2,
+                                                               myFilter)
+          // println("identifyRecursion: examining " + bijections.size +
+          //           " bijections between " + clause1 + " and " + clause2)
           for {
-            bijection <- bijections
-            if clause1.substitute(bijection).exactlyEquals(clause2)
+            (bijection, domainBijection) <- bijections
+            if clause1.substitute(bijection).
+            substituteDomains(domainBijection).exactlyEquals(clause2)
           } {
             try {
               val updatedMap = partialMap ++ clause1.allVariables.map { v =>
                 {
                   val d1 = clause1.constrs.domainFor(v)
                   val d2 = clause2.constrs.domainFor(bijection(v))
-                  (d1, (d2, findHistory(d1, d2)))
+                  val history = findHistory(d1, d2)
+                  (d1, (d2, history))
                 }
               }
               val recursion = identifyRecursion(
