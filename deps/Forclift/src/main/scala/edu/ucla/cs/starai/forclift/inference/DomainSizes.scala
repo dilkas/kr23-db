@@ -264,26 +264,10 @@ class DomainSizes(
     * Note that some of these parameters change as the circuit is being
     * traversed.
     */
-  def shrink(
-      domainMap: CNF.DomainMap,
-      parameterMap: WmcVisitor.ParameterMap
-  ): DomainSizes = {
-    // println("\n==========")
-    // println("Shrinking domainMap:")
-    // println(domainMap)
-    // println("Shrinking parameterMap (of size " + parameterMap.size + "):")
-    // println(parameterMap)
-    // println("==========\n")
-
+  def shrink(domainMap: CNF.DomainMap): DomainSizes = {
     val newDomainSizes = map {
       case (domain, _) => {
         val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))
-        // val newSize = history.map {
-        //   case (node, complement) =>
-        //     if (complement) self(node.mainIntroducedDomain.complement).size
-        //     else self(node.mainIntroducedDomain).size
-        // }.sum
-        //(domain, self(domain).reduceSize(self(newDomain).size))
         (domain, self(newDomain))
       }
     }

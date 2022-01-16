@@ -124,7 +124,7 @@ class IndependentPartialGroundingNode(
         val wmcVisitor = new SafeSignLogDoubleWmc
         val childlwmc = wmcVisitor.visit(
           child.get.smooth,
-          (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+          (domainSizes, predicateWeights)
         )
         "  " + getName(nameSpace) + " -> " + "exp" + getName(
           nameSpace
@@ -423,14 +423,13 @@ class DomainRecursionNode(
         val wmcVisitor = new SafeSignLogDoubleWmc
         val groundChildWmc = wmcVisitor.visit(
           groundChild.get.smooth,
-          (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+          (domainSizes, predicateWeights)
         )
         val mixedChildWmc = wmcVisitor.visit(
           mixedChild.get.smooth,
           (
             domainSizes - domain,
-            predicateWeights,
-            WmcVisitor.ParameterMap.empty
+            predicateWeights
           )
         )
         "  " + getName(nameSpace) + " -> " + "domainrec" + getName(
@@ -571,8 +570,7 @@ class ImprovedDomainRecursionNode(
           mixedChild.get.smooth,
           (
             domainSizes - domain,
-            predicateWeights,
-            WmcVisitor.ParameterMap.empty
+            predicateWeights
           )
         )
         "  " + getName(nameSpace) + " -> " + "domainrec" + getName(

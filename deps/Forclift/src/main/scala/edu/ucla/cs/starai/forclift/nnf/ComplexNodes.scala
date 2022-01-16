@@ -364,7 +364,7 @@ class And(
           try {
             wmcVisitor.visit(
               l.get.smooth,
-              (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+              (domainSizes, predicateWeights)
             )
           } catch {
             case e: UnsupportedOperationException => Complex.nan
@@ -373,7 +373,7 @@ class And(
           try {
             wmcVisitor.visit(
               r.get.smooth,
-              (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+              (domainSizes, predicateWeights)
             )
           } catch {
             case e: UnsupportedOperationException => Complex.nan
@@ -516,7 +516,7 @@ class Or(
           try {
             wmcVisitor.visit(
               l.get.smooth,
-              (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+              (domainSizes, predicateWeights)
             )
           } catch {
             case e: UnsupportedOperationException => Complex.nan
@@ -525,7 +525,7 @@ class Or(
           try {
             wmcVisitor.visit(
               r.get.smooth,
-              (domainSizes, predicateWeights, WmcVisitor.ParameterMap.empty)
+              (domainSizes, predicateWeights)
             )
           } catch {
             case e: UnsupportedOperationException => Complex.nan
