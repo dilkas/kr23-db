@@ -214,7 +214,6 @@ abstract class IJCAI11Compiler(
   def tryInclusionExclusion(cnf: CNF) = {
     val decomposableClauseOption = cnf.clauses.find { _.independentLiterals.nonEmpty }
     if (decomposableClauseOption.nonEmpty) {
-      log("\ninclusion-exclusion")
       val Some(clause) = decomposableClauseOption
       val otherClauses = cnf.clauses filterNot (_ == clause)
       val Some((cl1, cl2)) = clause.independentLiterals
@@ -223,7 +222,14 @@ abstract class IJCAI11Compiler(
       val minBranch = new CNF(cl1 :: cl2 :: otherClauses)
       val msg = "Inclusion-exclusion on $" + clause.toLatex() + "$."
       val node = new InclusionExclusion(cnf, None, None, None, msg)
-      log(cnf.toString + "\n")
+
+      log("\nInclusion-exclusion. Before:")
+      log(cnf)
+      log("After 1:")
+      log(cl1)
+      log("After 2:")
+      log(cl2)
+
       Some((Some(node), List(plus1Branch, plus2Branch, minBranch)))
     } else None
   }

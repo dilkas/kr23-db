@@ -135,8 +135,10 @@ class Clause(
     * We treat ElemConstrs separately by filtering out bijections that pair up
     * variables from different domains. Note that the number of variables in a
     * clause is usually only 2-3.
+    *
+    * TODO: update this description
     */
-  override def equals(that: Any): Boolean =
+  def myEquivalent(that: Any): Boolean =
     that match {
       case that: Clause => {
         if (hashCode != that.hashCode) {
@@ -175,6 +177,8 @@ class Clause(
         false
       }
     }
+
+  override def equals(that: Any): Boolean = exactlyEquals(that)
 
   def exactlyEquals(that: Any): Boolean =
     that match {
@@ -951,9 +955,8 @@ class PositiveUnitClause(
   override def canEqual(a: Any) = a.isInstanceOf[PositiveUnitClause]
 
   /** Equality is the same as for Clauses. */
-  override def equals(that: Any): Boolean = {
-    super.equals(that)
-  }
+  override def equals(that: Any): Boolean =
+    super.myEquivalent(that)
 
   /** Hash code is the same as for Clauses. */
   override def hashCode: Int = super.hashCode

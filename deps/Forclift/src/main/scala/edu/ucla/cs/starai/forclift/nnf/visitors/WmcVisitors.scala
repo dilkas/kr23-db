@@ -76,7 +76,7 @@ trait WmcVisitor {
 object WmcVisitor {
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  protected val Verbose = true
+  protected val Verbose = false
 
   /** Same as in the WmcVisitor trait.
     *

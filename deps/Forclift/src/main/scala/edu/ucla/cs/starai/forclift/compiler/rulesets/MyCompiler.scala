@@ -188,7 +188,7 @@ abstract class MyCompiler(
   override def nonGreedyRules: List[InferenceRule] =
     List(
       tryGroundDecomposition, // +1
-      tryInclusionExclusion, // +2
+      // tryInclusionExclusion, // +2
       tryShatter, // 0
       tryIndependentPartialGrounding, // 0
       tryCounting, // 0

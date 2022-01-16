@@ -26,23 +26,33 @@ def forclift_injections2(a, b):
         return b+1
     return sum(int(math.factorial(b) / math.factorial(b - m - l)) * forclift_injections2(a - 2, b - m - l) for m in range(min(b, 1) + 1) for l in range(min(b - m, 1) + 1))
 
+def forclift2_injections(m, n):
+    if m == 0: return 1
+    if n == 0: return forclift2_injections(m - 1, n)
+    return forclift2_injections(m - 1, n) + n * forclift2_injections(m - 1, n - 1)
+
 MAX = 5
 
 for m in range(1, MAX):
     for n in range(1, MAX):
-        print("f({}, {}) = {}".format(m, n, injections(m, n)))
-
-print()
-for m in range(MAX):
-    for n in range(MAX):
-        print("g({}, {}) = {}".format(m, n, injections2(m, n)))
+        print("f({}, {}) = {}".format(m, n, my_partial_injections(m, n)))
 
 print()
 for m in range(1, MAX):
     for n in range(1, MAX):
-        print("f({}, {}) = {}".format(m, n, forclift_injections(m, n)))
+        print("f({}, {}) = {}".format(m, n, forclift2_injections(m, n)))
 
-print()
-for m in range(MAX):
-    for n in range(MAX):
-        print("g({}, {}) = {}".format(m, n, forclift_injections2(m, n)))
+# print()
+# for m in range(MAX):
+#     for n in range(MAX):
+#         print("g({}, {}) = {}".format(m, n, injections2(m, n)))
+
+# print()
+# for m in range(1, MAX):
+#     for n in range(1, MAX):
+#         print("f({}, {}) = {}".format(m, n, forclift_injections(m, n)))
+
+# print()
+# for m in range(MAX):
+#     for n in range(MAX):
+#         print("g({}, {}) = {}".format(m, n, forclift_injections2(m, n)))
