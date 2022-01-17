@@ -85,6 +85,10 @@ class PartialCircuit(
                   ).applyAllRules()
                 }
                 case Some(node) => {
+                  // println("PartialCircuit::applyAllRules: adding")
+                  // println(cnf)
+                  // println("AND")
+                  // println(node.cnf)
                   circuitCopy.compiler.updateCache(cnf, node)
                   val newSuccessors = circuitCopy.compiler
                     .applyGreedyRulesToAllFormulas(node, successors)

@@ -164,7 +164,7 @@ trait MyRunnable[O]
       }
       WmcVisitor.wmc.get
     } else {
-      println("Computing " + nnfs.size + " answers\n")
+      println("Computing " + nnfs.size + " answer(s)\n")
       val answers = nnfs.map {
         nnf => {
           val answer = Timer {

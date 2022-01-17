@@ -42,9 +42,17 @@ class GreedyCompiler(
         val (node, successors) = tryRule.get
         if (node.isEmpty) {
           require(successors.size == 1)
+          // println("GreedyCompile::compile: recursive call")
           nnf = compile(successors.head)
         } else {
           nnf = List(node.get)
+
+          // println("GreedyCompiler::compile: (" +
+          //           nnf.head.getClass.getSimpleName + ") adding")
+          // println(cnf)
+          // println("AND")
+          // println(nnf.head.cnf)
+
           compiler.updateCache(cnf, nnf.head)
           nnf.head.update(
             successors.map(successor => Some(compile(successor).head))

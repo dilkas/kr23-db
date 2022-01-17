@@ -183,6 +183,7 @@ class Clause(
   def exactlyEquals(that: Any): Boolean =
     that match {
       case that: Clause => {
+        // println("Clause::exactlyEquals: comparing " + this + " and " + that)
         // println("Clause::exactlyEquals: posLits: " +
         //           (posLits.toSet == that.posLits.toSet))
         // println("Clause::exactlyEquals: negLits: " +

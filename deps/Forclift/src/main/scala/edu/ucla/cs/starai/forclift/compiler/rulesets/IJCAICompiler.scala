@@ -146,14 +146,16 @@ abstract class IJCAI11Compiler(
     val (dep, indep) = partition(List(cnf.clauses.head), cnf.clauses.tail)
     if (indep.isEmpty) None
     else {
-      log("\nIndependent subtheories. Before:")
-      log(cnf.toString)
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
       val node = new And(cnf, None, None, msg)
+
+      log("\n" + msg + " Before:")
+      log(cnf.toString)
       log("After 1:")
       log(new CNF(dep).toString)
       log("After 2:")
       log(new CNF(indep) + "\n")
+
       Some((Some(node), List(new CNF(dep), new CNF(indep))))
     }
   }

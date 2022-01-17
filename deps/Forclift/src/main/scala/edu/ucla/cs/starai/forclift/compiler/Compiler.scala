@@ -210,10 +210,10 @@ abstract class AbstractCompiler(
       //           " elements.")
       nnfCache(cnf.hashCode).toStream.map {
         case (formula, circuit) => {
-          // println("tryCache: calling identifyRecursion on:")
-          // println(cnf)
-          // println("tryCache: AND")
+          // println("tryCache: formula:")
           // println(formula)
+          // println("tryCache: the other formula:")
+          // println(circuit.cnf)
 
           CNF.identifyRecursion(cnf, formula) match {
             case Some(recursion) => Some((circuit, recursion))
@@ -231,6 +231,10 @@ abstract class AbstractCompiler(
           log(results._2 + "\n")
 
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
+          // println("tryCache: adding:")
+          // println(cnf)
+          // println("AND")
+          // println(node.cnf)
           updateCache(cnf, node)
           // println("tryCache finished")
           Some((Some(node), List[CNF]()))
@@ -299,6 +303,10 @@ abstract class AbstractCompiler(
                   return applyGreedyRules(successors.head)
                 }
               case Some(nnf) => {
+                // println("applyGreedyRules: adding")
+                // println(cnf)
+                // println("AND")
+                // println(nnf.cnf)
                 updateCache(cnf, nnf)
                 val newSuccessors = applyGreedyRulesToAllFormulas(nnf,
                                                                   successors)

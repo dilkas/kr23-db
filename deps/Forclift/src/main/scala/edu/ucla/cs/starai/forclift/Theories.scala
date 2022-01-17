@@ -19,7 +19,7 @@ package edu.ucla.cs.starai.forclift
 import collection._
 import scala.collection.immutable.Stream
 import edu.ucla.cs.starai.forclift.inference._
-import edu.ucla.cs.starai.forclift.nnf.ParametrisedNode
+import edu.ucla.cs.starai.forclift.nnf._
 
 final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
@@ -347,6 +347,10 @@ object CNF {
     if (d == d1) history else throw DomainNotMatchedException()
   }
 
+  private[this] def notInfinite(domainMap: DomainMap): Boolean =
+    domainMap.values.exists(_._2.exists(
+                               _._1.isInstanceOf[ConstraintRemovalNode]))
+
   /** Tries to identify newFormula as oldFormula but with some domains replaced
     * by their subdomains, irrespective of variable names.
     *
@@ -364,8 +368,10 @@ object CNF {
       oldFormula: CNF,
       partialMap: DomainMap = Map.empty
   ): Option[DomainMap] = {
+    // println("oldFormula size: " + oldFormula.size + ", newFormula size: " +
+    //           newFormula.size)
     if (oldFormula.isEmpty && newFormula.isEmpty) {
-      Some(partialMap)
+      if (notInfinite(partialMap)) Some(partialMap) else None
     } else if (
       newFormula.size != oldFormula.size ||
       newFormula.hashCode != oldFormula.hashCode
@@ -410,6 +416,7 @@ object CNF {
                 updatedMap
               )
               if (recursion.isDefined) {
+                // println("identifyRecursion succeeded")
                 return recursion
               }
             } catch {
