@@ -220,31 +220,49 @@ class Clause(
   def variableBijections(
       that: Clause,
       condition: Map[Var, Var] => Boolean = (_ => true)
-  ): List[Var => Var] =
+  ): List[Map[Var, Var]] =
     that.allVariables.toList.permutations.flatMap { permutation =>
       {
         val bijection = (allVariables.toList zip permutation).toMap
         if (condition(bijection)) {
-          Some((variable: Var) => bijection(variable))
+          Some(bijection)
         } else {
           None
         }
       }
     }.toList
 
+  private[this] def constructDomainMap(
+    domains1: List[Domain],
+    domains2: List[Domain]
+  ): Option[Map[Domain, Domain]] = {
+    var domainBijection = Map[Domain, Domain]()
+    for ((d1, d2) <- (domains1 zip domains2)) {
+      if (!domainBijection.contains(d1)) {
+        domainBijection += (d1 -> d2)
+      } else if (domainBijection(d1) != d2) {
+        return None
+      }
+    }
+    Some(domainBijection)
+  }
+
   def variableAndDomainBijections(
     that: Clause,
     condition: Map[Var, Var] => Boolean = (_ => true)
-  ): List[(Var => Var, Domain => Domain)] =
+  ): List[(Map[Var, Var], Map[Domain, Domain])] =
     that.allVariables.toList.permutations.flatMap { permutation =>
       {
         val bijection = (allVariables.toList zip permutation).toMap
         if (condition(bijection)) {
           val domains1 = allVariables.toList.map(constrs.domainFor(_))
           val domains2 = permutation.map(that.constrs.domainFor(_))
-          val domainBijection = (domains1 zip domains2).toMap
-          Some(((variable: Var) => bijection(variable),
-                (domain: Domain) => domainBijection(domain)))
+          val domainBijection = constructDomainMap(domains1, domains2)
+          domainBijection match {
+            case None => None
+            case Some(domainBijection) =>
+              Some((bijection, domainBijection))
+          }
         } else {
           None
         }

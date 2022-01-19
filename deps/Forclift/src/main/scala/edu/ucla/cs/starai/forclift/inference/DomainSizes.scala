@@ -267,7 +267,7 @@ class DomainSizes(
   def shrink(domainMap: CNF.DomainMap): DomainSizes = {
     val newDomainSizes = map {
       case (domain, _) => {
-        val (newDomain, history) = domainMap.getOrElse(domain, (domain, List()))
+        val newDomain = domainMap.getOrElse(domain, domain)
         (domain, self(newDomain))
       }
     }

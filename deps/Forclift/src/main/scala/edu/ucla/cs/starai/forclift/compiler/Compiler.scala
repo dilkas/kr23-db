@@ -231,10 +231,6 @@ abstract class AbstractCompiler(
           log(results._2 + "\n")
 
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
-          // println("tryCache: adding:")
-          // println(cnf)
-          // println("AND")
-          // println(node.cnf)
           updateCache(cnf, node)
           // println("tryCache finished")
           Some((Some(node), List[CNF]()))

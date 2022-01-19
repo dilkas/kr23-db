@@ -3,20 +3,24 @@
 \usepackage[UKenglish]{isodate}
 \usepackage[utf8]{inputenc}
 \usepackage{fullpage}
-\usepackage{amsmath}
+
+\usepackage{mathtools}
 \usepackage{amsthm}
 \usepackage{mathrsfs}
-\usepackage{oz}
+
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{tikz}
 \usepackage[capitalize]{cleveref}
 
-\usetikzlibrary{arrows,fit,positioning,trees}
+\usetikzlibrary{arrows,fit,positioning,trees,cd}
 
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
 
+\newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
+
+\DeclareMathOperator{\dom}{dom}
 \DeclareMathOperator{\Imm}{Im}
 \DeclareMathOperator{\Doms}{Doms}
 \DeclareMathOperator{\Vars}{Vars}
@@ -28,96 +32,117 @@
 \maketitle
 
 \section{Basic Definitions}
-% TODO (later): maybe mathcal instead of mathscr
+ TODO (later): maybe mathcal instead of mathscr
 
 \paragraph{Things I might need to explain.}
 \begin{itemize}
 \item notation: $\Imm$
-\item atom
+\item atom, literal
 \item inequality constraint
 \item $\Vars$, $\Vars(c) = \Vars(P) \cup \Vars(N) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
 \item the hash codes of clauses and formulas. Introduce the $\#$ notation.
 \item substitution
-\item (strict) equality of clauses. It's important to mention that we check the number of variables but not their domains.
-\item size of a domain, how each domain is partitioned into two, and how we iterate over all possible integer partitions of length two.
-\item maybe: notation for partial function, notation for powerset
+\item size of a domain, how each domain is partitioned into two during compilation.
+\item maybe: notation for partial function, notation for powerset, domain size
 \item notation for projection (or avoid it?)
 \item $\WMC$
+\item constraint removal operation
+\item two parts: compilation and inference.
+\item introduce and use arrows for bijections, injections, set inclusions, etc.
+\item $\emptyset$ for an empty partial map.
 \end{itemize}
 
 Let $\mathscr{V}$ be the set of circuit nodes.
 
-TODO: merge $\kappa$ and $\iota$ into one.
-
-TODO: maybe $\pi$ and $\kappa$ are global enough to have more unique names.
+TODO: maybe $\pi$ is global enough to have a more unique name.
 
 \begin{definition}
-  A \emph{domain} is a set with elements not used anywhere else.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathscr{D}$ be the set of all domains (note that this set expands during compilation).
+  A \emph{domain} is a set with elements not used anywhere else.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathscr{D}$ be the set of all domains and $\mathscr{C} \subset \mathscr{D}$ be the subset of domains introduced as a consequence of constraint removal. Note that both sets (can) expand during the compilation phase.
 
-  We now define two partial maps $\pi$ and $\kappa$ with the same domain $\dom(\pi) = \dom(\kappa) \subset \mathscr{D}$. First, let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mathscr{D}$ that denotes the \emph{parent} relation, i.e., if $\pi(d) = e$ for some $d, e \in \mathscr{D}$, then we call $e$ the parent (domain) of $d$, and $e$ a child of $d$. Intuitively, $\pi$ arranges all domains into a forest---thus, we often use graph theoretical terminology to describe properties of and relationships between domains. Second, let $\kappa\colon \mathscr{D} \pfun \mathscr{V}$ be a partial map that assigns a \emph{cause node} to all non-root domains. Third, let $\iota\colon \mathscr{D} \pfun \{\, 0, 1 \,\}$ unambiguously order the children of any internal node, i.e., $\iota(d) \ne \iota(e)$ whenever $\pi(d) = \pi(e)$ for any $d, e \in \mathscr{D}$.\footnote{Here, each internal node has at most two children.}
+Let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mathscr{D}$ that denotes the \emph{parent} relation, i.e., if $\pi(d) = e$ for some $d, e \in \mathscr{D}$, then we call $e$ the parent (domain) of $d$, and $e$ a child of $d$. Intuitively, $\pi$ arranges all domains into a forest---thus, we often use graph theoretical terminology to describe properties of and relationships between domains.
 \end{definition}
 
 \begin{definition}
-  A \emph{clause} is a triple $c = (P, N, C, \delta_c)$, where $P$ and $N$ are sets of atoms interpreted as positive and negative literals respectively, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (P', N', C', \delta_d)$ are \emph{equivalent} (written $c \equiv d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s.
+  A \emph{clause} is a triple $c = (P, N, C, \delta_c)$, where $P$ and $N$ are sets of atoms interpreted as positive and negative literals respectively, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (P', N', C', \delta_d)$ are \emph{isomorphic} (written $c \cong d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match).
 \end{definition}
 
 A \emph{formula} is a set of clauses.
 
 \section{Identifying Possibilities for Recursion}
 
-%% For succinctness, let $\mathscr{S} = \mathscr{D} \times \mathscr{D} \times 2^{\mathscr{V} \times \{\, 0, 1 \,\}}$.
-
-%% Let $\nu\colon \mathscr{S} \to 2^{\mathscr{S}}$ be a map defined as
-%% \[
-%% \nu(a, b, S) =
-%% \begin{cases}
-%%   \{\,(\pi(a), b, S \cup \{\, \kappa(a) \,\})\,\} & \text{if } a \in \dom(\pi) \\
-%%   \emptyset & \text{if } a \not\in \dom(\pi)
-%% \end{cases}
-%% \]
-%% for all $(a, b, S) \in \mathscr{S}$. Furthermore, let $\nu'\colon 2^{\mathscr{S}} \to 2^{\mathscr{S}}$ be an endomorphism defined as $\nu'(S) = \bigcup_{s \in S} \nu(s)$ for all $S \subseteq \mathscr{S}$.
+\begin{definition}[Notation]
+  For any clause $c = (P, N, C, \delta_c)$, bijection $\beta\colon \Vars(c) \to V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathscr{D}$, let $c \ast (\beta, \gamma) = d$ be the clause with all occurrences of any variable $v \in \Vars(c)$ in $P$, $N$, and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathscr{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes the following diagram commute:
+  \[
+  \begin{tikzcd}
+    \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow{d}{\delta_c} & V = \Vars(d) \ar[d, dashed, "\exists!\delta_d"] \\
+    \Doms(c) \arrow{r}{\gamma} & \mathscr{D}.
+  \end{tikzcd}
+  \]
+\end{definition}
 
 \begin{algorithm}[t]
-  \caption{A recursive function for checking whether one can reuse the circuit for computing $\WMC(\psi)$ to compute $\WMC(\phi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi) \times 2^{\mathscr{V} \times \{\, 0, 1 \,\}}$ is a partial map. TODO: explain more about $\rho$.}
+  \caption{A recursive function for checking whether one can reuse the circuit for computing $\WMC(\psi)$ to compute $\WMC(\phi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
   \SetKwProg{Fn}{Function}{:}{}
   \SetKwFunction{identifyRecursion}{identifyRecursion}
-  \SetKwFunction{findHistory}{findHistory}
-  \SetKwData{suitable}{suitable}
-  \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$}}{
-    \lIf{$\phi = \psi = \emptyset$}{\Return{$\rho$}}
+  \SetKwFunction{findHistory}{traceAncestors}
+  \SetKwFunction{generateMaps}{generateMaps}
+  \SetKwFunction{constructDomainMap}{constructDomainMap}
+  \SetKwData{suitable}{suitableBijection}
+  \SetKwData{found}{foundConstraintRemoval}
+  \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$, $\found = {\normalfont \texttt{false}}$}}{
     \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{\Return{\normalfont \texttt{null}}}
+    \If{$\phi = \psi = \emptyset$}{
+      \lIf{$\found$}{\Return{$\rho$}}
+      \Return{\normalfont \texttt{null}}\;
+    }
     \ForEach{clause $c \in \phi$}{
       \ForEach{clause $d \in \psi$ such that $\#d = \#c$} {
-        \ForEach{bijection $\beta\colon \Vars(c) \to \Vars(d)$}{
-          $\suitable \gets {\normalfont \texttt{true}}$\;
-          \If{$\forall v \in \Vars(c). (\delta_c(v) \not\in {\normalfont \dom}(\rho) \lor \pi_1(\rho(\delta_c(v))) = \delta_d(\beta(v)))$ {\bf and} $c\beta = d$}{
-            $\rho' \gets \rho$\;
-            \ForEach{$v \in \Vars(c)$}{
-              $H \gets \findHistory{$\delta_c(v)$, $\delta_d(\beta(v))$}$\;
-              \If{$H = {\normalfont \texttt{null}}$}{
-                $\suitable \gets {\normalfont \texttt{false}}$\;
-                break\;
-              }
-              $\rho' \gets \rho \cup \{\, \delta_c(v) \mapsto (\delta_d(\beta(v)), H) \,\}$\;
+        \ForEach{$(\beta, \gamma) \in \generateMaps{$c$, $d$, $\rho$}$ such that $c \ast (\beta, \gamma) = d$}{
+          $\found' \gets \found$\;
+          $\suitable \gets \texttt{true}$\;
+          \ForEach{$v \in \Vars(c)$}{
+            $\found'' \gets \findHistory{$\delta_c(v)$, $\delta_d(\beta(v))$}$\;
+            \If{$\found'' = {\normalfont \texttt{null}}$}{
+              $\suitable \gets \texttt{false}$\;
+              break\;
             }
-            \If{\suitable}{
-              $\rho'' \gets \identifyRecursion{$\phi \setminus \{\, c \,\}$, $\psi \setminus \{\, d \,\}$, $\rho'$}$\;
-              \lIf{$\rho'' \ne {\normalfont \texttt{null}}$}{\Return{$\rho''$}}
-            }
+            \lIf{$\found''$}{$\found' \gets \texttt{true}$}
+          }
+          \If{\suitable}{
+            $\rho'' \gets \identifyRecursion{$\phi \setminus \{\, c \,\}$, $\psi \setminus \{\, d \,\}$, $\rho \cup \gamma$, $\found'$}$\;
+            \lIf{$\rho'' \ne {\normalfont \texttt{null}}$}{\Return{$\rho''$}}
           }
         }
       }
       \Return{\normalfont \texttt{null}}\;
     }
   }
+  \Fn{\generateMaps{$c$, $d$, $\rho$}}{
+    $M \gets \emptyset$\;
+    \ForEach{bijection $\beta\colon \Vars(c) \to \Vars(d)$}{
+      \If{$\forall v \in \Vars(c). (\delta_c(v) \not\in {\normalfont \dom}(\rho) \lor \rho(\delta_c(v)) = \delta_d(\beta(v)))$}{
+        $\gamma \gets \constructDomainMap{$\Vars(c)$, $\delta_c$, $\delta_d$, $\beta$}$\;
+        \lIf{$\gamma \ne {\normalfont \texttt{null}}$}{$M \gets M \cup \{\, (\beta, \gamma) \,\}$}
+      }
+    }
+    \Return{$M$}\;
+  }
+  \Fn{\constructDomainMap{$V$, $\delta_c$, $\delta_d$, $\beta$}}{
+    $\gamma \gets \emptyset$\;
+    \ForEach{$v \in V$}{
+      \lIf{$\delta_c(v) \not\in \dom(\gamma)$}{$\gamma \gets \gamma \cup \{\, \delta_c(v) \mapsto \delta_d(\beta(v)) \,\}$}
+      \lElseIf{$\gamma(\delta_c(v)) \ne \delta_d(\beta(v))$}{\Return{\normalfont \texttt{null}}}
+    }
+    \Return{$\gamma$}\;
+  }
   \Fn{\findHistory{$c$, $d$}}{
-    $H \gets \emptyset$\;
+    $\found \gets \texttt{false}$\;
     \While{$d \ne c$ {\bf and} $d \in {\normalfont \dom}(\pi)$}{
-      $H \gets H \cup \{\, \kappa(d) \,\}$\;
+      \lIf{$d \in \mathscr{C}$}{$\found \gets \texttt{true}$}
       $d \gets \pi(d)$\;
     }
-    \lIf{$d = c$}{\Return{$H$}}
+    \lIf{$d = c$}{\Return{\found}}
     \Return{\normalfont \texttt{null}}\;
   }
 \end{algorithm}
@@ -156,12 +181,18 @@ A \emph{formula} is a set of clauses.
   \label{fig:example}
 \end{figure}
 
+The function \texttt{traceAncestors} returns \texttt{null} if domain $c \in \mathscr{D}$ is not an ancestor of domain $d \in \mathscr{D}$. Otherwise, it returns \texttt{true} if the size of $d$ is guaranteed to be strictly smaller than the size of $c$ (i.e., there is domain created by the constraint removal rule on the path from $c$ to $d$) and \texttt{false} if their sizes will be equal at some point during inference.
+
+Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function such that $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$.
+
+TODO: explain why $\rho \cup \gamma$ is possible.
+
 TODO: explain what the second return statement is about and why a third one is not necessary.
 
 TODO: mention which one is the main function, what each function takes and returns.
 
 \begin{example}
-  TODO: explain how the algorithm establishes a recursive relationship from
+  % TODO: explain how the algorithm establishes a recursive relationship from
   % 1. formulas (both the Forclift representation and the more normal way to write down the same thing)
   % 2. definitions of delta_c, delta_d, kappa, pi
   \begin{align*}

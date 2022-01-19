@@ -305,51 +305,29 @@ object CNF {
 
   def apply(clauses: Clause*) = new CNF(clauses.toList)
 
-  /** A history is a list of changes.
-    *
-    * Each change is a pair of:
-    * 1) a circuit node n that created the domain,
-    * 2) and a Boolean that indicates which of the two domains (introduced by n)
-    * is the relevant one ('true' means that it's the secondary domain, i.e.,
-    * the complement of the main one).
-    */
-  private[this] type History = List[(ParametrisedNode, Boolean)]
-
   /** Describes the relationship between the domains of both (i.e., the new and
     * the old) formulas.
     *
     * Each domain d of the new formula is mapped to a domain d' of the old
-    * formula and a history that describe how d' became d.
+    * formula.
     */
-  type DomainMap = Map[Domain, (Domain, History)]
-
-  /** The state that is being iterated over while trying to identify domains of
-    * the new formula as subdomains of the old formula.
-
-    * The first element of each tuple is the domain to be compared, the second
-    * element is its origin domain, and the third element is its history.
-    */
-  private[this] type State = Iterable[(Domain, Domain, History)]
+  type DomainMap = Map[Domain, Domain]
 
   final case class DomainNotMatchedException(
       private val message: String = "",
       private val cause: Throwable = None.orNull
   ) extends Exception(message, cause)
 
-  private[this] def findHistory(d1: Domain, d2: Domain): History = {
-    var history = List[(ParametrisedNode, Boolean)]()
+  private[this] def traceAncestors(d1: Domain, d2: Domain): Option[Boolean] = {
+    var foundConstraintRemoval = false
     var d = d2
-    while (d.isInstanceOf[SubDomain] && d != d1) {
-      history = (d.asInstanceOf[SubDomain].getCause,
-                  d.isInstanceOf[ComplementDomain]) :: history
+    while (d != d1 && d.isInstanceOf[SubDomain]) {
+      foundConstraintRemoval = foundConstraintRemoval ||
+        d.isCausedByConstraintRemoval
       d = d.parents.head
     }
-    if (d == d1) history else throw DomainNotMatchedException()
+    if (d == d1) Some(foundConstraintRemoval) else None
   }
-
-  private[this] def notInfinite(domainMap: DomainMap): Boolean =
-    domainMap.values.exists(_._2.exists(
-                               _._1.isInstanceOf[ConstraintRemovalNode]))
 
   /** Tries to identify newFormula as oldFormula but with some domains replaced
     * by their subdomains, irrespective of variable names.
@@ -366,17 +344,16 @@ object CNF {
   def identifyRecursion(
       newFormula: CNF,
       oldFormula: CNF,
-      partialMap: DomainMap = Map.empty
+      partialMap: DomainMap = Map.empty,
+      foundConstraintRemoval: Boolean = false
   ): Option[DomainMap] = {
-    // println("oldFormula size: " + oldFormula.size + ", newFormula size: " +
-    //           newFormula.size)
-    if (oldFormula.isEmpty && newFormula.isEmpty) {
-      if (notInfinite(partialMap)) Some(partialMap) else None
-    } else if (
+    if (
       newFormula.size != oldFormula.size ||
-      newFormula.hashCode != oldFormula.hashCode
+        newFormula.hashCode != oldFormula.hashCode
     ) {
       None
+    } else if (oldFormula.isEmpty && newFormula.isEmpty) {
+      if (foundConstraintRemoval) Some(partialMap) else None
     } else {
       for (clause1 <- oldFormula) {
         val updatedOldFormula = new CNF((oldFormula - clause1).toList)
@@ -388,35 +365,36 @@ object CNF {
               case (v1, v2) => {
                 val d1 = clause1.constrs.domainFor(v1)
                 !partialMap.contains(d1) ||
-                partialMap(d1)._1 == clause2.constrs.domainFor(v2)
+                partialMap(d1) == clause2.constrs.domainFor(v2)
               }
             }
 
           val bijections = clause1.variableAndDomainBijections(clause2,
                                                                myFilter)
-          // println("identifyRecursion: examining " + bijections.size +
-          //           " bijections between " + clause1 + " and " + clause2)
           for {
             (bijection, domainBijection) <- bijections
             if clause1.substitute(bijection).
             substituteDomains(domainBijection).exactlyEquals(clause2)
           } {
+            var foundConstraintRemoval2 = foundConstraintRemoval
             try {
-              val updatedMap = partialMap ++ clause1.allVariables.map { v =>
-                {
-                  val d1 = clause1.constrs.domainFor(v)
-                  val d2 = clause2.constrs.domainFor(bijection(v))
-                  val history = findHistory(d1, d2)
-                  (d1, (d2, history))
+              for (v <- clause1.allVariables) {
+                val foundConstraintRemoval3 = traceAncestors(
+                  clause1.constrs.domainFor(v),
+                  clause2.constrs.domainFor(bijection(v)))
+                foundConstraintRemoval3 match {
+                  case None => throw new DomainNotMatchedException
+                  case Some(v) =>
+                    foundConstraintRemoval2 = foundConstraintRemoval2 || v
                 }
               }
               val recursion = identifyRecursion(
                 updatedNewFormula,
                 updatedOldFormula,
-                updatedMap
+                partialMap ++ domainBijection,
+                foundConstraintRemoval2
               )
               if (recursion.isDefined) {
-                // println("identifyRecursion succeeded")
                 return recursion
               }
             } catch {
