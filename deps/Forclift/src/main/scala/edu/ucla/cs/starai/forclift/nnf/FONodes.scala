@@ -474,7 +474,6 @@ class ImprovedDomainRecursionNode(
     val cnf: CNF,
     var mixedChild: Option[NNFNode],
     val c: Constant,
-    val ineqs: Set[Constant],
     val domain: Domain,
     val explanation: String = ""
 ) extends NNFNode {
@@ -485,8 +484,11 @@ class ImprovedDomainRecursionNode(
 
   lazy val evalOrder = mixedChild.get.evalOrder // assume constant eval
 
+  // It's easier just to leave this here
+  lazy val ineqs = Set[Constant]()
+
   def simpleClone(): NNFNode =
-    new ImprovedDomainRecursionNode(cnf, None, c, ineqs, domain, explanation)
+    new ImprovedDomainRecursionNode(cnf, None, c, domain, explanation)
 
   def size = mixedChild.size + 1
 
@@ -508,7 +510,6 @@ class ImprovedDomainRecursionNode(
       cnf,
       Some(mixedChild.get.condition(pos, neg)),
       c,
-      ineqs,
       domain,
       explanation
     )

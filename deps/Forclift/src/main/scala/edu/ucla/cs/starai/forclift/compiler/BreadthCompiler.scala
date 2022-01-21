@@ -16,7 +16,7 @@ object BreadthCompiler {
     (sizeHint: Compiler.SizeHints) => new BreadthCompiler(sizeHint, true)
 
   // Two limits on the extensiveness of search
-  val NumSolutions = 1
+  val NumSolutions = 4
   val MaxDepth = 7
 
 }

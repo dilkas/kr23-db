@@ -39,11 +39,6 @@ abstract class MyCompiler(
         log("Improved domain recursion")
         val domain =
           suitableClause.constrs.domainFor(suitableClause.literalVariables.head)
-        val ineqs = suitableClause.constrs
-          .ineqConstrs(suitableClause.literalVariables.head)
-          .collect {
-            case c: Constant => c
-          }
         val constant = groundingConstantFor(cnf, domain)
         val mixedClauses = cnf.clauses.flatMap { clause =>
           {
@@ -79,7 +74,6 @@ abstract class MyCompiler(
           cnf,
           None,
           constant,
-          ineqs,
           domain,
           msg
         )

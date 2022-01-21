@@ -41,7 +41,7 @@
 \begin{itemize}
 \item notation: $\Imm$
 \item atom, literal, constant, predicate, variable
-\item inequality constraint
+\item inequality constraint. Notation: $[x \ne y]$, where $x$ is a variable (of the clause), and $y$ is either a variable or a constant.
 \item $\Vars$, $\Vars(c) = \Vars(P) \cup \Vars(N) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
 \item substitution
@@ -62,6 +62,7 @@ Let $\mathscr{V}$ be the set of circuit nodes.
 \item later: maybe mathcal instead of mathscr
 \item maybe $\pi$ is global enough to have a more unique name
 \item maybe $c[\beta, \gamma]$ is better than $c \ast (\beta, \gamma)$
+\item avoid using lowercase latin letters for everything: capitalise domains and variables
 \end{itemize}
 
 \begin{definition}
@@ -72,6 +73,8 @@ Let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mat
 
 \begin{definition}
   A \emph{clause} is a triple $c = (P, N, C, \delta_c)$, where $P$ and $N$ are sets of atoms interpreted as positive and negative literals respectively, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (P', N', C', \delta_d)$ are \emph{isomorphic} (written $c \cong d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match).
+
+  TODO: it's probably enough to say it's a set of literals, a set of constraints, and a $\delta$.
 \end{definition}
 
 A \emph{formula} is a set of clauses.
@@ -269,11 +272,23 @@ for all $x \in \mathscr{D}$.
 
 TODO: compilation rules, node types, their evaluation during inference.
 
+\subsection{Constraint Removal}
+
+TODO: introduce the Forclift-style notation (e.g., the compile operator) and the arbitrary formula $\phi$.
+
+\paragraph{Preconditions.} There is a domain $d \in \mathscr{D}$ and an element $e \in d$ such that:
+\begin{itemize}
+\item for each clause $c = (P, N, C, \delta_c) \in \phi$ and variable $v \in \Vars(c)$, either $\delta_c(v) \ne d$ or $[v \ne e] \in C$;
+\item $e$ does not occur in any literal of any clause of $\phi$.
+\end{itemize}
+
+NOTE: we know that
+
+\paragraph{Operator.}
+
 \subsection{Improved Domain Recursion}
 
 The original version of domain recursion is here \cite{DBLP:conf/nips/Broeck11}.
-
-\subsection{Constraint Removal}
 
 \section{Other Topics}
 
@@ -284,7 +299,7 @@ The original version of domain recursion is here \cite{DBLP:conf/nips/Broeck11}.
 
 \section{Circuit Evaluation}
 
-TODO: new node types, their algebraic/graphical representation, what info they hold, and how they're created.
+TODO: algebraic/graphical representation, what info they hold, and how they're created
 
 TODO: describe evaluation of: and, counting, constraint removal, ref, unit, contradiction, improved domain recursion. Most of this will be from \cite{DBLP:conf/ijcai/BroeckTMDR11}.
 

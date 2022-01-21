@@ -269,8 +269,10 @@ protected class LogDoubleWmc(
   ): LogDouble = {
     val (domainSizes, predicateWeights) = params
     val domainSize = cr.domain.size(domainSizes, Set())
-    if (domainSize <= 0) 0
-    else {
+    // if (domainSize <= 0) {
+    //   log("0 (constraint removal, base case)")
+    //   zero
+    // } else {
       val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
       val child = visit(
@@ -282,7 +284,7 @@ protected class LogDoubleWmc(
       )
       log(s"$child (constraint removal)")
       child
-    }
+    //}
   }
 
   protected def visitContradictionLeaf(
@@ -515,8 +517,10 @@ protected class SignLogDoubleWmc(
   ): SignLogDouble = {
     val (domainSizes, predicateWeights) = params
     val domainSize = cr.domain.size(domainSizes, Set())
-    if (domainSize <= 0) 0
-    else {
+    // if (domainSize <= 0) {
+    //   log("0 (constraint removal, base case)")
+    //   zero
+    // } else {
       val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
       val child = visit(
@@ -528,7 +532,7 @@ protected class SignLogDoubleWmc(
       )
       log(s"$child (constraint removal)")
       child
-    }
+    // }
   }
 
   protected def visitContradictionLeaf(
@@ -1159,8 +1163,8 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
   ): BigInt = {
     val (domainSizes, predicateWeights) = params
     val domainSize = cr.domain.size(domainSizes, Set())
-    if (domainSize <= 0) 0
-    else {
+    // if (domainSize <= 0) zero
+    // else {
       val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
       val child = visit(
@@ -1171,7 +1175,7 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
         )
       )
       child
-    }
+    // }
   }
 
   protected def visitContradictionLeaf(

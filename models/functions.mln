@@ -4,7 +4,7 @@ b = {1,...,2}
 p(a, b)
 
 p(x, y) ^ p(x, z) => y=z.
-forall x exist y p(x, y).
+//forall x exist y p(x, y).
 
 // injectivity
 p(w, y) ^ p(x, y) => w=x.
