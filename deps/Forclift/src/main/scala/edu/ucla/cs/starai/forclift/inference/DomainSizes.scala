@@ -264,7 +264,7 @@ class DomainSizes(
     * Note that some of these parameters change as the circuit is being
     * traversed.
     */
-  def shrink(domainMap: CNF.DomainMap): DomainSizes = {
+  def shrink(domainMap: Map[Domain, Domain]): DomainSizes = {
     val newDomainSizes = map {
       case (domain, _) => {
         val newDomain = domainMap.getOrElse(domain, domain)

@@ -214,8 +214,6 @@ class Clause(
 
   /** Returns all possible bijections from the variables of this clause to the
     * variables of that clause that satisfy the given condition.
-    *
-    * Used both in equals() and in CNF::identifyRecursion().
     */
   def variableBijections(
       that: Clause,
@@ -234,10 +232,14 @@ class Clause(
 
   private[this] def constructDomainMap(
     domains1: List[Domain],
-    domains2: List[Domain]
+    domains2: List[Domain],
+    partialMap: Map[Domain, Domain]
   ): Option[Map[Domain, Domain]] = {
     var domainBijection = Map[Domain, Domain]()
     for ((d1, d2) <- (domains1 zip domains2)) {
+      if (partialMap.contains(d1) && partialMap(d1) != d2) {
+        return None
+      }
       if (!domainBijection.contains(d1)) {
         domainBijection += (d1 -> d2)
       } else if (domainBijection(d1) != d2) {
@@ -249,22 +251,18 @@ class Clause(
 
   def variableAndDomainBijections(
     that: Clause,
-    condition: Map[Var, Var] => Boolean = (_ => true)
+    partialMap: Map[Domain, Domain]
   ): List[(Map[Var, Var], Map[Domain, Domain])] =
     that.allVariables.toList.permutations.flatMap { permutation =>
       {
         val bijection = (allVariables.toList zip permutation).toMap
-        if (condition(bijection)) {
-          val domains1 = allVariables.toList.map(constrs.domainFor(_))
-          val domains2 = permutation.map(that.constrs.domainFor(_))
-          val domainBijection = constructDomainMap(domains1, domains2)
-          domainBijection match {
-            case None => None
-            case Some(domainBijection) =>
-              Some((bijection, domainBijection))
-          }
-        } else {
-          None
+        val domains1 = allVariables.toList.map(constrs.domainFor(_))
+        val domains2 = permutation.map(that.constrs.domainFor(_))
+        val domainBijection = constructDomainMap(domains1, domains2, partialMap)
+        domainBijection match {
+          case None => None
+          case Some(domainBijection) =>
+            Some((bijection, domainBijection))
         }
       }
     }.toList

@@ -14,6 +14,9 @@
 
 \usetikzlibrary{arrows,fit,positioning,trees,cd}
 
+\crefname{algocf}{algorithm}{Algorithms}
+\Crefname{algocf}{Algorithm}{Algorithms}
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
@@ -32,16 +35,14 @@
 \maketitle
 
 \section{Basic Definitions}
- TODO (later): maybe mathcal instead of mathscr
 
 \paragraph{Things I might need to explain.}
 \begin{itemize}
 \item notation: $\Imm$
-\item atom, literal
+\item atom, literal, constant, predicate, variable
 \item inequality constraint
 \item $\Vars$, $\Vars(c) = \Vars(P) \cup \Vars(N) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
-\item the hash codes of clauses and formulas. Introduce the $\#$ notation.
 \item substitution
 \item size of a domain, how each domain is partitioned into two during compilation.
 \item maybe: notation for partial function, notation for powerset, domain size
@@ -55,7 +56,12 @@
 
 Let $\mathscr{V}$ be the set of circuit nodes.
 
-TODO: maybe $\pi$ is global enough to have a more unique name.
+\paragraph{TODO}
+\begin{itemize}
+\item later: maybe mathcal instead of mathscr
+\item maybe $\pi$ is global enough to have a more unique name
+\item maybe $c[\beta, \gamma]$ is better than $c \ast (\beta, \gamma)$
+\end{itemize}
 
 \begin{definition}
   A \emph{domain} is a set with elements not used anywhere else.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathscr{D}$ be the set of all domains and $\mathscr{C} \subset \mathscr{D}$ be the subset of domains introduced as a consequence of constraint removal. Note that both sets (can) expand during the compilation phase.
@@ -68,6 +74,8 @@ Let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mat
 \end{definition}
 
 A \emph{formula} is a set of clauses.
+
+We use hash codes to efficiently check whether a recursive relationship between two formulas is plausible. (It is plausible if the formulas are equal up to variables and domains.) The hash code of a clause $c = (P, N, C, \delta_c)$ combines the hash codes of the sets of constants and predicates in $c$, the numbers of positive and negative literals (i.e., $|P|$ and $|N|$), the number of inequality constraints $|C|$, and the number of variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash codes of all its clauses and is denoted $\#\phi$.
 
 \section{Identifying Possibilities for Recursion}
 
@@ -82,8 +90,10 @@ A \emph{formula} is a set of clauses.
 \end{definition}
 
 \begin{algorithm}[t]
-  \caption{A recursive function for checking whether one can reuse the circuit for computing $\WMC(\psi)$ to compute $\WMC(\phi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
+  \caption{A recursive function for checking whether one can reuse the circuit for computing $\WMC(\phi)$ to compute $\WMC(\psi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
+  \label{alg:recursion}
   \SetKwProg{Fn}{Function}{:}{}
+  \SetKw{KwRet}{yield}
   \SetKwFunction{identifyRecursion}{identifyRecursion}
   \SetKwFunction{findHistory}{traceAncestors}
   \SetKwFunction{generateMaps}{generateMaps}
@@ -92,17 +102,17 @@ A \emph{formula} is a set of clauses.
   \SetKwData{found}{foundConstraintRemoval}
   \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$, $\found = {\normalfont \texttt{false}}$}}{
     \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{\Return{\normalfont \texttt{null}}}
-    \If{$\phi = \psi = \emptyset$}{
+    \If{$\phi = \emptyset$}{
       \lIf{$\found$}{\Return{$\rho$}}
       \Return{\normalfont \texttt{null}}\;
     }
-    \ForEach{clause $c \in \phi$}{
-      \ForEach{clause $d \in \psi$ such that $\#d = \#c$} {
-        \ForEach{$(\beta, \gamma) \in \generateMaps{$c$, $d$, $\rho$}$ such that $c \ast (\beta, \gamma) = d$}{
+    \ForEach{clause $c \in \phi$\label{line:for1}}{
+      \ForEach{clause $d \in \psi$ such that $\#d = \#c$\label{line:for2}} {
+        \ForEach{$(\beta, \gamma) \in \generateMaps{$c$, $d$, $\rho$}$ such that $c \ast (\beta, \gamma) = d$\label{line:generateMaps}}{
           $\found' \gets \found$\;
           $\suitable \gets \texttt{true}$\;
-          \ForEach{$v \in \Vars(c)$}{
-            $\found'' \gets \findHistory{$\delta_c(v)$, $\delta_d(\beta(v))$}$\;
+          \ForEach{$e \in \Doms(c)$\label{line:vars}}{
+            $\found'' \gets \findHistory{$e$, $\gamma(e)$}$\;
             \If{$\found'' = {\normalfont \texttt{null}}$}{
               $\suitable \gets \texttt{false}$\;
               break\;
@@ -119,30 +129,27 @@ A \emph{formula} is a set of clauses.
     }
   }
   \Fn{\generateMaps{$c$, $d$, $\rho$}}{
-    $M \gets \emptyset$\;
-    \ForEach{bijection $\beta\colon \Vars(c) \to \Vars(d)$}{
-      \If{$\forall v \in \Vars(c). (\delta_c(v) \not\in {\normalfont \dom}(\rho) \lor \rho(\delta_c(v)) = \delta_d(\beta(v)))$}{
-        $\gamma \gets \constructDomainMap{$\Vars(c)$, $\delta_c$, $\delta_d$, $\beta$}$\;
-        \lIf{$\gamma \ne {\normalfont \texttt{null}}$}{$M \gets M \cup \{\, (\beta, \gamma) \,\}$}
-      }
+    \ForEach{bijection $\beta\colon \Vars(c) \to \Vars(d)$\label{line:bijection}}{
+      $\gamma \gets \constructDomainMap{$\Vars(c)$, $\delta_c$, $\delta_d$, $\beta$, $\rho$}$\;
+      \lIf{$\gamma \ne {\normalfont \texttt{null}}$}{\KwRet{$(\beta, \gamma)$}}
     }
-    \Return{$M$}\;
   }
-  \Fn{\constructDomainMap{$V$, $\delta_c$, $\delta_d$, $\beta$}}{
+  \Fn{\constructDomainMap{$V$, $\delta_c$, $\delta_d$, $\beta$, $\rho$}}{
     $\gamma \gets \emptyset$\;
     \ForEach{$v \in V$}{
+      \lIf{$\delta_c(v) \in \dom(\rho)$ {\bf and} $\rho(\delta_c(v)) \ne \delta_d(\beta(v))$}{\Return{\normalfont \texttt{null}}}
       \lIf{$\delta_c(v) \not\in \dom(\gamma)$}{$\gamma \gets \gamma \cup \{\, \delta_c(v) \mapsto \delta_d(\beta(v)) \,\}$}
       \lElseIf{$\gamma(\delta_c(v)) \ne \delta_d(\beta(v))$}{\Return{\normalfont \texttt{null}}}
     }
     \Return{$\gamma$}\;
   }
-  \Fn{\findHistory{$c$, $d$}}{
+  \Fn{\findHistory{$d$, $e$}}{
     $\found \gets \texttt{false}$\;
-    \While{$d \ne c$ {\bf and} $d \in {\normalfont \dom}(\pi)$}{
-      \lIf{$d \in \mathscr{C}$}{$\found \gets \texttt{true}$}
-      $d \gets \pi(d)$\;
+    \While{$e \ne d$ {\bf and} $e \in {\normalfont \dom}(\pi)$}{
+      \lIf{$e \in \mathscr{C}$}{$\found \gets \texttt{true}$}
+      $e \gets \pi(e)$\;
     }
-    \lIf{$d = c$}{\Return{\found}}
+    \lIf{$e = d$}{\Return{\found}}
     \Return{\normalfont \texttt{null}}\;
   }
 \end{algorithm}
@@ -150,65 +157,82 @@ A \emph{formula} is a set of clauses.
 \begin{figure}[t]
   \centering
   \begin{tikzpicture}[edge from parent/.style={draw,-latex}]
-    \node[draw,circle,fill=violet!10] (circuit) {} child {
-      node[draw,circle,fill=violet!10] (bmaker) {$\diamondsuit$}
-      child {node[draw,circle,fill=violet!10] {}
-        child {node[draw,circle,fill=violet!10] {}}
-        child {node[draw,circle,fill=violet!10] {}
-          child {node[draw,circle,fill=violet!10] {}}
-          child {node[draw,circle,fill=violet!10] {}
-            child {node[draw,circle,fill=violet!10] {}}
-            child {node[draw,circle,fill=violet!10] (amaker) {$\heartsuit$}
-              child {node[draw,circle,fill=violet!10] (ref) {}
-                child {node[draw,circle,fill=violet!10] {}}
-              }
-            }
-          }
-        }
-      }
-    };
-    \node[below right=1cm and 2cm of circuit] (a) {$a$} child {node (aprime) {$a'$}};
+    %% \node[draw,circle,fill=violet!10] (circuit) {} child {
+    %%   node[draw,circle,fill=violet!10] (bmaker) {$\diamondsuit$}
+    %%   child {node[draw,circle,fill=violet!10] {}
+    %%     child {node[draw,circle,fill=violet!10] {}}
+    %%     child {node[draw,circle,fill=violet!10] {}
+    %%       child {node[draw,circle,fill=violet!10] {}}
+    %%       child {node[draw,circle,fill=violet!10] {}
+    %%         child {node[draw,circle,fill=violet!10] {}}
+    %%         child {node[draw,circle,fill=violet!10] (amaker) {$\heartsuit$}
+    %%           child {node[draw,circle,fill=violet!10] (ref) {}
+    %%             child {node[draw,circle,fill=violet!10] {}}
+    %%           }
+    %%         }
+    %%       }
+    %%     }
+    %%   }
+    %% };
+    \node (a) {$a$} child {node[draw,rectangle] (aprime) {$a'$}};
     \node[right=1 cm of a] (b) {$b$}
     child {node (btop) {$b^\top$}}
     child {node (bbot) {$b^\bot$}};
-    \node[draw,fit=(a) (aprime) (b) (btop) (bbot)] {};
-    \draw[-latex] (ref) edge[densely dotted,bend left=90] (circuit);
-    \draw[-latex,color=teal] (aprime) edge[densely dashed] node[xshift=2mm,color=teal] {$0$} (amaker);
-    \draw[-latex,color=teal] (btop) edge[bend left=50,densely dashed] node[xshift=6mm,color=teal] {$0$} (bmaker);
-    \draw[-latex,color=teal] (bbot) edge[bend left=50,densely dashed] node[yshift=-2mm,color=teal] {$1$} (bmaker);
+    %% \node[draw,fit=(a) (aprime) (b) (btop) (bbot)] {};
+    %% \draw[-latex] (ref) edge[densely dotted,bend left=90] (circuit);
+    %% \draw[-latex,color=teal] (aprime) edge[densely dashed] node[xshift=2mm,color=teal] {$0$} (amaker);
+    %% \draw[-latex,color=teal] (btop) edge[bend left=50,densely dashed] node[xshift=6mm,color=teal] {$0$} (bmaker);
+    %% \draw[-latex,color=teal] (bbot) edge[bend left=50,densely dashed] node[yshift=-2mm,color=teal] {$1$} (bmaker);
   \end{tikzpicture}
-  \caption{A circuit (outside the box) and a forest of domains (inside the box). The dotted line on the left will be added if \texttt{identifyRecursion} returns a non-\texttt{null} mapping. The dashed edges with their labels represent the $\kappa$ function. The circuit nodes with symbols in them are the nodes that introduce new (sub)domains.}
+  \caption{The forest of domains from \cref{example}. The directed edges correspond to the pairs of domains in $\pi$ but in the opposite direction, e.g., $\pi(a') = a$. The domain enclosed in a rectangle is the only domain created by constraint removal, i.e., $\mathscr{C} = \{\, a' \,\}$.}
   \label{fig:example}
 \end{figure}
 
-The function \texttt{traceAncestors} returns \texttt{null} if domain $c \in \mathscr{D}$ is not an ancestor of domain $d \in \mathscr{D}$. Otherwise, it returns \texttt{true} if the size of $d$ is guaranteed to be strictly smaller than the size of $c$ (i.e., there is domain created by the constraint removal rule on the path from $c$ to $d$) and \texttt{false} if their sizes will be equal at some point during inference.
+The function \texttt{traceAncestors} returns \texttt{null} if domain $d \in \mathscr{D}$ is not an ancestor of domain $e \in \mathscr{D}$. Otherwise, it returns \texttt{true} if the size of $e$ is guaranteed to be strictly smaller than the size of $d$ (i.e., there is domain created by the constraint removal rule on the path from $d$ to $e$) and \texttt{false} if their sizes will be equal at some point during inference.
 
 Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function such that $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$.
 
-TODO: explain why $\rho \cup \gamma$ is possible.
+\paragraph{TODO}
+\begin{itemize}
+\item explain why $\rho \cup \gamma$ is possible
+\item explain what the second return statement is about and why a third one is not necessary
+\item mention which one is the main function, what each function takes and returns
+\item explain the yield keyword
+\item in the example below: write down both formula using the Forclift format
+\end{itemize}
 
-TODO: explain what the second return statement is about and why a third one is not necessary.
+The algorithm could be improved in two ways:
+\begin{itemize}
+\item by constructing a domain map first and then using it to reduce the number of viable variable bijections.
+\item by similarly using the domain map $\rho$.
+\end{itemize}
+However, it is not clear that this would result in an overall performance improvement, since the number of variables in instances of interest never exceeds three and the identity bijection is typically the right one.
 
-TODO: mention which one is the main function, what each function takes and returns.
+\begin{example} \label{example}
+  Let $\phi$ be the formula
+  \begin{align}
+    \forall X \in a. \forall Y \in b. \forall Z \in b. Y \ne Z &\implies \neg p(X, Y) \lor \neg p(X, Z)\label{phi1} \\
+    \forall X \in a. \forall Y \in b. \forall Z \in a. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y).\label{phi2}
+  \end{align}
+  and $\psi$ be the formula
+  \begin{align}
+    \forall X \in a'. \forall Y \in b^\bot. \forall Z \in b^\bot. Z \ne Y &\implies \neg p(X, Y) \lor \neg p(X, Z)\label{psi1} \\
+    \forall X \in a'. \forall Y \in b^\bot. \forall Z \in a'. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y)\label{psi2}
+  \end{align}
 
-\begin{example}
-  % TODO: explain how the algorithm establishes a recursive relationship from
-  % 1. formulas (both the Forclift representation and the more normal way to write down the same thing)
-  % 2. definitions of delta_c, delta_d, kappa, pi
-  \begin{align*}
-    \forall X \in a'. \forall Y \in b^\bot. \forall Z \in b^\bot. Z \ne Y &\implies \neg p(X, Y) \lor \neg p(X, Z) \\
-    \forall X \in a'. \forall Y \in b^\bot. \forall Z \in a'. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y)
-  \end{align*}
-  to
-  \begin{align*}
-    \forall X \in a. \forall Y \in b. \forall Z \in b. Y \ne Z &\implies \neg p(X, Y) \lor \neg p(X, Z) \\
-    \forall X \in a. \forall Y \in b. \forall Z \in a. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y)
-  \end{align*}
-  and mention \cref{fig:example}. Solution map (stored as the edge label):
-  \begin{align*}
-    \rho(a') &= (a, \{\, (\diamondsuit, 0) \,\}) \\
-    \rho(b^\bot) &= (b, \{\, (\heartsuit, 1) \,\})
-  \end{align*}
+  The relevant domains and the definition of $\pi$ is in \cref{fig:example}. Since $\#\phi = \#\psi$, and the formulas are non-empty, the algorithm proceeds with the for-loops on \cref{line:for1,line:for2,line:generateMaps}. Suppose $c$ in the algorithm refers to \cref{phi1}, and $d$ to \cref{psi1}. Since both clauses have three variables, function \texttt{generateMaps} has $3!=6$ bijections to check. Suppose the identity bijection is picked first. Then \texttt{constructDomainMap} is called with the following parameters:
+  \begin{itemize}
+  \item $V = \{\, X, Y, Z \,\}$,
+  \item $\delta_c = \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}$,
+  \item $\delta_d = \{\, X \mapsto a', Y \mapsto b^\bot, Z \mapsto b^\bot \,\}$,
+  \item $\beta = \{\, X \mapsto X, Y \mapsto Y, Z \mapsto Z \,\}$.
+  \end{itemize}
+  Since $\delta_i(Y) = \delta_i(Z)$ for $i \in \{\, c, d \,\}$, \texttt{constructDomainMap} returns $\gamma = \{\, a \mapsto a', b \mapsto b^\bot \,\}$. Thus, \texttt{generateMaps} yields its first pair of maps $(\beta, \gamma)$ to \cref{line:generateMaps}. Furthermore, the pair satisfies the $c \ast (\beta, \gamma) = d$ condition.
+
+  Suppose \cref{line:vars} selects $e = a$ first. Since $\pi(a') = a$, and $a' \in \mathscr{C}$, \texttt{traceAncestors($a$, $a'$)} returns \texttt{true}, and the recursive call to \texttt{identifyRecursion($\phi'$, $\psi'$, $\gamma$, true)} is made, where $\phi'$ and $\psi'$ are new formulas with one clause each: \cref{phi2} and \cref{psi2}, respectively.
+
+  Again we have two non-empty formulas with equal hash codes, so \texttt{generateMaps} is called with $c$ set to \cref{phi2}, $d$ set to \cref{psi2}, and $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$. Suppose \cref{line:bijection} picks the identity bijection first again.
+
 \end{example}
 
 TODO: conclude with a description of the inference rule and the node/edge type.

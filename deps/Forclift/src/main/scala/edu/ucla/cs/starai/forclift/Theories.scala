@@ -311,7 +311,6 @@ object CNF {
     * Each domain d of the new formula is mapped to a domain d' of the old
     * formula.
     */
-  type DomainMap = Map[Domain, Domain]
 
   final case class DomainNotMatchedException(
       private val message: String = "",
@@ -344,9 +343,9 @@ object CNF {
   def identifyRecursion(
       newFormula: CNF,
       oldFormula: CNF,
-      partialMap: DomainMap = Map.empty,
+      partialMap: Map[Domain, Domain] = Map.empty,
       foundConstraintRemoval: Boolean = false
-  ): Option[DomainMap] = {
+  ): Option[Map[Domain, Domain]] = {
     if (
       newFormula.size != oldFormula.size ||
         newFormula.hashCode != oldFormula.hashCode
@@ -360,17 +359,8 @@ object CNF {
         for (clause2 <- newFormula.filter(_.hashCode == clause1.hashCode)) {
           val updatedNewFormula = new CNF((newFormula - clause2).toList)
 
-          def myFilter(bijection: Map[Var, Var]): Boolean =
-            bijection.forall {
-              case (v1, v2) => {
-                val d1 = clause1.constrs.domainFor(v1)
-                !partialMap.contains(d1) ||
-                partialMap(d1) == clause2.constrs.domainFor(v2)
-              }
-            }
-
           val bijections = clause1.variableAndDomainBijections(clause2,
-                                                               myFilter)
+                                                               partialMap)
           for {
             (bijection, domainBijection) <- bijections
             if clause1.substitute(bijection).
@@ -378,10 +368,9 @@ object CNF {
           } {
             var foundConstraintRemoval2 = foundConstraintRemoval
             try {
-              for (v <- clause1.allVariables) {
+              for (d <- clause1.domains) {
                 val foundConstraintRemoval3 = traceAncestors(
-                  clause1.constrs.domainFor(v),
-                  clause2.constrs.domainFor(bijection(v)))
+                  d, domainBijection(d))
                 foundConstraintRemoval3 match {
                   case None => throw new DomainNotMatchedException
                   case Some(v) =>
@@ -395,6 +384,7 @@ object CNF {
                 foundConstraintRemoval2
               )
               if (recursion.isDefined) {
+                println(recursion)
                 return recursion
               }
             } catch {

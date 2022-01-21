@@ -32,7 +32,7 @@ import edu.ucla.cs.starai.forclift.nnf.visitors.WmcVisitor
 class Ref(
     val cnf: CNF,
     var nnfNode: Option[NNFNode],
-    val domainMap: CNF.DomainMap,
+    val domainMap: Map[Domain, Domain],
     val explanation: String = ""
 ) extends NNFNode {
 
