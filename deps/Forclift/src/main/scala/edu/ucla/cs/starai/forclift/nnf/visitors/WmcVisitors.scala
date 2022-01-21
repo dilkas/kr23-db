@@ -71,7 +71,7 @@ trait WmcVisitor {
 object WmcVisitor {
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  protected val Verbose = false
+  protected val Verbose = true
 
   /** This latch is reduced to zero as soon as one of the threads finishes
     * computing the weighted model count.
@@ -416,20 +416,14 @@ protected class LogDoubleWmc(
   protected def visitRefNode(
       ref: Ref,
       params: (DomainSizes, PredicateWeights)
-  ): LogDouble =
-    try {
-      val (domainSizes, predicateWeights) = params
-      val newDomainSizes = domainSizes.shrink(ref.domainMap)
-      val answer =
-        visit(ref.nnfNode.get, (newDomainSizes, predicateWeights))
-      log(s"$answer (ref)")
-      answer
-    } catch {
-      case e: DomainSize.CantShrinkDomainException => {
-        log("1 (ref, base case)")
-        1
-      }
-    }
+  ): LogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val answer =
+      visit(ref.nnfNode.get, (newDomainSizes, predicateWeights))
+    log(s"$answer (ref)")
+    answer
+  }
 
   protected def visitSmoothingNode(
       leaf: SmoothingNode,
@@ -668,20 +662,14 @@ protected class SignLogDoubleWmc(
   protected def visitRefNode(
       ref: Ref,
       params: (DomainSizes, PredicateWeights)
-  ): SignLogDouble =
-    try {
-      val (domainSizes, predicateWeights) = params
-      val newDomainSizes = domainSizes.shrink(ref.domainMap)
-      val answer =
-        visit(ref.nnfNode.get, (newDomainSizes, predicateWeights))
-      log(s"$answer (ref)")
-      answer
-    } catch {
-      case e: DomainSize.CantShrinkDomainException => {
-        log("1 (ref, base case)")
-        1
-      }
-    }
+  ): SignLogDouble = {
+    val (domainSizes, predicateWeights) = params
+    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val answer =
+      visit(ref.nnfNode.get, (newDomainSizes, predicateWeights))
+    log(s"$answer (ref)")
+    answer
+  }
 
   protected def visitSmoothingNode(
       leaf: SmoothingNode,
@@ -1297,18 +1285,13 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
   protected def visitRefNode(
       ref: Ref,
       params: (DomainSizes, PredicateWeights)
-  ): BigInt =
-    try {
-      val (domainSizes, predicateWeights) = params
-      val newDomainSizes = domainSizes.shrink(ref.domainMap)
-      val answer =
-        visit(ref.nnfNode.get, (newDomainSizes, predicateWeights))
-      answer
-    } catch {
-      case e: DomainSize.CantShrinkDomainException => {
-        1
-      }
-    }
+  ): BigInt = {
+    val (domainSizes, predicateWeights) = params
+    val newDomainSizes = domainSizes.shrink(ref.domainMap)
+    val answer =
+      visit(ref.nnfNode.get, (newDomainSizes, predicateWeights))
+    answer
+  }
 
   protected def visitSmoothingNode(
       leaf: SmoothingNode,

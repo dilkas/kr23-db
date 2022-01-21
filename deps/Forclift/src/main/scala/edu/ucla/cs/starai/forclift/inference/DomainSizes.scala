@@ -50,33 +50,9 @@ class DomainSize(val size: Int, val constants: Set[Constant] = Set()) {
 
   override def toString = size + " " + constants.mkString("{", ",", "}")
 
-  /** Returns a new DomainSize that has size equal to newSize (and preserves
-    * constants).
-    *
-    * Throws an exception if the new size is higher than the current size.
-    */
-  def reduceSize(newSize: Int) = {
-    //println("reducing domain size from " + size + " to " + newSize)
-    if (newSize == size) {
-      this
-    } else if (newSize < size) {
-      new DomainSize(newSize, constants)
-    } else {
-      throw new DomainSize.CantShrinkDomainException
-    }
-  }
-
 }
 
 object DomainSize {
-
-  /** WmcVisitors use this exception to detect the base case of a recursive
-    * call.
-    */
-  final case class CantShrinkDomainException(
-      private val message: String = "",
-      private val cause: Throwable = None.orNull
-  ) extends Exception(message, cause)
 
   def apply(
       givenSize: Int,
@@ -258,11 +234,7 @@ class DomainSizes(
   def project(domains: Set[Domain]) = copy(self = self.filterKeys(domains(_)))
 
   /** Returns a new DomainSizes object where all domains are replaced according
-    * to domainMap, and the size of each new domain is the sum of the
-    * parameters related to that (oldDomain, newDomain) pair.
-    *
-    * Note that some of these parameters change as the circuit is being
-    * traversed.
+    * to domainMap.
     */
   def shrink(domainMap: Map[Domain, Domain]): DomainSizes = {
     val newDomainSizes = map {
