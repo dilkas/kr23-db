@@ -24,6 +24,8 @@
 
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
 
+\DeclareMathOperator{\Compile}{\textsc{Compile}}
+\DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\dom}{dom}
 \DeclareMathOperator{\Imm}{Im}
 \DeclareMathOperator{\Doms}{Doms}
@@ -41,8 +43,8 @@
 \begin{itemize}
 \item notation: $\Imm$
 \item atom, literal, constant, predicate, variable
-\item inequality constraint. Notation: $[x \ne y]$, where $x$ is a variable (of the clause), and $y$ is either a variable or a constant.
-\item $\Vars$, $\Vars(c) = \Vars(P) \cup \Vars(N) \cup \Vars(C)$
+\item inequality constraint. Notation: $(x, y)$, where $x$ is a variable (of the clause), and $y$ is either a variable or a constant.
+\item $\Vars$, $\Vars(c) = \Vars(L) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
 \item substitution
 \item size of a domain, how each domain is partitioned into two during compilation.
@@ -62,7 +64,7 @@ Let $\mathscr{V}$ be the set of circuit nodes.
 \item later: maybe mathcal instead of mathscr
 \item maybe $\pi$ is global enough to have a more unique name
 \item maybe $c[\beta, \gamma]$ is better than $c \ast (\beta, \gamma)$
-\item avoid using lowercase latin letters for everything: capitalise domains and variables
+\item avoid using lowercase latin letters for everything: capitalise domains and variables.
 \end{itemize}
 
 \begin{definition}
@@ -72,19 +74,17 @@ Let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mat
 \end{definition}
 
 \begin{definition}
-  A \emph{clause} is a triple $c = (P, N, C, \delta_c)$, where $P$ and $N$ are sets of atoms interpreted as positive and negative literals respectively, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (P', N', C', \delta_d)$ are \emph{isomorphic} (written $c \cong d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match).
-
-  TODO: it's probably enough to say it's a set of literals, a set of constraints, and a $\delta$.
+  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (L', C', \delta_d)$ are \emph{isomorphic} (written $c \cong d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match).
 \end{definition}
 
 A \emph{formula} is a set of clauses.
 
-We use hash codes to efficiently check whether a recursive relationship between two formulas is plausible. (It is plausible if the formulas are equal up to variables and domains.) The hash code of a clause $c = (P, N, C, \delta_c)$ combines the hash codes of the sets of constants and predicates in $c$, the numbers of positive and negative literals (i.e., $|P|$ and $|N|$), the number of inequality constraints $|C|$, and the number of variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash codes of all its clauses and is denoted $\#\phi$.
+We use hash codes to efficiently check whether a recursive relationship between two formulas is plausible. (It is plausible if the formulas are equal up to variables and domains.) The hash code of a clause $c = (L, C, \delta_c)$ combines the hash codes of the sets of constants and predicates in $c$, the numbers of positive and negative literals, the number of inequality constraints $|C|$, and the number of variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash codes of all its clauses and is denoted $\#\phi$.
 
 \section{Identifying Possibilities for Recursion}
 
 \begin{definition}[Notation]
-  For any clause $c = (P, N, C, \delta_c)$, bijection $\beta\colon \Vars(c) \to V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathscr{D}$, let $c \ast (\beta, \gamma) = d$ be the clause with all occurrences of any variable $v \in \Vars(c)$ in $P$, $N$, and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathscr{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes the following diagram commute:
+  For any clause $c = (L, C, \delta_c)$, bijection $\beta\colon \Vars(c) \to V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathscr{D}$, let $c \ast (\beta, \gamma) = d$ be the clause with all occurrences of any variable $v \in \Vars(c)$ in $L$ and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathscr{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes the following diagram commute:
   \[
   \begin{tikzcd}
     \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & V = \Vars(d) \ar[d, dashed, "\exists!\delta_d"] \\
@@ -268,6 +268,8 @@ This $\rho$ is saved as a parameter of the new circuit node. During inference, t
 \]
 for all $x \in \mathscr{D}$.
 
+TODO: still need to connect this to tryCache.
+
 \section{New Operations}
 
 TODO: compilation rules, node types, their evaluation during inference.
@@ -278,13 +280,38 @@ TODO: introduce the Forclift-style notation (e.g., the compile operator) and the
 
 \paragraph{Preconditions.} There is a domain $d \in \mathscr{D}$ and an element $e \in d$ such that:
 \begin{itemize}
-\item for each clause $c = (P, N, C, \delta_c) \in \phi$ and variable $v \in \Vars(c)$, either $\delta_c(v) \ne d$ or $[v \ne e] \in C$;
+\item for each clause $c = (L, C, \delta_c) \in \phi$ and variable $v \in \Vars(c)$, either $\delta_c(v) \ne d$ or $(v, e) \in C$;
 \item $e$ does not occur in any literal of any clause of $\phi$.
 \end{itemize}
 
-NOTE: we know that
+\paragraph{Operator.} First, we introduce a new domain (i.e., $\mathscr{D} \coloneqq \mathscr{D} \sqcup \{\, d' \,\}$), add it to $\mathscr{C}$ (i.e., $\mathscr{C} \coloneqq C \sqcup \{\, d' \,\}$), and set $\pi(d') \coloneqq d$. Then $\CR(\phi) = \CR_{d \mapsto d'}(\Compile(\phi'))$. The new formula $\phi'$ is defined by replacing every clause $(L, C, \delta) \in \phi$ by a clause $c' = (L, C', \delta') \in \phi'$, where
+\[
+C' = \{\, (x, y) \in C \mid y \ne e \,\},
+\]
+and
+\[
+\delta'(x) =
+\begin{cases}
+  d' & \text{if } \delta(x) = d \\
+  \delta(x) & \text{otherwise}
+\end{cases}
+\]
+for all $x \in \Vars(c') \subseteq \Vars(c)$.
 
-\paragraph{Operator.}
+\begin{example}
+  Let $\phi = \{\, c_1, c_2, c_e \,\}$ be a formula with clauses (constants lowercase, variables uppercase)
+  \begin{align*}
+    c_1 &= (\emptyset, \{\, (Y, X) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\}), \\
+    c_2 &= (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \{\, X \mapsto a, Y \mapsto b^\bot, Z \mapsto b^\bot \,\}), \\
+    c_3 &= (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, x), (Z, X), (Z, x) \,\}, \{\, X \mapsto a, Y \mapsto b^\bot, Z \mapsto a \,\}).
+  \end{align*}
+  Domain $a$ and with its element $x \in a$ satisfy the preconditions for constraint removal. The operator introduces a new domain $a'$ and transforms $\phi$ to $\phi' = (c_1', c_2', c_3')$, where
+  \begin{align*}
+    c_1' &= c_1 \\
+    c_2' &= (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \{\, X \mapsto a', Y \mapsto b^\bot, Z \mapsto b^\bot \,\}) \\
+    c_3' &= (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (Z, X) \,\}, \{\, X \mapsto a', Y \mapsto b^\bot, Z \mapsto a' \,\}).
+  \end{align*}
+\end{example}
 
 \subsection{Improved Domain Recursion}
 
