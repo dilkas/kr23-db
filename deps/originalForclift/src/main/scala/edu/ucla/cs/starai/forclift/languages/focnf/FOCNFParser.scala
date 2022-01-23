@@ -291,7 +291,7 @@ class FOCNFParser extends ModelParser {
   
 
   def parse(theoryStr: String): FOCNF = {
-    val lines = theoryStr.lines.map{_.trim}.zipWithIndex.filter{case (line,nbr) => line.nonEmpty}
+    val lines = theoryStr.linesIterator.map{_.trim}.zipWithIndex.filter{case (line,nbr) => line.nonEmpty}
     val formulas = lines.flatMap{case (line,nbr) => parseLine(line, nbr+1)}.toList
     val formulas2 = formulas.map(_.standardizeApart)
     FOCNF(formulas2,

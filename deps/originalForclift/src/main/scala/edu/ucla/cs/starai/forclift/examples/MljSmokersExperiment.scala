@@ -87,7 +87,7 @@ Friends(person,person)
       smokesDb.mkString("\n") + friendsOfSmokersDb.mkString("\n") + friendsOfNonSmokersDb.mkString("\n")
     }
 
-    println(s"Database has ${trainingDBStr.lines.size} facts")
+    // println(s"Database has ${trainingDBStr.lines.size} facts")
 //    val dbFile = new PrintWriter(new File(dir, s"db-$size.db"))
 //    dbFile.println(trainingDBStr)
 //    dbFile.close
