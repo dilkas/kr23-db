@@ -316,9 +316,14 @@ for all $x \in \Vars(c') \subseteq \Vars(c)$.
   \end{align*}
 \end{example}
 
-\paragraph{Evaluation.} $\WMC(\CR_{d \mapsto d'}(n), \size) = \WMC(n, \size \cup \{\, d' \mapsto \size(d) - 1 \,\})$.
-
-TODO: add an explanation for why the way constraints, domain recursion, and constraint removal interact ensures that domain sizes will never be negative.
+\paragraph{Evaluation.}
+\[
+\WMC(\CR_{d \mapsto d'}(n), \size) =
+\begin{cases}
+  \WMC(n, \size \cup \{\, d' \mapsto \size(d) - 1 \,\}) & \text{if } \size(d) > 0 \\
+  0 & \text{otherwise.}
+\end{cases}
+\]
 
 \subsection{A Generalisation of Domain Recursion}
 
