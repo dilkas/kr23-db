@@ -1,4 +1,4 @@
-people = {1,2,3,4}
+people = {1,...,4}
 
 s(people, people)
 

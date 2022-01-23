@@ -594,7 +594,8 @@ class ImprovedDomainRecursionNode(
 
   override def toString(nameSpace: NameSpace[NNFNode, String]): String =
     (super.toString(nameSpace) + getName(nameSpace) + " = domainrec " + c +
-      " from " + domain + " " + mixedChild.get.getName(nameSpace) + "\n" +
-      "\n" + mixedChild.get.toString(nameSpace))
+       " from " + domain)
+  // + " " + mixedChild.get.getName(nameSpace) + "\n" + "\n" +
+  // mixedChild.get.toString(nameSpace))
 
 }

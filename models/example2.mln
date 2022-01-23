@@ -1,4 +1,4 @@
-person = {1,2,3}
+person = {1,...,30}
 
 q(person)
 r(person,person)

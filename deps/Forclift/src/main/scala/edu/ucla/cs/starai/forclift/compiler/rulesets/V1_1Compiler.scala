@@ -38,8 +38,8 @@ abstract class V1_1Compiler(
 
   def tryTautologyClauseElimination(cnf: CNF) = {
     val newCnf = cnf.removeTautologies
-    if (newCnf eq cnf) None
-    else Some((None, List(newCnf)))
+    if (newCnf eq cnf) List[Result]()
+    else List((None, List(newCnf)))
   }
 
   override def greedyRules: List[InferenceRule] = List(

@@ -41,8 +41,8 @@ abstract class IJCAI11Compiler(
   def tryTautology(cnf: CNF) = {
     if (cnf.isTautology) {
       log("\ntautology\n")
-      Some((Some(TrueNode), List[CNF]()))
-    } else None
+      List((Some(TrueNode), List[CNF]()))
+    } else List[Result]()
   }
 
   def tryPositiveUnitClause(cnf: CNF) = {
@@ -52,8 +52,8 @@ abstract class IJCAI11Compiler(
     if (isPositiveUnit) {
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, true)
-      Some((Some(unitLeaf), List[CNF]()))
-    } else None
+      List((Some(unitLeaf), List[CNF]()))
+    } else List[Result]()
   }
 
   def tryNegativeUnitClause(cnf: CNF) = {
@@ -61,8 +61,8 @@ abstract class IJCAI11Compiler(
     if (isPositiveUnit) {
       val unitClause = cnf.clauses.head
       val unitLeaf = new UnitLeaf(cnf, unitClause.toUnitClause, false)
-      Some((Some(unitLeaf), List[CNF]()))
-    } else None
+      List((Some(unitLeaf), List[CNF]()))
+    } else List[Result]()
   }
 
   def tryContradictionClause(cnf: CNF) = {
@@ -72,8 +72,8 @@ abstract class IJCAI11Compiler(
       val contradiction = cnf.clauses.head
       val contradictionLeaf = new ContradictionLeaf(cnf, contradiction.toContradictionClause, true)
       log(cnf.toString + "\n")
-      Some((Some(contradictionLeaf), List[CNF]()))
-    } else None
+      List((Some(contradictionLeaf), List[CNF]()))
+    } else List[Result]()
   }
 
   def tryPositiveUnitPropagation(cnf: CNF) = {
@@ -93,8 +93,8 @@ abstract class IJCAI11Compiler(
       val node = new And(cnf, None, None, msg)
       log("Positive unit propagation. After:")
       log(branchCnf + "\n")
-      Some((Some(node), List(unitCNF, branchCnf)))
-    } else None
+      List((Some(node), List(unitCNF, branchCnf)))
+    } else List[Result]()
   }
 
   def tryNegativeUnitPropagation(cnf: CNF) = {
@@ -110,8 +110,8 @@ abstract class IJCAI11Compiler(
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
-      Some((Some(node), List(unitCNF, branchCnf)))
-    } else None
+      List((Some(node), List(unitCNF, branchCnf)))
+    } else List[Result]()
   }
 
   def tryRemoveDoubleClauses(cnf: CNF): InferenceResult = {
@@ -122,8 +122,8 @@ abstract class IJCAI11Compiler(
       val newCnf = new CNF(newClauses)
       log("After:")
       log(newCnf + "\n")
-      Some((None, List(newCnf)))
-    } else None
+      List((None, List(newCnf)))
+    } else List[Result]()
   }
 
   def tryIndependentSubtheories(cnf: CNF): InferenceResult = {
@@ -144,7 +144,7 @@ abstract class IJCAI11Compiler(
       }
     }
     val (dep, indep) = partition(List(cnf.clauses.head), cnf.clauses.tail)
-    if (indep.isEmpty) None
+    if (indep.isEmpty) List[Result]()
     else {
       val msg = if (!afterShattering) "Independence." else "Independence after shattering."
       val node = new And(cnf, None, None, msg)
@@ -156,7 +156,7 @@ abstract class IJCAI11Compiler(
       log("After 2:")
       log(new CNF(indep) + "\n")
 
-      Some((Some(node), List(new CNF(dep), new CNF(indep))))
+      List((Some(node), List(new CNF(dep), new CNF(indep))))
     }
   }
 
@@ -166,7 +166,7 @@ abstract class IJCAI11Compiler(
   def tryIndependentSubtheoriesAfterShattering(cnf: CNF)
       : InferenceResult = {
     val shatteredCnf = shatter(cnf)
-    if (cnf eq shatteredCnf) None
+    if (cnf eq shatteredCnf) List[Result]()
     else {
       log("\nindependent subtheories after shattering")
       log(cnf.toString + "\n")
@@ -179,7 +179,7 @@ abstract class IJCAI11Compiler(
 
   def onlyIfGround(f: InferenceRule)(cnf: CNF) = {
     if (cnf.isGround) f(cnf)
-    else None
+    else List[Result]()
   }
 
   def tryGroundDecomposition(cnf: CNF): InferenceResult = {
@@ -209,8 +209,8 @@ abstract class IJCAI11Compiler(
       val msg = "Shannon decomposition on $" + literal.toLatex(new VarNameSpace) + "$."
       val node = new Or(cnf, None, None, msg)
       log(cnf.toString + "\n")
-      Some((Some(node), List(trueBranch, falseBranch)))
-    } else None
+      List((Some(node), List(trueBranch, falseBranch)))
+    } else List[Result]()
   }
 
   def tryInclusionExclusion(cnf: CNF) = {
@@ -232,14 +232,14 @@ abstract class IJCAI11Compiler(
       log("After 2:")
       log(cl2)
 
-      Some((Some(node), List(plus1Branch, plus2Branch, minBranch)))
-    } else None
+      List((Some(node), List(plus1Branch, plus2Branch, minBranch)))
+    } else List[Result]()
   }
 
   def tryShatter(cnf: CNF) = {
     val shatteredCnf = shatter(cnf)
-    if (shatteredCnf eq cnf) None
-    else Some(None, List(shatteredCnf))
+    if (shatteredCnf eq cnf) List[Result]()
+    else List((None, List(shatteredCnf)))
   }
 
   case class IndexedConstant(val i: Int) {
@@ -263,7 +263,7 @@ abstract class IJCAI11Compiler(
 
   def tryIndependentPartialGrounding(cnf: CNF): InferenceResult = {
     // in the future, this should be implemented  by finding all binding classes and then checking size and root
-    if(cnf.clauses.exists(_.rootVars.isEmpty)) return None
+    if(cnf.clauses.exists(_.rootVars.isEmpty)) return List[Result]()
     else {
       // every clause has a root variable -- we can try
       val chosenVariables = collection.mutable.Map.empty[Clause, Var]
@@ -274,12 +274,15 @@ abstract class IJCAI11Compiler(
       // one by one add all variables that are the only roots in their clause
       val (singletonRoots, multiRoots) = multiClauses.partition { _.rootVars.size == 1 }
       for (c <- singletonRoots)  {
-        if(!tryAddingVariable(chosenVariables, chosenClauses, c, c.rootVars.head)) return None
+        if(!tryAddingVariable(chosenVariables, chosenClauses, c,
+                              c.rootVars.head)) {
+          return List[Result]()
+        }
         chosenClauses = c :: chosenClauses
       }
       // now do search for the remainder
       val finalChoice = searchChoices(chosenVariables,chosenClauses,multiRoots.sortBy(_.rootVars.size))
-      if(finalChoice.isEmpty) return None
+      if(finalChoice.isEmpty) return List[Result]()
       else{
         log("\nindependent partial grounding")
     	  val solution = finalChoice.get
@@ -307,7 +310,7 @@ abstract class IJCAI11Compiler(
         val inversionNode = new IndependentPartialGroundingNode(
           cnf, None, constant, rootVarIneqs, rootVarDomain, msg)
         log(cnf.toString + "\n")
-	      Some((Some(inversionNode), List(invertedCNF)))
+	      List((Some(inversionNode), List(invertedCNF)))
       }
     }
   }
@@ -444,8 +447,8 @@ abstract class IJCAI11Compiler(
       subdomain.setCause(node)
       log("After:")
       log(childCNF + "\n")
-      Some((Some(node), List(childCNF)))
-    } else None
+      List((Some(node), List(childCNF)))
+    } else List[Result]()
   }
 
   def greedyRules: List[InferenceRule] = List(

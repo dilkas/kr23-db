@@ -89,6 +89,8 @@ class Clause(
 
   def domains = constrs.domains
 
+  def domainsFor(variables: Set[Var]) = constrs.domainsFor(variables)
+
   def groundLiterals = atoms.filter { _.isGround }
 
   /** Check whether there are constraints not pertaining to the variables in

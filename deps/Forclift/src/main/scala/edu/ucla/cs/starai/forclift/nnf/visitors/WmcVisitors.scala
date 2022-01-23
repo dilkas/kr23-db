@@ -71,7 +71,7 @@ trait WmcVisitor {
 object WmcVisitor {
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  protected val Verbose = true
+  protected val Verbose = false
 
   /** This latch is reduced to zero as soon as one of the threads finishes
     * computing the weighted model count.
@@ -269,12 +269,11 @@ protected class LogDoubleWmc(
   ): LogDouble = {
     val (domainSizes, predicateWeights) = params
     val domainSize = cr.domain.size(domainSizes, Set())
-    // if (domainSize <= 0) {
-    //   log("0 (constraint removal, base case)")
-    //   zero
-    // } else {
-      val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
-        (cr.subdomain.complement, 1)
+    if (domainSize <= 0) {
+      log("0 (constraint removal, base case)")
+      zero
+    } else {
+      val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1)
       val child = visit(
         cr.child.get,
         (
@@ -284,7 +283,7 @@ protected class LogDoubleWmc(
       )
       log(s"$child (constraint removal)")
       child
-    //}
+    }
   }
 
   protected def visitContradictionLeaf(
@@ -517,10 +516,10 @@ protected class SignLogDoubleWmc(
   ): SignLogDouble = {
     val (domainSizes, predicateWeights) = params
     val domainSize = cr.domain.size(domainSizes, Set())
-    // if (domainSize <= 0) {
-    //   log("0 (constraint removal, base case)")
-    //   zero
-    // } else {
+    if (domainSize <= 0) {
+      log("0 (constraint removal, base case)")
+      zero
+    } else {
       val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
       val child = visit(
@@ -532,7 +531,7 @@ protected class SignLogDoubleWmc(
       )
       log(s"$child (constraint removal)")
       child
-    // }
+    }
   }
 
   protected def visitContradictionLeaf(
@@ -1163,8 +1162,8 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
   ): BigInt = {
     val (domainSizes, predicateWeights) = params
     val domainSize = cr.domain.size(domainSizes, Set())
-    // if (domainSize <= 0) zero
-    // else {
+    if (domainSize <= 0) zero
+    else {
       val newDomainSizes = domainSizes + (cr.subdomain, domainSize - 1) +
         (cr.subdomain.complement, 1)
       val child = visit(
@@ -1175,7 +1174,7 @@ protected class BigIntWmc(val decimalPrecision: Int = 100)
         )
       )
       child
-    // }
+    }
   }
 
   protected def visitContradictionLeaf(

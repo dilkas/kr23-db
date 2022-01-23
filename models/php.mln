@@ -1,5 +1,5 @@
-pidgeons = {1,...,100}
-holes = {1,...,99}
+pidgeons = {1,...,10}
+holes = {1,...,9}
 
 p(pidgeons, holes)
 

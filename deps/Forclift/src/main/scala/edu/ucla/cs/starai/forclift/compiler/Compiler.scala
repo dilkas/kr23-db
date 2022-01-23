@@ -126,14 +126,15 @@ abstract class AbstractCompiler(
     * other cases, the list holds formulas that will be compiled into direct
     * successors of the returned circuit node.
     */
-  protected type InferenceResult = Option[(Option[NNFNode], List[CNF])]
+  protected type Result = (Option[NNFNode], List[CNF])
+  protected type InferenceResult = List[Result]
 
   protected type InferenceRule = CNF => InferenceResult
 
   // ============================== DATA ======================================
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  private[this] val Verbose = true
+  private[this] val Verbose = false
 
   // ============================== MISC METHODS ==============================
 
@@ -204,7 +205,7 @@ abstract class AbstractCompiler(
     // println(cnf)
     if (!nnfCache.contains(cnf.hashCode)) {
       // println("tryCache: not found")
-      None
+      List[Result]()
     } else {
       // println("tryCache: found. The bucket has " + nnfCache(cnf.hashCode).size +
       //           " elements.")
@@ -233,11 +234,11 @@ abstract class AbstractCompiler(
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
           updateCache(cnf, node)
           // println("tryCache finished")
-          Some((Some(node), List[CNF]()))
+          List((Some(node), List[CNF]()))
         }
         case None => {
           // println("tryCache finished")
-          None
+          List[Result]()
         }
       }
     }
@@ -278,7 +279,8 @@ abstract class AbstractCompiler(
     nonGreedyRules(i)(cnf)
   } catch {
     // This works around some bugs related to shattering
-    case e: IllegalStateException => None
+    case _: IllegalStateException => List[Result]()
+    case _: UnsupportedOperationException => List[Result]()
   }
 
   /** Constructs the maximal PartialCircuit that can be built using only greedy
@@ -289,14 +291,16 @@ abstract class AbstractCompiler(
     while (rules.nonEmpty) {
       try {
         rules.head(cnf) match {
-          case None => {
+          case Nil => {
             rules = rules.tail
           }
-          case Some((node, successors)) => {
+          case (node, successors)::tail => {
+            // We assume that all greedy rules produce at most one solution
+            require(tail.isEmpty)
             node match {
               case None => {
                 require(successors.size == 1)
-                  return applyGreedyRules(successors.head)
+                return applyGreedyRules(successors.head)
                 }
               case Some(nnf) => {
                 // println("applyGreedyRules: adding")
@@ -313,7 +317,8 @@ abstract class AbstractCompiler(
         }
       } catch {
         // This works around a bug in the implementation of shattering
-        case e: IllegalStateException => rules = rules.tail
+        case _: IllegalStateException => rules = rules.tail
+        case _: UnsupportedOperationException => rules = rules.tail
       }
     }
     new PartialCircuit(this, None, List(cnf))

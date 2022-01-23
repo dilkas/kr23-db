@@ -1,4 +1,4 @@
-person = {1,...,1000}
+person = {1,...,100}
 
 f(person,person)
 

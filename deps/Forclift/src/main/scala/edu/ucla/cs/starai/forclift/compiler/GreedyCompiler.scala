@@ -39,7 +39,7 @@ class GreedyCompiler(
     while (nnf.isEmpty && rules.nonEmpty) {
       val tryRule = rules.head(cnf)
       if (tryRule.nonEmpty) {
-        val (node, successors) = tryRule.get
+        val (node, successors) = tryRule.head
         if (node.isEmpty) {
           require(successors.size == 1)
           // println("GreedyCompile::compile: recursive call")

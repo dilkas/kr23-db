@@ -37,6 +37,9 @@ final case class CNF(val clauses: List[Clause]) extends SetProxy[Clause] {
 
   def domains = clauses.flatMap { _.domains }.toSet
 
+  def domainsWithVariablesInLiterals =
+    clauses.flatMap { c => c.domainsFor(c.literalVariables) }.toSet
+
   lazy val atoms = clauses.flatMap { _.atoms }.toSet
 
   def isSingleton = clauses.nonEmpty && clauses.tail.isEmpty
@@ -384,7 +387,6 @@ object CNF {
                 foundConstraintRemoval2
               )
               if (recursion.isDefined) {
-                println(recursion)
                 return recursion
               }
             } catch {

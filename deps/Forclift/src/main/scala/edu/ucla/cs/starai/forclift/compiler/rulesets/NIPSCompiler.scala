@@ -89,11 +89,11 @@ abstract class NIPS11Compiler(
       // NOTE: The code below is deprecated
       val node = new DomainRecursionNode(
         cnf,
-        Some(mixedNnf.get._1.get.asInstanceOf[IndependentPartialGroundingNode]),
+        Some(mixedNnf.head._1.get.asInstanceOf[IndependentPartialGroundingNode]),
         None, constant, ineqs, domain, msg)
       log(cnf.toString + "\n")
-      Some((Some(node), List(groundCNF)))
-    } else None
+      List((Some(node), List(groundCNF)))
+    } else List[Result]()
   }
 
   override def nonGreedyRules: List[InferenceRule] = {

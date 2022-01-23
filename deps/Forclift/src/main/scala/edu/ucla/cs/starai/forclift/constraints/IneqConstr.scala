@@ -211,7 +211,8 @@ final class IneqConstr(final val self: MultiMap[Var, Term] = MultiMap.empty)
             clone += tuple
           }
 
-          // We don't want to end up with a 'constant != constant' constraint
+          // We don't want to end up with a 'constant != constant' constraint.
+          // In case of such a constraint, the entire substitution is invalid.
           case subsConstant: Constant =>
             require(clone(variable).forall(!_.equals(subsConstant)))
         }

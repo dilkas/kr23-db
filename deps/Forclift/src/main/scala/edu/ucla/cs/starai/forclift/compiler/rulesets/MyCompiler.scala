@@ -32,13 +32,9 @@ abstract class MyCompiler(
     nnfCache: Compiler.Buckets = new Compiler.Buckets
 ) extends V1_1Compiler(sizeHint, nnfCache) {
 
-  def tryImprovedDomainRecursion(cnf: CNF) = {
-    cnf.clauses.find { !_.literalVariables.isEmpty } match {
-      case None => None
-      case Some(suitableClause) => {
-        log("Improved domain recursion")
-        val domain =
-          suitableClause.constrs.domainFor(suitableClause.literalVariables.head)
+  def tryImprovedDomainRecursion(cnf: CNF) =
+    cnf.domainsWithVariablesInLiterals.map {
+      domain => {
         val constant = groundingConstantFor(cnf, domain)
         val mixedClauses = cnf.clauses.flatMap { clause =>
           {
@@ -67,8 +63,6 @@ abstract class MyCompiler(
           }
         }
         val mixedCNF = new CNF(mixedClauses)
-        log("Before:")
-        log(mixedCNF.toString)
         val msg = "Improved domain recursion on $" + domain + "$"
         val node = new ImprovedDomainRecursionNode(
           cnf,
@@ -77,12 +71,13 @@ abstract class MyCompiler(
           domain,
           msg
         )
+        log(msg + ". Before:")
+        log(cnf)
         log("After:")
-        log(cnf + "\n")
-        Some((Some(node), List(mixedCNF)))
+        log(mixedCNF)
+        (Some(node), List(mixedCNF))
       }
-    }
-  }
+    }.toList
 
   def tryConstraintRemoval(cnf: CNF): InferenceResult = {
     for (originalClause <- cnf) {
@@ -139,7 +134,7 @@ abstract class MyCompiler(
                   log("Constraint removal. After:")
                   log(newCnf + "\n")
 
-                  return Some((Some(node), List(newCnf)))
+                  return List((Some(node), List(newCnf)))
                 }
               }
               case _ => {}
@@ -148,7 +143,7 @@ abstract class MyCompiler(
         }
       }
     }
-    None
+    List[Result]()
   }
 
   def tryContradictionFilter(cnf: CNF) = {
@@ -156,9 +151,9 @@ abstract class MyCompiler(
       c.isConditionalContradiction && c.isUnconditional
     }
     if (contradictionClauseOption.nonEmpty) {
-      Some((None, List(new CNF(List(contradictionClauseOption.get)))))
+      List((None, List(new CNF(List(contradictionClauseOption.get)))))
     } else {
-      None
+      List[Result]()
     }
   }
 

@@ -66,38 +66,35 @@ class PartialCircuit(
     // println("applyAllRules: started")
     val cnf = formulas.head
     Compiler.checkCnfInput(cnf)
+    var circuitCopy = myClone()
     val circuits = (0 until compiler.nonGreedyRules.size).toStream.flatMap {
       ruleIndex =>
-        {
-          val circuitCopy = myClone()
-          circuitCopy.compiler.applyIthRule(ruleIndex, cnf) match {
-            case None => None // the rule is not applicable
-            case Some((node: Option[NNFNode], successors: List[CNF])) => {
-              node match {
-                case None => {
-                  // rerun on the updated formula
-                  require(successors.size == 1)
-                  new PartialCircuit(
-                    circuitCopy.compiler,
-                    circuitCopy.circuit,
-                    successors ++ circuitCopy.formulas.tail,
-                    depth
-                  ).applyAllRules()
-                }
-                case Some(node) => {
-                  // println("PartialCircuit::applyAllRules: adding")
-                  // println(cnf)
-                  // println("AND")
-                  // println(node.cnf)
-                  circuitCopy.compiler.updateCache(cnf, node)
-                  val newSuccessors = circuitCopy.compiler
-                    .applyGreedyRulesToAllFormulas(node, successors)
-                  Some(circuitCopy.add(node, newSuccessors))
-                }
+      {
+        circuitCopy.compiler.applyIthRule(ruleIndex, cnf).flatMap {
+          case (node: Option[NNFNode], successors: List[CNF]) => {
+            val answer = node match {
+              case None => {
+                // rerun on the updated formula
+                require(successors.size == 1)
+                new PartialCircuit(
+                  circuitCopy.compiler,
+                  circuitCopy.circuit,
+                  successors ++ circuitCopy.formulas.tail,
+                  depth
+                ).applyAllRules().toList
+              }
+              case Some(node) => {
+                circuitCopy.compiler.updateCache(cnf, node)
+                val newSuccessors = circuitCopy.compiler
+                  .applyGreedyRulesToAllFormulas(node, successors)
+                List(circuitCopy.add(node, newSuccessors))
               }
             }
+            circuitCopy = myClone()
+            answer
           }
         }
+      }
     }
     // println("applyAllRules: finished")
     circuits
