@@ -159,7 +159,6 @@ abstract class MyCompiler(
 
   override def greedyRules: List[InferenceRule] =
     List(
-      tryCache,
       tryTautology,
       tryContradictionClause,
       tryPositiveUnitClause,
@@ -176,6 +175,7 @@ abstract class MyCompiler(
 
   override def nonGreedyRules: List[InferenceRule] =
     List(
+      tryCache,
       tryGroundDecomposition, // +1
       // tryInclusionExclusion, // +2
       tryShatter, // 0

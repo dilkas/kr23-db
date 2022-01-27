@@ -22,19 +22,43 @@
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
 
+\makeatletter
+\newcommand\incircbin
+    {%
+      \mathpalette\@incircbin
+    }
+    \newcommand\@incircbin[2]
+                          {%
+                            \mathbin%
+                                {%
+                                  \ooalign{\hidewidth$#1#2$\hidewidth\crcr$#1\bigcirc$}%
+                                }%
+                          }
+                          \newcommand{\oland}{\incircbin{\land}}
+                          \newcommand{\olor}{\incircbin{\lor}}
+                          \newcommand{\Contradiction}{\incircbin{\bot}}
+                          \newcommand{\Tautology}{\incircbin{\top}}
+                          \newcommand{\Smoothing}{\incircbin{}}
+                          \newcommand{\Unit}{\incircbin{1}}
+                          \makeatother
+
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
 
 \DeclareMathOperator{\Compile}{\textsc{Compile}}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\DR}{\textsc{DR}}
+\DeclareMathOperator{\IE}{\textsc{IE}}
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
+\DeclareMathOperator{\wwp}{w}
+\DeclareMathOperator{\wwn}{\overline{w}}
 
 \DeclareMathOperator{\dom}{dom}
 \DeclareMathOperator{\Imm}{Im}
 \DeclareMathOperator{\Doms}{Doms}
-\DeclareMathOperator{\size}{size}
+\DeclareMathOperator{\size}{\sigma}
 \DeclareMathOperator{\Vars}{Vars}
 \DeclareMathOperator{\WMC}{WMC}
+\DeclareMathOperator{\gr}{gr}
 
 \title{Empowering Domain Recursion in Symmetric Weighted First-Order Model Counting}
 
@@ -45,24 +69,17 @@
 
 \paragraph{Things I might need to explain.}
 \begin{itemize}
-\item notation: $\Imm$
-\item atom, (positive/negative) literal, constant, predicate, variable, literal variable
-\item inequality constraint. Notation: $(x, y)$, where $x$ is a variable (of the clause), and $y$ is either a variable or a constant.
+\item atom, (positive/negative) literal, constant, predicate, variable, literal variable, clause, unit clause
 \item $\Vars$, $\Vars(c) = \Vars(L) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
-\item size of a domain, how each domain is partitioned into two during compilation.
-\item maybe: notation for partial function, notation for powerset, domain size
-\item notation for projection (or avoid it?)
-\item $\WMC$
-\item constraint removal operation
+\item maybe: notation for partial function, notation for powerset, notation for disjoint union, domain size
+\item $\WMC$, $\wwp$, $\wwn$, $\Imm$
 \item two parts: compilation and inference.
 \item introduce and use arrows for bijections, injections, set inclusions, etc.
 \item $\emptyset$ for an empty partial map.
 \item notation for variable substitution for literal and constraint sets: $S[x/V]$, where $S$ is the set, $V$ is a set of variable, and $x$ is the new constant or variable. Note that for constraint sets this could mean that a variable and a constant need to switch places.
 \item During inference, there is a domain size map $\size\colon \mathscr{D} \to \mathbb{N}_0$.
 \end{itemize}
-
-Let $\mathscr{V}$ be the set of circuit nodes.
 
 \paragraph{TODO}
 \begin{itemize}
@@ -72,19 +89,38 @@ Let $\mathscr{V}$ be the set of circuit nodes.
 \item capitalise variable names.
 \end{itemize}
 
+Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
+
 \begin{definition}
-  A \emph{domain} is a set with elements not used anywhere else.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathscr{D}$ be the set of all domains and $\mathscr{C} \subset \mathscr{D}$ be the subset of domains introduced as a consequence of constraint removal. Note that both sets (can) expand during the compilation phase.
+  A \emph{domain} is a symbol for a finite set.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathscr{D}$ be the set of all domains and $\mathscr{C} \subset \mathscr{D}$ be the subset of domains introduced as a consequence of constraint removal. Note that both sets (can) expand during the compilation phase.
 
 Let $\pi\colon \mathscr{D} \pfun \mathscr{D}$ be a partial endomorphism on $\mathscr{D}$ that denotes the \emph{parent} relation, i.e., if $\pi(d) = e$ for some $d, e \in \mathscr{D}$, then we call $e$ the parent (domain) of $d$, and $e$ a child of $d$. Intuitively, $\pi$ arranges all domains into a forest---thus, we often use graph theoretical terminology to describe properties of and relationships between domains.
 \end{definition}
 
 \begin{definition}
-  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains. Two clauses $c$ and $d = (L', C', \delta_d)$ are \emph{isomorphic} (written $c \cong d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match).
+An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable, and $b$ is either a variable or a constant.
+\end{definition}
+
+% TODO: so far I'm not using equivalence anywhere
+\begin{definition}
+  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathscr{D}$ is a function that maps all variables in $c$ to their domains such that if $(x, y) \in C$ for some variables $x$ and $y$, then $\delta_c(x) = \delta_c(y)$.
+
+  Two clauses $c$ and $d = (L', C', \delta_d)$ are \emph{isomorphic} (written $c \cong d$) if there is a bijection $\beta\colon \Vars(c) \to \Vars(d)$ such that $c\beta = d\beta$. TODO: we will always use this subscript notation for the $\delta$'s. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match).
 \end{definition}
 
 A \emph{formula} is a set of clauses.
 
 We use hash codes to efficiently check whether a recursive relationship between two formulas is plausible. (It is plausible if the formulas are equal up to variables and domains.) The hash code of a clause $c = (L, C, \delta_c)$ combines the hash codes of the sets of constants and predicates in $c$, the numbers of positive and negative literals, the number of inequality constraints $|C|$, and the number of variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash codes of all its clauses and is denoted $\#\phi$.
+
+\begin{definition}
+  Let $\gr(\cdot; \sigma)$ be the function (parameterised by the domain size function $\size$) that takes a clause $c = (L, C, \delta)$ and returns the number of ways the variables in $c$ can be replaced by elements of their respective domains in a way that satisfies the inequality constraints.\footnote{Note that the literals of the clause have no effect on $\gr$.} Formally, for each variable $v \in \Vars(c)$, let $C_v = \{ w \mid (u, w) \in C \setminus \Vars(c)^2 \text{, }u \ne v \}$ be the set of (explicitly named) constants that $v$ is permitted to be equal to. Then
+  \[
+  \gr(c; \sigma) \coloneqq \left|\left\{\, (e_v)_{v \in \Vars(c)} \in \prod_{v \in \Vars(c)} C_v \sqcup [\sigma(\delta(v)) - |C_v|] \;\middle|\; \right.\right. e_u \ne e_w \text{ for all } (u, w) \in C \cap \Vars(c)^2 \left.\left. \vphantom{\prod_{v \in \Vars(c)}} \,\right\}\right|
+  \]
+  for any clause $c$. (Here, $[n] \coloneqq \{\,1, 2, \dots, n\,\}$ for any non-negative integer $n$.)
+\end{definition}
+
+TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
 
 \section{Identifying Possibilities for Recursion}
 
@@ -263,7 +299,7 @@ Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Dom
 
 \subsection{Evaluation}
 
-$\WMC(\Reff_\rho(n), \size) = \WMC(n, \size')$ ($n$ is the target circuit node), where $\size'$ is defined as
+$\WMC(\Reff_\rho(n); \size) = \WMC(n; \size')$ ($n$ is the target circuit node), where $\size'$ is defined as
 \[
 \size'(x) =
 \begin{cases}
@@ -318,9 +354,9 @@ for all $x \in \Vars(c') \subseteq \Vars(c)$.
 
 \paragraph{Evaluation.}
 \[
-\WMC(\CR_{d \mapsto d'}(n), \size) =
+\WMC(\CR_{d \mapsto d'}(n); \size) =
 \begin{cases}
-  \WMC(n, \size \cup \{\, d' \mapsto \size(d) - 1 \,\}) & \text{if } \size(d) > 0 \\
+  \WMC(n; \size \cup \{\, d' \mapsto \size(d) - 1 \,\}) & \text{if } \size(d) > 0 \\
   0 & \text{otherwise.}
 \end{cases}
 \]
@@ -385,9 +421,9 @@ TODO: introduce $\phi$.
 
 \paragraph{Evaluation.}
 \[
-\WMC(\DR_d(n), \size) =
+\WMC(\DR_d(n); \size) =
 \begin{cases}
-  \WMC(n, \size) & \text{if } \size(d) > 0 \\
+  \WMC(n; \size) & \text{if } \size(d) > 0 \\
   1 & \text{otherwise.}
 \end{cases}
 \]
@@ -401,11 +437,31 @@ One is picked as the multiplicative identity.
 \item new rules that don't create nodes (e.g., duplicate removal, unconditional contradiction detection, etc.)
 \end{itemize}
 
-\section{Circuit Evaluation}
+\section{Circuit Nodes Types and Their Evaluations}
 
-TODO: algebraic/graphical representations
+Along with the three circuit node types described above, here are all the other ones. This section is mostly just taken from \cite{DBLP:conf/ijcai/BroeckTMDR11} but with some changes in notation.
 
-TODO: describe evaluation of: and, counting, constraint removal, ref, unit, contradiction, improved domain recursion. Most of this will be from \cite{DBLP:conf/ijcai/BroeckTMDR11}.
+TODO: explain that $x, y, z$ refer to nodes, $c$ refers to a clause, and describe each node type in a bit more detail.
+
+\begin{description}
+\item[tautology] $\WMC(\Tautology; \size) = 1$
+\item[contradiction] $\WMC(\Contradiction c; \size) = 0^{\gr(c; \size)}$
+\item[unit clause]
+  \[
+  \WMC(\Unit c; \size) =
+  \begin{cases}
+    \wwp(p)^{\gr(c; \size)} & \text{if the literal is positive} \\
+    \wwn(p)^{\gr(c; \size)} & \text{otherwise,}
+  \end{cases}
+  \]
+  where $p$ is the predicate of the literal.
+\item[smoothing] $\WMC(\Smoothing c; \size) = (\wwp(p) + \wwn(p))^{\gr(c; \size)}$, where $p$ is the predicate of the literal.
+\item[decomposable conjunction] $\WMC(x \oland y; \size) = \WMC(x; \size) \times \WMC(y; \size)$
+\item[deterministic disjunction] $\WMC(x \olor y; \size) = \WMC(x; \size) + \WMC(y; \size)$
+\item[decomposable set-conjunction] $\WMC(\oland_D x; \size) = \WMC(x; \size)^{\size(D)}$
+\item[deterministic set-disjunction] $\WMC(\olor_{D \subseteq S} x; \size) = \sum_{d = 0}^{\size(S)} \binom{\size(S)}{d} \WMC(x; \size \cup \{\, D \mapsto d \,\})$
+\item[inclusion-exclusion] $\WMC(\IE(x, y, z); \size) = \WMC(x; \size) + \WMC(y; \size) - \WMC(z; \size)$
+\end{description}
 
 \section{Examples}
 

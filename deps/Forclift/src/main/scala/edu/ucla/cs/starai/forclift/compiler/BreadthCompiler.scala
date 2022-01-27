@@ -17,7 +17,7 @@ object BreadthCompiler {
 
   // Two limits on the extensiveness of search
   val NumSolutions = 10
-  val MaxDepth = 4
+  val MaxDepth = 5
 
 }
 

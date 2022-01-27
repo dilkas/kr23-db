@@ -747,16 +747,17 @@ sealed case class ExistFormula(
     }
   }
 
+  def domains = vars.map { v =>
+    val atom = atoms.find { _.args.contains(v) }.get
+    atom.domain(v)
+  }
+
   def existToDisj = {
     // We cannot perform this operation correctly because the domain sizes are
     // not known when the formula is translated into CNF.
     println("[Warning] Expanding existential quantifier to disjunction of known constants. Domain sizes are ignored!\n"+
             "          Use Skolemization for domains where not all constants are given")
     val map = new mutable.HashMap[Var, Term]()
-    val domains = vars.map { v =>
-      val atom = atoms.find { _.args.contains(v) }.get
-      atom.domain(v)
-    }
     val exlist = expandExistentialRec(vars zip domains, map)
     exlist.length match {
       case 0 => {

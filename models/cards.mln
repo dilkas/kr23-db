@@ -1,4 +1,4 @@
-person = {1,...,100}
+person = {1,...,15}
 
 card(person, person)
 

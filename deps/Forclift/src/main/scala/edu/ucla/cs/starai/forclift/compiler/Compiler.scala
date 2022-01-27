@@ -134,7 +134,7 @@ abstract class AbstractCompiler(
   // ============================== DATA ======================================
 
   /** A hacky way to turn a bunch of println statements on and off. */
-  private[this] val Verbose = false
+  private[this] val Verbose = true
 
   // ============================== MISC METHODS ==============================
 

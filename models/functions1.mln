@@ -9,4 +9,4 @@ forall x exist y p(x, y).
 p(w, y) ^ p(x, y) => w=x.
 
 // surjectivity
-//forall y exist x p(x, y).
+forall y exist x p(x, y).

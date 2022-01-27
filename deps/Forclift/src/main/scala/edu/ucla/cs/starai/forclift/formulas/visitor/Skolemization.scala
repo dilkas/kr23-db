@@ -166,6 +166,10 @@ protected class Skolemization extends FormulaVisitor[(EFNameSpace,Constraints), 
     val s  = new Predicate(Symbol("s" + prefix), other_vars.size, domains)
     val sf = LiteralFormula(s(other_vars: _*))
 
+    // println("Introducing a new predicate " + zf +
+    //           " to represent existential quantification over domain(s) " +
+    //           formula.domains)
+
     val pf_neg = NegFormula(pf)
 
     val new_sk_formulas = (DisjFormula(zf,     pf_neg), Constraints.empty) ::
