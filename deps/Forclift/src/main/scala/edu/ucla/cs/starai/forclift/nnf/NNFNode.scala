@@ -268,8 +268,8 @@ abstract class NNFNode(
       directSuccessors.foreach {
         case None => {
           updateFirst(newNode)
-          // println("addNode: added as a direct successor of " +
-          //           getClass.getSimpleName)
+          // println("addNode: added " + newNode.getClass.getSimpleName +
+          //           " as a direct successor of " + getClass.getSimpleName)
           return true
         }
         case Some(node) => {

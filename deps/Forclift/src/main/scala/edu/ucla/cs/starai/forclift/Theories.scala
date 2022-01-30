@@ -329,6 +329,7 @@ object CNF {
       d = d.parents.head
     }
     if (d == d1) Some(foundConstraintRemoval) else None
+    // if (d == d1) Some(true) else None // an experimental relaxation
   }
 
   /** Tries to identify newFormula as oldFormula but with some domains replaced

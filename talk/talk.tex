@@ -156,8 +156,10 @@
     \end{align*}
     Answer: $n!\stirling{m}{n} = \sum_{i=0}^n (-1)^i\binom{n}{i}(n-i)^m$.
   \end{block}
-  \begin{block}{Bijections}
-    Theory:
+\end{frame}
+
+\begin{frame}{Bijections}
+  \begin{block}{Theory}
     \begin{align*}
       \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
       \forall x \in M. \exists y \in N. &P(x, y) \\
@@ -166,6 +168,12 @@
     \end{align*}
     Answer: $n!$ if $m=n$.
   \end{block}
+  \alert{Linear (!) answer found by Forclift:}
+  \begin{align*}
+    f(m, n) &= - f(m, n-1) + \sum_{k=0}^m \binom{m}{k}[k < 2]f(m - k, n - 1) \\
+    &= - f(m, n-1) + f(m, n - 1) + m \times f(m - 1, n - 1) \\
+    &= m \times f(m - 1, n - 1)
+  \end{align*}
 \end{frame}
 
 \begin{frame}{Counting (Unweighted) Functions: Currently Unliftable (3)}

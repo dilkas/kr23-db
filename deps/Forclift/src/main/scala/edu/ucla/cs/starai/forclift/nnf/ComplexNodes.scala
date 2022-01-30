@@ -286,11 +286,9 @@ class And(
   override def updateFirst(child: NNFNode) =
     if (l.isEmpty) {
       l = Some(child)
-      // println("And::updateFirst: added as left")
       true
     } else if (r.isEmpty) {
       r = Some(child)
-      // println("And::updateFirst: added as right")
       true
     } else {
       false

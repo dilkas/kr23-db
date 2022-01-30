@@ -81,8 +81,6 @@ abstract class IJCAI11Compiler(
       c => c.isPositiveUnitClause && c.isUnconditional
     }
     if (unitClauseOption.nonEmpty) {
-      log("\nPositive unit propagation. Before:")
-      log(cnf.toString)
       val unitClause = unitClauseOption.get
       val unitLiteral = unitClause.atoms.head
       val otherClauses: List[Clause] = cnf.clauses filterNot (_ == unitClause)
@@ -91,7 +89,9 @@ abstract class IJCAI11Compiler(
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
-      log("Positive unit propagation. After:")
+      log("\nPositive " + msg + " Before:")
+      log(cnf)
+      log("After:")
       log(branchCnf + "\n")
       List((Some(node), List(unitCNF, branchCnf)))
     } else List[Result]()
@@ -100,8 +100,6 @@ abstract class IJCAI11Compiler(
   def tryNegativeUnitPropagation(cnf: CNF) = {
     val unitClauseOption = cnf.clauses.find { c => c.isNegativeUnitClause && c.isUnconditional }
     if (unitClauseOption.nonEmpty) {
-      log("\nnegative unit propagation")
-      log(cnf.toString + "\n")
       val unitClause = unitClauseOption.get
       val unitLiteral = unitClause.atoms.head
       val otherClauses: List[Clause] = cnf.clauses filterNot (_ == unitClause)
@@ -110,6 +108,10 @@ abstract class IJCAI11Compiler(
       val unitCNF = CNF(unitClause)
       val msg = "Unit propagation of $" + unitClause.toLatex() + "$."
       val node = new And(cnf, None, None, msg)
+      log("\nNegative " + msg + " Before:")
+      log(cnf)
+      log("After:")
+      log(branchCnf + "\n")
       List((Some(node), List(unitCNF, branchCnf)))
     } else List[Result]()
   }
@@ -195,7 +197,6 @@ abstract class IJCAI11Compiler(
     val countingCnf = if (countShatteredLiterals) shatter(cnf) else cnf
     val groundLiterals = countingCnf.clauses.flatMap { _.groundLiterals }
     if (groundLiterals.nonEmpty) {
-      log("\nground decomposition")
       val groupedAtoms = groundLiterals.groupBy(a => a)
       val atomCounts = groupedAtoms.mapValues(list => list.size)
       val ordering = new Ordering[(Atom, Int)] {
@@ -208,7 +209,12 @@ abstract class IJCAI11Compiler(
       val falseBranch = cnf + Clause(List(), List(literal))
       val msg = "Shannon decomposition on $" + literal.toLatex(new VarNameSpace) + "$."
       val node = new Or(cnf, None, None, msg)
-      log(cnf.toString + "\n")
+      log("\n" + msg + " Before:")
+      log(cnf)
+      log("After 1:")
+      log(trueBranch)
+      log("After 2:")
+      log(falseBranch + "\n")
       List((Some(node), List(trueBranch, falseBranch)))
     } else List[Result]()
   }

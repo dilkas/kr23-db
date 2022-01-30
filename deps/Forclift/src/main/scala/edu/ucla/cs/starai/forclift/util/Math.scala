@@ -305,6 +305,18 @@ object Binomial {
     }
   }
 
-  def coeff(n: Int, k: Int): LogDouble = factorial(n) / factorial(k) / factorial(n - k)
+  // def coeff(n: Int, k: Int): LogDouble = factorial(n) / factorial(k) / factorial(n - k)
+
+  /** Compute the (n, k) binomial coefficient in Theta(nk) time. */
+  def coeff(n: Int, k: Int): LogDouble = {
+    val row = Array.fill[LogDouble](k + 1)(0)
+    row(0) = 1
+    for (p <- 1 to n) {
+      for (q <- p.min(k) until 0 by -1) {
+        row(q) = row(q) + row(q - 1)
+      }
+    }
+    row(k)
+  }
 
 }

@@ -18,9 +18,13 @@
 \crefname{algocf}{algorithm}{Algorithms}
 \Crefname{algocf}{Algorithm}{Algorithms}
 
+\newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
+\newtheorem{observation}{Observation}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
 
 \makeatletter
 \newcommand\incircbin
@@ -462,6 +466,51 @@ TODO: explain that $x, y, z$ refer to nodes, $c$ refers to a clause, and describ
 \item[deterministic set-disjunction] $\WMC(\olor_{D \subseteq S} x; \size) = \sum_{d = 0}^{\size(S)} \binom{\size(S)}{d} \WMC(x; \size \cup \{\, D \mapsto d \,\})$
 \item[inclusion-exclusion] $\WMC(\IE(x, y, z); \size) = \WMC(x; \size) + \WMC(y; \size) - \WMC(z; \size)$
 \end{description}
+
+TODO: define 'circuit' (or something similar). Note that circuits are rooted.
+
+\subsection{Observations and Theoretical Results}
+
+TODO: explain how circuits and domain sizes connect to functions on integers
+
+\begin{observation}
+  Let $n$ be a positive integer and $d \in \mathscr{D}$ a domain. Then one can construct a circuit $x$ such that
+  \[
+  \WMC(x; \size) =
+  \begin{cases}
+    0 & \text{if } \size(d) \ge n \\
+    \WMC(y; \size) & \text{otherwise,}
+  \end{cases}
+  \]
+  where $y$ is a circuit node of arbitrary type. Indeed, $(\Contradiction c) \oland y$ is such a circuit, where $c = (L, C, \delta)$ is a clause with $n$ variables $(v_i)_{i=1}^n$ such that:
+  \begin{itemize}
+  \item $L$ is unimportant,
+  \item $C = \{\, (v_i, v_j) \mid i = 1, \dots, n - 1\text{, }j = i + 1, \dots, n \,\}$,
+  \item and $\delta(v_i) = d$ for all $i = 1, \dots, n$.
+  \end{itemize}
+  TODO: explain why this works.
+\end{observation}
+
+\begin{remark}
+  Such (sub)circuits can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
+\end{remark}
+
+Intuition: although one can return zero if the size of a domain is too big, there is no way to do the same if the domain size is too small. And this turns out to be crucial for computing factorials and constructing recursive subcircuits that compare the sizes of two domains.
+
+\begin{theorem}
+  There is no circuit $x$ such that
+  \[
+  \WMC(x; \size) =
+  \begin{cases}
+    0 & \text{if } \size(d) = 0 \\
+    \WMC(y; \size) & \text{otherwise,}
+  \end{cases}
+  \]
+  where $y$ is a circuit node of arbitrary type.
+\end{theorem}
+\begin{proof}
+  Let us consider all possible root node types.
+\end{proof}
 
 \section{Examples}
 

@@ -63,7 +63,7 @@ abstract class MyCompiler(
           }
         }
         val mixedCNF = new CNF(mixedClauses)
-        val msg = "Improved domain recursion on $" + domain + "$"
+        val msg = "Improved domain recursion on $" + domain + "$."
         val node = new ImprovedDomainRecursionNode(
           cnf,
           None,
@@ -71,10 +71,10 @@ abstract class MyCompiler(
           domain,
           msg
         )
-        log(msg + ". Before:")
+        log("\n" + msg + " Before:")
         log(cnf)
         log("After:")
-        log(mixedCNF)
+        log(mixedCNF + "\n")
         (Some(node), List(mixedCNF))
       }
     }.toList

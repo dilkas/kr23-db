@@ -338,6 +338,10 @@ abstract class AbstractCompiler(
         {
           if (partialCircuit.circuit.isDefined) {
             require(node.updateFirst(partialCircuit.circuit.get))
+            // println("applyGreedyRulesToAllFormulas: added " +
+            //           partialCircuit.circuit.get.getClass.getSimpleName +
+            //           " as a direct successor of " +
+            //           node.getClass.getSimpleName)
           }
           partialCircuit.formulas
         }
