@@ -87,7 +87,8 @@
 
 \paragraph{TODO}
 \begin{itemize}
-\item later: maybe mathcal instead of mathscr
+\item should I always say `compilation rule' instead of `operator'?
+\item maybe mathcal instead of mathscr
 \item maybe $\pi$ is global enough to have a more unique name
 \item maybe $c[\beta, \gamma]$ is better than $c \ast (\beta, \gamma)$
 \item capitalise variable names.
@@ -203,6 +204,19 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
   }
 \end{algorithm}
 
+\begin{algorithm}[t]
+  \caption{A generalised version of the compilation rule that uses \cref{alg:recursion} to add $\Reff$ nodes (i.e., the edges that make the circuit no longer a tree) to the circuit}
+  \label{alg:trycache}
+  \SetKwData{compilationCache}{compilationCache}
+  \KwIn{formula $\phi$}
+  \KwOut{a $\Reff$ circuit node (or \texttt{null})}
+  \ForEach{$(\psi, n) \in \compilationCache{$\#\psi$}$}{
+    $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
+    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\Reff_\rho(n)$}}
+  }
+  \Return{\normalfont \texttt{null}}\;
+\end{algorithm}
+
 \begin{figure}[t]
   \centering
   \begin{tikzpicture}[edge from parent/.style={draw,-latex}]
@@ -243,6 +257,7 @@ Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alph
 
 \paragraph{TODO}
 \begin{itemize}
+\item introduce/describe \cref{alg:recursion} and \cref{alg:trycache} and describe the cache that's being used.
 \item explain why $\rho \cup \gamma$ is possible
 \item explain what the second return statement is about and why a third one is not necessary
 \item mention which one is the main function, what each function takes and returns
@@ -439,6 +454,13 @@ One is picked as the multiplicative identity.
 \begin{itemize}
 \item domains, smoothing, and avoiding infinite cycles
 \item new rules that don't create nodes (e.g., duplicate removal, unconditional contradiction detection, etc.)
+\item my search algorithm
+\item some notes on halting
+  \begin{itemize}
+  \item Search is infinite. Some rules increase the size of the formula(s), but most reduc it.
+  \item Inference is guaranteed to terminate if at least one domain shrinks by at least one. But note that allowing recursive calls with the same domain sizes (e.g., $f(n) = f(n) + \dots$) could be useful because these problematic terms might cancel out.
+  \item It's impossible for $n \gets n - 1$ and $\texttt{for } n \in \dots$ to combine in a way that results in an infinite loop.
+  \end{itemize}
 \end{itemize}
 
 \section{Circuit Nodes Types and Their Evaluations}
@@ -495,26 +517,21 @@ TODO: explain how circuits and domain sizes connect to functions on integers
   Such (sub)circuits can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
 \end{remark}
 
-Intuition: although one can return zero if the size of a domain is too big, there is no way to do the same if the domain size is too small. And this turns out to be crucial for computing factorials and constructing recursive subcircuits that compare the sizes of two domains.
-
-\begin{theorem}
-  There is no circuit $x$ such that
-  \[
-  \WMC(x; \size) =
-  \begin{cases}
-    0 & \text{if } \size(d) = 0 \\
-    \WMC(y; \size) & \text{otherwise,}
-  \end{cases}
-  \]
-  where $y$ is a circuit node of arbitrary type.
-\end{theorem}
-\begin{proof}
-  Let us consider all possible root node types.
-\end{proof}
-
 \section{Examples}
 
-\subsection{Counting Partial Injections}
+For both one domain and two domains:
+\begin{itemize}
+\item bijections
+\item injections
+\item partial injections
+\end{itemize}
+
+\section{Conclusions and Future Work}
+
+\begin{itemize}
+\item Transform circuits to definitions of (possibly recursive) functions on integers. Use a computer algebra system to simplify them.
+\item Design an algorithm to infer the necessary base cases. (Note that there can be an infinite amount of them when functions have more than one parameter.)
+\end{itemize}
 
 \bibliographystyle{acm}
 \bibliography{notes}

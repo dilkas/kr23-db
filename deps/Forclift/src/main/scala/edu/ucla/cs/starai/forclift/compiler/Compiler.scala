@@ -193,7 +193,7 @@ abstract class AbstractCompiler(
     }
   }
 
-  /** An inference rule for creating Ref nodes, i.e., arcs that deviate from
+  /** An inference rule for creating Ref nodes, i.e., edges that deviate from
     * the otherwise tree-like structure of the circuit.
     *
     * Uses nnfCache and CNF.identifyRecursion to find an already-discovered
