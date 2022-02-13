@@ -158,24 +158,6 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{Bijections}
-  \begin{block}{Theory}
-    \begin{align*}
-      \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
-      \forall x \in M. \exists y \in N. &P(x, y) \\
-      \alert{\forall w, x \in M. \forall y \in N.} &\alert{P(w, y) \land P(x, y) \Rightarrow w=x} \\
-      \alert{\forall y \in N. \exists x \in M.} &\alert{P(x, y)}
-    \end{align*}
-    Answer: $n!$ if $m=n$.
-  \end{block}
-  \alert{Linear (!) answer found by Forclift:}
-  \begin{align*}
-    f(m, n) &= - f(m, n-1) + \sum_{k=0}^m \binom{m}{k}[k < 2]f(m - k, n - 1) \\
-    &= - f(m, n-1) + f(m, n - 1) + m \times f(m - 1, n - 1) \\
-    &= m \times f(m - 1, n - 1)
-  \end{align*}
-\end{frame}
-
 \begin{frame}{Counting (Unweighted) Functions: Currently Unliftable (3)}
   \begin{block}{Partial functions}
     Theory: $\forall x \in M. \forall y, z \in N. P(x, y) \land P(x, z)
@@ -257,6 +239,30 @@
     \end{cases}
     \]
   \end{block}
+\end{frame}
+
+\begin{frame}{Bijections}
+  \begin{align*}
+    \forall x \in M. \forall y, z \in N. &P(x, y) \land P(x, z) \Rightarrow y=z \\
+    \forall x \in M. \exists y \in N. &P(x, y) \\
+    \forall w, x \in M. \forall y \in N. & P(w, y) \land P(x, y) \Rightarrow w=x \\
+    \forall y \in N. \exists x \in M. & P(x, y)
+  \end{align*}
+  Answer: $n!$ if $m=n$ and zero otherwise.
+\end{frame}
+
+\begin{frame}{Bijections: a linear answer found by Forclift}
+  \begin{align*}
+    f(m, n) &= - f(m, n-1) + \sum_{k=0}^m \binom{m}{k}[k < 2]f(m - k, n - 1) \\
+    &= - f(m, n-1) + f(m, n - 1) + m \times f(m - 1, n - 1) \\
+    &= m \times f(m - 1, n - 1)
+  \end{align*}
+  This works if supplied with the right base cases:
+  \begin{align*}
+    f(0, 0) &= 1, \\
+    f(m, 0) &= 0 \text{ (for all $m > 0$),} \\
+    f(0, n) &= 0 \text{ (for all $n > 0$).}
+  \end{align*}
 \end{frame}
 
 \end{document}

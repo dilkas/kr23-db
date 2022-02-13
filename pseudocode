@@ -1,24 +1,99 @@
 COMPILATION
 
-nnfCache (HashMap[Int, List[(CNF, NNFNode)]])
-updateCache(CNF, NNFNode): describe in words
 Compilation:
 * Greedy search using a predefined order. Instead of backtracking, give up.
 * 1. add the node, 2. run updateCache(cnf, node), 3. recurse on the remaining theory(/ies), 4. add the edges
 * After compilation, run PostOrderVisitor and DomainsVisitor.
 
-tryCache(cnf: CNF)
-Preconditions: exists (cnf', nnf) in nnfCache: cnf.hashCode = cnf'.hashCode and identifyRecursion returns something (TODO: reformulate this)
-r := identifyRecursion(cnf, cnf')
-node := Ref(cnf, r)
-updateCache(cnf, node)
-V := V + {node}
-E := E + {(node, nnf)}
-
 TODO:
-Ref()
 PostOrderVisitor
 DomainsVisitor
+
+==================================================
+
+Data: solutions = emptyset
+Data: lists of greedy and non-greedy rules
+Two stopping conditions: depth & number of solutions
+
+C_0 <- empty cache
+(G_0, s_0, C_0, L_0) <- applyGreedyRules(phi, C_0)
+if (L_0 is empty) {
+  solutions <- solutions u {(G_0, s_0)}
+} else {
+  q <- Queue((G_0, s_0, C_0, L_0))
+  while (!q.empty()) {
+    # q.addAll(q.pop().nextCircuits())
+    foreach state (G, C, L) in applyNonGreedyRules(q.pop()) {
+      if (L is empty) {
+        solutions <- solutions cup {G}
+      } else {
+        q.push((G, C, L))
+      }
+    }
+  }
+}
+
+Function applyGreedyRules(phi, C):
+foreach greedy rule r {
+  S <- r(phi)
+  if (S != emptyset) {
+    (G, L) <- any element of S
+    if (G is null) {
+      /* we know that L has just one element */
+      return applyGreedyRules(L.head, C)
+    } else {
+      (V, s, N^+) <- G
+      C <- updateCache(C, phi, s)
+      L' <- applyGreedyRulesToAllFormulas(G, C, s, L)
+      return (G, C, L')
+    }
+  }
+  return (null, C, [phi])
+}
+
+Function applyGreedyRulesToAllFormulas(G, C, v, L):
+/** assert: |N^+(v)| = |L| */
+N^+(v) = [pi_3(applyGreedyRules(phi, C)) | phi in L]
+return \bigoplus_{phi in L} pi_1(applyGreedyRules(phi))
+
+Function updateCache(C, phi, v):
+if (#phi not in C)
+  return C cup {#phi mapsto (phi, v)}
+if (!exists t in C(#phi) s.t. pi_2(t) = v)
+  return C cup {#phi mapsto (phi, v) ++ C(#phi)}
+return C
+
+/** could be optimised to make fewer copies */
+Function applyNonGreedyRules(s):
+  (G, C, L) <- s
+  phi <- the first element of L
+  (G', C', L') <- myClone(s)
+  states <- []
+  foreach non-greedy rule r {
+    S <- r(phi)
+    foreach (G, L) in S {
+      if G is null {
+        /** we know that L has just one element */
+        states <- states ++ applyNonGreedyRules(G', C', L)
+      } else {
+        (V, s, N+) <- G
+        updateCache(C', phi, s)
+        L'' <- applyGreedyRulesToAllFormulas(G, C', s, L)
+        # states <- states ++ add(C', G, s, L'')
+        if (G' is not null) {
+          states <- states ++ (addNode(G', s), C', L'' ++ L'.tail)
+        } else {
+          states <- states ++ (G, C', L'' ++ L'.tail)
+        }
+      }
+    }
+    (G', C', L') <- myClone(s)
+  }
+  return states
+
+
+TODO: addNode, myClone
+applyGreedyRulesToAllFormulas, addNode, and applyNonGreedyRules should take care of graph merging. Take unions of both V and N^+, keeping s the same.
 
 ==================================================
 

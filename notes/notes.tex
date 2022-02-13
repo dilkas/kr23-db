@@ -64,12 +64,12 @@
 \DeclareMathOperator{\WMC}{WMC}
 \DeclareMathOperator{\gr}{gr}
 
-\title{Empowering Domain Recursion in Symmetric Weighted First-Order Model Counting}
+\title{Recursive Solutions to First-Order Model Counting}
 
 \begin{document}
 \maketitle
 
-\section{Basic Definitions}
+\section{Definitions}
 
 \paragraph{Things I might need to explain.}
 \begin{itemize}
@@ -92,6 +92,7 @@
 \item maybe $\pi$ is global enough to have a more unique name
 \item maybe $c[\beta, \gamma]$ is better than $c \ast (\beta, \gamma)$
 \item capitalise variable names.
+\item introduce/use notation for vertices, edges of a graph
 \end{itemize}
 
 Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
@@ -126,6 +127,35 @@ We use hash codes to efficiently check whether a recursive relationship between 
 \end{definition}
 
 TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
+
+\section{Search}
+
+\begin{definition}
+  A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, node labels, and ordered direct successors. We denote an FCG as $G = (V, s, N^+)$, where $V$ is the set of nodes, $s \in V$ is the source, and $N^+$ is the direct successor function that maps each node in $V$ to a list that contains either other nodes in $V$ or $\star$, which means that the target of the edge is yet to be determined. For each $v \in V$, the length of the list $N^+(v)$ is determined by the label of $v$.
+
+\end{definition}
+
+\paragraph{TODO.}
+\begin{itemize}
+\item explain the connection to the algebraic formalism (or just don't use it). % We will also use algebraic notation to describe (parts of) circuits: circuittype_parameters(nodes pointed to by the outedges)
+\item define `an FCG for a formula'
+\item need an example
+\item vertex or node, $v$ or $n$?
+\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, and $[x]$ for a list with one element.
+\end{itemize}
+
+\begin{definition}
+  A \emph{state} (of the search for an FCG for a given formula) is a tuple $(G, C, L)$, where:
+  \begin{itemize}
+  \item $G$ is an FCG (can be \texttt{null}),
+  \item $C$ is a compilation cache that maps integers to sets of pairs $(\phi, n)$, where $\phi$ is a formula, and $n$ is a node of $G$ (which is used to identify opportunities for recursion),
+  \item and $L$ is a list of formulas (that are yet to be compiled). (Note that the order is crucial!)
+  \end{itemize}
+\end{definition}
+
+\begin{definition}
+  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas.
+\end{definition}
 
 \section{Identifying Possibilities for Recursion}
 
@@ -205,7 +235,7 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
 \end{algorithm}
 
 \begin{algorithm}[t]
-  \caption{A generalised version of the compilation rule that uses \cref{alg:recursion} to add $\Reff$ nodes (i.e., the edges that make the circuit no longer a tree) to the circuit}
+  \caption{A generalised version of the compilation rule that uses \cref{alg:recursion} to add $\Reff$ nodes (i.e., the edges that make the circuit no longer a tree) to the circuit. TODO: refactor to return a set of solutions.}
   \label{alg:trycache}
   \SetKwData{compilationCache}{compilationCache}
   \KwIn{formula $\phi$}
@@ -327,8 +357,6 @@ $\WMC(\Reff_\rho(n); \size) = \WMC(n; \size')$ ($n$ is the target circuit node),
 \end{cases}
 \]
 for all $x \in \mathscr{D}$.
-
-TODO: still need to connect this to tryCache.
 
 \section{New Operations}
 
@@ -457,7 +485,7 @@ One is picked as the multiplicative identity.
 \item my search algorithm
 \item some notes on halting
   \begin{itemize}
-  \item Search is infinite. Some rules increase the size of the formula(s), but most reduc it.
+  \item Search is infinite. Some rules increase the size of the formula(s), but most reduce it.
   \item Inference is guaranteed to terminate if at least one domain shrinks by at least one. But note that allowing recursive calls with the same domain sizes (e.g., $f(n) = f(n) + \dots$) could be useful because these problematic terms might cancel out.
   \item It's impossible for $n \gets n - 1$ and $\texttt{for } n \in \dots$ to combine in a way that results in an infinite loop.
   \end{itemize}
