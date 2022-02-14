@@ -332,21 +332,12 @@ abstract class AbstractCompiler(
       node: NNFNode,
       formulas: List[CNF]
   ): List[CNF] = {
-    require(formulas.size == node.directSuccessors.count(_.isEmpty))
-    val newFormulas = formulas.map(applyGreedyRules(_)).flatMap {
-      partialCircuit =>
-        {
-          if (partialCircuit.circuit.isDefined) {
-            require(node.updateFirst(partialCircuit.circuit.get))
-            // println("applyGreedyRulesToAllFormulas: added " +
-            //           partialCircuit.circuit.get.getClass.getSimpleName +
-            //           " as a direct successor of " +
-            //           node.getClass.getSimpleName)
-          }
-          partialCircuit.formulas
-        }
-    }
-    newFormulas
+    require(formulas.size == node.directSuccessors.size)
+    require(node.directSuccessors.forall(_.isEmpty))
+    val partialCircuits = formulas.map(applyGreedyRules(_))
+    val newNodes = partialCircuits.map(_.circuit)
+    node.update(newNodes)
+    partialCircuits.flatMap(_.formulas)
   }
 
 }

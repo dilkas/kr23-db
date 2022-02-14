@@ -22,7 +22,6 @@ if (L_0 is empty) {
 } else {
   q <- Queue((G_0, s_0, C_0, L_0))
   while (!q.empty()) {
-    # q.addAll(q.pop().nextCircuits())
     foreach state (G, C, L) in applyNonGreedyRules(q.pop()) {
       if (L is empty) {
         solutions <- solutions cup {G}
@@ -44,17 +43,18 @@ foreach greedy rule r {
     } else {
       (V, s, N^+) <- G
       C <- updateCache(C, phi, s)
-      L' <- applyGreedyRulesToAllFormulas(G, C, s, L)
-      return (G, C, L')
+      return applyGreedyRulesToAllFormulas(G, C, L, s)
     }
   }
   return (null, C, [phi])
 }
 
-Function applyGreedyRulesToAllFormulas(G, C, v, L):
+TODO: should return (G, C, L)
+
+Function applyGreedyRulesToAllFormulas(G, C, L, v):
 /** assert: |N^+(v)| = |L| */
-N^+(v) = [pi_3(applyGreedyRules(phi, C)) | phi in L]
-return \bigoplus_{phi in L} pi_1(applyGreedyRules(phi))
+N^+(v) <- [pi_1(applyGreedyRules(phi, C)) | phi in L]
+return \bigoplus_{phi in L} pi_3(applyGreedyRules(phi, C))
 
 Function updateCache(C, phi, v):
 if (#phi not in C)
@@ -67,7 +67,7 @@ return C
 Function applyNonGreedyRules(s):
   (G, C, L) <- s
   phi <- the first element of L
-  (G', C', L') <- myClone(s)
+  (G', C', L') <- a copy of s
   states <- []
   foreach non-greedy rule r {
     S <- r(phi)
@@ -78,8 +78,7 @@ Function applyNonGreedyRules(s):
       } else {
         (V, s, N+) <- G
         updateCache(C', phi, s)
-        L'' <- applyGreedyRulesToAllFormulas(G, C', s, L)
-        # states <- states ++ add(C', G, s, L'')
+        L'' <- applyGreedyRulesToAllFormulas(G, C', L, s)
         if (G' is not null) {
           states <- states ++ (addNode(G', s), C', L'' ++ L'.tail)
         } else {
@@ -87,12 +86,22 @@ Function applyNonGreedyRules(s):
         }
       }
     }
-    (G', C', L') <- myClone(s)
+    (G', C', L') <- a copy of s
   }
   return states
 
+Function addNode(G, v, r = s_G):
+if (label(r) = Ref) return null
+foreach t in N+(r) {
+  if t = star {
+    update N^+(r) by replacing t with v
+    return (V_G cup {v}, s_G, the new N^+)
+  }
+  G' <- addNode(G, v, t)
+  if (G' is not null) return G'
+}
+return null
 
-TODO: addNode, myClone
 applyGreedyRulesToAllFormulas, addNode, and applyNonGreedyRules should take care of graph merging. Take unions of both V and N^+, keeping s the same.
 
 ==================================================

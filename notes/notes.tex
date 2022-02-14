@@ -137,11 +137,12 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
 
 \paragraph{TODO.}
 \begin{itemize}
+\item maybe add a (vertex) labelling function and its codomain (and use it in the algorithm)? But it's only used once...
 \item explain the connection to the algebraic formalism (or just don't use it). % We will also use algebraic notation to describe (parts of) circuits: circuittype_parameters(nodes pointed to by the outedges)
 \item define `an FCG for a formula'
 \item need an example
 \item vertex or node, $v$ or $n$?
-\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, and $[x]$ for a list with one element.
+\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, $[x]$ for a list with one element, $L$ for the length of the list.
 \end{itemize}
 
 \begin{definition}
@@ -154,8 +155,56 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
 \end{definition}
 
 \begin{definition}
-  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas.
+  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas. TODO: add an example showing that it's usually an FCG with one node and a bunch of $\star$'s marking a fixed number of outedges.
 \end{definition}
+
+We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a rule, then $|L| = 1$, i.e., the rule transformed the formula without creating any nodes.
+
+\begin{algorithm}[t]
+  \caption{The search algorithm}
+  \label{alg:search}
+  \SetKwData{solutions}{solutions}
+  \SetKwProg{Fn}{Function}{:}{}
+  \SetKwFunction{applyGreedyRules}{applyGreedyRules}
+  \SetKwFunction{applyNonGreedyRules}{applyNonGreedyRules}
+  \SetKwFunction{put}{put}
+  \SetKwFunction{get}{get}
+  \SetKwFunction{emptyy}{empty}
+  \SetKwFunction{updateCache}{updateCache}
+  \KwData{a set of greedy rules $\Gamma$}
+  \KwData{a set of non-greedy rules $\Delta$}
+  \KwData{a formula $\phi_0$}
+  \KwResult{all found FCGs for $\phi_0$ are in the set \solutions}
+  $\solutions \gets \emptyset$\;
+  $C_0 \gets \emptyset$\;
+  $(G_0, C_0, L_0) \gets \applyGreedyRules{$\phi_0$, $C_0$}$\;
+  \lIf{$L_0 = []$}{$\solutions \gets \solutions \cup \{\, G_0 \,\}$}
+  \Else{
+    $q \gets \text{an empty queue of states}$\;
+    $q.\put{$(G_0, C_0, L_0)$}$\;
+    \While{{\bf not} $q.\emptyy{}$}{
+      \ForEach{state $(G, C, L) \in \applyNonGreedyRules{$q.\get{}$}$}{
+        \lIf{$L = []$}{$\solutions \gets \solutions \cup \{\, G \,\}$}
+        \lElse{$q.\put{$(G, C, L)$}$}
+      }
+    }
+  }
+  \Fn{\applyGreedyRules{$\phi$, $C$}}{
+    \ForEach{rule $r \in \Gamma$}{
+      $S \gets r(\phi)$\;
+      \If{$S \ne \emptyset$}{
+        $(G, L) \gets \text{any element of } S$\; % TODO: explain why this is valid for greedy rules
+        \lIf{$G = {\normalfont \texttt{null}}$}{\Return{\applyGreedyRules{the only element of $L$, $C$}}}
+        \Else{
+          $(V, s, N^+) \gets G$\;
+          $C \gets \updateCache(C, \phi, s)$\;
+          % TODO: continue here
+        }
+      }
+    }
+    \Return{$({\normalfont \texttt{null}}, C, [\phi])$}\;
+  }
+\end{algorithm}
 
 \section{Identifying Possibilities for Recursion}
 
