@@ -43,7 +43,7 @@ foreach greedy rule r {
     } else {
       (V, s, N^+) <- G
       C <- updateCache(C, phi, s)
-      return applyGreedyRulesToAllFormulas(G, C, L, s)
+      return applyGreedyRulesToAllFormulas(G, C, L)
     }
   }
   return (null, C, [phi])
@@ -51,17 +51,23 @@ foreach greedy rule r {
 
 TODO: should return (G, C, L)
 
-Function applyGreedyRulesToAllFormulas(G, C, L, v):
-/** assert: |N^+(v)| = |L| */
-N^+(v) <- [pi_1(applyGreedyRules(phi, C)) | phi in L]
-return \bigoplus_{phi in L} pi_3(applyGreedyRules(phi, C))
-
-Function updateCache(C, phi, v):
-if (#phi not in C)
-  return C cup {#phi mapsto (phi, v)}
-if (!exists t in C(#phi) s.t. pi_2(t) = v)
-  return C cup {#phi mapsto (phi, v) ++ C(#phi)}
-return C
+Function applyGreedyRulesToAllFormulas(G, C, L):
+(V, s, N^+) <- G
+L' <- []
+N^+(s) <- []
+foreach phi in L {
+  (G', C, L'') <- applyGreedyRules(phi, C)
+  L' <- L' ++ L''
+  if (G' != null) {
+    (V', s', N^+') <- G'
+    V <- V cup V'
+    N^+ <- N^+ cup N^+'
+    N^+(s) <- N^+(s) ++ [s']
+  } else {
+    N^+(s) <- N^+(s) ++ [star]
+  }
+}
+return ((V, s, N^+), C, L')
 
 /** could be optimised to make fewer copies */
 Function applyNonGreedyRules(s):
@@ -78,7 +84,7 @@ Function applyNonGreedyRules(s):
       } else {
         (V, s, N+) <- G
         updateCache(C', phi, s)
-        L'' <- applyGreedyRulesToAllFormulas(G, C', L, s)
+        L'' <- applyGreedyRulesToAllFormulas(G, C', L, s) // TODO: update this line
         if (G' is not null) {
           states <- states ++ (addNode(G', s), C', L'' ++ L'.tail)
         } else {
@@ -89,6 +95,13 @@ Function applyNonGreedyRules(s):
     (G', C', L') <- a copy of s
   }
   return states
+
+Function updateCache(C, phi, v):
+if (#phi not in C)
+  return C cup {#phi mapsto (phi, v)}
+if (!exists t in C(#phi) s.t. pi_2(t) = v)
+  return C cup {#phi mapsto (phi, v) ++ C(#phi)}
+return C
 
 Function addNode(G, v, r = s_G):
 if (label(r) = Ref) return null
@@ -101,8 +114,6 @@ foreach t in N+(r) {
   if (G' is not null) return G'
 }
 return null
-
-applyGreedyRulesToAllFormulas, addNode, and applyNonGreedyRules should take care of graph merging. Take unions of both V and N^+, keeping s the same.
 
 ==================================================
 

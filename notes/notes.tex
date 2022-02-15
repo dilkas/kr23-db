@@ -83,6 +83,7 @@
 \item $\emptyset$ for an empty partial map.
 \item notation for variable substitution for literal and constraint sets: $S[x/V]$, where $S$ is the set, $V$ is a set of variable, and $x$ is the new constant or variable. Note that for constraint sets this could mean that a variable and a constant need to switch places.
 \item During inference, there is a domain size map $\size\colon \mathscr{D} \to \mathbb{N}_0$.
+\item $\sqcup$ for both sets and functions
 \end{itemize}
 
 \paragraph{TODO}
@@ -140,9 +141,9 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
 \item maybe add a (vertex) labelling function and its codomain (and use it in the algorithm)? But it's only used once...
 \item explain the connection to the algebraic formalism (or just don't use it). % We will also use algebraic notation to describe (parts of) circuits: circuittype_parameters(nodes pointed to by the outedges)
 \item define `an FCG for a formula'
-\item need an example
 \item vertex or node, $v$ or $n$?
-\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, $[x]$ for a list with one element, $L$ for the length of the list.
+\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, $[x]$ for a list with one element, $|L|$ for the length of the list, and $h : t$ to denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$.
+\item use Greek letters for compilation rules
 \end{itemize}
 
 \begin{definition}
@@ -161,24 +162,21 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
 We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a rule, then $|L| = 1$, i.e., the rule transformed the formula without creating any nodes.
 
 \begin{algorithm}[t]
-  \caption{The search algorithm}
+  \caption{The (main part of the) search algorithm}
   \label{alg:search}
-  \SetKwData{solutions}{solutions}
   \SetKwProg{Fn}{Function}{:}{}
+  \SetKwData{solutions}{solutions}
   \SetKwFunction{applyGreedyRules}{applyGreedyRules}
   \SetKwFunction{applyNonGreedyRules}{applyNonGreedyRules}
   \SetKwFunction{put}{put}
   \SetKwFunction{get}{get}
   \SetKwFunction{emptyy}{empty}
-  \SetKwFunction{updateCache}{updateCache}
-  \KwData{a set of greedy rules $\Gamma$}
-  \KwData{a set of non-greedy rules $\Delta$}
-  \KwData{a formula $\phi_0$}
+  \KwIn{a formula $\phi_0$}
   \KwResult{all found FCGs for $\phi_0$ are in the set \solutions}
   $\solutions \gets \emptyset$\;
   $C_0 \gets \emptyset$\;
   $(G_0, C_0, L_0) \gets \applyGreedyRules{$\phi_0$, $C_0$}$\;
-  \lIf{$L_0 = []$}{$\solutions \gets \solutions \cup \{\, G_0 \,\}$}
+  \lIf{$L_0 = []$}{$\solutions \gets \{\, G_0 \,\}$}
   \Else{
     $q \gets \text{an empty queue of states}$\;
     $q.\put{$(G_0, C_0, L_0)$}$\;
@@ -189,22 +187,106 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
       }
     }
   }
+\end{algorithm}
+
+\begin{algorithm}
+  \caption{Functions used in \cref{alg:search} for applying compilation rules}
+  \label{alg:apply}
+  \SetKwProg{Fn}{Function}{:}{}
+  \SetKwData{newStates}{newStates}
+  \SetKwFunction{applyGreedyRules}{applyGreedyRules}
+  \SetKwFunction{applyNonGreedyRules}{applyNonGreedyRules}
+  \SetKwFunction{applyGreedyRulesToAllFormulas}{applyGreedyRulesToAllFormulas}
+  \SetKwFunction{mergeFcgs}{mergeFcgs}
+  \SetKwFunction{updateCache}{updateCache}
+  \KwData{a set of greedy rules $\Gamma$}
+  \KwData{a set of non-greedy rules $\Delta$}
   \Fn{\applyGreedyRules{$\phi$, $C$}}{
     \ForEach{rule $r \in \Gamma$}{
       $S \gets r(\phi)$\;
       \If{$S \ne \emptyset$}{
-        $(G, L) \gets \text{any element of } S$\; % TODO: explain why this is valid for greedy rules
+        $(G, L) \gets \text{any element of } S$\;
         \lIf{$G = {\normalfont \texttt{null}}$}{\Return{\applyGreedyRules{the only element of $L$, $C$}}}
         \Else{
           $(V, s, N^+) \gets G$\;
           $C \gets \updateCache(C, \phi, s)$\;
-          % TODO: continue here
+          \Return{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}\;
         }
       }
     }
     \Return{$({\normalfont \texttt{null}}, C, [\phi])$}\;
   }
+  \Fn{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}{
+    $(V, s, N^+) \gets G$\;
+    $N^+(s) \gets []$\;
+    $L' \gets []$\;
+    \ForEach{formula $\phi \in L$}{
+      $(G', C, L'') \gets \applyGreedyRules{$\phi$, $C$}$\;
+      $L' \gets L' \oplus L''$\;
+      \lIf{$G' = {\normalfont \texttt{null}}$}{$N^+(s) \gets N^+(s) \oplus [\star]$}
+      \Else{
+        $(V', s', N') \gets G'$\;
+        $V \gets V \sqcup V'$\;
+        $N^+ \gets N^+ \sqcup N'$\;
+        $N^+(s) \gets N^+(s) \oplus [s']$\;
+      }
+    }
+    \Return{$((V, s, N^+), C, L')$}\;
+  }
+  \Fn{\applyNonGreedyRules{$s$}}{
+    $(G, C, L) \gets s$\;
+    $\phi : T \gets L$\;
+    $(G', C', L') \gets \text{a copy of } s$\;
+    $\newStates \gets []$\;
+    \ForEach{rule $r \in \Delta$}{
+      \ForEach{$(G'', L'') \in r(\phi)$}{
+        \lIf{$G'' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \oplus \applyNonGreedyRules{$(G', C', L'')$}$}
+        \Else{
+          $(V, s, N^+) \gets G''$\;
+          $C' \gets \updateCache{$C'$, $\phi$, $s$}$\;
+          $(G'', C', L'') \gets \applyGreedyRulesToAllFormulas{$G''$, $C'$, $L''$}$\;
+          \lIf{$G' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \oplus [(G'', C', L'' \oplus T)]$}
+          \lElse{$\newStates \gets \newStates \oplus [(\mergeFcgs{$G'$, $G''$}, C', L'' \oplus T)]$}
+        }
+      }
+      $(G', C', L') \gets \text{a copy of } s$\;
+    }
+    \Return{\newStates}\;
+  }
 \end{algorithm}
+
+\begin{algorithm}
+  \caption{Helper functions used by \cref{alg:apply}}
+  \label{alg:helpers}
+  \SetKwProg{Fn}{Function}{:}{}
+  \SetKwFunction{mergeFcgs}{mergeFcgs}
+  \SetKwFunction{updateCache}{updateCache}
+  \Fn{\updateCache{$C$, $\phi$, $v$}}{
+    \lIf{$\#\phi \not\in \dom(C)$}{\Return{$C \cup \{\, \#\phi \mapsto (\phi, v) \,\}$}}
+    \lIf{there is no $(\phi', v') \in C(\#\phi)$ such that $v' = v$}{$C(\#\phi) \gets (\phi, v) \oplus C(\#\phi)$}
+    \Return{$C$}\;
+  }
+  \Fn{\mergeFcgs{$G = (V, s, N^+)$, $G' = (V', s', N')$, $r = s$}}{
+    \lIf{$r$ has label \textsc{Ref}}{\Return{\normalfont \texttt{null}}}
+    \ForEach{$t \in N^+(r)$}{
+      \If{$t = \star$}{
+        replace $t$ with $s'$ in $N^+(r)$\;
+        \Return{$(V \sqcup V', s, N^+ \sqcup N')$}\;
+      }
+      $G'' \gets \mergeFcgs{$G$, $G'$, $t$}$\;
+      \lIf{$G'' \ne {\normalfont \texttt{null}}$}{\Return{$G''$}}
+    }
+    \Return{\normalfont \texttt{null}}\;
+  }
+\end{algorithm}
+
+\paragraph{TODO}
+\begin{itemize}
+\item maybe `applyAllRules' is a better name
+\item explain the `tail' part of the algorithm
+\end{itemize}
+
+Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because there is going to be at least one $\star$ in $G$ and the function will find it.
 
 \section{Identifying Possibilities for Recursion}
 
