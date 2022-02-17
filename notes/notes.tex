@@ -13,7 +13,10 @@
 \usepackage{tikz}
 \usepackage[capitalize]{cleveref}
 
-\usetikzlibrary{arrows,fit,positioning,trees,cd}
+\usetikzlibrary{fit,positioning,trees,cd}
+\usetikzlibrary{shapes}
+\usetikzlibrary{arrows}
+\usetikzlibrary{arrows.meta}
 
 \crefname{algocf}{algorithm}{Algorithms}
 \Crefname{algocf}{Algorithm}{Algorithms}
@@ -71,6 +74,21 @@
 
 \section{Definitions}
 
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}[triangle/.style = {regular polygon, regular polygon sides=3}]
+    \node[draw,ellipse] (a) at (0, 0) {$\phi(n)$};
+    \node[draw,ellipse] (b) at (0, -2) {$\psi(n-1)$};
+    \node[draw,ellipse] (c) at (-1, -4) {$\phi(n-1)$};
+    \node[draw,triangle] (d) at (1, -4) {};
+    \draw[-{Latex[length=2mm]}] (a) -- (b) node [midway,xshift=50] {domain recursion};
+    \draw[-{Latex[length=2mm]}] (b) -- (c);
+    \draw[-{Latex[length=2mm]}] (b) -- (d);
+    \draw[-{Latex[length=2mm]}] (c) to [bend left=45] node [midway,xshift=-30] () {$n \mapsto n-1$} (a);
+  \end{tikzpicture}
+  \caption{An illustration of the main idea. TODO: refer to this in the introduction.}
+\end{figure}
+
 \paragraph{Things I might need to explain.}
 \begin{itemize}
 \item atom, (positive/negative) literal, constant, predicate, variable, literal variable, clause, unit clause
@@ -84,6 +102,7 @@
 \item notation for variable substitution for literal and constraint sets: $S[x/V]$, where $S$ is the set, $V$ is a set of variable, and $x$ is the new constant or variable. Note that for constraint sets this could mean that a variable and a constant need to switch places.
 \item During inference, there is a domain size map $\size\colon \mathscr{D} \to \mathbb{N}_0$.
 \item $\sqcup$ for both sets and functions
+\item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$).
 \end{itemize}
 
 \paragraph{TODO}
@@ -94,6 +113,8 @@
 \item maybe $c[\beta, \gamma]$ is better than $c \ast (\beta, \gamma)$
 \item capitalise variable names.
 \item introduce/use notation for vertices, edges of a graph
+\item maybe `plus-plus' is better than $\oplus$
+\item maybe put each function into its own algorithm environment, using the caption for the function name
 \end{itemize}
 
 Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
@@ -129,20 +150,19 @@ We use hash codes to efficiently check whether a recursive relationship between 
 
 TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
 
-\section{Search}
+\section{Search/Compilation}
 
 \begin{definition}
-  A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, node labels, and ordered direct successors. We denote an FCG as $G = (V, s, N^+)$, where $V$ is the set of nodes, $s \in V$ is the source, and $N^+$ is the direct successor function that maps each node in $V$ to a list that contains either other nodes in $V$ or $\star$, which means that the target of the edge is yet to be determined. For each $v \in V$, the length of the list $N^+(v)$ is determined by the label of $v$.
+  A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, node labels, and ordered direct successors. We denote an FCG as $G = (V, s, N^+, \lambda)$, where $V$ is the set of nodes, $s \in V$ is the source, $N^+$ is the direct successor function that maps each node in $V$ to a list that contains either other nodes in $V$ or $\star$, which means that the target of the edge is yet to be determined, and $\lambda\colon V \to \mathscr{L}$ is the vertex-labelling function with some codomain $\mathscr{L}$, which is assumed to be the same for all FCGs. For each $v \in V$, the length of the list $N^+(v)$ is determined by $\lambda(v)$.
 
 \end{definition}
 
 \paragraph{TODO.}
 \begin{itemize}
-\item maybe add a (vertex) labelling function and its codomain (and use it in the algorithm)? But it's only used once...
 \item explain the connection to the algebraic formalism (or just don't use it). % We will also use algebraic notation to describe (parts of) circuits: circuittype_parameters(nodes pointed to by the outedges)
 \item define `an FCG for a formula'
 \item vertex or node, $v$ or $n$?
-\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, $[x]$ for a list with one element, $|L|$ for the length of the list, and $h : t$ to denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$.
+\item what notation for lists (a.k.a. sequences) am I going to use? $\oplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, $[x]$ for a list with one element, $|L|$ for the length of the list, and $h : t$ to denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. Also add an example of the list comprehension notation.
 \item use Greek letters for compilation rules
 \end{itemize}
 
@@ -208,7 +228,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
         $(G, L) \gets \text{any element of } S$\;
         \lIf{$G = {\normalfont \texttt{null}}$}{\Return{\applyGreedyRules{the only element of $L$, $C$}}}
         \Else{
-          $(V, s, N^+) \gets G$\;
+          $(V, s, N^+, \lambda) \gets G$\;
           $C \gets \updateCache(C, \phi, s)$\;
           \Return{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}\;
         }
@@ -217,7 +237,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
     \Return{$({\normalfont \texttt{null}}, C, [\phi])$}\;
   }
   \Fn{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}{
-    $(V, s, N^+) \gets G$\;
+    $(V, s, N^+, \lambda) \gets G$\;
     $N^+(s) \gets []$\;
     $L' \gets []$\;
     \ForEach{formula $\phi \in L$}{
@@ -225,13 +245,14 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
       $L' \gets L' \oplus L''$\;
       \lIf{$G' = {\normalfont \texttt{null}}$}{$N^+(s) \gets N^+(s) \oplus [\star]$}
       \Else{
-        $(V', s', N') \gets G'$\;
+        $(V', s', N', \lambda') \gets G'$\;
         $V \gets V \sqcup V'$\;
         $N^+ \gets N^+ \sqcup N'$\;
         $N^+(s) \gets N^+(s) \oplus [s']$\;
+        $\lambda \gets \lambda \sqcup \lambda'$\;
       }
     }
-    \Return{$((V, s, N^+), C, L')$}\;
+    \Return{$((V, s, N^+, \lambda), C, L')$}\;
   }
   \Fn{\applyNonGreedyRules{$s$}}{
     $(G, C, L) \gets s$\;
@@ -242,7 +263,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
       \ForEach{$(G'', L'') \in r(\phi)$}{
         \lIf{$G'' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \oplus \applyNonGreedyRules{$(G', C', L'')$}$}
         \Else{
-          $(V, s, N^+) \gets G''$\;
+          $(V, s, N^+, \lambda) \gets G''$\;
           $C' \gets \updateCache{$C'$, $\phi$, $s$}$\;
           $(G'', C', L'') \gets \applyGreedyRulesToAllFormulas{$G''$, $C'$, $L''$}$\;
           \lIf{$G' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \oplus [(G'', C', L'' \oplus T)]$}
@@ -266,12 +287,12 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
     \lIf{there is no $(\phi', v') \in C(\#\phi)$ such that $v' = v$}{$C(\#\phi) \gets (\phi, v) \oplus C(\#\phi)$}
     \Return{$C$}\;
   }
-  \Fn{\mergeFcgs{$G = (V, s, N^+)$, $G' = (V', s', N')$, $r = s$}}{
-    \lIf{$r$ has label \textsc{Ref}}{\Return{\normalfont \texttt{null}}}
+  \Fn{\mergeFcgs{$G = (V, s, N^+, \lambda)$, $G' = (V', s', N', \lambda')$, $r = s$}}{
+    \lIf{$\lambda(r) = \textsc{Ref}$}{\Return{\normalfont \texttt{null}}}
     \ForEach{$t \in N^+(r)$}{
       \If{$t = \star$}{
         replace $t$ with $s'$ in $N^+(r)$\;
-        \Return{$(V \sqcup V', s, N^+ \sqcup N')$}\;
+        \Return{$(V \sqcup V', s, N^+ \sqcup N', \lambda \sqcup \lambda')$}\;
       }
       $G'' \gets \mergeFcgs{$G$, $G'$, $t$}$\;
       \lIf{$G'' \ne {\normalfont \texttt{null}}$}{\Return{$G''$}}
@@ -287,6 +308,32 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
 \end{itemize}
 
 Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because there is going to be at least one $\star$ in $G$ and the function will find it.
+
+\section{Smoothing}
+
+\begin{algorithm}
+  \SetKwData{changed}{changed}
+  \caption{Propagating atoms for smoothing across the FCG in a way that avoids infinite loops}
+  \label{alg:smoothing}
+  \KwIn{FCG $(V, s, N^+, \lambda)$}
+  \KwIn{function $\iota$ that maps labels in $\mathscr{L}$ to sets of atoms}
+  \KwIn{functions $\{\,f_l\,\}_{l \in \mathscr{L}}$ that take a list of sets of atoms and return a set of atoms}
+  \KwOut{function $S$ that maps vertices in $V$ to sets of atoms}
+  $S \gets \{\, v \mapsto \iota(\lambda(v)) \mid v \in V \,\}$\;
+  $\changed \gets \texttt{true}$\;
+  \While{\changed}{
+    $\changed \gets \texttt{false}$\;
+    \ForEach{vertex $v \in V$}{
+      $S' \gets f_{\lambda(v)}([S(w) \mid w \in N^+(v)])$\;
+      \If{$S' \ne S(v)$}{
+        $\changed \gets \texttt{true}$\;
+        $S(v) \gets S'$\;
+      }
+    }
+  }
+\end{algorithm}
+
+[Insert motivation for smoothing from Section 3.4. of the Forclift paper.] Originally, smoothing was (and still is) a two-step process. First, atoms that are still accounted for in the circuit are propagated upwards. Then, at nodes with certain labels, missing atoms are detected and additional sinks are created to account for them. If left unchanged, the first step of this process would result in an infinite loop whenever a cycle is encountered. \Cref{alg:smoothing} outlines how the first step can be adapted to an arbitrary directed graph.
 
 \section{Identifying Possibilities for Recursion}
 
@@ -611,9 +658,7 @@ One is picked as the multiplicative identity.
 \section{Other Topics}
 
 \begin{itemize}
-\item domains, smoothing, and avoiding infinite cycles
 \item new rules that don't create nodes (e.g., duplicate removal, unconditional contradiction detection, etc.)
-\item my search algorithm
 \item some notes on halting
   \begin{itemize}
   \item Search is infinite. Some rules increase the size of the formula(s), but most reduce it.
@@ -647,8 +692,6 @@ TODO: explain that $x, y, z$ refer to nodes, $c$ refers to a clause, and describ
 \item[deterministic set-disjunction] $\WMC(\olor_{D \subseteq S} x; \size) = \sum_{d = 0}^{\size(S)} \binom{\size(S)}{d} \WMC(x; \size \cup \{\, D \mapsto d \,\})$
 \item[inclusion-exclusion] $\WMC(\IE(x, y, z); \size) = \WMC(x; \size) + \WMC(y; \size) - \WMC(z; \size)$
 \end{description}
-
-TODO: define 'circuit' (or something similar). Note that circuits are rooted.
 
 \subsection{Observations and Theoretical Results}
 
