@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{hyperref}
 \usepackage[UKenglish]{babel}
 \usepackage[UKenglish]{isodate}
 \usepackage[utf8]{inputenc}
@@ -102,8 +103,8 @@
 \item $\emptyset$ for an empty partial map.
 \item notation for variable substitution for literal and constraint sets: $S[x/V]$, where $S$ is the set, $V$ is a set of variable, and $x$ is the new constant or variable. Note that for constraint sets this could mean that a variable and a constant need to switch places.
 \item During inference, there is a domain size map $\size\colon \mathcal{D} \to \mathbb{N}_0$.
-\item $\sqcup$ for both sets and functions. TODO: I think I use $\cup$ elsewhere.
 \item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$).
+\item \textsc{ForcLift}
 \end{itemize}
 
 \paragraph{TODO}
@@ -147,35 +148,41 @@ TODO: I'm already using the square brackets to denote lists.
 
 TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
 
+\paragraph{Notation for lists.}
+We let $[]$ and $[x]$ denote an empty list and a list with one element $x$, respectively. We write $\in$ for (in-order) enumeration, $\mdoubleplus$ for concatenation, and $|\cdot|$ for the length of a list. Let $h : t$ denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. We also use list comprehensions written equivalently to set comprehensions. For example, let $L \coloneqq [1]$ and $M \coloneqq [2]$ be two lists. Then $M = [2x \mid x \in L]$, $L \mdoubleplus M = 1 : [2]$, and $|M| = 1$.
+
 \section{Search/Compilation}
 
-\begin{definition}
-  A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, node labels, and ordered direct successors. We denote an FCG as $G = (V, s, N^+, \lambda)$, where $V$ is the set of nodes, $s \in V$ is the source, $N^+$ is the direct successor function that maps each node in $V$ to a list that contains either other nodes in $V$ or $\star$, which means that the target of the edge is yet to be determined, and $\lambda\colon V \to \mathcal{L}$ is the vertex-labelling function with some codomain $\mathcal{L}$, which is assumed to be the same for all FCGs. For each $v \in V$, the length of the list $N^+(v)$ is determined by $\lambda(v)$.
+\subsection{From Circuits to Labelled Graphs}
 
-\end{definition}
+A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, vertex labels, and ordered outgoing edges.\footnote{Note that imposing an ordering on outgoing edges is just a limited version of edge labelling.} We denote an FCG as $G = (V, s, N^+, \tau)$, where $V$ is the set of vertices, and $s \in V$ is the unique source. Also, $N^+$ is the direct successor function that maps each vertex in $V$ to a \emph{list} that contains either other vertices in $V$ or a special symbol $\star$. This symbol means that the target of the edge is yet to be determined.
+
+Vertex labels consist of two parts: the \emph{type} and the \emph{parameters}. For the main definition, we leave the parameters implicit and let $\tau\colon V \to \mathcal{T}$ denote the vertex-labelling function that maps each vertex in $V$ to its type in $\mathcal{T}$. Most of our list of types $\mathcal{T} \coloneqq \{\, \Smoothing, \Unit, \Tautology, \Contradiction, \oland, \olor, \CR, \DR, \IE, \Reff \,\}$ is as described in previous work \cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11} as well as the source code of \textsc{ForcLift}\footnote{\url{https://dtai.cs.kuleuven.be/drupal/wfomc}} but with one new type $\CR$ and two revamped types $\DR$ and $\Reff$. For each vertex $v \in V$, the length of the list $N^+(v)$ (i.e., the out-degree of $v$) is determined by its type $\tau(v)$.
+
+As in previous work \cite{DBLP:conf/ijcai/BroeckTMDR11}, to describe individual vertices and small (sub)-FCGs, we also use notation of the form, e.g., $\Reff_\rho(v)$. Here, the type of the vertex (e.g., $\Reff$) is `applied' to its direct successors (e.g., $v$) using either function or infix notation and provided with its parameter(s) (e.g., $\rho$) in the subscript. We say that `$G$ is an FCG for formula $\phi$' if two conditions are satisfied. First, the image of $N^+$ contains no $\star$'s. Second, $G$ encodes a function that maps the sizes of the domains in $\phi$ to the WMC of $\phi$ (more on this in \cref{sec:evaluation}).
 
 \paragraph{TODO.}
 \begin{itemize}
-\item explain the connection to the algebraic formalism (or just don't use it). % We will also use algebraic notation to describe (parts of) circuits: circuittype_parameters(nodes pointed to by the outedges)
-\item define `an FCG for a formula'
-\item vertex or node, $v$ or $n$?
-\item what notation for lists (a.k.a. sequences) am I going to use? $\mdoubleplus$ for concatenation (of both two lists and an element to a list), $\in$ for (in-order) enumeration, $[]$ for an empty list, $[x]$ for a list with one element, $|L|$ for the length of the list, and $h : t$ to denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. Also add an example of the list comprehension notation.
+\item provide a short explanation of the types (emphasising which ones are new/updated). %\footnote{The new (as well as significantly renewed) types in \mathcal{T} are described in subsequent (TODO: which ones?) sections. The meanings of other types are described...}
+\item have an example of a simple FCG
 \end{itemize}
+
+\subsection{Everything Else}
 
 \begin{definition}
   A \emph{state} (of the search for an FCG for a given formula) is a tuple $(G, C, L)$, where:
   \begin{itemize}
-  \item $G$ is an FCG (can be \texttt{null}),
-  \item $C$ is a compilation cache that maps integers to sets of pairs $(\phi, n)$, where $\phi$ is a formula, and $n$ is a node of $G$ (which is used to identify opportunities for recursion),
+  \item $G$ is an FCG (or \texttt{null}),
+  \item $C$ is a compilation cache that maps integers to sets of pairs $(\phi, v)$, where $\phi$ is a formula, and $v$ is a vertex of $G$ (which is used to identify opportunities for recursion),
   \item and $L$ is a list of formulas (that are yet to be compiled). (Note that the order is crucial!)
   \end{itemize}
 \end{definition}
 
 \begin{definition}
-  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas. TODO: add an example showing that it's usually an FCG with one node and a bunch of $\star$'s marking a fixed number of outedges.
+  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas. TODO: add an example showing that it's usually an FCG with one vertex and a bunch of $\star$'s marking a fixed number of outgoing edges.
 \end{definition}
 
-We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a rule, then $|L| = 1$, i.e., the rule transformed the formula without creating any nodes.
+We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a rule, then $|L| = 1$, i.e., the rule transformed the formula without creating any vertices.
 
 \begin{algorithm}[t]
   \caption{The (main part of the) search algorithm}
@@ -224,7 +231,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
         $(G, L) \gets \text{any element of } S$\;
         \lIf{$G = {\normalfont \texttt{null}}$}{\Return{\applyGreedyRules{the only element of $L$, $C$}}}
         \Else{
-          $(V, s, N^+, \lambda) \gets G$\;
+          $(V, s, N^+, \tau) \gets G$\;
           $C \gets \updateCache(C, \phi, s)$\;
           \Return{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}\;
         }
@@ -233,7 +240,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
     \Return{$({\normalfont \texttt{null}}, C, [\phi])$}\;
   }
   \Fn{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}{
-    $(V, s, N^+, \lambda) \gets G$\;
+    $(V, s, N^+, \tau) \gets G$\;
     $N^+(s) \gets []$\;
     $L' \gets []$\;
     \ForEach{formula $\phi \in L$}{
@@ -241,14 +248,14 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
       $L' \gets L' \mdoubleplus L''$\;
       \lIf{$G' = {\normalfont \texttt{null}}$}{$N^+(s) \gets N^+(s) \mdoubleplus [\star]$}
       \Else{
-        $(V', s', N', \lambda') \gets G'$\;
+        $(V', s', N', \tau') \gets G'$\;
         $V \gets V \sqcup V'$\;
         $N^+ \gets N^+ \sqcup N'$\;
         $N^+(s) \gets N^+(s) \mdoubleplus [s']$\;
-        $\lambda \gets \lambda \sqcup \lambda'$\;
+        $\tau \gets \tau \sqcup \tau'$\;
       }
     }
-    \Return{$((V, s, N^+, \lambda), C, L')$}\;
+    \Return{$((V, s, N^+, \tau), C, L')$}\;
   }
   \Fn{\applyAllRules{$s$}}{
     $(G, C, L) \gets s$\;
@@ -259,7 +266,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
       \ForEach{$(G'', L'') \in r(\phi)$}{
         \lIf{$G'' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus \applyAllRules{$(G', C', L'')$}$}
         \Else{
-          $(V, s, N^+, \lambda) \gets G''$\;
+          $(V, s, N^+, \tau) \gets G''$\;
           $C' \gets \updateCache{$C'$, $\phi$, $s$}$\;
           $(G'', C', L'') \gets \applyGreedyRulesToAllFormulas{$G''$, $C'$, $L''$}$\;
           \lIf{$G' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus [(G'', C', L'' \mdoubleplus T)]$}
@@ -283,12 +290,12 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
     \lIf{there is no $(\phi', v') \in C(\#\phi)$ such that $v' = v$}{$C(\#\phi) \gets (\phi, v) \mdoubleplus C(\#\phi)$}
     \Return{$C$}\;
   }
-  \Fn{\mergeFcgs{$G = (V, s, N^+, \lambda)$, $G' = (V', s', N', \lambda')$, $r = s$}}{
-    \lIf{$\lambda(r) = \textsc{Ref}$}{\Return{\normalfont \texttt{null}}}
+  \Fn{\mergeFcgs{$G = (V, s, N^+, \tau)$, $G' = (V', s', N', \tau')$, $r = s$}}{
+    \lIf{$\tau(r) = \textsc{Ref}$}{\Return{\normalfont \texttt{null}}}
     \ForEach{$t \in N^+(r)$}{
       \If{$t = \star$}{
         replace $t$ with $s'$ in $N^+(r)$\;
-        \Return{$(V \sqcup V', s, N^+ \sqcup N', \lambda \sqcup \lambda')$}\;
+        \Return{$(V \sqcup V', s, N^+ \sqcup N', \tau \sqcup \tau')$}\;
       }
       $G'' \gets \mergeFcgs{$G$, $G'$, $t$}$\;
       \lIf{$G'' \ne {\normalfont \texttt{null}}$}{\Return{$G''$}}
@@ -297,7 +304,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   }
 \end{algorithm}
 
-TODO: explain the `tail' part of the algorithm, i.e., that the first formula is replaced by some nodes and some formulas.
+TODO: explain the `tail' part of the algorithm, i.e., that the first formula is replaced by some vertices and some formulas.
 
 Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because there is going to be at least one $\star$ in $G$ and the function will find it.
 
@@ -307,16 +314,16 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
   \SetKwData{changed}{changed}
   \caption{Propagating atoms for smoothing across the FCG in a way that avoids infinite loops}
   \label{alg:smoothing}
-  \KwIn{FCG $(V, s, N^+, \lambda)$}
-  \KwIn{function $\iota$ that maps labels in $\mathcal{L}$ to sets of atoms}
-  \KwIn{functions $\{\,f_l\,\}_{l \in \mathcal{L}}$ that take a list of sets of atoms and return a set of atoms}
+  \KwIn{FCG $(V, s, N^+, \tau)$}
+  \KwIn{function $\iota$ that maps vertex types in $\mathcal{T}$ to sets of atoms}
+  \KwIn{functions $\{\,f_l\,\}_{l \in \mathcal{T}}$ that take a list of sets of atoms and return a set of atoms}
   \KwOut{function $S$ that maps vertices in $V$ to sets of atoms}
-  $S \gets \{\, v \mapsto \iota(\lambda(v)) \mid v \in V \,\}$\;
+  $S \gets \{\, v \mapsto \iota(\tau(v)) \mid v \in V \,\}$\;
   $\changed \gets \texttt{true}$\;
   \While{\changed}{
     $\changed \gets \texttt{false}$\;
     \ForEach{vertex $v \in V$}{
-      $S' \gets f_{\lambda(v)}([S(w) \mid w \in N^+(v)])$\;
+      $S' \gets f_{\tau(v)}([S(w) \mid w \in N^+(v)])$\;
       \If{$S' \ne S(v)$}{
         $\changed \gets \texttt{true}$\;
         $S(v) \gets S'$\;
@@ -325,7 +332,7 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
   }
 \end{algorithm}
 
-[Insert motivation for smoothing from Section 3.4. of the Forclift paper.] Originally, smoothing was (and still is) a two-step process. First, atoms that are still accounted for in the circuit are propagated upwards. Then, at nodes with certain labels, missing atoms are detected and additional sinks are created to account for them. If left unchanged, the first step of this process would result in an infinite loop whenever a cycle is encountered. \Cref{alg:smoothing} outlines how the first step can be adapted to an arbitrary directed graph.
+[Insert motivation for smoothing from Section 3.4. of the ForcLift paper.] Originally, smoothing was (and still is) a two-step process. First, atoms that are still accounted for in the circuit are propagated upwards. Then, at vertices of certain types, missing atoms are detected and additional sinks are created to account for them. If left unchanged, the first step of this process would result in an infinite loop whenever a cycle is encountered. \Cref{alg:smoothing} outlines how the first step can be adapted to an arbitrary directed graph.
 
 \section{Identifying Possibilities for Recursion}
 
@@ -340,7 +347,7 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
 \end{definition}
 
 \begin{algorithm}[t]
-  \caption{A recursive function for checking whether one can reuse the circuit for computing $\WMC(\phi)$ to compute $\WMC(\psi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
+  \caption{A recursive function for checking whether one can reuse the FCG for computing $\WMC(\phi)$ to compute $\WMC(\psi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
   \label{alg:recursion}
   \SetKwProg{Fn}{Function}{:}{}
   \SetKw{KwRet}{yield}
@@ -405,14 +412,14 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
 \end{algorithm}
 
 \begin{algorithm}[t]
-  \caption{A generalised version of the compilation rule that uses \cref{alg:recursion} to add $\Reff$ nodes (i.e., the edges that make the circuit no longer a tree) to the circuit.}
+  \caption{A generalised version of the compilation rule that uses \cref{alg:recursion} to add $\Reff$ vertices (i.e., the edges that make the FCG no longer a tree) to the FCG.}
   \label{alg:trycache}
   \SetKwData{compilationCache}{compilationCache}
   \KwIn{formula $\phi$}
-  \KwOut{a $\Reff$ circuit node (or \texttt{null})}
-  \ForEach{$(\psi, n) \in \compilationCache{$\#\psi$}$}{
+  \KwOut{a vertex of type $\Reff$ (or \texttt{null})}
+  \ForEach{$(\psi, v) \in \compilationCache{$\#\psi$}$}{
     $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
-    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\,\Reff_\rho(n)\,\}$}}
+    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\,\Reff_\rho(v)\,\}$}}
   }
   \Return{\normalfont \texttt{null}}\;
 \end{algorithm}
@@ -453,7 +460,7 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
 
 The function \texttt{traceAncestors} returns \texttt{null} if domain $d \in \mathcal{D}$ is not an ancestor of domain $e \in \mathcal{D}$. Otherwise, it returns \texttt{true} if the size of $e$ is guaranteed to be strictly smaller than the size of $d$ (i.e., there is domain created by the constraint removal rule on the path from $d$ to $e$) and \texttt{false} if their sizes will be equal at some point during inference.
 
-Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function such that $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$.
+Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function such that $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$. TODO: explain $\sqcup$ for both sets and functions.
 
 \paragraph{TODO}
 \begin{itemize}
@@ -462,7 +469,7 @@ Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alph
 \item explain what the second return statement is about and why a third one is not necessary
 \item mention which one is the main function, what each function takes and returns
 \item explain the yield keyword
-\item in the example below: write down both formula using the Forclift format
+\item in the example below: write down both formula using the ForcLift format
 \item the parent relation and ancestor tracing is no longer necessary
 \end{itemize}
 
@@ -514,12 +521,12 @@ Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Dom
   \item $\beta = \{\, X \mapsto X, Y \mapsto Y, Z \mapsto Z \,\}$,
   \item $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$.
   \end{itemize}
-  Since $\beta$ and $\rho$ `commute' (TODO: as in the diagram above), and there are no new domains in $\Doms(c)$ and $\Doms(d)$, $\gamma$ exists and is equal to $\rho$. Again, the returned pair $(\beta, \gamma)$ satisfies $c[\beta, \gamma] = d$. This $\gamma$ passes the \texttt{traceAncestors} checks exactly the same way as the one before, and \cref{line:recursion} calls \texttt{identifyRecursion($\emptyset$, $\emptyset$, $\rho$, true)}, which immediately returns $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$ as the final answer. This means that one can indeed use a circuit for $\WMC(\phi)$ to compute $\WMC(\psi)$ by replacing every mention of $a$ with $a'$ and every mention of $b$ with $b^\bot$.
+  Since $\beta$ and $\rho$ `commute' (TODO: as in the diagram above), and there are no new domains in $\Doms(c)$ and $\Doms(d)$, $\gamma$ exists and is equal to $\rho$. Again, the returned pair $(\beta, \gamma)$ satisfies $c[\beta, \gamma] = d$. This $\gamma$ passes the \texttt{traceAncestors} checks exactly the same way as the one before, and \cref{line:recursion} calls \texttt{identifyRecursion($\emptyset$, $\emptyset$, $\rho$, true)}, which immediately returns $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$ as the final answer. This means that one can indeed use an FCG for $\WMC(\phi)$ to compute $\WMC(\psi)$ by replacing every mention of $a$ with $a'$ and every mention of $b$ with $b^\bot$.
 \end{example}
 
 \subsection{Evaluation}
 
-$\WMC(\Reff_\rho(n); \size) = \WMC(n; \size')$ ($n$ is the target circuit node), where $\size'$ is defined as
+$\WMC(\Reff_\rho(v); \size) = \WMC(v; \size')$ ($n$ is the target vertex), where $\size'$ is defined as
 \[
 \size'(x) =
 \begin{cases}
@@ -533,7 +540,7 @@ for all $x \in \mathcal{D}$.
 
 \subsection{Constraint Removal}
 
-TODO: introduce the Forclift-style notation (e.g., the compile operator) and the arbitrary formula $\phi$.
+TODO: introduce the ForcLift-style notation (e.g., the compile operator) and the arbitrary formula $\phi$.
 
 \paragraph{Preconditions.} There is a domain $d \in \mathcal{D}$ and an element $e \in d$ such that:
 \begin{itemize}
@@ -651,7 +658,7 @@ One is picked as the multiplicative identity.
 \section{Other Topics}
 
 \begin{itemize}
-\item new rules that don't create nodes (e.g., duplicate removal, unconditional contradiction detection, etc.)
+\item new rules that don't create vertices (e.g., duplicate removal, unconditional contradiction detection, etc.)
 \item some notes on halting
   \begin{itemize}
   \item Search is infinite. Some rules increase the size of the formula(s), but most reduce it.
@@ -660,11 +667,11 @@ One is picked as the multiplicative identity.
   \end{itemize}
 \end{itemize}
 
-\section{Circuit Nodes Types and Their Evaluations}
+\section{How to Evaluate an FCG} \label{sec:evaluation}
 
-Along with the three circuit node types described above, here are all the other ones. This section is mostly just taken from \cite{DBLP:conf/ijcai/BroeckTMDR11} but with some changes in notation.
+Along with the three vertex types described above, here are all the other ones. This section is mostly just taken from \cite{DBLP:conf/ijcai/BroeckTMDR11} but with some changes in notation.
 
-TODO: explain that $x, y, z$ refer to nodes, $c$ refers to a clause, and describe each node type in a bit more detail.
+TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and describe each vertex type in a bit more detail.
 
 \begin{description}
 \item[tautology] $\WMC(\Tautology; \size) = 1$
@@ -688,10 +695,10 @@ TODO: explain that $x, y, z$ refer to nodes, $c$ refers to a clause, and describ
 
 \subsection{Observations and Theoretical Results}
 
-TODO: explain how circuits and domain sizes connect to functions on integers
+TODO: explain how FCGs and domain sizes connect to functions on integers
 
 \begin{observation}
-  Let $n$ be a positive integer and $d \in \mathcal{D}$ a domain. Then one can construct a circuit $x$ such that
+  Let $n$ be a positive integer and $d \in \mathcal{D}$ a domain. Then one can construct an FCG $x$ such that
   \[
   \WMC(x; \size) =
   \begin{cases}
@@ -699,7 +706,7 @@ TODO: explain how circuits and domain sizes connect to functions on integers
     \WMC(y; \size) & \text{otherwise,}
   \end{cases}
   \]
-  where $y$ is a circuit node of arbitrary type. Indeed, $(\Contradiction c) \oland y$ is such a circuit, where $c = (L, C, \delta)$ is a clause with $n$ variables $(v_i)_{i=1}^n$ such that:
+  where $y$ is a vertex of arbitrary type. Indeed, $(\Contradiction c) \oland y$ is such an FCG, where $c = (L, C, \delta)$ is a clause with $n$ variables $(v_i)_{i=1}^n$ such that:
   \begin{itemize}
   \item $L$ is unimportant,
   \item $C = \{\, (v_i, v_j) \mid i = 1, \dots, n - 1\text{, }j = i + 1, \dots, n \,\}$,
@@ -709,7 +716,7 @@ TODO: explain how circuits and domain sizes connect to functions on integers
 \end{observation}
 
 \begin{remark}
-  Such (sub)circuits can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
+  Such FCGs can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
 \end{remark}
 
 \section{Examples}
@@ -724,7 +731,7 @@ For both one domain and two domains:
 \section{Conclusions and Future Work}
 
 \begin{itemize}
-\item Transform circuits to definitions of (possibly recursive) functions on integers. Use a computer algebra system to simplify them.
+\item Transform FCGs to definitions of (possibly recursive) functions on integers. Use a computer algebra system to simplify them.
 \item Design an algorithm to infer the necessary base cases. (Note that there can be an infinite amount of them when functions have more than one parameter.)
 \end{itemize}
 
