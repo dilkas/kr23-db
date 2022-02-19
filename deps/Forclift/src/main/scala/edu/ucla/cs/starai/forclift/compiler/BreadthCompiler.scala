@@ -1,6 +1,7 @@
 package edu.ucla.cs.starai.forclift.compiler
 
 import scala.collection.mutable._
+import scala.util.Try
 
 import edu.ucla.cs.starai.forclift._
 import edu.ucla.cs.starai.forclift.compiler.rulesets._
@@ -14,10 +15,6 @@ object BreadthCompiler {
 
   val builderWithGrounding: Compiler.Builder =
     (sizeHint: Compiler.SizeHints) => new BreadthCompiler(sizeHint, true)
-
-  // Two limits on the extensiveness of search
-  val NumSolutions = 10
-  val MaxDepth = 5
 
 }
 
@@ -36,6 +33,11 @@ class BreadthCompiler(
   /** Found solutions */
   private[this] var circuits: List[NNFNode] = List[NNFNode]()
 
+  /** Two parameters for the extensiveness of search */
+  lazy val maxDepth: Int = Try(sys.env.get("DEPTH").get.toInt).getOrElse(5)
+  lazy val numSolutions: Int = Try(sys.env.get("SOLUTIONS").get.toInt).
+    getOrElse(100)
+
   private[this] final case class EndSearchException(
       private val message: String = "",
       private val cause: Throwable = None.orNull
@@ -48,7 +50,7 @@ class BreadthCompiler(
   override def foundSolution(circuit: NNFNode): Unit = {
     circuits = circuit :: circuits
     println("FOUND " + circuits.size + " SOLUTION(S)")
-    if (circuits.size >= BreadthCompiler.NumSolutions)
+    if (circuits.size >= numSolutions)
       throw new EndSearchException
   }
 
@@ -63,14 +65,15 @@ class BreadthCompiler(
       // val q = PriorityQueue(compiler.applyGreedyRules(cnf))(Ordering.by(_.priority))
       var depth = 0
       try {
-        while (depth <= BreadthCompiler.MaxDepth && q.nonEmpty) {
+        while (depth <= maxDepth && q.nonEmpty) {
+          println("depth: " + depth)
           val partialCircuit = q.dequeue
           if (partialCircuit.depth > depth) {
             depth = partialCircuit.depth
-            println("depth: " + partialCircuit.depth)
           }
-          if (depth <= BreadthCompiler.MaxDepth)
+          if (depth <= maxDepth) {
             q ++= partialCircuit.nextCircuits(this)
+          }
         }
       } catch {
         case e: EndSearchException => {}

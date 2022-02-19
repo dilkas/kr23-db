@@ -1,5 +1,0 @@
-domain people 5 {a, b, c, d, e}
-
-predicate S(people, people)
-
-S(xa, ya) v !S(xb, ya) v S(xb, yb) v !S(xa, yb)

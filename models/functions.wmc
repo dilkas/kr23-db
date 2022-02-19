@@ -1,9 +1,0 @@
-domain a 2 {a, b}
-domain b 2 {a, b}
-
-predicate P(a, b)
-
-P(x, y) ^ P(x, z) => y=z
-forall x exists y p(x, y)
-P(w, y) ^ P(x, y) => w=x
-forall y exists x P(x, y)
