@@ -84,61 +84,57 @@ abstract class MyCompiler(
       for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
         val originalDomain = originalClause.constrs.domainFor(variable)
 
-        // Recursion that subtracts more than 1 from a domain size gets a bit
-        // complicated with multiple base cases, so we don't currently support
-        // it.
-        if (!originalDomain.isCausedByConstraintRemoval) {
-          for (term <- terms) {
-            term match {
-              case constant: Constant => {
-                // We have a "v != c" constraint. Does it apply to all
-                // variables from the same domain across all clauses? And does
-                // c occur in atoms? I.e., for each clause, for each variable,
-                // either domain is different or there is the same inequality
-                // constraint.
-                if (
-                  cnf.forall { clause =>
-                    clause.atoms.forall { atom: Atom =>
-                      !atom.constants.contains(constant)
-                    }
-                  } &&
+        //        if (!originalDomain.isCausedByConstraintRemoval) {
+        for (term <- terms) {
+          term match {
+            case constant: Constant => {
+              // We have a "v != c" constraint. Does it apply to all
+              // variables from the same domain across all clauses? And does
+              // c occur in atoms? I.e., for each clause, for each variable,
+              // either domain is different or there is the same inequality
+              // constraint.
+              if (
+                cnf.forall { clause =>
+                  clause.atoms.forall { atom: Atom =>
+                    !atom.constants.contains(constant)
+                  }
+                } &&
                   cnf.forall { clause =>
                     clause.allVariables.forall { variable: Var =>
                       clause.constrs.domainFor(variable) !=
                         originalDomain ||
-                      clause.constrs.ineqConstrs(variable).contains(constant)
+                        clause.constrs.ineqConstrs(variable).contains(constant)
                     }
                   }
-                ) {
-                  val newIndex = (originalDomain.nbSplits + 1).toString
-                  val newDomain = originalDomain.subdomain(
-                    newIndex,
-                    newIndex,
-                    excludedConstants = Set(constant)
-                  )
-                  val newCnf = CNF(cnf.map { clause =>
-                    clause
-                      .removeConstraints(constant)
-                      .replaceDomains(originalDomain, newDomain)
-                  }.toList: _*)
-                  val node = new ConstraintRemovalNode(
-                    cnf,
-                    None,
-                    originalDomain,
-                    newDomain
-                  )
-                  newDomain.setCause(node)
+              ) {
+                val newIndex = (originalDomain.nbSplits + 1).toString
+                val newDomain = originalDomain.subdomain(
+                  newIndex,
+                  newIndex,
+                  excludedConstants = Set(constant)
+                )
+                val newCnf = CNF(cnf.map { clause =>
+                                   clause
+                                     .removeConstraints(constant)
+                                     .replaceDomains(originalDomain, newDomain)
+                                 }.toList: _*)
+                val node = new ConstraintRemovalNode(
+                  cnf,
+                  None,
+                  originalDomain,
+                  newDomain
+                )
+                newDomain.setCause(node)
 
-                  log("\nConstraint removal. Before:")
-                  log(cnf.toString)
-                  log("Constraint removal. After:")
-                  log(newCnf + "\n")
+                log("\nConstraint removal. Before:")
+                log(cnf.toString)
+                log("Constraint removal. After:")
+                log(newCnf + "\n")
 
-                  return List((Some(node), List(newCnf)))
-                }
+                return List((Some(node), List(newCnf)))
               }
-              case _ => {}
             }
+            case _ => {}
           }
         }
       }
@@ -177,7 +173,7 @@ abstract class MyCompiler(
     List(
       tryCache,
       tryGroundDecomposition, // +1
-      // tryInclusionExclusion, // +2
+      tryInclusionExclusion, // +2
       tryShatter, // 0
       tryIndependentPartialGrounding, // 0
       tryCounting, // 0

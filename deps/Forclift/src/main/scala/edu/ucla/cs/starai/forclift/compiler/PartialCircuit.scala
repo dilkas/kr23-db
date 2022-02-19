@@ -84,6 +84,8 @@ class PartialCircuit(
                 ).applyAllRules().toList
               }
               case Some(node) => {
+                // println("Node " + node.getClass.getSimpleName + " has " +
+                //           successors.size + " successors")
                 circuitCopy.compiler.updateCache(cnf, node)
                 val newSuccessors = circuitCopy.compiler
                   .applyGreedyRulesToAllFormulas(node, successors)

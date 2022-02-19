@@ -184,10 +184,11 @@ abstract class AbstractCompiler(
     //              { case (_, node) => node == nnf }))
 
     if (
-      !nnfCache.contains(cnf.hashCode) || !nnfCache(cnf.hashCode).exists {
-        case (_, node) => node == nnf
-      }
-    ) {
+      !nnf.isInstanceOf[Ref] && (
+        !nnfCache.contains(cnf.hashCode) || !nnfCache(cnf.hashCode).exists {
+          case (_, node) => node == nnf
+        }
+      )) {
       nnfCache(cnf.hashCode) = (cnf, nnf) ::
         nnfCache.getOrElse(cnf.hashCode, List[(CNF, NNFNode)]())
     }
@@ -232,7 +233,9 @@ abstract class AbstractCompiler(
           log(results._2 + "\n")
 
           val node = new Ref(cnf, Some(results._1), results._2, "Cache hit.")
-          updateCache(cnf, node)
+          // don't cache the Ref node because the node targeted by this Ref
+          // will do
+          // updateCache(cnf, node)
           // println("tryCache finished")
           List((Some(node), List[CNF]()))
         }
@@ -331,13 +334,15 @@ abstract class AbstractCompiler(
   def applyGreedyRulesToAllFormulas(
       node: NNFNode,
       formulas: List[CNF]
-  ): List[CNF] = {
+  ): List[CNF] = if (formulas.nonEmpty) {
     require(formulas.size == node.directSuccessors.size)
     require(node.directSuccessors.forall(_.isEmpty))
     val partialCircuits = formulas.map(applyGreedyRules(_))
     val newNodes = partialCircuits.map(_.circuit)
     node.update(newNodes)
     partialCircuits.flatMap(_.formulas)
+  } else {
+    List[CNF]()
   }
 
 }

@@ -89,6 +89,7 @@
     \draw[-{Latex[length=2mm]}] (c) to [bend left=45] node [midway,xshift=-30] () {$n \mapsto n-1$} (a);
   \end{tikzpicture}
   \caption{An illustration of the main idea. TODO: refer to this in the introduction.}
+  \label{fig:idea}
 \end{figure}
 
 \paragraph{Things I might need to explain.}
@@ -105,13 +106,14 @@
 \item During inference, there is a domain size map $\size\colon \mathcal{D} \to \mathbb{N}_0$.
 \item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$).
 \item \textsc{ForcLift}
+\item In a way, we're dividing the idea of domain recursion between the IDR and the Ref nodes, thus also generalising it. [This is good context to refer to \cref{fig:idea}.]
 \end{itemize}
 
 \paragraph{TODO}
 \begin{itemize}
 \item should I always say `compilation rule' instead of `operator'?
 \item maybe $\pi$ is global enough to have a more unique name
-\item capitalise variable names.
+\item capitalise variable and domain names.
 \item maybe introduce/use notation for vertices, edges of a graph
 \item maybe put each function into its own algorithm environment, using the caption for the function name
 \end{itemize}
@@ -226,21 +228,20 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   \KwData{a set of non-greedy rules $\Delta$}
   \Fn{\applyGreedyRules{$\phi$, $C$}}{
     \ForEach{rule $r \in \Gamma$}{
-      $S \gets r(\phi)$\;
-      \If{$S \ne \emptyset$}{
-        $(G, L) \gets \text{any element of } S$\;
+      \If{$r(\phi) \ne \emptyset$}{
+        $(G, L) \gets \text{any element of } r(\phi)$\;
         \lIf{$G = {\normalfont \texttt{null}}$}{\Return{\applyGreedyRules{the only element of $L$, $C$}}}
         \Else{
           $(V, s, N^+, \tau) \gets G$\;
-          $C \gets \updateCache(C, \phi, s)$\;
+          $C \gets \updateCache{$C$, $\phi$, $G$}$\;
           \Return{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}\;
         }
       }
     }
     \Return{$({\normalfont \texttt{null}}, C, [\phi])$}\;
   }
-  \Fn{\applyGreedyRulesToAllFormulas{$G$, $C$, $L$}}{
-    $(V, s, N^+, \tau) \gets G$\;
+  \Fn{\applyGreedyRulesToAllFormulas{$(V, s, N^+, \tau)$, $C$, $L$}}{
+    \lIf{$L = []$}{\Return{$((V, s, N^+, \tau), C, L)$}}
     $N^+(s) \gets []$\;
     $L' \gets []$\;
     \ForEach{formula $\phi \in L$}{
@@ -267,7 +268,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
         \lIf{$G'' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus \applyAllRules{$(G', C', L'')$}$}
         \Else{
           $(V, s, N^+, \tau) \gets G''$\;
-          $C' \gets \updateCache{$C'$, $\phi$, $s$}$\;
+          $C' \gets \updateCache{$C'$, $\phi$, $G''$}$\;
           $(G'', C', L'') \gets \applyGreedyRulesToAllFormulas{$G''$, $C'$, $L''$}$\;
           \lIf{$G' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus [(G'', C', L'' \mdoubleplus T)]$}
           \lElse{$\newStates \gets \newStates \mdoubleplus [(\mergeFcgs{$G'$, $G''$}, C', L'' \mdoubleplus T)]$}
@@ -285,9 +286,10 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   \SetKwProg{Fn}{Function}{:}{}
   \SetKwFunction{mergeFcgs}{mergeFcgs}
   \SetKwFunction{updateCache}{updateCache}
-  \Fn{\updateCache{$C$, $\phi$, $v$}}{
-    \lIf{$\#\phi \not\in \dom(C)$}{\Return{$C \cup \{\, \#\phi \mapsto (\phi, v) \,\}$}}
-    \lIf{there is no $(\phi', v') \in C(\#\phi)$ such that $v' = v$}{$C(\#\phi) \gets (\phi, v) \mdoubleplus C(\#\phi)$}
+  \Fn{\updateCache{$C$, $\phi$, $(V, s, N^+, \tau)$}}{
+    \lIf{$\tau(s) = \textsc{Ref}$}{\Return{$C$}}
+    \lIf{$\#\phi \not\in \dom(C)$}{\Return{$C \cup \{\, \#\phi \mapsto (\phi, s) \,\}$}}
+    \lIf{there is no $(\phi', v) \in C(\#\phi)$ such that $v = s$}{$C(\#\phi) \gets (\phi, s) \mdoubleplus C(\#\phi)$}
     \Return{$C$}\;
   }
   \Fn{\mergeFcgs{$G = (V, s, N^+, \tau)$, $G' = (V', s', N', \tau')$, $r = s$}}{
@@ -304,7 +306,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   }
 \end{algorithm}
 
-TODO: explain the `tail' part of the algorithm, i.e., that the first formula is replaced by some vertices and some formulas.
+TODO: explain the `tail' part of the algorithm, i.e., that the first formula is replaced by some vertices and some formulas. And explain why we don't want to have \textsc{Ref} vertices in the cache.
 
 Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because there is going to be at least one $\star$ in $G$ and the function will find it.
 
@@ -316,7 +318,7 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
   \label{alg:smoothing}
   \KwIn{FCG $(V, s, N^+, \tau)$}
   \KwIn{function $\iota$ that maps vertex types in $\mathcal{T}$ to sets of atoms}
-  \KwIn{functions $\{\,f_l\,\}_{l \in \mathcal{T}}$ that take a list of sets of atoms and return a set of atoms}
+  \KwIn{functions $\{\,f_t\,\}_{t \in \mathcal{T}}$ that take a list of sets of atoms and return a set of atoms}
   \KwOut{function $S$ that maps vertices in $V$ to sets of atoms}
   $S \gets \{\, v \mapsto \iota(\tau(v)) \mid v \in V \,\}$\;
   $\changed \gets \texttt{true}$\;
@@ -536,11 +538,11 @@ $\WMC(\Reff_\rho(v); \size) = \WMC(v; \size')$ ($n$ is the target vertex), where
 \]
 for all $x \in \mathcal{D}$.
 
-\section{New Operations}
+\section{New Compilation Rules}
+
+Throughout this section, let $\phi$ be an arbitrary formula.
 
 \subsection{Constraint Removal}
-
-TODO: introduce the ForcLift-style notation (e.g., the compile operator) and the arbitrary formula $\phi$.
 
 \paragraph{Preconditions.} There is a domain $d \in \mathcal{D}$ and an element $e \in d$ such that:
 \begin{itemize}
@@ -603,11 +605,11 @@ for all $x \in \Vars(c') \subseteq \Vars(c)$.
   }
 \end{algorithm}
 
-TODO: Compare with the original. The original version of domain recursion is here \cite{DBLP:conf/nips/Broeck11}.
-
-TODO: introduce $\phi$.
+TODO: Compare with the original \cite{DBLP:conf/nips/Broeck11}.
 
 \paragraph{Precondition.} Domain recursion can be applied to domain $d \in \mathcal{D}$ if there is a clause $c$ with a literal variable $v \in \Vars(L_c)$ such that $\delta_c(v) = d$.
+
+The reason for this precondtion is the same as in the initial version of domain recursion: there must be a variable with that domain featured among the literals because it needs to be replaced by a constant. TODO: expand this.
 
 \paragraph{Operator.} First, introduce a new constant $x$. Then $\DR(\phi) = \DR_d(\Compile(\phi'))$, where $\phi'$ is generated by \cref{alg:domainrecursion}.
 
@@ -665,6 +667,8 @@ One is picked as the multiplicative identity.
   \item Inference is guaranteed to terminate if at least one domain shrinks by at least one. But note that allowing recursive calls with the same domain sizes (e.g., $f(n) = f(n) + \dots$) could be useful because these problematic terms might cancel out.
   \item It's impossible for $n \gets n - 1$ and $\texttt{for } n \in \dots$ to combine in a way that results in an infinite loop.
   \end{itemize}
+\item care should be taken when cloning to preserve the validity of the cache and avoid infinite cycles (we use a separate (node $\to$ node) cache for this)
+\item No (more) caching during inference.
 \end{itemize}
 
 \section{How to Evaluate an FCG} \label{sec:evaluation}
@@ -730,6 +734,12 @@ For both one domain and two domains:
 
 \section{Conclusions and Future Work}
 
+\paragraph{Conclusions and observations.}
+\begin{itemize}
+\item $\CR$ must be separate from $\DR$ because initially the requirement to not have the newly introduced constant in the literals is not satisfied.
+\end{itemize}
+
+\paragraph{Future work.}
 \begin{itemize}
 \item Transform FCGs to definitions of (possibly recursive) functions on integers. Use a computer algebra system to simplify them.
 \item Design an algorithm to infer the necessary base cases. (Note that there can be an infinite amount of them when functions have more than one parameter.)
