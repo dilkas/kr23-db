@@ -726,16 +726,42 @@ TODO: explain how FCGs and domain sizes connect to functions on integers
 
 \section{Examples}
 
-\textsc{ForcLift} fails on all of these.
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=52mm]
+    \node (dr) {$\DR_{x \in a}$}
+    child {node {$\bigvee_{b^\top \subseteq b}$}
+      child {node {$\wedge$}
+        child {node {$1_{(\{\, p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\top \,\})}$}}
+        child {node {$\wedge$}
+          child {node {$1_{(\{\, \neg p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\bot \,\})}$}}
+          child {node {$\wedge$}
+            child {node {$1_{(\{\, \neg p(X, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto a, Y \mapsto b^\top \,\})}$}}
+            child {node {$\CR_{a \mapsto a'}$}
+              child {node {$\wedge$}
+                child {node {$\bot_{(\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\})}$}}
+                child {node (ref) {$\Reff_{\{\, a \mapsto a', b \mapsto b^\bot \,\}}$}}
+              }}}}}};
+    \draw[-latex, bend right] (ref) to (dr);
+  \end{tikzpicture}
+  \caption{A graphical representation of an FCG for injections and partial injections between two domains. TODO: add a reference to a formula?}
+\end{figure}
 
 \paragraph{TODO.}
 \begin{itemize}
+\item $b^\bot$ should be part of the notation for counting.
+\item \textsc{ForcLift} fails on all of these.
+\item Mention that functions, surjections, and their partial counterparts are/were already liftable.
+\item Formulas for partial injections, how to add totality, surjectivity.
+\item Describe the figure and connect it to the algebraic formula.
 \item Explain the algebraic notation that I'm using here (e.g., that $f$ is always the main function)
 \item Explain the Knuth's bracket notation (or use something else, since I'm already using brackets for lists)
 \item Explain the importance of comparing domain sizes to 2.
 \item Maybe a big table: name, formula, optimal solution and its complexity, best found solution, its depth, its complexity. Also mention that it only takes a few seconds to find these solutions.
-\item Have at least one example of how an FCG maps to recursive functions
 \item Going beyond depth 6 (or sometimes even completing depth 6) is computationally infeasible with the current implementation, but depth at most 5 can be searched within at most a few seconds.
+\item Notation for domain recursion should include the constant name.
+\item Combine the tikz and the algebraic notation into one, so I don't need to have two versions. But how? Maybe associate a symbol with each type and only to the types that I use?
+\item Partial bijection is the same as partial injection.
 \end{itemize}
 
 \begin{itemize}
