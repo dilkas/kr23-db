@@ -726,11 +726,121 @@ TODO: explain how FCGs and domain sizes connect to functions on integers
 
 \section{Examples}
 
-For both one domain and two domains:
+\textsc{ForcLift} fails on all of these.
+
+\paragraph{TODO.}
 \begin{itemize}
-\item bijections
-\item injections
-\item partial injections
+\item Explain the algebraic notation that I'm using here (e.g., that $f$ is always the main function)
+\item Explain the Knuth's bracket notation (or use something else, since I'm already using brackets for lists)
+\item Explain the importance of comparing domain sizes to 2.
+\item Maybe a big table: name, formula, optimal solution and its complexity, best found solution, its depth, its complexity. Also mention that it only takes a few seconds to find these solutions.
+\item Have at least one example of how an FCG maps to recursive functions
+\item Going beyond depth 6 (or sometimes even completing depth 6) is computationally infeasible with the current implementation.
+\item max time to search through depth 5?
+\end{itemize}
+
+\begin{itemize}
+\item 1d bijections
+  \begin{itemize}
+  \item depth 3 exponential solution:
+    \begin{align*}
+      f(n) &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m}g(n, m) \\
+      g(n, m) &= \sum_{l=0}^n \binom{n}{l}[l < 2]g(n-l, m-1) \\
+      &= g(n, m - 1) + ng(n - 1, m - 1),
+    \end{align*}
+    which works with base case $g(n, 0) = 1$.
+  \item depth 4 gives 3 more solutions:
+    \begin{enumerate}
+    \item a $\Theta(n^3)$ number of recursive calls (the first definition is exactly as before):
+      \begin{align*}
+        f(n) &= \sum_{m=0}^n \binom{n}{m}(-1)^{n-m}g(n, m) \\
+        g(n, m) &= \sum_{l=0}^m \binom{m}{l}[l < 2](1 + (-1)[l < 1])g(n - 1, m - l) \\
+        &= mg(n - 1, m - 1),
+      \end{align*}
+      which works with base case $g(0, m) = 1$.
+    \item exponential:
+      \begin{align*}
+        f(n) &= \sum_{m=0}^n \binom{n}{m}(-1)^{n-m} \sum_{l=0}^n \binom{n}{l} (-1)^{n-l}g(m, l) \\
+        g(m, l) &= \sum_{k=0}^m \binom{m}{k}[k < 2]g(m - k, l - 1) \\
+        &= g(m, l - 1) + mg(m - 1, l - 1),
+      \end{align*}
+      which works with base case $g(m, 0) = 1$.
+    \item same as the one before but with the parameters of $g$ swapped.
+    \end{enumerate}
+  \item depth 5 gives 2 more solutions:
+    \begin{enumerate}
+    \item a $\Theta(n^2)$ number of recursive calls:
+      \begin{align*}
+        f(n) &= \sum_{m=0}^n \binom{n}{m}(-1)^{n-m}g(n, m) \\
+        g(n, m) &= -g(n-1, m) + \sum_{l=0}^{m}\binom{m}{l}[l < 2]g(n-1, m-l) \\
+        &= mg(n-1, m-1),
+      \end{align*}
+      which works with base case $g(0, m) = 1$.
+    \item essentially the same as the first solution of depth 4 but the same $g$ is expressed differently:
+      \[
+      g(n, m) = -g(n-1, m) + \sum_{l=0}^m \binom{m}{l} [l < 2] g(n-1, m-l).
+      \]
+    \end{enumerate}
+  \end{itemize}
+\item 1d injections (same as 1d bijections, but note that the 2d case is different) (no liftable solutions)
+  \begin{itemize}
+  \item depth 3 gives 2 solutions:
+    \begin{enumerate}
+    \item exponential:
+      \begin{align*}
+        f(n) &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m} g(n, m) \\
+        g(n, m) &= \sum_{l=0}^m \binom{m}{l}[l < 2]g(n-1, m-l) \\
+        &= g(n-1, m) + mg(n-1, m-1),
+      \end{align*}
+      which works with base case $g(0, m) = 1$.
+    \item same as the one before but with the parameters of $g$ swapped.
+    \end{enumerate}
+  \item depth 5 gives 4 more solutions:
+    \begin{enumerate}
+    \item a very complex exponential solution:
+      \begin{align*}
+        f(n) &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m} \sum_{l=0}^m \binom{m}{l}[l < 2]g(n-1, m-l) \\
+        &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m} (g(n-1, m) + mg(n-1, m-1)) \\
+        g(j, k) &= \sum_{i=0}^k \binom{k}{i} [i < 2] g(j-1, k-i) \\
+        &= g(j-1, k) + kg(j-1, k-1),
+      \end{align*}
+      which works with base case $g(0, k) = 1$.
+    \item same as the one before but with the parameters of $g$ swapped.
+    \item exponential:
+      \begin{align*}
+        f(n) &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m} \sum_{l=0}^n \binom{n}{l} [l < 2] g(m-1, n-l) \\
+        &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m} (g(m-1, n) + ng(m-1, n-1)) \\
+        g(j, k) &= \sum_{i=0}^j \binom{j}{i} [i < 2] g(j-i, k-1) \\
+        &= g(j, k-1) + jg(j-1, k-1),
+      \end{align*}
+      which works with base case $g(j, 0) = 1$.
+    \item same as the one before but with the parameters of $g$ swapped.
+    \end{enumerate}
+  \item 2 more solutions at depth 6, but who cares?
+  \end{itemize}
+\item 1d partial injections. 2 solutions at depth 6, but they're too complicated to check by hand. A contradiction with $X \ne x$ constraints makes things complicated.
+\item 2d bijections
+  \begin{itemize}
+  \item depth 3 gives 3 solutions:
+    \begin{enumerate}
+    \item linear:
+      \begin{align*}
+        f(m, n) &= \sum_{l=0}^m \binom{m}{l} [l < 2] (1 - [l < 1])f(m-l, n-1) \\
+        &= mf(m-1, n-1),
+      \end{align*}
+      which works with base cases $f(0, 0) = 1$, $f(0, n) = 0$, $f(m, 0) = 0$.
+    \item same but with $m$ and $n$ switched.
+    \item
+      \begin{align*}
+      f(m, n) &= \sum_{l=0}^m \binom{m}{l} (-1)^{m-l} g(l, n) \\
+      g(l, n) &= \sum_{k=0}^n \binom{n}{k} [k < 2] g(l-1, n-k) \\
+      &= g(l-1, n) + ng(l-1, n-1),
+      \end{align*}
+      which works with base cases $g(0, 0) = g(l, 0) = 1$ and $g(0, n) = 0$.
+    \end{enumerate}
+  \end{itemize}
+\item 2d injections
+\item 2d partial injections
 \end{itemize}
 
 \section{Conclusions and Future Work}
@@ -744,6 +854,7 @@ For both one domain and two domains:
 \begin{itemize}
 \item Transform FCGs to definitions of (possibly recursive) functions on integers. Use a computer algebra system to simplify them.
 \item Design an algorithm to infer the necessary base cases. (Note that there can be an infinite amount of them when functions have more than one parameter.)
+\item Observation: -1 (and powers thereof) appear in every solution to a formula if and only if the formula has existential quantification. That's not very smart! By putting unit propagation into $\Gamma$, these powers are pushed to the outer layers of the solution (i.e., `early' in the FCG). It's likely that removing this restriction would enable the algorithm to find asymptotically optimal solutions.
 \end{itemize}
 
 \bibliographystyle{acm}
