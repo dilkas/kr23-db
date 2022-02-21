@@ -68,6 +68,15 @@ def two_dimensional_bijections2(m, n):
         return g(l-1, n) + n * g(l-1, n-1)
     return sum(math.comb(m, l) * (-1)**(m-l) * g(l, n) for l in range(m+1))
 
+def two_dimensional_injections(m, n):
+    if m == 0 and n == 0: return 1
+    if n == 0: return 0
+    return two_dimensional_injections(m, n-1) + m * two_dimensional_injections(m-1, n-1)
+
+def two_dimensional_partial_injections(m, n):
+    if n == 0: return 1
+    return two_dimensional_partial_injections(m, n-1) + m * two_dimensional_partial_injections(m-1, n-1)
+
 # ================================= MISC =================================
 
 def my_partial_injections(m, n):
@@ -108,6 +117,8 @@ MAX = 5
 #     for n in range(1, MAX):
 #         print("f({}, {}) = {}".format(m, n, forclift2_injections(m, n)))
 
-for m in range(1, MAX):
-    for n in range(1, MAX):
-        print("f({}, {}) = {}".format(m, n, two_dimensional_bijections2(m, n)))
+for m in range(0, MAX):
+    for n in range(0, MAX):
+        print("f({}, {}) = {} ({})".format(m, n,
+                                           two_dimensional_partial_injections(m, n),
+                                           my_partial_injections(m, n)))
