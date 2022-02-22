@@ -9,6 +9,7 @@
 \usepackage{amsthm}
 \usepackage{mathrsfs}
 \usepackage{amsfonts}
+\usepackage{amssymb}
 
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{tikz}
@@ -52,8 +53,8 @@
 
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
 \newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
+\newcommand*{\twoheadrightarrowtail}{\mathrel{\rightarrowtail\kern-1.9ex\twoheadrightarrow}}
 
-\DeclareMathOperator{\Compile}{\textsc{Compile}}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\DR}{\textsc{DR}}
 \DeclareMathOperator{\IE}{\textsc{IE}}
@@ -97,34 +98,29 @@
 \item atom, (positive/negative) literal, constant, predicate, variable, literal variable, clause, unit clause
 \item $\Vars$, $\Vars(c) = \Vars(L) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
-\item maybe: notation for partial function, notation for powerset, notation for disjoint union
 \item $\WMC$, $\wwp$, $\wwn$, $\Imm$
 \item two parts: compilation and inference.
-\item introduce and use arrows for bijections, injections, set inclusions, etc.
-\item $\emptyset$ for an empty partial map.
-\item notation for variable substitution for literal and constraint sets: $S[x/V]$, where $S$ is the set, $V$ is a set of variable, and $x$ is the new constant or variable. Note that for constraint sets this could mean that a variable and a constant need to switch places.
 \item During inference, there is a domain size map $\size\colon \mathcal{D} \to \mathbb{N}_0$.
 \item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$).
 \item \textsc{ForcLift}
 \item In a way, we're dividing the idea of domain recursion between the IDR and the Ref nodes, thus also generalising it. [This is good context to refer to \cref{fig:idea}.]
 \end{itemize}
 
+\paragraph{Notation.}
+\begin{itemize}
+\item We write $\to$ for functions, $\pfun$ for partial functions, $\twoheadrightarrowtail$ for bijections, and $\hookrightarrow$ for set inclusion.
+\end{itemize}
+
 \paragraph{TODO}
 \begin{itemize}
-\item should I always say `compilation rule' instead of `operator'?
-\item maybe $\pi$ is global enough to have a more unique name
-\item capitalise variable and domain names.
-\item maybe introduce/use notation for vertices, edges of a graph
-\item maybe put each function into its own algorithm environment, using the caption for the function name
-\item replace the Compile operator with my new definition of a rule. Instead of preconditions, have the rule return a set for all applicable domains.
+\item capitalise variable names.
+\item use $\langle\rangle$ for lists. Square brackets are overloaded already.
 \end{itemize}
 
 Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
 
 \begin{definition}
-  A \emph{domain} is a symbol for a finite set.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathcal{D}$ be the set of all domains and $\mathcal{C} \subset \mathcal{D}$ be the subset of domains introduced as a consequence of constraint removal. Note that both sets (can) expand during the compilation phase.
-
-Let $\pi\colon \mathcal{D} \pfun \mathcal{D}$ be a partial endomorphism on $\mathcal{D}$ that denotes the \emph{parent} relation, i.e., if $\pi(d) = e$ for some $d, e \in \mathcal{D}$, then we call $e$ the parent (domain) of $d$, and $e$ a child of $d$. Intuitively, $\pi$ arranges all domains into a forest---thus, we often use graph theoretical terminology to describe properties of and relationships between domains.
+  A \emph{domain} is a symbol for a finite set.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathcal{D}$ be the set of all domains. Note that this set expands during the compilation.
 \end{definition}
 
 \begin{definition}
@@ -132,7 +128,7 @@ An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable, a
 \end{definition}
 
 \begin{definition}
-  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of inequality constraints, and $\delta_c\colon \Vars(c) \to \mathcal{D}$ is a function that maps all variables in $c$ to their domains such that if $(x, y) \in C$ for some variables $x$ and $y$, then $\delta_c(x) = \delta_c(y)$. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match). TODO: we will always use this subscript notation for the $\delta$'s. 
+  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of constraints, and $\delta_c\colon \Vars(c) \to \mathcal{D}$ is a function that maps all variables in $c$ to their domains such that (s.t.) if $(x, y) \in C$ for some variables $x$ and $y$, then $\delta_c(x) = \delta_c(y)$. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match). TODO: we will always use this subscript notation for the $\delta$'s. 
 \end{definition}
 
 A \emph{formula} is a set of clauses.
@@ -146,8 +142,6 @@ We use hash codes to efficiently check whether a recursive relationship between 
   \]
   for any clause $c$. (Here, $[n] \coloneqq \{\,1, 2, \dots, n\,\}$ for any non-negative integer $n$.)
 \end{definition}
-
-TODO: I'm already using the square brackets to denote lists.
 
 TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
 
@@ -198,7 +192,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   \SetKwFunction{get}{get}
   \SetKwFunction{emptyy}{empty}
   \KwIn{a formula $\phi_0$}
-  \KwResult{all found FCGs for $\phi_0$ are in the set \solutions}
+  \KwOut{all found FCGs for $\phi_0$ are in the set \solutions}
   $\solutions \gets \emptyset$\;
   $C_0 \gets \emptyset$\;
   $(G_0, C_0, L_0) \gets \applyGreedyRules{$\phi_0$, $C_0$}$\;
@@ -290,7 +284,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   \Fn{\updateCache{$C$, $\phi$, $(V, s, N^+, \tau)$}}{
     \lIf{$\tau(s) = \textsc{Ref}$}{\Return{$C$}}
     \lIf{$\#\phi \not\in \dom(C)$}{\Return{$C \cup \{\, \#\phi \mapsto (\phi, s) \,\}$}}
-    \lIf{there is no $(\phi', v) \in C(\#\phi)$ such that $v = s$}{$C(\#\phi) \gets (\phi, s) \mdoubleplus C(\#\phi)$}
+    \lIf{there is no $(\phi', v) \in C(\#\phi)$ s.t. $v = s$}{$C(\#\phi) \gets (\phi, s) \mdoubleplus C(\#\phi)$}
     \Return{$C$}\;
   }
   \Fn{\mergeFcgs{$G = (V, s, N^+, \tau)$, $G' = (V', s', N', \tau')$, $r = s$}}{
@@ -339,61 +333,57 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
 
 \section{Identifying Possibilities for Recursion}
 
-\begin{definition}[Notation]
-  For any clause $c = (L, C, \delta_c)$, bijection $\beta\colon \Vars(c) \to V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathcal{D}$, let $c[\beta, \gamma] = d$ be the clause with all occurrences of any variable $v \in \Vars(c)$ in $L$ and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathcal{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes the following diagram commute:
-  \[
-  \begin{tikzcd}
-    \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & V = \Vars(d) \ar[d, dashed, "\exists!\delta_d"] \\
-    \Doms(c) \ar[r, swap, "\gamma"] & \mathcal{D}.
-  \end{tikzcd}
-  \]
-\end{definition}
+\paragraph{Notation.}
+For any clause $c = (L, C, \delta_c)$, bijection $\beta\colon \Vars(c) \twoheadrightarrowtail V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathcal{D}$, let $c[\beta, \gamma] = d$ be the clause $c$ with all occurrences of any variable $v \in \Vars(c)$ in $L$ and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathcal{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes
+\[
+\begin{tikzcd}
+  \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & V = \Vars(d) \ar[d, dashed, "\exists!\delta_d"] \\
+  \Doms(c) \ar[r, swap, "\gamma"] & \mathcal{D}
+\end{tikzcd}
+\]
+commute.
 
 \begin{algorithm}[t]
-  \caption{A recursive function for checking whether one can reuse the FCG for computing $\WMC(\phi)$ to compute $\WMC(\psi)$. Both $\phi$ and $\psi$ are formulas, and $\rho\colon \Doms(\phi) \protect\pfun \Doms(\psi)$ is a partial map.}
-  \label{alg:recursion}
+  \caption{The compilation rule for $\Reff$}
+  \label{alg:trycache}
+
   \SetKwProg{Fn}{Function}{:}{}
   \SetKw{KwRet}{yield}
+  \SetKwData{compilationCache}{compilationCache}
   \SetKwFunction{identifyRecursion}{identifyRecursion}
-  \SetKwFunction{findHistory}{traceAncestors}
   \SetKwFunction{generateMaps}{generateMaps}
   \SetKwFunction{constructDomainMap}{constructDomainMap}
-  \SetKwData{suitable}{suitableBijection}
-  \SetKwData{found}{foundConstraintRemoval}
-  \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$, $\found = {\normalfont \texttt{false}}$}}{
+
+  \KwIn{formula $\phi$}
+  \KwOut{either a singleton with the new $\Reff$ vertex or $\emptyset$}
+
+  \ForEach{$(\psi, v) \in \compilationCache{$\#\phi$}$}{
+    $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
+    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\, (\Reff_\rho(v), \emptyset) \,\}$}}
+  }
+  \Return{$\emptyset$}\;
+
+  \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$}}{
     \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{\Return{\normalfont \texttt{null}}}
-    \If{$\phi = \emptyset$}{
-      \lIf{$\found$}{\Return{$\rho$}}
-      \Return{\normalfont \texttt{null}}\;
-    }
+    \lIf{$\phi = \emptyset$}{\Return{$\rho$}}
     \ForEach{clause $c \in \phi$\label{line:for1}}{
-      \ForEach{clause $d \in \psi$ such that $\#d = \#c$\label{line:for2}} {
-        \ForEach{$(\beta, \gamma) \in \generateMaps{$c$, $d$, $\rho$}$ such that $c[\beta, \gamma] = d$\label{line:generateMaps}}{
-          $\found' \gets \found$\;
-          $\suitable \gets \texttt{true}$\;
-          \ForEach{$e \in \Doms(c)$\label{line:vars}}{
-            $\found'' \gets \findHistory{$e$, $\gamma(e)$}$\;
-            \If{$\found'' = {\normalfont \texttt{null}}$}{
-              $\suitable \gets \texttt{false}$\;
-              break\;
-            }
-            \lIf{$\found''$}{$\found' \gets \texttt{true}$}
-          }
-          \If{\suitable}{
-            $\rho'' \gets \identifyRecursion{$\phi \setminus \{\, c \,\}$, $\psi \setminus \{\, d \,\}$, $\rho \cup \gamma$, $\found'$}$\;\label{line:recursion}
-            \lIf{$\rho'' \ne {\normalfont \texttt{null}}$}{\Return{$\rho''$}}
-          }
+      \ForEach{clause $d \in \psi$ s.t. $\#d = \#c$\label{line:for2}} {
+        \ForEach{$(\beta, \gamma) \in \generateMaps{$c$, $d$, $\rho$}$ s.t. $c[\beta, \gamma] = d$\label{line:generateMaps}}{
+          $\rho' \gets \identifyRecursion{$\phi \setminus \{\, c \,\}$, $\psi \setminus \{\, d \,\}$, $\rho \cup \gamma$}$\;\label{line:recursion}
+          \lIf{$\rho' \ne {\normalfont \texttt{null}}$}{\Return{$\rho'$}}
         }
       }
       \Return{\normalfont \texttt{null}}\;
     }
   }
+
   \Fn{\generateMaps{$c$, $d$, $\rho$}}{
     \ForEach{bijection $\beta\colon \Vars(c) \to \Vars(d)$\label{line:bijection}}{
       $\gamma \gets \constructDomainMap{$\Vars(c)$, $\delta_c$, $\delta_d$, $\beta$, $\rho$}$\;
       \lIf{$\gamma \ne {\normalfont \texttt{null}}$}{\KwRet{$(\beta, \gamma)$}}
     }
   }
+
   \Fn{\constructDomainMap{$V$, $\delta_c$, $\delta_d$, $\beta$, $\rho$}}{
     $\gamma \gets \emptyset$\;
     \ForEach{$v \in V$}{
@@ -403,77 +393,20 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
     }
     \Return{$\gamma$}\;
   }
-  \Fn{\findHistory{$d$, $e$}}{
-    $\found \gets \texttt{false}$\;
-    \While{$e \ne d$ {\bf and} $e \in {\normalfont \dom}(\pi)$}{
-      \lIf{$e \in \mathcal{C}$}{$\found \gets \texttt{true}$}
-      $e \gets \pi(e)$\;
-    }
-    \lIf{$e = d$}{\Return{\found}}
-    \Return{\normalfont \texttt{null}}\;
-  }
 \end{algorithm}
-
-\begin{algorithm}[t]
-  \caption{A generalised version of the compilation rule that uses \cref{alg:recursion} to add $\Reff$ vertices (i.e., the edges that make the FCG no longer a tree) to the FCG.}
-  \label{alg:trycache}
-  \SetKwData{compilationCache}{compilationCache}
-  \KwIn{formula $\phi$}
-  \KwOut{a vertex of type $\Reff$ (or \texttt{null})}
-  \ForEach{$(\psi, v) \in \compilationCache{$\#\psi$}$}{
-    $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
-    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\,\Reff_\rho(v)\,\}$}}
-  }
-  \Return{\normalfont \texttt{null}}\;
-\end{algorithm}
-
-\begin{figure}[t]
-  \centering
-  \begin{tikzpicture}[edge from parent/.style={draw,-latex}]
-    %% \node[draw,circle,fill=violet!10] (circuit) {} child {
-    %%   node[draw,circle,fill=violet!10] (bmaker) {$\diamondsuit$}
-    %%   child {node[draw,circle,fill=violet!10] {}
-    %%     child {node[draw,circle,fill=violet!10] {}}
-    %%     child {node[draw,circle,fill=violet!10] {}
-    %%       child {node[draw,circle,fill=violet!10] {}}
-    %%       child {node[draw,circle,fill=violet!10] {}
-    %%         child {node[draw,circle,fill=violet!10] {}}
-    %%         child {node[draw,circle,fill=violet!10] (amaker) {$\heartsuit$}
-    %%           child {node[draw,circle,fill=violet!10] (ref) {}
-    %%             child {node[draw,circle,fill=violet!10] {}}
-    %%           }
-    %%         }
-    %%       }
-    %%     }
-    %%   }
-    %% };
-    \node (a) {$a$} child {node[draw,rectangle] (aprime) {$a'$}};
-    \node[right=1 cm of a] (b) {$b$}
-    child {node (btop) {$b^\top$}}
-    child {node (bbot) {$b^\bot$}};
-    %% \node[draw,fit=(a) (aprime) (b) (btop) (bbot)] {};
-    %% \draw[-latex] (ref) edge[densely dotted,bend left=90] (circuit);
-    %% \draw[-latex,color=teal] (aprime) edge[densely dashed] node[xshift=2mm,color=teal] {$0$} (amaker);
-    %% \draw[-latex,color=teal] (btop) edge[bend left=50,densely dashed] node[xshift=6mm,color=teal] {$0$} (bmaker);
-    %% \draw[-latex,color=teal] (bbot) edge[bend left=50,densely dashed] node[yshift=-2mm,color=teal] {$1$} (bmaker);
-  \end{tikzpicture}
-  \caption{The forest of domains from \cref{example}. The directed edges correspond to the pairs of domains in $\pi$ but in the opposite direction, e.g., $\pi(a') = a$. The domain enclosed in a rectangle is the only domain created by constraint removal, i.e., $\mathcal{C} = \{\, a' \,\}$.}
-  \label{fig:example}
-\end{figure}
 
 The function \texttt{traceAncestors} returns \texttt{null} if domain $d \in \mathcal{D}$ is not an ancestor of domain $e \in \mathcal{D}$. Otherwise, it returns \texttt{true} if the size of $e$ is guaranteed to be strictly smaller than the size of $d$ (i.e., there is domain created by the constraint removal rule on the path from $d$ to $e$) and \texttt{false} if their sizes will be equal at some point during inference.
 
-Notation: For partial functions $\alpha, \beta\colon A \pfun B$ such that $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function such that $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$. TODO: explain $\sqcup$ for both sets and functions.
+Notation: For partial functions $\alpha, \beta\colon A \pfun B$ s.t. $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function s.t. $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$. TODO: explain $\sqcup$ for both sets and functions.
 
 \paragraph{TODO}
 \begin{itemize}
-\item introduce/describe \cref{alg:recursion} and \cref{alg:trycache} and describe the cache that's being used.
+\item update the example to not refer to things that don't exist anymore
+\item introduce/describe and \cref{alg:trycache} and describe the cache that's being used.
 \item explain why $\rho \cup \gamma$ is possible
 \item explain what the second return statement is about and why a third one is not necessary
-\item mention which one is the main function, what each function takes and returns
 \item explain the yield keyword
 \item in the example below: write down both formula using the ForcLift format
-\item the parent relation and ancestor tracing is no longer necessary
 \end{itemize}
 
 The algorithm could be improved in two ways:
@@ -483,7 +416,7 @@ The algorithm could be improved in two ways:
 \end{itemize}
 However, it is not clear that this would result in an overall performance improvement, since the number of variables in instances of interest never exceeds three and the identity bijection is typically the right one.
 
-Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Doms(c) \to \Doms(d)$ such that the following diagram commutes (and returns \texttt{null} if such a function does not exist):
+Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Doms(c) \to \Doms(d)$ s.t. the following diagram commutes (and returns \texttt{null} if such a function does not exist):
 \[
 \begin{tikzcd}
   \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
@@ -545,25 +478,29 @@ Throughout this section, let $\phi$ be an arbitrary formula.
 
 \subsection{Constraint Removal}
 
-\paragraph{Preconditions.} There is a domain $d \in \mathcal{D}$ and an element $e \in d$ such that:
-\begin{itemize}
-\item for each clause $c = (L, C, \delta_c) \in \phi$ and variable $v \in \Vars(c)$, either $\delta_c(v) \ne d$ or $(v, e) \in C$;
-\item $e$ does not occur in any literal of any clause of $\phi$.
-\end{itemize}
+\begin{algorithm}[t]
+  \caption{The compilation rule for $\CR$}
+  \label{alg:constraintremoval}
+  \KwIn{formula $\phi$, set of domains $\mathcal{D}$}
+  \KwOut{set $S$}
+  $S \gets \emptyset$\;
+  \ForEach{domain $d \in \mathcal{D}$ and element $e \in d$ s.t. $e$ does not occur in any literal of any clause of $\phi$ {\bf and} for each clause $ c = (L, C, \delta_c) \in \phi$ and variable $v \in \Vars(c)$, either $\delta_c(v) \ne d$ {\bf or} $(v, e) \in C$}{
+    add a new domain $d'$ to $\mathcal{D}$\;
+    $\phi' \gets \emptyset$\;
+    \ForEach{clause $(L, C, \delta) \in \phi$}{
+      $C' \gets \{\, (x, y) \in C \mid y \ne e \,\}$\;
+      $\delta' \gets \emptyset$\;
+      \ForEach{variable $v \in \Vars(L) \cup \Vars(C')$}{
+        \lIf{$\delta(v) = d$}{$\delta' \gets \delta' \cup \{\, v \mapsto d' \,\}$}
+        \lElse{$\delta' \gets \delta' \cup \{\, v \mapsto \delta(v) \,\}$}
+      }
+      $\phi' \gets \phi' \cup \{\, (L, C', \delta') \,\}$\;
+    }
+    $S \gets S \cup \{\, \CR_{d \mapsto d'}, \phi' \,\}$\;
+  }
+\end{algorithm}
 
-\paragraph{Operator.} First, we introduce a new domain (i.e., $\mathcal{D} \coloneqq \mathcal{D} \sqcup \{\, d' \,\}$), add it to $\mathcal{C}$ (i.e., $\mathcal{C} \coloneqq C \sqcup \{\, d' \,\}$), and set $\pi(d') \coloneqq d$. Then $\CR(\phi) = \CR_{d \mapsto d'}(\Compile(\phi'))$. The new formula $\phi'$ is defined by replacing every clause $(L, C, \delta) \in \phi$ by a clause $c' = (L, C', \delta') \in \phi'$, where
-\[
-C' = \{\, (x, y) \in C \mid y \ne e \,\},
-\]
-and
-\[
-\delta'(x) =
-\begin{cases}
-  d' & \text{if } \delta(x) = d \\
-  \delta(x) & \text{otherwise}
-\end{cases}
-\]
-for all $x \in \Vars(c') \subseteq \Vars(c)$.
+TODO: describe \cref{alg:constraintremoval} and rewrite the example below.
 
 \begin{example}
   Let $\phi = \{\, c_1, c_2, c_e \,\}$ be a formula with clauses (constants lowercase, variables uppercase)
@@ -592,27 +529,33 @@ for all $x \in \Vars(c') \subseteq \Vars(c)$.
 \subsection{A Generalisation of Domain Recursion}
 
 \begin{algorithm}[t]
-  \caption{Formula transformation for domain recursion}
+  \caption{The compilation rule for $\DR$}
   \label{alg:domainrecursion}
-  \KwIn{formula $\phi$, domain $d \in \mathcal{D}$, and constant $x$}
-  \KwOut{formula $\phi'$}
-  $\phi' \gets \emptyset$\;
-  \ForEach{clause $c = (L, C, \delta) \in \phi$\label{line:forclause}}{
-    $V \gets \{\, v \in \Vars(L) \mid \delta(v) = d \,\}$\;
-    \ForEach{subset $W \subseteq V$ such that $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, v \in \Vars(C) \mid (v, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
-      \tcc{Here, $\delta'$ is the restriction of $\delta$ to the new set of variables}
-      $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (v, x) \mid (v \in V \setminus W) \,\}, \delta') \,\}$\;
+  \KwIn{formula $\phi$}
+  \KwOut{set $S$}
+  $S \gets \emptyset$\;
+  \ForEach{domain $d \in \mathcal{D}$ s.t. there is a clause $c \in \phi$ and a variable $v \in \Vars(L_c)$ s.t. $\delta_c(v) = d$}{
+    $\phi' \gets \emptyset$\;
+    $x \gets \text{a new constant associated with domain } d$\;
+    \ForEach{clause $c = (L, C, \delta) \in \phi$\label{line:forclause}}{
+      $V \gets \{\, v \in \Vars(L) \mid \delta(v) = d \,\}$\;
+      \ForEach{subset $W \subseteq V$ s.t. $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, v \in \Vars(C) \mid (v, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
+        \tcc{Here, $\delta'$ is the restriction of $\delta$ to the new set of variables}
+        $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (v, x) \mid (v \in V \setminus W) \,\}, \delta') \,\}$\;
+      }
     }
+    $S \gets S \cup \{\, (\DR_d, \phi') \,\}$\;
   }
 \end{algorithm}
 
-TODO: Compare with the original \cite{DBLP:conf/nips/Broeck11}.
+\paragraph{The algorithm uses this notation for substitution.}
+Let $S$ be a set of constraints or literals, $V$ a set of variables, and $x$ either a variable or a constant. Then we write $S[x/V]$ to denote $S$ with all occurrences of all variables in $V$ replaced with $x$.\footnote{Note that if $(v, w)$ is a two-variable constraint, substituting a constant $c$ for $v$ would result in $(c, w)$, which would have to be rewritten as $(w, c)$ to fit the definition of a constraint.}
 
-\paragraph{Precondition.} Domain recursion can be applied to domain $d \in \mathcal{D}$ if there is a clause $c$ with a literal variable $v \in \Vars(L_c)$ such that $\delta_c(v) = d$.
+TODO: Compare with the original \cite{DBLP:conf/nips/Broeck11}.
 
 The reason for this precondtion is the same as in the initial version of domain recursion: there must be a variable with that domain featured among the literals because it needs to be replaced by a constant. TODO: expand this.
 
-\paragraph{Operator.} First, introduce a new constant $x$. Then $\DR(\phi) = \DR_d(\Compile(\phi'))$, where $\phi'$ is generated by \cref{alg:domainrecursion}.
+TODO: describe \cref{alg:domainrecursion}.
 
 \begin{example}
   Let $\phi = \{\, c_1, c_2 \,\}$ be a formula, where
@@ -669,7 +612,7 @@ One is picked as the multiplicative identity.
   \item It's impossible for $n \gets n - 1$ and $\texttt{for } n \in \dots$ to combine in a way that results in an infinite loop.
   \end{itemize}
 \item care should be taken when cloning to preserve the validity of the cache and avoid infinite cycles (we use a separate (node $\to$ node) cache for this)
-\item No (more) caching during inference.
+\item another change: one rule can return more than one `continuation of the graph'
 \end{itemize}
 
 \section{How to Evaluate an FCG} \label{sec:evaluation}
@@ -698,37 +641,11 @@ TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and desc
 \item[inclusion-exclusion] $\WMC(\IE(x, y, z); \size) = \WMC(x; \size) + \WMC(y; \size) - \WMC(z; \size)$
 \end{description}
 
-\subsection{Observations and Theoretical Results}
-
-TODO: explain how FCGs and domain sizes connect to functions on integers
-
-\begin{observation}
-  Let $n$ be a positive integer and $d \in \mathcal{D}$ a domain. Then one can construct an FCG $x$ such that
-  \[
-  \WMC(x; \size) =
-  \begin{cases}
-    0 & \text{if } \size(d) \ge n \\
-    \WMC(y; \size) & \text{otherwise,}
-  \end{cases}
-  \]
-  where $y$ is a vertex of arbitrary type. Indeed, $(\Contradiction c) \oland y$ is such an FCG, where $c = (L, C, \delta)$ is a clause with $n$ variables $(v_i)_{i=1}^n$ such that:
-  \begin{itemize}
-  \item $L$ is unimportant,
-  \item $C = \{\, (v_i, v_j) \mid i = 1, \dots, n - 1\text{, }j = i + 1, \dots, n \,\}$,
-  \item and $\delta(v_i) = d$ for all $i = 1, \dots, n$.
-  \end{itemize}
-  TODO: explain why this works.
-\end{observation}
-
-\begin{remark}
-  Such FCGs can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
-\end{remark}
-
-\section{Examples}
+\section{Newly Domain-Liftable Formulas}
 
 \begin{figure}
   \centering
-  \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=52mm]
+  \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=48mm]
     \node (dr) {$\DR_{x \in a}$}
     child {node {$\bigvee_{b^\top \subseteq b}$}
       child {node {$\wedge$}
@@ -762,7 +679,12 @@ TODO: explain how FCGs and domain sizes connect to functions on integers
 \item Notation for domain recursion should include the constant name.
 \item Combine the tikz and the algebraic notation into one, so I don't need to have two versions. But how? Maybe associate a symbol with each type and only to the types that I use?
 \item Partial bijection is the same as partial injection.
+\item the exponential solutions can be computed in quadratic time with dynamic programming!
 \end{itemize}
+
+\begin{remark}
+  FCGs that compare the size of a domain to an integer can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
+\end{remark}
 
 \begin{itemize}
 \item 1d bijections and 1d injections (note that it's the same problem). Depth 3 solution:
