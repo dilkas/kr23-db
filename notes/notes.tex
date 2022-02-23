@@ -114,7 +114,6 @@
 \paragraph{TODO}
 \begin{itemize}
 \item capitalise variable names.
-\item use $\langle\rangle$ for lists. Square brackets are overloaded already.
 \end{itemize}
 
 Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
@@ -146,7 +145,7 @@ We use hash codes to efficiently check whether a recursive relationship between 
 TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
 
 \paragraph{Notation for lists.}
-We let $[]$ and $[x]$ denote an empty list and a list with one element $x$, respectively. We write $\in$ for (in-order) enumeration, $\mdoubleplus$ for concatenation, and $|\cdot|$ for the length of a list. Let $h : t$ denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. We also use list comprehensions written equivalently to set comprehensions. For example, let $L \coloneqq [1]$ and $M \coloneqq [2]$ be two lists. Then $M = [2x \mid x \in L]$, $L \mdoubleplus M = 1 : [2]$, and $|M| = 1$.
+Let $\langle\rangle$ and $\langle x \rangle$ denote an empty list and a list with one element $x$, respectively. We write $\in$ for (in-order) enumeration, $\mdoubleplus$ for concatenation, and $|\cdot|$ for the length of a list. Let $h : t$ denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. We also use list comprehensions written equivalently to set comprehensions. For example, let $L \coloneqq \langle 1 \rangle$ and $M \coloneqq \langle 2 \rangle$ be two lists. Then $M = \langle 2x \mid x \in L \rangle$, $L \mdoubleplus M = 1 : \langle 2 \rangle$, and $|M| = 1$.
 
 \section{Search/Compilation}
 
@@ -196,13 +195,13 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
   $\solutions \gets \emptyset$\;
   $C_0 \gets \emptyset$\;
   $(G_0, C_0, L_0) \gets \applyGreedyRules{$\phi_0$, $C_0$}$\;
-  \lIf{$L_0 = []$}{$\solutions \gets \{\, G_0 \,\}$}
+  \lIf{$L_0 = \langle\rangle$}{$\solutions \gets \{\, G_0 \,\}$}
   \Else{
     $q \gets \text{an empty queue of states}$\;
     $q.\put{$(G_0, C_0, L_0)$}$\;
     \While{{\bf not} $q.\emptyy{}$}{
       \ForEach{state $(G, C, L) \in \applyAllRules{$q.\get{}$}$}{
-        \lIf{$L = []$}{$\solutions \gets \solutions \cup \{\, G \,\}$}
+        \lIf{$L = \langle\rangle$}{$\solutions \gets \solutions \cup \{\, G \,\}$}
         \lElse{$q.\put{$(G, C, L)$}$}
       }
     }
@@ -233,21 +232,21 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
         }
       }
     }
-    \Return{$({\normalfont \texttt{null}}, C, [\phi])$}\;
+    \Return{$({\normalfont \texttt{null}}, C, \langle\phi\rangle)$}\;
   }
   \Fn{\applyGreedyRulesToAllFormulas{$(V, s, N^+, \tau)$, $C$, $L$}}{
-    \lIf{$L = []$}{\Return{$((V, s, N^+, \tau), C, L)$}}
-    $N^+(s) \gets []$\;
-    $L' \gets []$\;
+    \lIf{$L = \langle\rangle$}{\Return{$((V, s, N^+, \tau), C, L)$}}
+    $N^+(s) \gets \langle\rangle$\;
+    $L' \gets \langle\rangle$\;
     \ForEach{formula $\phi \in L$}{
       $(G', C, L'') \gets \applyGreedyRules{$\phi$, $C$}$\;
       $L' \gets L' \mdoubleplus L''$\;
-      \lIf{$G' = {\normalfont \texttt{null}}$}{$N^+(s) \gets N^+(s) \mdoubleplus [\star]$}
+      \lIf{$G' = {\normalfont \texttt{null}}$}{$N^+(s) \gets N^+(s) \mdoubleplus \langle\star\rangle$}
       \Else{
         $(V', s', N', \tau') \gets G'$\;
         $V \gets V \sqcup V'$\;
         $N^+ \gets N^+ \sqcup N'$\;
-        $N^+(s) \gets N^+(s) \mdoubleplus [s']$\;
+        $N^+(s) \gets N^+(s) \mdoubleplus \langle s' \rangle$\;
         $\tau \gets \tau \sqcup \tau'$\;
       }
     }
@@ -257,7 +256,7 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
     $(G, C, L) \gets s$\;
     $\phi : T \gets L$\;
     $(G', C', L') \gets \text{a copy of } s$\;
-    $\newStates \gets []$\;
+    $\newStates \gets \langle\rangle$\;
     \ForEach{rule $r \in \Delta$}{
       \ForEach{$(G'', L'') \in r(\phi)$}{
         \lIf{$G'' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus \applyAllRules{$(G', C', L'')$}$}
@@ -265,8 +264,8 @@ We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a 
           $(V, s, N^+, \tau) \gets G''$\;
           $C' \gets \updateCache{$C'$, $\phi$, $G''$}$\;
           $(G'', C', L'') \gets \applyGreedyRulesToAllFormulas{$G''$, $C'$, $L''$}$\;
-          \lIf{$G' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus [(G'', C', L'' \mdoubleplus T)]$}
-          \lElse{$\newStates \gets \newStates \mdoubleplus [(\mergeFcgs{$G'$, $G''$}, C', L'' \mdoubleplus T)]$}
+          \lIf{$G' = {\normalfont \texttt{null}}$}{$\newStates \gets \newStates \mdoubleplus \langle(G'', C', L'' \mdoubleplus T)\rangle$}
+          \lElse{$\newStates \gets \newStates \mdoubleplus \langle(\mergeFcgs{$G'$, $G''$}, C', L'' \mdoubleplus T)\rangle$}
         }
       }
       $(G', C', L') \gets \text{a copy of } s$\;
@@ -320,7 +319,7 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
   \While{\changed}{
     $\changed \gets \texttt{false}$\;
     \ForEach{vertex $v \in V$}{
-      $S' \gets f_{\tau(v)}([S(w) \mid w \in N^+(v)])$\;
+      $S' \gets f_{\tau(v)}(\langle S(w) \mid w \in N^+(v) \rangle)$\;
       \If{$S' \ne S(v)$}{
         $\changed \gets \texttt{true}$\;
         $S(v) \gets S'$\;
