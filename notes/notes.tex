@@ -10,10 +10,14 @@
 \usepackage{mathrsfs}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{pifont}
 
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{tikz}
 \usepackage[capitalize]{cleveref}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{colortbl}
 
 \usetikzlibrary{fit,positioning,trees,cd}
 \usetikzlibrary{shapes}
@@ -54,6 +58,8 @@
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
 \newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
 \newcommand*{\twoheadrightarrowtail}{\mathrel{\rightarrowtail\kern-1.9ex\twoheadrightarrow}}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
 
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\DR}{\textsc{DR}}
@@ -75,6 +81,8 @@
 \begin{document}
 \maketitle
 
+\section{Introduction}
+
 \section{Definitions}
 
 \begin{figure}[t]
@@ -95,7 +103,7 @@
 
 \paragraph{Things I might need to explain.}
 \begin{itemize}
-\item atom, (positive/negative) literal, constant, predicate, variable, literal variable, clause, unit clause
+\item atom, (positive/negative) literal, constant, predicate, argument, arity, variable, clause, unit clause, first-order logic
 \item $\Vars$, $\Vars(c) = \Vars(L) \cup \Vars(C)$
 \item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
 \item $\WMC$, $\wwp$, $\wwn$, $\Imm$
@@ -111,11 +119,6 @@
 \item We write $\to$ for functions, $\pfun$ for partial functions, $\twoheadrightarrowtail$ for bijections, and $\hookrightarrow$ for set inclusion.
 \end{itemize}
 
-\paragraph{TODO}
-\begin{itemize}
-\item capitalise variable names.
-\end{itemize}
-
 Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
 
 \begin{definition}
@@ -129,6 +132,8 @@ An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable, a
 \begin{definition}
   A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of constraints, and $\delta_c\colon \Vars(c) \to \mathcal{D}$ is a function that maps all variables in $c$ to their domains such that (s.t.) if $(x, y) \in C$ for some variables $x$ and $y$, then $\delta_c(x) = \delta_c(y)$. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match). TODO: we will always use this subscript notation for the $\delta$'s. 
 \end{definition}
+
+TODO: implicit universal quantification.
 
 A \emph{formula} is a set of clauses.
 
@@ -147,23 +152,23 @@ TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative
 \paragraph{Notation for lists.}
 Let $\langle\rangle$ and $\langle x \rangle$ denote an empty list and a list with one element $x$, respectively. We write $\in$ for (in-order) enumeration, $\mdoubleplus$ for concatenation, and $|\cdot|$ for the length of a list. Let $h : t$ denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. We also use list comprehensions written equivalently to set comprehensions. For example, let $L \coloneqq \langle 1 \rangle$ and $M \coloneqq \langle 2 \rangle$ be two lists. Then $M = \langle 2x \mid x \in L \rangle$, $L \mdoubleplus M = 1 : \langle 2 \rangle$, and $|M| = 1$.
 
-\section{Search/Compilation}
-
-\subsection{From Circuits to Labelled Graphs}
+\section{From Circuits to Labelled Graphs}
 
 A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, vertex labels, and ordered outgoing edges.\footnote{Note that imposing an ordering on outgoing edges is just a limited version of edge labelling.} We denote an FCG as $G = (V, s, N^+, \tau)$, where $V$ is the set of vertices, and $s \in V$ is the unique source. Also, $N^+$ is the direct successor function that maps each vertex in $V$ to a \emph{list} that contains either other vertices in $V$ or a special symbol $\star$. This symbol means that the target of the edge is yet to be determined.
 
 Vertex labels consist of two parts: the \emph{type} and the \emph{parameters}. For the main definition, we leave the parameters implicit and let $\tau\colon V \to \mathcal{T}$ denote the vertex-labelling function that maps each vertex in $V$ to its type in $\mathcal{T}$. Most of our list of types $\mathcal{T} \coloneqq \{\, \Smoothing, \Unit, \Tautology, \Contradiction, \oland, \olor, \CR, \DR, \IE, \Reff \,\}$ is as described in previous work \cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11} as well as the source code of \textsc{ForcLift}\footnote{\url{https://dtai.cs.kuleuven.be/drupal/wfomc}} but with one new type $\CR$ and two revamped types $\DR$ and $\Reff$. For each vertex $v \in V$, the length of the list $N^+(v)$ (i.e., the out-degree of $v$) is determined by its type $\tau(v)$.
+
+TODO: conjunctions and disjunctions should be different from set-conjunctions and set-disjunctions.
 
 As in previous work \cite{DBLP:conf/ijcai/BroeckTMDR11}, to describe individual vertices and small (sub)-FCGs, we also use notation of the form, e.g., $\Reff_\rho(v)$. Here, the type of the vertex (e.g., $\Reff$) is `applied' to its direct successors (e.g., $v$) using either function or infix notation and provided with its parameter(s) (e.g., $\rho$) in the subscript. We say that `$G$ is an FCG for formula $\phi$' if two conditions are satisfied. First, the image of $N^+$ contains no $\star$'s. Second, $G$ encodes a function that maps the sizes of the domains in $\phi$ to the WMC of $\phi$ (more on this in \cref{sec:evaluation}).
 
 \paragraph{TODO.}
 \begin{itemize}
 \item provide a short explanation of the types (emphasising which ones are new/updated). %\footnote{The new (as well as significantly renewed) types in \mathcal{T} are described in subsequent (TODO: which ones?) sections. The meanings of other types are described...}
-\item have an example of a simple FCG
+\item have an example of a simple FCG. Describe the figure from later.
 \end{itemize}
 
-\subsection{Everything Else}
+\section{Search/Compilation}
 
 \begin{definition}
   A \emph{state} (of the search for an FCG for a given formula) is a tuple $(G, C, L)$, where:
@@ -304,7 +309,7 @@ TODO: explain the `tail' part of the algorithm, i.e., that the first formula is 
 
 Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because there is going to be at least one $\star$ in $G$ and the function will find it.
 
-\section{Smoothing}
+\section{In-Between Compilation and Inference: Smoothing}
 
 \begin{algorithm}
   \SetKwData{changed}{changed}
@@ -330,7 +335,9 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
 
 [Insert motivation for smoothing from Section 3.4. of the ForcLift paper.] Originally, smoothing was (and still is) a two-step process. First, atoms that are still accounted for in the circuit are propagated upwards. Then, at vertices of certain types, missing atoms are detected and additional sinks are created to account for them. If left unchanged, the first step of this process would result in an infinite loop whenever a cycle is encountered. \Cref{alg:smoothing} outlines how the first step can be adapted to an arbitrary directed graph.
 
-\section{Identifying Possibilities for Recursion}
+\section{New Compilation Rules}
+
+\subsection{Identifying Possibilities for Recursion}
 
 \paragraph{Notation.}
 For any clause $c = (L, C, \delta_c)$, bijection $\beta\colon \Vars(c) \twoheadrightarrowtail V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathcal{D}$, let $c[\beta, \gamma] = d$ be the clause $c$ with all occurrences of any variable $v \in \Vars(c)$ in $L$ and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathcal{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes
@@ -459,7 +466,7 @@ Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Dom
   Since $\beta$ and $\rho$ `commute' (TODO: as in the diagram above), and there are no new domains in $\Doms(c)$ and $\Doms(d)$, $\gamma$ exists and is equal to $\rho$. Again, the returned pair $(\beta, \gamma)$ satisfies $c[\beta, \gamma] = d$. This $\gamma$ passes the \texttt{traceAncestors} checks exactly the same way as the one before, and \cref{line:recursion} calls \texttt{identifyRecursion($\emptyset$, $\emptyset$, $\rho$, true)}, which immediately returns $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$ as the final answer. This means that one can indeed use an FCG for $\WMC(\phi)$ to compute $\WMC(\psi)$ by replacing every mention of $a$ with $a'$ and every mention of $b$ with $b^\bot$.
 \end{example}
 
-\subsection{Evaluation}
+\subsubsection{Evaluation}
 
 $\WMC(\Reff_\rho(v); \size) = \WMC(v; \size')$ ($n$ is the target vertex), where $\size'$ is defined as
 \[
@@ -470,10 +477,6 @@ $\WMC(\Reff_\rho(v); \size) = \WMC(v; \size')$ ($n$ is the target vertex), where
 \end{cases}
 \]
 for all $x \in \mathcal{D}$.
-
-\section{New Compilation Rules}
-
-Throughout this section, let $\phi$ be an arbitrary formula.
 
 \subsection{Constraint Removal}
 
@@ -543,7 +546,7 @@ TODO: describe \cref{alg:constraintremoval} and rewrite the example below.
         $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (v, x) \mid (v \in V \setminus W) \,\}, \delta') \,\}$\;
       }
     }
-    $S \gets S \cup \{\, (\DR_d, \phi') \,\}$\;
+    $S \gets S \cup \{\, (\DR_{d \gets d \setminus \{\, x \,\}}, \phi') \,\}$\;
   }
 \end{algorithm}
 
@@ -591,7 +594,7 @@ TODO: describe \cref{alg:domainrecursion}.
 
 \paragraph{Evaluation.}
 \[
-\WMC(\DR_d(n); \size) =
+\WMC(\DR_{d \gets d \setminus \{\, x \,\}}(n); \size) =
 \begin{cases}
   \WMC(n; \size) & \text{if } \size(d) > 0 \\
   1 & \text{otherwise.}
@@ -640,12 +643,36 @@ TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and desc
 \item[inclusion-exclusion] $\WMC(\IE(x, y, z); \size) = \WMC(x; \size) + \WMC(y; \size) - \WMC(z; \size)$
 \end{description}
 
-\section{Newly Domain-Liftable Formulas}
+\section{Examples of Newly Domain-Liftable Formulas}
+
+\begin{table}
+  \centering
+  \begin{tabular}{cccccc}
+    \toprule
+    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Complexity} \\
+    Partial & Endo & Class & Best Known & With Circuits & With Graphs \\
+    \midrule
+    \rowcolor{lightgray}\cmark/\xmark & \cmark/\xmark & Functions & $\lg m$ & $m$ & $m$ \\
+    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \lg m$ \cite{30049} & ? & ? \\
+    \xmark & \cmark & & $n \lg m$ \cite{30049} & ? & ? \\
+    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $b$ to $a$} \\
+    \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
+    \rowcolor{lightgray}\xmark & \xmark & & $\lg m$ & - & $mn$ \\
+    \rowcolor{lightgray}\xmark & \cmark & & $\lg m$ & - & $m^3$ \\
+    \rowcolor{lightgray}\cmark & \xmark & & $\min\{\, m, n \,\}^2$ & - & $n^2$ \\
+    \rowcolor{lightgray}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & - & - \\
+    \xmark & \xmark & \multirow{3}{*}{Bijections} & $\lg m$ & - & $m$ \\
+    \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
+    \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Here, $m$ is the size of $a$, and $n$ is the size of $b$. All asymptotic complexities are in $\Theta(\cdot)$. Logarithm with base two. This is for unweighted counting. A hyphen means that no solution was found. TODO: add shaded rows. TODO: explain assumptions for the counts to not be zero. TODO: double check. TODO: maybe combine more rows/columns.}
+\end{table}
 
 \begin{figure}
   \centering
   \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=48mm]
-    \node (dr) {$\DR_{x \in a}$}
+    \node (dr) {$\DR_{a \gets a \setminus \{\, x \,\}}$}
     child {node {$\bigvee_{b^\top \subseteq b}$}
       child {node {$\wedge$}
         child {node {$1_{(\{\, p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\top \,\})}$}}
@@ -661,30 +688,49 @@ TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and desc
     \draw[-latex, bend right] (ref) to (dr);
   \end{tikzpicture}
   \caption{A graphical representation of an FCG for injections and partial injections between two domains. TODO: add a reference to a formula?}
+  \label{fig:examplefcg}
 \end{figure}
 
 \paragraph{TODO.}
 \begin{itemize}
 \item $b^\bot$ should be part of the notation for counting.
-\item \textsc{ForcLift} fails on all of these.
-\item Mention that functions, surjections, and their partial counterparts are/were already liftable.
 \item Formulas for partial injections, how to add totality, surjectivity.
-\item Describe the figure and connect it to the algebraic formula.
+\item Describe \cref{fig:examplefcg} and connect it to the algebraic formula.
 \item Explain the algebraic notation that I'm using here (e.g., that $f$ is always the main function)
-\item Explain the Knuth's bracket notation (or use something else, since I'm already using brackets for lists)
-\item Explain the importance of comparing domain sizes to 2.
-\item Maybe a big table: name, formula, optimal solution and its complexity, best found solution, its depth, its complexity. Also mention that it only takes a few seconds to find these solutions.
+\item Explain the importance of comparing domain sizes to 2. FCGs that compare the size of a domain to an integer can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
+\item Maybe a big table: name, optimal solution and its complexity, best found solution, its depth, its complexity. Also mention that it only takes a few seconds to find these solutions.
 \item Going beyond depth 6 (or sometimes even completing depth 6) is computationally infeasible with the current implementation, but depth at most 5 can be searched within at most a few seconds.
-\item Notation for domain recursion should include the constant name.
 \item Combine the tikz and the algebraic notation into one, so I don't need to have two versions. But how? Maybe associate a symbol with each type and only to the types that I use?
 \item Partial bijection is the same as partial injection.
 \item the exponential solutions can be computed in quadratic time with dynamic programming!
+\item Can't explain how formulas are translated into (my definition of) clauses without explaining Skolemization, which is out of scope.
+\item Note that in some cases different descriptions of the same problem lead to different solutions (with different complexities).
+\item Maybe we are actually guaranteed that the solution is always polynomial-time.
 \end{itemize}
 
-\begin{remark}
-  FCGs that compare the size of a domain to an integer can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
-\end{remark}
+Let $p$ be a predicate of arity two s.t. the first argument is associated with domain $a$, and the second argument is associated with domain $b$ (i.e., $p$ represents a relation between sets $a$ and $b$). Then, to restrict all relations representable by $p$ to just functions from $a$ to $b$, in first-order logic one might write
+\begin{gather}
+  \forall X \in a. \forall Y \in b. \forall Z \in b. p(X, Y) \land p(X, Z) \implies Y = Z \label{eq:def1} \\
+  \forall X \in a. \exists Y \in b. p(X, Y). \label{eq:def2}
+\end{gather}
+The former says that one element of $a$ can map to at \emph{most} one element of $b$, and the latter says that each element of $a$ must map to at \emph{least} one element of $b$. One might add
+\begin{equation} \label{eq:injectivity}
+  \forall W \in a. \forall X \in a. \forall Y \in b. p(W, Y) \land p(X, Y) \implies W = X
+\end{equation}
+to restrict $p$ to injections or
+\begin{equation}
+  \forall Y \in b. \exists X \in a. p(X, Y)
+\end{equation}
+to ensure surjectivity or remove \cref{eq:def2} to consider partial functions. Lastly, one can replace all occurrences of $b$ with $a$ so as to model endofunctions instead.
 
+\paragraph{Notes.}
+\begin{itemize}
+\item \textsc{ForcLift} fails on all of these.
+\item Functions, surjections, and their partial counterparts are/were already liftable. It seems like lifting injectivity (which is a fairly general property) is the main accomplishment. (But this is just the one I noticed. There may be many others as well.)
+\item Here, $[\cdot]$ is the Iverson bracket.
+\end{itemize}
+
+\paragraph{Results.}
 \begin{itemize}
 \item 1d bijections and 1d injections (note that it's the same problem). Depth 3 solution:
   \begin{align*}
