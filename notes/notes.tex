@@ -69,6 +69,7 @@
 \DeclareMathOperator{\wwn}{\overline{w}}
 
 \DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\id}{id}
 \DeclareMathOperator{\Imm}{Im}
 \DeclareMathOperator{\Doms}{Doms}
 \DeclareMathOperator{\size}{\sigma}
@@ -83,8 +84,6 @@
 
 \section{Introduction}
 
-\section{Definitions}
-
 \begin{figure}[t]
   \centering
   \begin{tikzpicture}[triangle/.style = {regular polygon, regular polygon sides=3}]
@@ -97,62 +96,72 @@
     \draw[-{Latex[length=2mm]}] (b) -- (d);
     \draw[-{Latex[length=2mm]}] (c) to [bend left=45] node [midway,xshift=-30] () {$n \mapsto n-1$} (a);
   \end{tikzpicture}
-  \caption{An illustration of the main idea. TODO: refer to this in the introduction.}
+  \caption{An illustration of the main idea.}
   \label{fig:idea}
 \end{figure}
 
+In a way, we're dividing the idea of domain recursion between the IDR and the Ref nodes, thus also generalising it. [TODO: mention \cref{fig:idea}.]
+
+\section{Preliminaries}
+
 \paragraph{Things I might need to explain.}
 \begin{itemize}
-\item atom, (positive/negative) literal, constant, predicate, argument, arity, variable, clause, unit clause, first-order logic
-\item $\Vars$, $\Vars(c) = \Vars(L) \cup \Vars(C)$
-\item $\Doms$ on both formulas and clauses. $\Doms(c) = \Imm \delta_c$, and $\Doms(\phi) = \bigcup_{c \in \phi} \Doms(c)$.
-\item $\WMC$, $\wwp$, $\wwn$, $\Imm$
+\item atom, (positive/negative) literal, constant, predicate, variable, clause, unit clause, first-order logic
+\item $\WMC$, $\wwp$, $\wwn$.
 \item two parts: compilation and inference.
 \item During inference, there is a domain size map $\size\colon \mathcal{D} \to \mathbb{N}_0$.
-\item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$).
+\item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$). TODO: having notation for $\Delta$ and $\Gamma$ isn't that necessary
 \item \textsc{ForcLift}
-\item In a way, we're dividing the idea of domain recursion between the IDR and the Ref nodes, thus also generalising it. [This is good context to refer to \cref{fig:idea}.]
+\item $\sqcup$ for both sets and functions
 \end{itemize}
 
 \paragraph{Notation.}
 \begin{itemize}
-\item We write $\to$ for functions, $\pfun$ for partial functions, $\twoheadrightarrowtail$ for bijections, and $\hookrightarrow$ for set inclusion.
+\item We write $\to$ for functions, $\pfun$ for partial functions, $\twoheadrightarrowtail$ for bijections, and $\hookrightarrow$ for set inclusion. Let $\id$ denote the identity function (on any domain). For any function $f$, let $\Imm f$ be the image of $f$.
 \end{itemize}
 
 Most of the definitions here are adaptations/formalisations of \cite{DBLP:conf/ijcai/BroeckTMDR11} and the corresponding code.
 
 \begin{definition}
-  A \emph{domain} is a symbol for a finite set.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.} Let $\mathcal{D}$ be the set of all domains. Note that this set expands during the compilation.
+  A \emph{domain} is a symbol for a finite set.\footnote{In the context of functions, the domain of a function $f$ retains its usual meaning and is denoted $\dom(f)$.}
 \end{definition}
 
 \begin{definition}
-An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable, and $b$ is either a variable or a constant.
+  An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable, and $b$ is either a variable or a constant.
 \end{definition}
 
 \begin{definition}
-  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is the set of literals, $C$ is a set of constraints, and $\delta_c\colon \Vars(c) \to \mathcal{D}$ is a function that maps all variables in $c$ to their domains such that (s.t.) if $(x, y) \in C$ for some variables $x$ and $y$, then $\delta_c(x) = \delta_c(y)$. Equality of clauses is defined in the usual way (i.e., all variables, domains, etc. must match). TODO: we will always use this subscript notation for the $\delta$'s. 
+  A \emph{clause} is a triple $c = (L, C, \delta_c)$, where $L$ is a set of literals, $C$ is a set of constraints, and $\delta_c$ is a function that maps all variables in $c$ to their domains such that (s.t.) if $(x, y) \in C$ for some variables $x$ and $y$, then $\delta_c(x) = \delta_c(y)$. Note that for convenience sometimes we write $\delta_c$ for the domain map of $c$ without unpacking $c$ into its three constituents.
+
+  Also, let $\Vars$ be a function that maps clauses and sets of literals and inequalities to the set of variables contained within. In particular, $\Vars(c) \coloneqq \Vars(L) \cup \Vars(C)$.
 \end{definition}
 
-TODO: implicit universal quantification.
+A \emph{formula} is a set of clauses. All variables in a clause are implicitly universally quantified (but note that variables are never shared among clauses), and all clauses in a formula are implicitly linked by conjunction. This way, one can read formulas as defined here as sentences in first-order logic.
 
-A \emph{formula} is a set of clauses.
-
-We use hash codes to efficiently check whether a recursive relationship between two formulas is plausible. (It is plausible if the formulas are equal up to variables and domains.) The hash code of a clause $c = (L, C, \delta_c)$ combines the hash codes of the sets of constants and predicates in $c$, the numbers of positive and negative literals, the number of inequality constraints $|C|$, and the number of variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash codes of all its clauses and is denoted $\#\phi$.
-
-\begin{definition}
-  Let $\gr(\cdot; \sigma)$ be the function (parameterised by the domain size function $\size$) that takes a clause $c = (L, C, \delta)$ and returns the number of ways the variables in $c$ can be replaced by elements of their respective domains in a way that satisfies the inequality constraints.\footnote{Note that the literals of the clause have no effect on $\gr$.} Formally, for each variable $v \in \Vars(c)$, let $C_v = \{ w \mid (u, w) \in C \setminus \Vars(c)^2 \text{, }u \ne v \}$ be the set of (explicitly named) constants that $v$ is permitted to be equal to. Then
+TODO: Note: we will reuse this several times.
+\begin{example} \label{example:first}
+  Let $\phi \coloneqq \{\, c_1, c_2 \,\}$ be a formula, where
   \[
-  \gr(c; \sigma) \coloneqq \left|\left\{\, (e_v)_{v \in \Vars(c)} \in \prod_{v \in \Vars(c)} C_v \sqcup [\sigma(\delta(v)) - |C_v|] \;\middle|\; \right.\right. e_u \ne e_w \text{ for all } (u, w) \in C \cap \Vars(c)^2 \left.\left. \vphantom{\prod_{v \in \Vars(c)}} \,\right\}\right|
+  c_1 \coloneqq (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}),
   \]
-  for any clause $c$. (Here, $[n] \coloneqq \{\,1, 2, \dots, n\,\}$ for any non-negative integer $n$.)
-\end{definition}
+  and
+  \[
+  c_2 \coloneqq (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \{\, X \mapsto a, Y \mapsto b, Z \mapsto a \,\}),
+  \]
+  for some predicate $p$, variables $X$, $Y$, $Z$, and domains $a$ and $b$. Then in first-order logic $\phi$ could be read as
+  \begin{align*}
+    (\forall X \in a. \forall Y \in b. \forall Z \in b. Y \ne Z &\implies \neg p(X, Y) \lor \neg p(X, Z)) \land \\
+    (\forall X \in a. \forall Y \in b. \forall Z \in a. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y)).
+  \end{align*}
+\end{example}
 
-TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
+\paragraph{Hashing.}
+We use hash codes to efficiently check whether a recursive relationship between two formulas is plausible. (It is plausible if the formulas are equal up to variables and domains.) The hash code of a clause $c = (L, C, \delta)$ combines the hash codes of the sets of constants and predicates in $c$, the numbers of positive and negative literals, the number of inequality constraints $|C|$, and the number of variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash codes of all its clauses and is denoted $\#\phi$.
 
 \paragraph{Notation for lists.}
 Let $\langle\rangle$ and $\langle x \rangle$ denote an empty list and a list with one element $x$, respectively. We write $\in$ for (in-order) enumeration, $\mdoubleplus$ for concatenation, and $|\cdot|$ for the length of a list. Let $h : t$ denote a list with first element (a.k.a. head) $h$ and remaining list (a.k.a. tail) $t$. We also use list comprehensions written equivalently to set comprehensions. For example, let $L \coloneqq \langle 1 \rangle$ and $M \coloneqq \langle 2 \rangle$ be two lists. Then $M = \langle 2x \mid x \in L \rangle$, $L \mdoubleplus M = 1 : \langle 2 \rangle$, and $|M| = 1$.
 
-\section{From Circuits to Labelled Graphs}
+\section{Generalising Circuits to Labelled Graphs}
 
 A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a (weakly connected) directed graph with a a single source, vertex labels, and ordered outgoing edges.\footnote{Note that imposing an ordering on outgoing edges is just a limited version of edge labelling.} We denote an FCG as $G = (V, s, N^+, \tau)$, where $V$ is the set of vertices, and $s \in V$ is the unique source. Also, $N^+$ is the direct successor function that maps each vertex in $V$ to a \emph{list} that contains either other vertices in $V$ or a special symbol $\star$. This symbol means that the target of the edge is yet to be determined.
 
@@ -165,10 +174,10 @@ As in previous work \cite{DBLP:conf/ijcai/BroeckTMDR11}, to describe individual 
 \paragraph{TODO.}
 \begin{itemize}
 \item provide a short explanation of the types (emphasising which ones are new/updated). %\footnote{The new (as well as significantly renewed) types in \mathcal{T} are described in subsequent (TODO: which ones?) sections. The meanings of other types are described...}
-\item have an example of a simple FCG. Describe the figure from later.
+\item have an example of a simple FCG. Maybe describe the figure from later and move it here.
 \end{itemize}
 
-\section{Search/Compilation}
+\section{Compilation as Search}
 
 \begin{definition}
   A \emph{state} (of the search for an FCG for a given formula) is a tuple $(G, C, L)$, where:
@@ -337,17 +346,30 @@ Note: At the end, \texttt{mergeFcgs} will never return \texttt{null} because the
 
 \section{New Compilation Rules}
 
+Let $\mathcal{D}$ be the set of all domains. Note that this set expands during the compilation.
+
 \subsection{Identifying Possibilities for Recursion}
 
-\paragraph{Notation.}
-For any clause $c = (L, C, \delta_c)$, bijection $\beta\colon \Vars(c) \twoheadrightarrowtail V$ (for some set of variables $V$) and function $\gamma\colon \Doms(c) \to \mathcal{D}$, let $c[\beta, \gamma] = d$ be the clause $c$ with all occurrences of any variable $v \in \Vars(c)$ in $L$ and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathcal{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes
+\subsubsection{Notation}
+
+Let $\Doms$ be a function that maps any clause or formula to the set of domains used within. Specifically, $\Doms(c) \coloneqq \Imm \delta_c$ for any clause $c$, and $\Doms(\phi) \coloneqq \bigcup_{c \in \phi} \Doms(c)$ for any formula $\phi$.
+
+For partial functions $\alpha, \beta\colon A \pfun B$ s.t. $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function s.t. $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$.
+
+For any clause $c = (L, C, \delta_c)$, bijection $\beta\colon \Vars(c) \twoheadrightarrowtail V$ (for some set of variables $V$), and function $\gamma\colon \Doms(c) \to \mathcal{D}$, let $c[\beta, \gamma] = d$ be the clause $c$ with all occurrences of any variable $v \in \Vars(c)$ in $L$ and $C$ replaced with $\beta(v)$ (so $\Vars(d) = V$) and $\delta_d\colon V \to \mathcal{D}$ defined as $\delta_d \coloneqq \gamma \circ \delta_c \circ \beta^{-1}$. In other words, $\delta_d$ is the unique function that makes
 \[
 \begin{tikzcd}
   \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & V = \Vars(d) \ar[d, dashed, "\exists!\delta_d"] \\
   \Doms(c) \ar[r, swap, "\gamma"] & \mathcal{D}
 \end{tikzcd}
 \]
-commute.
+commute. For example, if clause $c_1$ is as in \cref{example:first}, then
+\begin{multline*}
+  c_1[\{\, X \mapsto A, Y \mapsto B, Z \mapsto C \,\}, \{\, a \mapsto b, b \mapsto c \,\}] = \\
+  (\{\, \neg p(A, B), \neg p(A, C) \,\}, \{\, (B, C) \,\}, \{\, A \mapsto b, B \mapsto c, C \mapsto c \,\}).
+\end{multline*}
+
+\subsubsection{Everything Else}
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\Reff$}
@@ -401,10 +423,6 @@ commute.
   }
 \end{algorithm}
 
-The function \texttt{traceAncestors} returns \texttt{null} if domain $d \in \mathcal{D}$ is not an ancestor of domain $e \in \mathcal{D}$. Otherwise, it returns \texttt{true} if the size of $e$ is guaranteed to be strictly smaller than the size of $d$ (i.e., there is domain created by the constraint removal rule on the path from $d$ to $e$) and \texttt{false} if their sizes will be equal at some point during inference.
-
-Notation: For partial functions $\alpha, \beta\colon A \pfun B$ s.t. $\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$, we write $\alpha \cup \beta$ for the unique partial function s.t. $\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and $\alpha \cup \beta|_{\dom(\beta)} = \beta$. TODO: explain $\sqcup$ for both sets and functions.
-
 \paragraph{TODO}
 \begin{itemize}
 \item update the example to not refer to things that don't exist anymore
@@ -422,7 +440,7 @@ The algorithm could be improved in two ways:
 \end{itemize}
 However, it is not clear that this would result in an overall performance improvement, since the number of variables in instances of interest never exceeds three and the identity bijection is typically the right one.
 
-Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Doms(c) \to \Doms(d)$ s.t. the following diagram commutes (and returns \texttt{null} if such a function does not exist):
+Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
 \[
 \begin{tikzcd}
   \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
@@ -430,20 +448,13 @@ Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Dom
   \mathcal{D} \ar[r, swap, "\rho"] & \mathcal{D}.
 \end{tikzcd}
 \]
+commutes (and returns \texttt{null} if such a function does not exist).
 
+TODO: update this example. Fix references.
 \begin{example} \label{example}
-  Let $\phi$ be the formula
-  \begin{align}
-    \forall X \in a. \forall Y \in b. \forall Z \in b. Y \ne Z &\implies \neg p(X, Y) \lor \neg p(X, Z)\label{phi1} \\
-    \forall X \in a. \forall Y \in b. \forall Z \in a. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y).\label{phi2}
-  \end{align}
-  and $\psi$ be the formula
-  \begin{align}
-    \forall X \in a'. \forall Y \in b^\bot. \forall Z \in b^\bot. Z \ne Y &\implies \neg p(X, Y) \lor \neg p(X, Z)\label{psi1} \\
-    \forall X \in a'. \forall Y \in b^\bot. \forall Z \in a'. X \ne Z &\implies \neg p(X, Y) \lor \neg p(Z, Y)\label{psi2}
-  \end{align}
+  Let $\phi$ be the formula from \cref{example:first} and $\psi \coloneqq \phi[\id, \{\, a \mapsto a', b \mapsto b^\bot \,\}]$ (i.e., $\phi$ with both of its domains replaced).
 
-  The relevant domains and the definition of $\pi$ is in \cref{fig:example}. Since $\#\phi = \#\psi$, and the formulas are non-empty, the algorithm proceeds with the for-loops on \cref{line:for1,line:for2,line:generateMaps}. Suppose $c$ in the algorithm refers to \cref{phi1}, and $d$ to \cref{psi1}. Since both clauses have three variables, in the worst case, function \texttt{generateMaps} would have $3!=6$ bijections to check. Suppose the identity bijection is picked first. Then \texttt{constructDomainMap} is called with the following parameters:
+  Since $\#\phi = \#\psi$, and the formulas are non-empty, the algorithm proceeds with the for-loops on \cref{line:for1,line:for2,line:generateMaps}. Suppose $c$ in the algorithm refers to \cref{phi1}, and $d$ to \cref{psi1}. Since both clauses have three variables, in the worst case, function \texttt{generateMaps} would have $3!=6$ bijections to check. Suppose the identity bijection is picked first. Then \texttt{constructDomainMap} is called with the following parameters:
   \begin{itemize}
   \item $V = \{\, X, Y, Z \,\}$,
   \item $\delta_c = \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}$,
@@ -603,23 +614,19 @@ TODO: describe \cref{alg:domainrecursion}.
 
 One is picked as the multiplicative identity.
 
-\section{Other Topics}
-
-\begin{itemize}
-\item new rules that don't create vertices (e.g., duplicate removal, unconditional contradiction detection, etc.)
-\item some notes on halting
-  \begin{itemize}
-  \item Search is infinite. Some rules increase the size of the formula(s), but most reduce it.
-  \item Inference is guaranteed to terminate if at least one domain shrinks by at least one. But note that allowing recursive calls with the same domain sizes (e.g., $f(n) = f(n) + \dots$) could be useful because these problematic terms might cancel out.
-  \item It's impossible for $n \gets n - 1$ and $\texttt{for } n \in \dots$ to combine in a way that results in an infinite loop.
-  \end{itemize}
-\item care should be taken when cloning to preserve the validity of the cache and avoid infinite cycles (we use a separate (node $\to$ node) cache for this)
-\item another change: one rule can return more than one `continuation of the graph'
-\end{itemize}
-
 \section{How to Evaluate an FCG} \label{sec:evaluation}
 
 Along with the three vertex types described above, here are all the other ones. This section is mostly just taken from \cite{DBLP:conf/ijcai/BroeckTMDR11} but with some changes in notation.
+
+\begin{definition}
+  Let $\gr(\cdot; \sigma)$ be the function (parameterised by the domain size function $\size$) that takes a clause $c = (L, C, \delta)$ and returns the number of ways the variables in $c$ can be replaced by elements of their respective domains in a way that satisfies the inequality constraints.\footnote{Note that the literals of the clause have no effect on $\gr$.} Formally, for each variable $v \in \Vars(c)$, let $C_v = \{ w \mid (u, w) \in C \setminus \Vars(c)^2 \text{, }u \ne v \}$ be the set of (explicitly named) constants that $v$ is permitted to be equal to. Then
+  \[
+  \gr(c; \sigma) \coloneqq \left|\left\{\, (e_v)_{v \in \Vars(c)} \in \prod_{v \in \Vars(c)} C_v \sqcup [\sigma(\delta(v)) - |C_v|] \;\middle|\; \right.\right. e_u \ne e_w \text{ for all } (u, w) \in C \cap \Vars(c)^2 \left.\left. \vphantom{\prod_{v \in \Vars(c)}} \,\right\}\right|
+  \]
+  for any clause $c$. (Here, $[n] \coloneqq \{\,1, 2, \dots, n\,\}$ for any non-negative integer $n$.)
+\end{definition}
+
+TODO: how does the algorithm prevent the number in $[\cdot]$ from being negative?
 
 TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and describe each vertex type in a bit more detail.
 
@@ -649,24 +656,24 @@ TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and desc
   \centering
   \begin{tabular}{cccccc}
     \toprule
-    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Complexity} \\
+    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
     Partial & Endo & Class & Best Known & With Circuits & With Graphs \\
     \midrule
-    \rowcolor{lightgray}\cmark/\xmark & \cmark/\xmark & Functions & $\lg m$ & $m$ & $m$ \\
-    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \lg m$ \cite{30049} & ? & ? \\
-    \xmark & \cmark & & $n \lg m$ \cite{30049} & ? & ? \\
+    \rowcolor{gray!10}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
+    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ \cite{30049} & ? & ? \\
+    \xmark & \cmark & & $n \log m$ \cite{30049} & ? & ? \\
     \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $b$ to $a$} \\
     \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
-    \rowcolor{lightgray}\xmark & \xmark & & $\lg m$ & - & $mn$ \\
-    \rowcolor{lightgray}\xmark & \cmark & & $\lg m$ & - & $m^3$ \\
-    \rowcolor{lightgray}\cmark & \xmark & & $\min\{\, m, n \,\}^2$ & - & $n^2$ \\
-    \rowcolor{lightgray}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & - & - \\
-    \xmark & \xmark & \multirow{3}{*}{Bijections} & $\lg m$ & - & $m$ \\
+    \rowcolor{gray!10}\xmark & \xmark & & $\log m$ & - & $mn$ \\
+    \rowcolor{gray!10}\xmark & \cmark & & $\log m$ & - & $m^3$ \\
+    \rowcolor{gray!10}\cmark & \xmark & & $\min\{\, m, n \,\}^2$ & - & $n^2$ \\
+    \rowcolor{gray!10}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & - & - \\
+    \xmark & \xmark & \multirow{3}{*}{Bijections} & $\log m$ & - & $m$ \\
     \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
     \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
     \bottomrule
   \end{tabular}
-  \caption{Here, $m$ is the size of $a$, and $n$ is the size of $b$. All asymptotic complexities are in $\Theta(\cdot)$. Logarithm with base two. This is for unweighted counting. A hyphen means that no solution was found. TODO: add shaded rows. TODO: explain assumptions for the counts to not be zero. TODO: double check. TODO: maybe combine more rows/columns.}
+  \caption{Here, $m$ is the size of $a$, and $n$ is the size of $b$. All asymptotic complexities are in $\Theta(\cdot)$. This is for unweighted counting. A hyphen means that no solution was found. Assuming all arithmetic operations to take constant time. Maybe a better solution could be found with more search. TODO: explain assumptions for the counts to not be zero. TODO: double check. TODO: maybe combine more rows/columns. TODO: transfer the citations to text.}
 \end{table}
 
 \begin{figure}
@@ -675,14 +682,14 @@ TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and desc
     \node (dr) {$\DR_{a \gets a \setminus \{\, x \,\}}$}
     child {node {$\bigvee_{b^\top \subseteq b}$}
       child {node {$\wedge$}
-        child {node {$1_{(\{\, p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\top \,\})}$}}
+        child {node[fill=green!10] {$1_{(\{\, p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\top \,\})}$}}
         child {node {$\wedge$}
-          child {node {$1_{(\{\, \neg p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\bot \,\})}$}}
+          child {node[fill=green!10] {$1_{(\{\, \neg p(x, X) \,\}, \emptyset, \{\, X \mapsto b^\bot \,\})}$}}
           child {node {$\wedge$}
-            child {node {$1_{(\{\, \neg p(X, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto a, Y \mapsto b^\top \,\})}$}}
+            child {node[fill=green!10] {$1_{(\{\, \neg p(X, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto a, Y \mapsto b^\top \,\})}$}}
             child {node {$\CR_{a \mapsto a'}$}
               child {node {$\wedge$}
-                child {node {$\bot_{(\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\})}$}}
+                child {node[fill=red!10] {$\bot_{(\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\})}$}}
                 child {node (ref) {$\Reff_{\{\, a \mapsto a', b \mapsto b^\bot \,\}}$}}
               }}}}}};
     \draw[-latex, bend right] (ref) to (dr);
@@ -693,19 +700,15 @@ TODO: explain that $x, y, z$ refer to vertices, $c$ refers to a clause, and desc
 
 \paragraph{TODO.}
 \begin{itemize}
-\item $b^\bot$ should be part of the notation for counting.
-\item Formulas for partial injections, how to add totality, surjectivity.
 \item Describe \cref{fig:examplefcg} and connect it to the algebraic formula.
 \item Explain the algebraic notation that I'm using here (e.g., that $f$ is always the main function)
 \item Explain the importance of comparing domain sizes to 2. FCGs that compare the size of a domain to an integer can be constructed automatically using compilation rules, although $n$ is upper bounded by the maximum number of variables in any clause of the input formula since there is no rule that would introduce new variables.
-\item Maybe a big table: name, optimal solution and its complexity, best found solution, its depth, its complexity. Also mention that it only takes a few seconds to find these solutions.
-\item Going beyond depth 6 (or sometimes even completing depth 6) is computationally infeasible with the current implementation, but depth at most 5 can be searched within at most a few seconds.
+\item Mention that it only takes a few seconds to find these solutions. Going beyond depth 6 (or sometimes even completing depth 6) is computationally infeasible with the current implementation, but depth at most 5 can be searched within at most a few seconds.
 \item Combine the tikz and the algebraic notation into one, so I don't need to have two versions. But how? Maybe associate a symbol with each type and only to the types that I use?
-\item Partial bijection is the same as partial injection.
 \item the exponential solutions can be computed in quadratic time with dynamic programming!
 \item Can't explain how formulas are translated into (my definition of) clauses without explaining Skolemization, which is out of scope.
 \item Note that in some cases different descriptions of the same problem lead to different solutions (with different complexities).
-\item Maybe we are actually guaranteed that the solution is always polynomial-time.
+\item Maybe we are actually guaranteed that the solution is always polynomial-time. Except... running time could be infinite?
 \end{itemize}
 
 Let $p$ be a predicate of arity two s.t. the first argument is associated with domain $a$, and the second argument is associated with domain $b$ (i.e., $p$ represents a relation between sets $a$ and $b$). Then, to restrict all relations representable by $p$ to just functions from $a$ to $b$, in first-order logic one might write
@@ -753,6 +756,19 @@ to ensure surjectivity or remove \cref{eq:def2} to consider partial functions. L
   \end{align*}
   which works with base cases $f(0, 0) = 1$ and $f(m, 0) = 0$.
 \item 2d partial injections, depth 2. Exactly the same circuit as above but with base case $f(m, 0) = 1$.
+\end{itemize}
+
+\section{Discussion}
+
+\begin{itemize}
+\item new rules that don't create vertices (e.g., duplicate removal, unconditional contradiction detection, etc.)
+\item some notes on halting
+  \begin{itemize}
+  \item Search is infinite. Some rules increase the size of the formula(s), but most reduce it.
+  \item Inference is guaranteed to terminate if at least one domain shrinks by at least one. But note that allowing recursive calls with the same domain sizes (e.g., $f(n) = f(n) + \dots$) could be useful because these problematic terms might cancel out.
+  \item It's impossible for $n \gets n - 1$ and $\texttt{for } n \in \dots$ to combine in a way that results in an infinite loop.
+  \end{itemize}
+\item care should be taken when cloning to preserve the validity of the cache and avoid infinite cycles (we use a separate (node $\to$ node) cache for this)
 \end{itemize}
 
 \section{Conclusions and Future Work}
