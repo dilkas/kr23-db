@@ -111,6 +111,7 @@ In a way, we're dividing the idea of domain recursion between the IDR and the Re
 \item two parts: compilation and inference.
 \item During inference, there is a domain size map $\size\colon \mathcal{D} \to \mathbb{N}_0$.
 \item mention which rules are in $\Gamma$ and which ones are in $\Delta$ (and why tryCache has to be in $\Delta$). TODO: having notation for $\Delta$ and $\Gamma$ isn't that necessary
+\item My formalisation of constraints is more restrictive than the original (e.g., in the thesis).
 \item \textsc{ForcLift}
 \item $\sqcup$ for both sets and functions
 \end{itemize}
@@ -141,13 +142,13 @@ A \emph{formula} is a set of clauses. All variables in a clause are implicitly u
 TODO: Note: we will reuse this several times.
 \begin{example} \label{example:first}
   Let $\phi \coloneqq \{\, c_1, c_2 \,\}$ be a formula, where
-  \[
-  c_1 \coloneqq (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}),
-  \]
+  \begin{equation} \label{phi1}
+    c_1 \coloneqq (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}),
+  \end{equation}
   and
-  \[
-  c_2 \coloneqq (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \{\, X \mapsto a, Y \mapsto b, Z \mapsto a \,\}),
-  \]
+  \begin{equation} \label{phi2}
+    c_2 \coloneqq (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \{\, X \mapsto a, Y \mapsto b, Z \mapsto a \,\}),
+  \end{equation}
   for some predicate $p$, variables $X$, $Y$, $Z$, and domains $a$ and $b$. Then in first-order logic $\phi$ could be read as
   \begin{align*}
     (\forall X \in a. \forall Y \in b. \forall Z \in b. Y \ne Z &\implies \neg p(X, Y) \lor \neg p(X, Z)) \land \\
@@ -425,8 +426,7 @@ commute. For example, if clause $c_1$ is as in \cref{example:first}, then
 
 \paragraph{TODO}
 \begin{itemize}
-\item update the example to not refer to things that don't exist anymore
-\item introduce/describe and \cref{alg:trycache} and describe the cache that's being used.
+\item introduce/describe \cref{alg:trycache} and describe the cache that's being used.
 \item explain why $\rho \cup \gamma$ is possible
 \item explain what the second return statement is about and why a third one is not necessary
 \item explain the yield keyword
@@ -441,20 +441,18 @@ The algorithm could be improved in two ways:
 However, it is not clear that this would result in an overall performance improvement, since the number of variables in instances of interest never exceeds three and the identity bijection is typically the right one.
 
 Diagramatically, \texttt{constructDomainMap} attempts to find $\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
-\[
+\begin{equation} \label{eq:commute}
 \begin{tikzcd}
   \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
   \Doms(c) \ar[r, dashed, "\gamma"] \ar[d, hookrightarrow] & \Doms(d) \ar[d, hookrightarrow] \\
   \mathcal{D} \ar[r, swap, "\rho"] & \mathcal{D}.
 \end{tikzcd}
-\]
+\end{equation}
 commutes (and returns \texttt{null} if such a function does not exist).
 
 TODO: update this example. Fix references.
 \begin{example} \label{example}
-  Let $\phi$ be the formula from \cref{example:first} and $\psi \coloneqq \phi[\id, \{\, a \mapsto a', b \mapsto b^\bot \,\}]$ (i.e., $\phi$ with both of its domains replaced).
-
-  Since $\#\phi = \#\psi$, and the formulas are non-empty, the algorithm proceeds with the for-loops on \cref{line:for1,line:for2,line:generateMaps}. Suppose $c$ in the algorithm refers to \cref{phi1}, and $d$ to \cref{psi1}. Since both clauses have three variables, in the worst case, function \texttt{generateMaps} would have $3!=6$ bijections to check. Suppose the identity bijection is picked first. Then \texttt{constructDomainMap} is called with the following parameters:
+  Let $\phi$ be the formula from \cref{example:first} and $\psi \coloneqq \phi[\id, \{\, a \mapsto a', b \mapsto b^\bot \,\}]$ (i.e., $\phi$ with both of its domains replaced). Since $\#\phi = \#\psi$, and both formulas are non-empty, the algorithm proceeds with the for-loops on \cref{line:for1,line:for2,line:generateMaps}. Suppose $c$ in the algorithm refers to \cref{phi1}, and $d$ to \cref{psi1}. Since both clauses have three variables, in the worst case, function \texttt{generateMaps} would have $3!=6$ bijections to check. Suppose the identity bijection is picked first. Then \texttt{constructDomainMap} is called with the following parameters:
   \begin{itemize}
   \item $V = \{\, X, Y, Z \,\}$,
   \item $\delta_c = \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}$,
@@ -474,7 +472,7 @@ TODO: update this example. Fix references.
   \item $\beta = \{\, X \mapsto X, Y \mapsto Y, Z \mapsto Z \,\}$,
   \item $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$.
   \end{itemize}
-  Since $\beta$ and $\rho$ `commute' (TODO: as in the diagram above), and there are no new domains in $\Doms(c)$ and $\Doms(d)$, $\gamma$ exists and is equal to $\rho$. Again, the returned pair $(\beta, \gamma)$ satisfies $c[\beta, \gamma] = d$. This $\gamma$ passes the \texttt{traceAncestors} checks exactly the same way as the one before, and \cref{line:recursion} calls \texttt{identifyRecursion($\emptyset$, $\emptyset$, $\rho$, true)}, which immediately returns $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$ as the final answer. This means that one can indeed use an FCG for $\WMC(\phi)$ to compute $\WMC(\psi)$ by replacing every mention of $a$ with $a'$ and every mention of $b$ with $b^\bot$.
+  Since $\beta$ and $\rho$ commute (as in \cref{eq:commute}), and there are no new domains in $\Doms(c)$ and $\Doms(d)$, $\gamma$ exists and is equal to $\rho$. Again, the returned pair $(\beta, \gamma)$ satisfies $c[\beta, \gamma] = d$. \Cref{line:recursion} calls \texttt{identifyRecursion($\emptyset$, $\emptyset$, $\rho$, true)}, which immediately returns $\rho = \{\, a \mapsto a', b \mapsto b^\bot \,\}$ as the final answer. This means that one can indeed use an FCG for $\WMC(\phi)$ to compute $\WMC(\psi)$ by replacing every mention of $a$ with $a'$ and every mention of $b$ with $b^\bot$.
 \end{example}
 
 \subsubsection{Evaluation}
