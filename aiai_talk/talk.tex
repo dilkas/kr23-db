@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{mathtools}
 \usepackage{tikz}
+\usepackage{complexity}
 
 \usetheme{CambridgeUS}
 
@@ -12,9 +13,13 @@
 \usetikzlibrary{arrows}
 \usetikzlibrary{arrows.meta}
 \usetikzlibrary{positioning}
+\usetikzlibrary{overlay-beamer-styles}
 
 \beamertemplatenavigationsymbolsempty
 \DeclareRobustCommand{\stirling}{\genfrac\{\}{0pt}{}}
+
+\definecolor{color1}{HTML}{1B9E77}
+\definecolor{color2}{HTML}{D95F02}
 
 \author[Paulius Dilkas]{\textbf{Paulius Dilkas}, Vaishak Belle}
 \title[Recursive Solutions to FOMC]{Recursive Solutions to First-Order Model Counting}
@@ -25,10 +30,12 @@
 
 \maketitle
 
+\section{A Motivating Example}
+
 \begin{frame}{Some Elementary Counting}
-  \begin{block}{A Counting Problem}
+  \begin{exampleblock}{A Counting Problem}
     Suppose we were meeting in person, the room had \structure{$n$} seats, and there were \structure{$m \le n$} attendees. How many ways would there be to seat everyone?
-  \end{block}
+  \end{exampleblock}
 
   \pause
   More explicitly, we assume that:
@@ -87,10 +94,13 @@
   \item Thus, SWFOMC can also be used for efficient \alert{probabilistic inference} in relational models.
   \item None of the (implemented) (SW)FOMC algorithms are able to count, e.g., \alert{injective} and \alert{bijective} functions.
   \end{itemize}
+  \begin{block}{Claim}
+    This shortcoming can be addressed via support for (almost arbitrary) \alert{recursive functions}.
+  \end{block}
 \end{frame}
 
-% TODO: this can be fixed via recursion. Add a numerical example, show its complexity.
-\begin{frame}{Recursion to the Rescue!}
+\begin{frame}{Back to Our Example}
+  For instance, the following function counts injections
   \[
   f(m, n) =
   \begin{cases}
@@ -99,9 +109,312 @@
     f(m, n-1) + mf(m-1, n-1) & \text{otherwise.}
   \end{cases}
   \]
+  \pause
   \begin{itemize}
-  \item Optimal time complexity to compute \structure{$n^{\underline{m}}$} is \structure{$\Theta(\log m)$}
+  \item \structure{$f$} can be computed in \structure{$\Theta(mn)$} time (via dynamic programming).
+  \item Optimal time complexity to compute \structure{$n^{\underline{m}}$} is \structure{$\Theta(\log m)$}.
+  \item But \structure{$\Theta(mn)$} is still much better than solving an equivalent \alert{$\#\P$-complete} problem in propositional logic.
+  \item The rest of this talk is about how such functions can be found automatically.
   \end{itemize}
+\end{frame}
+
+\section{Graphs and Their Role in Knowledge Compilation}
+
+\begin{frame}{First-Order Knowledge Compilation}
+  \begin{columns}
+    \begin{column}{0.25\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node[fill=red!50,fill on=<2>] (dr) {}
+        child {node {}
+          child {node {}
+            child {node {}}
+            child {node {}
+              child {node {}}
+              child {node {}
+                child {node {}}
+                child {node[fill=red!50,fill on=<2>] {}
+                  child {node {}
+                    child {node {}}
+                    child {node[fill=red!50,fill on=<2>] (ref) {}}
+        }}}}}};
+        \draw[-latex, bend right,alt=<2>{red}{black}] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.75\textwidth}
+      \begin{block}{Workflow Before}
+        \begin{enumerate}
+        \item Compile the formula to a \alert{circuit}
+        \item Evaluate to get the answer
+        \end{enumerate}
+      \end{block}
+      \pause
+      \begin{block}{Workflow After}
+        \begin{enumerate}
+        \item Compile the formula to a \alert{graph}
+        \item Extract the definitions of functions
+        \item Simplify
+        \item Supplement with \alert{base cases}
+        \item Evaluate to get the answer
+        \end{enumerate}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+% Only Step 1 is fully automated at this point. The other steps are executed by hand.
+% Two parts: compilation and inference/evaluation.
+
+\begin{frame}{More Formally...}
+  \begin{definition}
+    A \alert{first-order deterministic decomposable negation normal form computational graph} (FCG) is a
+    \begin{itemize}
+    \item directed graph
+    \item (which is weakly connected)
+    \item with a single source,
+    \item labelled vertices,
+    \item and ordered outgoing edges.
+    \end{itemize}
+  \end{definition}
+\end{frame}
+
+\begin{frame}{How to Interpret an FCG}
+  \begin{columns}
+    \begin{column}{0.25\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node[fill=red!50,fill on=<2>] (dr) {}
+        child {node[fill=red!50,fill on=<3>] {}
+          child {node[fill=red!50, fill on=<4>] {}
+            child {node[fill=red!50, fill on=<5>] {}}
+            child {node[fill=red!50, fill on=<6>] {}
+              child {node[fill=red!50, fill on=<7>] {}}
+              child {node[fill=red!50, fill on=<8>] {}
+                child {node[fill=red!50, fill on=<9>] {}}
+                child {node[fill=red!50, fill on=<10>] {}
+                  child {node[fill=red!50, fill on=<11>] {}
+                    child {node[fill=red!50, fill on=<12>] {}}
+                    child {node[fill=red!50, fill on=<13>] (ref) {}}
+        }}}}}};
+        \draw[-latex, bend right] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.75\textwidth}
+      \begin{align*}
+        f(m, n) &= \onslide<3->{\sum_{l=0}^m \binom{m}{l}} \onslide<5->{1} \onslide<4->{\times} \onslide<7->{1} \onslide<6->{\times} \onslide<9->{1} \onslide<8->{\times} \onslide<12->{[l<2]} \onslide<11->{\times} \onslide<13->{f(m-l, n-1)}\\
+        \onslide<14>{&= f(m, n-1) + mf(m-1, n-1)}
+      \end{align*}
+      \onslide<12>{
+        \[
+          [\phi] =
+          \begin{cases}
+            1 & \text{if } \phi \\
+            0 & \text{if } \neg\phi
+          \end{cases}
+          \]
+      }
+    \end{column}
+  \end{columns}
+\end{frame} % Things get more interesting if you do some computations before encountering a cycle or if you have several cycles.
+
+%% \section{Compilation: How to Construct an FCG}
+\section{Compilation: How to Construct an FCG}
+
+\begin{frame}{Compilation Rules}
+  \begin{definition}
+    A \alert{(compilation) rule} is a function that takes a \alert{formula} and returns a set of \structure{$(G, L)$} pairs, where
+    \begin{itemize}
+    \item \structure{$G$} is a (potentially \texttt{null}) FCG,
+    \item and \structure{$L$} is a list of formulas.
+    \end{itemize}
+  \end{definition}
+\end{frame}
+
+\begin{frame}{Example Rule: Independence}
+  Input formula:
+  \begin{gather}
+    ({\color{color1} \forall x, y \in L. x=y}) \land \label{eq:1} \tag{{\color{color1} 1}} \\
+    ({\color{color2} \forall x \in M. \forall y, z \in N. P(x, y) \land P(x, z) \Rightarrow y=z}) \land \label{eq:2} \tag{{\color{color2} 2}} \\
+    ({\color{color2} \forall w, x \in M. \forall y \in N. P(w, y) \land P(x, y) \Rightarrow w=x}) \label{eq:3} \tag{{\color{color2} 3}}
+  \end{gather}
+  \pause
+  Only one \structure{(G, L)} pair:
+  \[
+  G = 
+  \begin{tikzpicture}[edge from parent/.style={draw,-latex},baseline=(current bounding box.center)]
+    \node[draw,circle] {$\land$}
+    child {node {\color{color1} $\star$}}
+    child {node {\color{color2} $\star$}}
+    ;
+  \end{tikzpicture},
+  \qquad
+  L = \langle {\color{color1} \eqref{eq:1}}, {\color{color2} \eqref{eq:2} \land \eqref{eq:3}} \rangle
+  \]
+  Later, both \structure{$G$} and \structure{$L$} are incorporated into a larger \alert{search state}.
+\end{frame}
+% stars mark edges to nowhere and they are associated with the formulas in L via a certain order
+
+\begin{frame}{New Rule 1: (Generalised) Domain Recursion}
+  \begin{columns}
+    \begin{column}{0.20\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node[fill=red!50] (dr) {}
+        child {node {}
+          child {node {}
+            child {node {}}
+            child {node {}
+              child {node {}}
+              child {node {}
+                child {node {}}
+                child {node {}
+                  child {node {}
+                    child {node {}}
+                    child {node (ref) {}}
+        }}}}}};
+        \draw[-latex, bend right] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.8\textwidth}
+      \begin{example}
+        Input formula:
+        \[
+        \forall x \in M. \forall y, z \in N. y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z)
+        \]
+        Output formula (with a new constant \structure{$c \in M$}):
+        \begin{gather*}
+          \forall y, z \in N. y \ne z \Rightarrow \neg P(\alert{c}, y) \lor \neg P(\alert{c}, z) \\
+          \forall x \in M. \forall y, z \in N. \alert{x \ne c} \land y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z)
+        \end{gather*}
+        %% Output FCG:
+        %% \begin{tikzpicture}[edge from parent/.style={draw,-latex}]
+        %%   \node[draw,circle] {$\textsc{DR}$}
+        %%   child {node {$\star$}}
+        %%   ;
+        %% \end{tikzpicture}
+        Here, domain recursion is applied to domain \structure{$M$}. It could similarly be applied to \structure{$N$} as well.
+      \end{example}
+    \end{column}
+  \end{columns}
+\end{frame}
+% We're still creating a vertex in a graph with one outgoing edge.
+
+\begin{frame}{New Rule 2: Constraint Removal}
+  \begin{columns}
+    \begin{column}{0.20\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node (dr) {}
+        child {node {}
+          child {node {}
+            child {node {}}
+            child {node {}
+              child {node {}}
+              child {node {}
+                child {node {}}
+                child {node[fill=red!50] {}
+                  child {node {}
+                    child {node {}}
+                    child {node (ref) {}}
+        }}}}}};
+        \draw[-latex, bend right] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.8\textwidth}
+      \begin{example}
+        Input formula (with a constant \structure{$c \in M$}):
+        \begin{gather*}
+        \forall x \in \alert{M}. \forall y, z \in N. \alert{x \ne c} \land y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z) \\
+        \begin{multlined}
+          \forall w,x \in \alert{M}. \forall y \in N. \alert{w \ne c} \land \alert{x \ne c} \land w \ne x \Rightarrow \\
+          \neg P(w, y) \lor \neg P(x, y)
+        \end{multlined}
+        \end{gather*}
+        Output formula (with a new domain \structure{$M' \coloneqq M \setminus \{\, c \,\}$}):
+        \begin{gather*}
+          \forall x \in \alert{M'}. \forall y, z \in N. y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z) \\
+          \forall w,x \in \alert{M'}. \forall y \in N. w \ne x \Rightarrow \neg P(w, y) \lor \neg P(x, y)
+        \end{gather*}
+      \end{example}
+    \end{column}
+  \end{columns}
+\end{frame}
+% Requirement: all variables from M are != c.
+% Necessary because later we want to compare formulas and identify that they are isomorphic up to domains.
+
+\begin{frame}{New Rule 3: Identifying Possibilities for Recursion}
+  \begin{columns}
+    \begin{column}{0.25\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node (dr) {}
+        child {node {}
+          child {node {}
+            child {node {}}
+            child {node {}
+              child {node {}}
+              child {node {}
+                child {node {}}
+                child {node {}
+                  child {node {}
+                    child {node {}}
+                    child {node[fill=red!50] (ref) {}}
+        }}}}}};
+        \draw[-latex, bend right, red] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.75\textwidth}
+      \begin{block}{Goal}
+      Check if the input formula is isomorphic (up to domains) to a previously encountered formula.
+      \end{block}
+      \begin{block}{Rough Outline}
+        \begin{enumerate}
+        \item Consider pairs of `similar' clauses.
+        \item Consider bijections between their sets of variables.
+        \item Extend each such bijection to a map between sets of domains.
+        \item If the bijection makes the clauses equal, and the domain map is compatible with previous domain maps, move on to another pair of clauses.
+        \end{enumerate}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%% \begin{frame}{Compilation as Search}
+%%   \begin{definition}
+%%     A \alert{(search) state} is a tuple \structure{$(G, C, L)$}, where:
+%%     \begin{itemize}
+%%     \item \structure{$G$} is an FCG (or \texttt{null}),
+%%     \item \structure{$C$} is a compilation cache that maps integers to sets of pairs $(\phi, v)$, where $\phi$ is a formula, and $v$ is a vertex of $G$ (which is used to identify opportunities for recursion),
+%%     \item and \structure{$L$} is a list of formulas (that are yet to be compiled). (Note that the order is crucial!)
+%%     \end{itemize}
+%%   \end{definition}
+%%   The search algorithm combines greedy and breadth-first search:
+%% \end{frame}
+
+\section{Summary}
+
+\begin{frame}{Summary \& Future Work}
+  \begin{block}{Summary}
+    The circuits hitherto used for FOMC become more powerful with:
+    \begin{itemize}
+    \item cycles,
+    \item generalised domain recursion,
+    \item and some more new compilation rules that support domain recursion.
+    \end{itemize}
+  \end{block}
+  \begin{block}{Future Work}
+    \begin{itemize}
+    \item Automate:
+      \begin{itemize}
+      \item extracting and simplifying the definitions of functions,
+      \item finding all base cases.
+      \end{itemize}
+    \item Open questions:
+      \begin{itemize}
+      \item What kind of \alert{sequences} are computable in this way?
+      \item Would using a \alert{different logic} extend the capabilities of FOMC further?
+      \end{itemize}
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \end{document}

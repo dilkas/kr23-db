@@ -116,6 +116,8 @@ In a way, we're dividing the idea of domain recursion between the IDR and the Re
 \item $\sqcup$ for both sets and functions
 \end{itemize}
 
+TODO: reorder Section 6 to introduce DR before CR before Ref.
+
 \paragraph{Notation.}
 \begin{itemize}
 \item We write $\to$ for functions, $\pfun$ for partial functions, $\twoheadrightarrowtail$ for bijections, and $\hookrightarrow$ for set inclusion. Let $\id$ denote the identity function (on any domain). For any function $f$, let $\Imm f$ be the image of $f$.
@@ -190,7 +192,9 @@ As in previous work \cite{DBLP:conf/ijcai/BroeckTMDR11}, to describe individual 
 \end{definition}
 
 \begin{definition}
-  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas. TODO: add an example showing that it's usually an FCG with one vertex and a bunch of $\star$'s marking a fixed number of outgoing edges.
+  A (compilation) \emph{rule} is a function that takes a formula and returns a set of $(G, L)$ pairs, where $G$ is a (potentially \texttt{null}) FCG, and $L$ is a list of formulas.
+
+  TODO: Take the example from the AIAI talk.
 \end{definition}
 
 We assume that if there is a pair $(\texttt{null}, L)$ in the set returned by a rule, then $|L| = 1$, i.e., the rule transformed the formula without creating any vertices.
