@@ -84,6 +84,8 @@
 
 \section{Introduction}
 
+\paragraph{Abstract.} First-order model counting (FOMC) is a #P-complete computational problem that asks to count the models of a sentence in first-order logic. Despite being around for more than a decade, practical FOMC algorithms are still unable to compute functions as simple as a factorial. We argue that the capabilities of FOMC algorithms are severely limited by their inability to express arbitrary recursive computations. To enable arbitrary recursion, we relax the restrictions that typically accompany domain recursion and generalise circuits used to express a solution to an FOMC problem to graphs that may contain cycles. To this end, we enhance the most well-established (weighted) FOMC algorithm ForcLift with new compilation rules and an algorithm to check whether a recursive call is feasible. These improvements allow us to find efficient solutions to counting fundamental structures such as injections and bijections.
+
 \begin{figure}[t]
   \centering
   \begin{tikzpicture}[triangle/.style = {regular polygon, regular polygon sides=3}]
@@ -101,6 +103,44 @@
 \end{figure}
 
 In a way, we're dividing the idea of domain recursion between the IDR and the Ref nodes, thus also generalising it. [TODO: mention \cref{fig:idea}.]
+
+\section{First-Order Logic}
+
+In this section, we describe a variation of function-free first-order logic with equality. For a more complete exposition of first-order logic, see the book by \cite{DBLP:books/daglib/0023546}.
+
+In first-order logic, an \emph{atom} (i.e., an atomic formula) is either $t_1 = t_2$ or $P(t_1, \dots, t_n)$ for some predicate $P$ and terms $(t_i)_{i=1}^n$. Here, $n \in \mathbb{N}_0$ is the \emph{arity} of $P$. A \emph{term} is either a constant or a variable (we also call terms \emph{arguments}). An atom is \emph{ground} if all of its terms are constants.
+
+A \emph{formula} is a well-formed expression that connects atoms using the previously described logical operators as well as universal ($\forall x \in D. \phi$) and existential ($\exists x \in D. \phi$) quantifiers. Here, $x$ is a variable, $D$ is a domain, and $\phi$ is a formula. A variable occurrence is \emph{bound} if it is within the scope of a quantifier for that variable, otherwise it is \emph{free}. A formula is a \emph{sentence} if all of its variable occurrences are bound.\footnote{In the rest of this chapter, all formulas in first-order logic are assumed to be sentences.}
+
+\subsection{How to Interpret a Sentence}
+
+Let $\phi$ be a sentence. Since each variable in $\phi$ is introduced by a quantifier, each variable is linked to a unique domain. As is done implicitly in previous work \citep{DBLP:phd/basesearch/VandenBroeck13}, we make the following assumption.
+
+\begin{assumption}
+  Each constant can be mapped to a domain, and each $n$-ary predicate can be mapped to a sequence of $n$ domains such that:
+  \begin{enumerate}
+  \item ...
+  \item ...
+  \end{enumerate}
+\end{assumption}
+
+First, we assume that each $n$-ary predicate can be associated with a sequence of $n$ domains, one for each of its terms. Second, we assume that each constant can be similarly linked to a unique domain. Third, we assume that equality is only checked between terms that have the same domain.
+
+TODO: describe this more formally. Maybe just two rules: whenever two terms are compared, they have the same domain, the domain of a term is always the same as the $k$-th domain of the predicate.
+
+\begin{itemize}
+\item Interpretation
+  \begin{itemize}
+  \item domains as sets
+  \item constants as specific elements of domains (different constant implies different element. If the domain is not big enough, then the formula is unsat.)
+  \item variables (indicated during quantification)
+  \item predicates are interpreted as relations
+  \end{itemize}
+\item models are defined very differently: all combinations of relations that satisfy the sentence.
+\item (multiple) (finite) domains (of discourse). This makes, e.g., satisfiability decidable and a FO formula can always be expanded to a propositional one.
+\end{itemize}
+
+more on first-order logic: \citep{DBLP:books/daglib/0023546}. The MLN paper also has a description
 
 \section{Preliminaries}
 
