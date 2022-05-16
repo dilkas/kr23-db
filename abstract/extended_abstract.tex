@@ -1,41 +1,42 @@
-\documentclass{article}
+\documentclass[runningheads]{llncs}
+\usepackage[T1]{fontenc}
+
 \usepackage[capitalise]{cleveref}
-\usepackage[UKenglish]{babel}
-\usepackage[UKenglish]{isodate}
-\usepackage[utf8]{inputenc}
 \usepackage{microtype}
 \usepackage{tikz}
 \usepackage{amsfonts}
-\usepackage[affil-it]{authblk}
 
 \usetikzlibrary{arrows}
 \usetikzlibrary{arrows.meta}
 \usetikzlibrary{shapes}
 
-\usepackage{natbib}
-\bibliographystyle{abbrvnat}
+\begin{document}
 
 \title{Recursive Solutions to First-Order Model Counting}
-\author{Paulius Dilkas}
-\author{Vaishak Belle}
-\affil{University of Edinburgh, Edinburgh, UK}
+\author{Paulius Dilkas \and Vaishak Belle}
+\authorrunning{P. Dilkas and V. Belle}
+\institute{University of Edinburgh, Edinburgh, UK\\
+  \email{p.dilkas@sms.ed.ac.uk}, \email{vbelle@ed.ac.uk}}
 
-\begin{document}
 \maketitle
+
+\begin{abstract}
+  First-order model counting (FOMC) is a computational problem that asks to count the models of a sentence in first-order logic. Despite being around for more than a decade, practical FOMC algorithms are still unable to compute functions as simple as a factorial. We argue that the capabilities of FOMC algorithms are severely limited by their inability to express arbitrary recursive computations. To enable arbitrary recursion, we relax the restrictions that typically accompany domain recursion and generalise circuits used to express a solution to an FOMC problem to graphs that may contain cycles. To this end, we enhance the most well-established (weighted) FOMC algorithm ForcLift with new compilation rules and an algorithm to check whether a recursive call is feasible. These improvements allow us to find efficient solutions to counting fundamental structures such as injections and bijections.
+\end{abstract}
 
 % Definition and scope of the topic: FOMC
 
-\emph{First-order model counting} (FOMC) is the problem of computing the number of models of a sentence in first-order logic given the size(s) of its domain(s) \citep{DBLP:conf/ijcai/BroeckTMDR11}. The main application of FOMC (or, rather, its \emph{weighted} variant WFOMC) is in probabilistic inference, particularly for statistical relational models such as Markov logic networks that define probabilities over sets of objects and relations thereof \citep{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16}.
+\emph{First-order model counting} (FOMC) is the problem of computing the number of models of a sentence in first-order logic given the size(s) of its domain(s) \cite{DBLP:conf/ijcai/BroeckTMDR11}. The main application of FOMC (or, rather, its \emph{weighted} variant WFOMC) is in probabilistic inference, particularly for statistical relational models such as Markov logic networks that define probabilities over sets of objects and relations thereof \cite{DBLP:journals/cacm/GogateD16,DBLP:conf/ijcai/BroeckTMDR11}.
 
-Over slightly more than a decade, research on (W)FOMC advanced on both theoretical and empirical fronts. Several WFOMC algorithms such as ForcLift \citep{DBLP:conf/ijcai/BroeckTMDR11}, probabilistic theorem proving \citep{DBLP:journals/cacm/GogateD16}, and L2C \citep{DBLP:conf/kr/KazemiP16} were developed. More and more classes of formulas were shown to be \emph{liftable}, i.e., solvable in polynomial time with respect to the size(s) of the domain(s) \citep{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}. Much of the researchers' attention was devoted to developing efficient solutions to formulas with up to two variables \citep{DBLP:conf/uai/BremenK21,DBLP:journals/corr/abs-2110-05992}.
+Over slightly more than a decade, research on (W)FOMC advanced on both theoretical and empirical fronts. Several WFOMC algorithms such as ForcLift \cite{DBLP:conf/ijcai/BroeckTMDR11}, probabilistic theorem proving \cite{DBLP:journals/cacm/GogateD16}, and L2C \cite{DBLP:conf/kr/KazemiP16} were developed. More and more classes of formulas were shown to be \emph{liftable}, i.e., solvable in polynomial time with respect to the size(s) of the domain(s) \cite{DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21,DBLP:conf/kr/BremenK21}. Much of the researchers' attention was devoted to developing efficient solutions to formulas with up to two variables \cite{DBLP:journals/corr/abs-2110-05992,DBLP:conf/uai/BremenK21}.
 
 % The problem you are to focus on the topic: recursion
 
-However, none of the publicly available (W)FOMC algorithms can efficiently compute functions as simple as a factorial.\footnote{The problem of computing the factorial can be described using two variables and counting quantifiers, so it belongs to a fragment of first-order logic which is known to be liftable \citep{DBLP:journals/jair/Kuzelka21}.} We claim that this shortcoming is due to the inability of these algorithms to construct recursive solutions.
+However, none of the publicly available (W)FOMC algorithms can efficiently compute functions as simple as a factorial.\footnote{The problem of computing the factorial can be described using two variables and counting quantifiers, so it belongs to a fragment of first-order logic which is known to be liftable \cite{DBLP:journals/jair/Kuzelka21}.} We claim that this shortcoming is due to the inability of these algorithms to construct recursive solutions.
 
 % If the problem was faced before, describe the state of the art.
 
-The topic of recursion in the context of WFOMC has been studied before but in very limited ways. \Citet{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data which is then used to conjecture recurrence relations that explain that data. \Citet{DBLP:conf/nips/Broeck11} introduced the idea of \emph{domain recursion}. Intuitively, domain recursion partitions a domain of size $n$ into a single explicitly named constant and the remaining domain of size $n-1$. However, many stringent conditions are enforced to ensure that the search for a tractable solution always terminates.
+The topic of recursion in the context of WFOMC has been studied before but in very limited ways. Barv{\'{\i}}nek et al.~\cite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data which is then used to conjecture recurrence relations that explain that data. Van den Broeck~\cite{DBLP:conf/nips/Broeck11} introduced the idea of \emph{domain recursion}. Intuitively, domain recursion partitions a domain of size $n$ into a single explicitly named constant and the remaining domain of size $n-1$. However, many stringent conditions are enforced to ensure that the search for a tractable solution always terminates.
 
 %1) But their code only conjectures stuff on data. My conjectures are guaranteed always true.
 %2) everything has to be expressible in $\mathbf{C}^2$, i.e., the two-variable fragment of first-order logic with counting quantifiers on one domain.
@@ -59,7 +60,7 @@ The topic of recursion in the context of WFOMC has been studied before but in ve
   \label{fig:idea}
 \end{figure}
 
-In this work, we show how new tractable solutions can be found by dispensing with these restrictions. With additional compilation rules and an algorithm for checking whether a `recursive call' is possible, ForcLift \citep{DBLP:conf/ijcai/BroeckTMDR11} can construct recursive functions that efficiently solve counting problems that used to be beyond its reach. The main conceptual difference from the original algorithm is that the input formula is now compiled to a labelled directed graph rather than a circuit (i.e., cycles are allowed). This idea is illustrated in \cref{fig:idea}. Suppose the original formula $\phi$ depended on a domain of size $n \in \mathbb{N}$. Domain recursion transforms $\phi$ into a different formula $\psi$ that depends on a domain of size $n-1$. After some number of subsequent transformations, the algorithm identifies that a solution to $\psi$ can be constructed in part by finding a solution to a version of $\phi$ where the domain of size $n$ is replaced by a domain of size $n-1$. Recognising $\phi$ from before, we can add a cycle-forming edge to the graph, which can be interpreted as function $f$ relying on $f(n-1)$ to compute $f(n)$.
+In this work, we show how new tractable solutions can be found by dispensing with these restrictions. With additional compilation rules and an algorithm for checking whether a `recursive call' is possible, ForcLift \cite{DBLP:conf/ijcai/BroeckTMDR11} can construct recursive functions that efficiently solve counting problems that used to be beyond its reach. The main conceptual difference from the original algorithm is that the input formula is now compiled to a labelled directed graph rather than a circuit (i.e., cycles are allowed). This idea is illustrated in \cref{fig:idea}. Suppose the original formula $\phi$ depended on a domain of size $n \in \mathbb{N}$. Domain recursion transforms $\phi$ into a different formula $\psi$ that depends on a domain of size $n-1$. After some number of subsequent transformations, the algorithm identifies that a solution to $\psi$ can be constructed in part by finding a solution to a version of $\phi$ where the domain of size $n$ is replaced by a domain of size $n-1$. Recognising $\phi$ from before, we can add a cycle-forming edge to the graph, which can be interpreted as function $f$ relying on $f(n-1)$ to compute $f(n)$.
 
 %% \begin{itemize}
 %% \item one can then extract the (potentially recursive) definitions of functions from the graph
@@ -110,6 +111,7 @@ Further work is necessary to fully automate this new way of computing the (W)FOM
 %%   \end{itemize}
 %% \end{itemize}
 
+\bibliographystyle{splncs04}
 \bibliography{extended_abstract}
 
 \end{document}
