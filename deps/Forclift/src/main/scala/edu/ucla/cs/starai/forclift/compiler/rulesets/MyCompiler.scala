@@ -84,7 +84,6 @@ abstract class MyCompiler(
       for ((variable, terms) <- originalClause.constrs.ineqConstrs) {
         val originalDomain = originalClause.constrs.domainFor(variable)
 
-        //        if (!originalDomain.isCausedByConstraintRemoval) {
         for (term <- terms) {
           term match {
             case constant: Constant => {
@@ -171,7 +170,7 @@ abstract class MyCompiler(
 
   override def nonGreedyRules: List[InferenceRule] =
     List(
-      tryCache,
+      tryCache, // revamped
       tryGroundDecomposition, // +1
       tryInclusionExclusion, // +2
       tryShatter, // 0
