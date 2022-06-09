@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=makeyap
-Exec=makeyap
-Terminal=false
-Type=Application
-Categories=GTK;
-StartupNotify=true

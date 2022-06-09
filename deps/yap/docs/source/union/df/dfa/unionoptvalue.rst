@@ -1,4 +1,0 @@
-Union optvalue
-==============
-
-.. doxygenunion:: optvalue

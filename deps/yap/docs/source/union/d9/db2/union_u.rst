@@ -1,4 +1,0 @@
-Union U
-=======
-
-.. doxygenunion:: U

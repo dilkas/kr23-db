@@ -1,4 +1,0 @@
-Union AI
-========
-
-.. doxygenunion:: AI
