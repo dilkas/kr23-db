@@ -138,6 +138,37 @@ def two_dimensional_partial_injections(m, n):
     ) + m * two_dimensional_partial_injections(m - 1, n - 1)
 
 
+def my_one_dimensional_surjections(n):
+    return sum((-1) ** k * math.comb(n, k) * (n - k) ** n for k in range(n + 1))
+
+
+def forclift_one_dimensional_surjections(n):
+    return sum(
+        math.comb(n, m)
+        * (-1) ** (n - m)
+        * sum(math.comb(n, l) * (-1) ** (n - l) * (l + 1) ** m for l in range(n + 1))
+        for m in range(n + 1)
+    )
+
+
+def crane_one_dimensional_surjections(n):
+    return sum(
+        math.comb(n, m)
+        * (-1) ** (n - m)
+        * sum(
+            math.comb(n, l) * (-1) ** (n - l) * crane_one_dimensional_surjections2(l, m)
+            for l in range(n + 1)
+        )
+        for m in range(n + 1)
+    )
+
+
+def crane_one_dimensional_surjections2(l, m):
+    if m == 0:
+        return 1
+    return (l + 1) * crane_one_dimensional_surjections2(l, m - 1)
+
+
 # ================================= MISC =================================
 
 
@@ -197,6 +228,14 @@ def forclift2_injections(m, n):
     return forclift2_injections(m - 1, n) + n * forclift2_injections(m - 1, n - 1)
 
 
+def partial_injections_final(m, n):
+    if m == 0:
+        return 1
+    return partial_injections_final(m - 1, n) + n * partial_injections_final(
+        m - 1, n - 1
+    )
+
+
 MAX = 5
 
 # for m in range(1, MAX):
@@ -214,7 +253,16 @@ for m in range(0, MAX):
             "f({}, {}) = {} ({})".format(
                 m,
                 n,
-                two_dimensional_partial_injections(m, n),
+                partial_injections_final(m, n),
                 my_partial_injections(m, n),
             )
         )
+
+# for n in range(0, MAX):
+#     print(
+#         "f({}) = {} ({})".format(
+#             n,
+#             crane_one_dimensional_surjections(n),
+#             my_one_dimensional_surjections(n),
+#         )
+#     )
