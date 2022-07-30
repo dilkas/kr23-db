@@ -125,6 +125,7 @@
 \newcommand{\SRU}{$\mathsf{S}^{2}\mathsf{RU}$}
 \newcommand{\Uone}{$\mathsf{U}_{1}$}
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
+\newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\GDR}{\textsc{GDR}}
 \DeclareMathOperator{\IE}{\textsc{IE}}
@@ -211,8 +212,11 @@
 of models of a sentence in first-order logic (FOL) given the size(s) of its
 domain(s) \citep{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
 (WFOMC) extends FOMC with (pairs of) weights on predicates and asks for a
-weighted sum across all models instead. WFOMC emerged as the dominant approach
-to \emph{lifted (probabilistic) inference}. Lifted inference techniques exploit
+weighted sum across all models instead. By fixing the sizes of the domains, a
+WFOMC instance can be rewritten as a WMC instance---in fact, the WFOMC algorithm
+by \citet{DBLP:conf/ijcai/BroeckTMDR11} can do so when it is unable to solve the
+instance in a lifted manner. WFOMC emerged as the dominant approach to
+\emph{lifted (probabilistic) inference}. Lifted inference techniques exploit
 symmetries in probabilistic models by reasoning about sets rather than
 individuals \citep{DBLP:conf/ecai/Kersting12}. By doing so, many instances
 become solvable in polynomial time \citep{DBLP:conf/nips/Broeck11}. Lifted
@@ -264,26 +268,17 @@ proving \citep{DBLP:journals/cacm/GogateD16}.
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{The problem of computing
   the factorial can be described using two variables and counting quantifiers,
-  so it is known to be liftable in theory \citep{DBLP:journals/jair/Kuzelka21}.}
-We claim that this shortcoming is due to the inability of these algorithms to
-construct recursive solutions. The topic of recursion in the context of WFOMC
-has been studied before but in limited ways.
-\Citet{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data which
-is then used to conjecture recurrence relations that explain that data.
+  so it is known to be liftable in principle
+  \citep{DBLP:journals/jair/Kuzelka21}.} We claim that this shortcoming is due
+to the inability of these algorithms to construct recursive solutions. The topic
+of recursion in the context of WFOMC has been studied before but in limited
+ways. \Citet{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data
+which is then used to conjecture recurrence relations that explain that data.
 \Citet{DBLP:conf/nips/Broeck11} introduced the idea of \emph{domain recursion}.
 Intuitively, domain recursion partitions a domain of size $n$ into a single
 explicitly named constant and the remaining domain of size $n-1$. However, many
 stringent conditions are enforced to ensure that the search for a tractable
 solution always terminates.
-
-% \begin{itemize}
-%   \item But their code only conjectures stuff on data. My conjectures are
-%         guaranteed to always be true.
-%   \item everything has to be expressible in \Ctwo{}, i.e., the two-variable
-%         fragment of FOL with counting quantifiers on one domain.
-%   \item They only consider P-recursive functions, which means that, e.g.,
-%         $f(n) = f(n-1)f(n-2)$ would not be allowed.
-% \end{itemize}
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -291,87 +286,56 @@ solution always terminates.
 % 5.1) An overview of how ForcLift/Crane work.
 
 In this work, we show how to relax these restrictions in a way that results in a
-stronger (W)FOMC algorithm, capable of handling more instances in a lifted
-manner. The ideas presented in this paper are implemented in
-\textsc{Crane}---an extension of the arguably most well-known WFOMC algorithm
-\textsc{ForcLift} written in Scala. \textsc{ForcLift} works in two stages:
-compilation and evaluation/propagation.\footnote{There is also an intermediate
-  stage called \emph{smoothing} that takes place between compilation and
-  evaluation. As our changes to smoothing are quite elementary, we do not
-  discuss them to not distract the reader from the main contributions of this
-  paper.} In the first part, various \emph{(compilation) rules} are applied to
-the input (or some derivative) formula, gradually constructing a circuit. In the
-second part, the weights of the instance (and sometimes constants) are
-propagated through the circuit, computing the WMC\@.
+stronger (W)FOMC algorithm, capable of handling more instances (e.g., counting
+various injective mappings) in a lifted manner. The ideas presented in this
+paper are implemented in \textsc{Crane}---an extension of the arguably most
+well-known WFOMC algorithm \textsc{ForcLift} written in Scala. \textsc{ForcLift}
+works in two stages: compilation and evaluation/propagation.\footnote{There is
+  also an intermediate stage called \emph{smoothing} that takes place between
+  compilation and evaluation. As our changes to smoothing are quite elementary,
+  we do not discuss them to not distract the reader from the main contributions
+  of this paper.} In the first part, various \emph{(compilation) rules} are
+applied to the input (or some derivative) formula, gradually constructing a
+circuit. In the second part, the weights of the instance (and sometimes
+constants) are propagated through the circuit, computing the WMC\@.
 
 % 5.2) The main idea: cycles that represent recursive calls.
 
-TODO: improve the wording of the paragraph below.
+TODO: remove the references to the figure.
 
 The main conceptual difference between \textsc{Crane} and \textsc{ForcLift} is
 that we utilise labelled directed graphs instead of circuits. The cycles in
-these graphs represent recursive calls. Suppose the original formula $\phi$
-depends on a domain of size $n \in \mathbb{N}$. Our generalised version of
-domain recursion transforms $\phi$ into a different formula $\psi$ that depends
-on a domain of size $n-1$. After some number of subsequent transformations, the
-algorithm identifies that a solution to $\psi$ can be constructed in part by
-finding a solution to a version of $\phi$ where the domain of size $n$ is
-replaced by a domain of size $n-1$. Recognising $\phi$ from before, we can add a
-cycle-forming edge to the graph, which can be interpreted as function $f$
-relying on $f(n-1)$ to compute $f(n)$.
+these graphs represent recursive calls. See \cref{fig:after} for an illustration
+of an example scenario. Suppose the original formula $\phi$ depends on a domain
+of size $n \in \mathbb{N}$. \emph{Generalised domain recursion} (GDR), one of
+the new compilation rules, transforms $\phi$ into a different formula $\psi$
+that has an additional constant and some new \emph{constraints}. After some
+additional transformations, the constraints in $\psi$ become `uniform' and can
+be removed, replacing the domain of size $n$ with a new domain of size
+$n-1$---this is the responsibility of the \emph{constraint removal} (CR)
+compilation rule. Afterwards, another new compilation rule recognizes that the
+resulting formula $\phi(n-1)$ is just like the input formula $\phi(n)$ except it
+refers to a different domain. This observation allows us to add a cycle-forming
+edge to the graph (highlighted in blue in \cref{fig:after}), which can be
+interpreted as function $f$ relying on $f(n-1)$ to compute $f(n)$. To construct
+such graphs, we also introduce a novel search algorithm that replaces the greedy
+search used by \textsc{ForcLift}.
 
 % 5.3) contributions, references to sections, shortcomings
 
-To construct such graphs, we introduce a novel search algorithm that replaces
-greedy search used by \textsc{ForcLift} and three compilation rules that work
-together to construct cyclic graphs. We begin with \cref{sec:recprelims} where
-we define the representation used for sentences in FOL as well as discuss
-caching and some notational conventions. Then, at the beginning of
-\cref{sec:methods} we formally define the graphs that replace circuits in
+\Cref{sec:recprelims} defines the representation used for sentences in FOL as
+well as discuss caching and some notational conventions. At the beginning of
+\cref{sec:methods}, we formally define the graphs that replace circuits in
 representing a solution to a (W)FOMC problem and discuss some related notions.
-\Cref{sec:rules} introduces the new compilation rules:
-\begin{itemize}
-  \item a generalisation of domain recursion by \citet{DBLP:conf/nips/Broeck11},
-  \item \emph{constraint removal}---a formula transformation rule that removes
-        the constraints introduced by generalised domain recursion (GDR),
-        introducing a new (smaller) domain instead,
-  \item and a rule for creating recursive calls.
-\end{itemize}
-In a typical solution produced by \textsc{Crane}, these rules are executed in
-exactly this order (interspersed with some other rules), with the edge that
-represents a recursive call pointing back to the node introduced by GDR\@. In
-\cref{sec:interpret}, we informally discuss how a graph can be interpreted as a
+\Cref{sec:rules} introduces the new compilation rules. \Cref{sec:search} then
+describes our new search algorithm that makes fewer assumptions than
+\textsc{ForcLift} about the right order in which compilation rules should be
+applied. In \cref{sec:interpret}, we discuss how a graph can be interpreted as a
 collection of (potentially recursive) functions. Finally, in \cref{sec:results}
 we compare \textsc{ForcLift} and \textsc{Crane} on a range of function-counting
 problems. We show that \textsc{Crane} performs as well as \textsc{ForcLift} on
 the instances that were already solvable by \textsc{ForcLift} but is also able
-to handle most instances that \textsc{ForcLift} fails on as well.
-
-% \Cref{sec:search} then describes our new search algorithm that makes fewer
-% assumptions than \textsc{ForcLift} about the right order in which compilation
-% rules should be applied.
-
-% \begin{itemize}
-%   \item What we do with the compilation result is different (see below)
-%   \item evaluation/interpretation: algebraic simplification, dynamic programming
-%   \item limitation: function extraction and simplification need to be automated,
-%         same for finding base cases
-% \end{itemize}
-
-% Leftovers
-% \begin{itemize}
-%   \item compilation works by always having a formula as input and
-%         adding nodes to the circuit/FCG that constitute the solution the that
-%         formula.
-%   \item Workflow after
-%   \begin{itemize}
-%     \item Compile the formula to a graph
-%     \item Extract the definitions of functions
-%     \item Simplify
-%     \item Supplement with base cases
-%     \item Evaluate to get the answer
-%   \end{itemize}
-% \end{itemize}
+to handle most of the instances that \textsc{ForcLift} fails on.
 
 \section{Preliminaries}\label{sec:recprelims}
 
@@ -382,7 +346,7 @@ is on unweighted model counting, \textsc{ForcLift}'s
 \citep{DBLP:conf/ijcai/BroeckTMDR11} support for weights trivially transfers to
 \textsc{Crane} as well.
 
-Our representation of FOMC instances is heavily based on the format used
+Our representation of FOMC instances is largely based on the format used
 internally by \textsc{ForcLift}, some aspects of which are described by
 \citet{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} is able to translate
 sentences in a variant of function-free many-sorted FOL with equality to this
@@ -390,8 +354,10 @@ internal format. An \emph{atom} is $p(t_1, \dots, t_n)$ for some predicate $p$
 and terms $t_{1}, \dots, t_{n}$. Here, $n \in \mathbb{N}_0$ is the \emph{arity}
 of $p$. A \emph{term} is either a constant or a variable. A \emph{literal} is
 either an atom or the negation of an atom (denoted by
-$\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all domains; note
-that this set expands during compilation.
+$\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all domains.
+Initially, $\mathcal{D}$ contains all domains mentioned by the input (W)FOMC
+instance. During compilation, new domains added to $\mathcal{D}$ by some of the
+compilation rules.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
@@ -414,9 +380,10 @@ that this set expands during compilation.
 
 Similarly to variables in \cref{def:clause}, all constants are (implicitly)
 mapped to domains, and each $n$-ary predicate is implicitly mapped to a sequence
-of $n$ domains. For constant $x$, predicate $p$, and domains $a$ and $b$, we
-write, e.g., $x \in a$ and $p \in a \times b$ to denote that $x$ is associated
-with $a$, and $p$ is associated with $a$ and $b$ (in that order).
+of $n$ domains. For constant or variable $x$, predicate $p$, and domains
+$\Gamma$ and $\Delta$, we write, e.g., $x \in \Gamma$ and
+$p \in \Gamma \times \Delta$ to denote that $x$ is associated with $\Gamma$, and
+$p$ is associated with $\Gamma$ and $\Delta$ (in that order).
 
 \begin{definition}[Formula]\label{def:formula}
   A \emph{formula} (called a c-theory by \citet{DBLP:conf/ijcai/BroeckTMDR11})
@@ -430,21 +397,21 @@ with $a$, and $p$ is associated with $a$ and $b$ (in that order).
     c_1 &\coloneqq
           \begin{multlined}[t]
             (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
-            \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}),
+            \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
           \end{multlined}\\
     c_2 &\coloneqq
           \begin{multlined}[t]
             (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \\
-            \{\, X \mapsto a, Y \mapsto b, Z \mapsto a \,\})
+            \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\})
           \end{multlined}
   \end{align*}
-  for some predicate $p$, variables $X$, $Y$, $Z$, and domains $a$ and $b$. Then
-  $\Vars(\{\, (Y, Z) \,\}) = \{\, Y, Z \,\}$, and
+  for some predicate $p$, variables $X$, $Y$, $Z$, and domains $\Gamma$ and
+  $\Delta$. Then $\Vars(\{\, (Y, Z) \,\}) = \{\, Y, Z \,\}$, and
   $\Vars(c_{1}) = \Vars(c_{2}) = \{\, X, Y, Z \,\}$. Based on the domain maps of
-  $c_{1}$ and $c_{2}$, we can infer that $p \in a \times b$. All variables (in
-  both clauses) that occur as the first argument to $p$ are in $a$, and likewise
-  all variables that occur as the second argument to $p$ are in $b$. Therefore,
-  $\phi$ `type checks' as a valid formula.
+  $c_{1}$ and $c_{2}$, we can infer that $p \in \Gamma \times \Delta$. All
+  variables (in both clauses) that occur as the first argument to $p$ are in
+  $\Gamma$, and likewise all variables that occur as the second argument to $p$
+  are in $\Delta$. Therefore, $\phi$ `type checks' as a valid formula.
 \end{example}
 
 There are two major differences between
@@ -454,22 +421,22 @@ variable-to-domain assignments from constraints and move them to a separate
 function $\delta_{c}$ in \cref{def:clause}. Formalising these assignments as a
 function unveils the (previously implicit) assumption that each variable must be
 assigned to a domain. Second, while \citet{DBLP:conf/ijcai/BroeckTMDR11} allow
-for equality constraints and constraints of the form $X \not\in d$ for some
-variable $X$ and domain $d$, we exclude such constraints simply because they are
-not needed.
+for equality constraints and constraints of the form $X \not\in \Delta$ for some
+variable $X$ and domain $\Delta$, we exclude such constraints simply because
+they are not needed.
 
-One can read a formula as in \cref{def:formula} as a sentence in a FOL\@.
-All variables in a
-clause are implicitly universally quantified (but note that variables are never
-shared among clauses), and all clauses in a formula are implicitly linked by
-conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
+One can read a formula as in \cref{def:formula} as a sentence in a FOL\@. All
+variables in a clause are implicitly universally quantified (but note that
+variables are never shared among clauses), and all clauses in a formula are
+implicitly linked by conjunction. Thus, formula $\phi$ from \cref{example:first}
+reads as
 \begin{align*}
   &\begin{multlined}[t]
-    (\forall X \in a\text{. }\forall Y, Z \in b\text{. }\\
+    (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
     Y \ne Z \implies \neg p(X, Y) \lor \neg p(X, Z)) \land
     \end{multlined}\\
   &\begin{multlined}[t]
-    (\forall X, Z \in a\text{. }\forall Y \in b\text{. }\\
+    (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
     X \ne Z \implies \neg p(X, Y) \lor \neg p(Z, Y)).
     \end{multlined}
 \end{align*}
@@ -482,15 +449,16 @@ predicates (interpreted as relations) have to satisfy.\footnote{If some domain
 combinations of relations that satisfy these conditions.
 
 \begin{example}
-  Let $\phi$ be as in \cref{example:first} and let $|a| = |b| = 2$. There are
-  $2^{2 \times 2} = 16$ possible relations between $a$ and $b$. Let us count how
-  many of them satisfy the conditions imposed on predicate $p$. The empty
-  relation does. All four relations of cardinality one do too. Finally, there
-  are two relations of cardinality two that satisfy the conditions as well.
-  Thus, the FOMC of $\phi$ (when $|a| = |b| = 2$) is 7. Incidentally, the FOMC
-  of $\phi$ counts partial injections. We will continue to use the problem of
-  counting partial injections (and the formula from \cref{example:first}
-  specifically) as the main running example throughout the paper.
+  Let $\phi$ be as in \cref{example:first} and let $|\Gamma| = |\Delta| = 2$.
+  There are $2^{2 \times 2} = 16$ possible relations between $\Gamma$ and
+  $\Delta$. Let us count how many of them satisfy the conditions imposed on
+  predicate $p$. The empty relation does. All four relations of cardinality one
+  do too. Finally, there are two relations of cardinality two that satisfy the
+  conditions as well. Thus, the FOMC of $\phi$ (when $|\Gamma| = |\Delta| = 2$)
+  is 7. Incidentally, the FOMC of $\phi$ counts partial injections. We will
+  continue to use the problem of counting partial injections (and the formula
+  from \cref{example:first} specifically) as the main running example throughout
+  the paper.
 \end{example}
 
 \paragraph*{Notation.}
@@ -519,21 +487,20 @@ compilation rules.
   \centering
   \begin{tikzpicture}[every node/.style={draw,ellipse},edge from
     parent/.style={draw,-Latex},sibling distance=3cm]
-    \node (dr) {$\GDR_{a \gets a \setminus \{\, x \,\}}$}
-    child {node {$\bigvee_{b^\top \subseteq b}$}
-      child {node {$\CR_{a \mapsto a'}$}
+    \node (dr) {$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$}
+    child {node {$\bigvee_{\Delta^\top \subseteq \Delta}$}
+      child {node {$\CR_{\Gamma \mapsto \Gamma'}$}
         child {
           node[circle] {$\wedge$}
           child {node {$\bot$}}
-          % _{(\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\})}
-          child {node (ref) {$\Reff_{\{\, a \mapsto a', b \mapsto b^{\bot} \,\}}$}}
+          child {node (ref) {$\Reff_{\{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^{\bot} \,\}}$}}
         }}};
     \draw[-Latex, bend right] (ref) to (dr);
   \end{tikzpicture}
   \caption{A simplified version of an FCG constructed by \textsc{Crane} for the
     problem of counting partial injections from \cref{example:first}. Label
-    $\bigvee_{b^\top \subseteq b}$ denotes set-disjunction, $\land$ denotes
-    conjunction, and $\bot$ denotes a contradiction---see the work by
+    $\bigvee_{\Delta^\top \subseteq \Delta}$ denotes set-disjunction, $\land$
+    denotes conjunction, and $\bot$ denotes a contradiction---see the work by
     \citet{DBLP:conf/ijcai/BroeckTMDR11} for the descriptions of these node
     types. Here we omit nodes whose only arithmetic effect is multiplication by
     one. Some of these nodes play an important role in the weighted version of
@@ -560,17 +527,18 @@ non-tree-like edges (denoted by $\Reff$), while used before, is extended to
 contain the information necessary to support recursive calls. We also add three
 new types:
 \begin{itemize}
-  \item a type for \emph{constraint removal} denoted by $\CR$,
-  \item a type for \emph{generalised domain recursion} denoted by $\GDR$ (both
-        with out-degree one),
+  \item a type for constraint removal denoted by $\CR$,
+  \item a type for generalised domain recursion denoted by $\GDR$ (both with
+        out-degree one),
   \item and $\star$---a placeholder type (with out-degree zero) for nodes that
         are going to be replaced.
 \end{itemize}
 When drawing an FCG, we order outgoing edges from left to right, write node
 labels directly on the nodes, and omit irrelevant labels and/or parameters. See
 \cref{fig:examplefcg} for an example FCG\@. Its source node has out-degree 1
-(i.e., $|N^+(s)| = 1$), label $\GDR_{a \gets a \setminus \{\, x \,\}}$, and type
-$\GDR$ (i.e., $\tau(s) = \GDR$).
+(i.e., $|N^+(s)| = 1$), label
+$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$, and type $\GDR$ (i.e.,
+$\tau(s) = \GDR$).
 
 %\paragraph*{Notation.}
 Similarly to \citet{DBLP:conf/ijcai/BroeckTMDR11}, we write $T_p$ for an FCG
@@ -645,94 +613,81 @@ if a rule returns an empty set, then that rule is not applicable to the formula,
 and the algorithm continues with the next rule.
 
 \subsection{Generalised Domain Recursion}\label{sec:dr}
-% 1. Note that the total number of such possibilities is not necessarily
-% exponential: some combinations produce clearly unsatisfiable formulas that can
-% be immediately discarded.
-% 2. We can combine all of these possibilities into a single formula equivalent
-% to the original one.
-% 3. \begin{itemize}
-%   \item the formula is shattered,
-%   \item the formula has no independent subformulas,
-%   \item and there exists a root binding class.
-% \end{itemize}
-% 4. During evaluation, $v$ is ignored, and the WMCs of $x$ and $r$ can be
-% computed independently. Note that the WMC of $x$ is independent of the size of
-% $D$---this further simplifies the matters.
 
 % Main idea
 The main idea behind domain recursion (both the original version by
 \citet{DBLP:conf/nips/Broeck11} and the one presented here) is as follows. Let
-$d \in \mathcal{D}$ be a domain. Assuming that $d \ne \emptyset$, pick some
-$x \in d$. Then, for every variable $X$ associated with domain $d$ that occurs
-in a literal, consider two possibilities: $X = x$ and $X \ne x$.
+$\Omega \in \mathcal{D}$ be a domain. Assuming that $\Omega \ne \emptyset$, pick
+some $x \in \Omega$. Then, for every variable $X \in \Omega$ that occurs in a
+literal, consider two possibilities: $X = x$ and $X \ne x$.
 
 \begin{example}\label{example:dr}
   Let $\phi$ be a formula with a single clause
   \begin{multline*}
     (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
-    \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}).
+    \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}).
   \end{multline*}
-  Then we can introduce constant $x \in a$ and rewrite $\phi$ as
+  Then we can introduce constant $x \in \Gamma$ and rewrite $\phi$ as
   $\phi' = \{\, c_{1}, c_{2} \,\}$, where
   \begin{align*}
     c_{1} &= \begin{multlined}[t]
       (\{\, \neg p(x, Y), \neg p(x, Z) \,\}, \{\, (Y, Z) \,\}, \\
-      \{\, Y \mapsto b, Z \mapsto b \,\}),
+      \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}\\
     c_{2} &= \begin{multlined}[t]
       (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
-      \{\, X \mapsto a', Y \mapsto b, Z \mapsto b \,\}),
+      \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}
   \end{align*}
-  and $a' = a \setminus \{\, x \,\}$.
+    and $\Gamma' = \Gamma \setminus \{\, x \,\}$.
 \end{example}
 
 % Original domain recursion
 \citet{DBLP:conf/nips/Broeck11} imposes stringent preconditions on the input
 formula to ensure that the expanded version of the formula (as in
 \cref{example:dr}) can be handled efficiently. The clauses in this expanded
-formula are then partitioned into three parts based on whether the transformation
-introduced constants or constraints or both. The aforementioned conditions
-ensure that these parts can be treated independently.
+formula are then partitioned into three parts based on whether the
+transformation introduced constants or constraints or both. The aforementioned
+conditions ensure that these parts can be treated independently.
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\GDR$ nodes.}\label{alg:domainrecursion}
-  \KwIn{formula $\phi$}
+  \KwIn{formula $\phi$, set of all relevant domains $\mathcal{D}$}
   \KwOut{set of chips $S$}
   $S \gets \emptyset$\;
-  \ForEach{domain $d \in \mathcal{D}$ s.t.\ there is $c \in \phi$ and $v \in \Vars(L_c)$ s.t. $\delta_c(v) = d$\label{line:condition}}{
+  \ForEach{domain $\Omega \in \mathcal{D}$ s.t.\ there is $c \in \phi$ and $X \in \Vars(L_c)$ s.t. $\delta_c(X) = \Omega$\label{line:condition}}{
     $\phi' \gets \emptyset$\;
-    $x \gets \text{a new constant in domain } d$\;
+    $x \gets \text{a new constant in domain } \Omega$\;
     \ForEach{clause $c = (L, C, \delta) \in \phi$\label{line:forclause}}{
-      $V \gets \{\, v \in \Vars(L) \mid \delta(v) = d \,\}$\;
-      \ForEach{subset $W \subseteq V$ s.t. $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, v \in \Vars(C) \mid (v, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
+      $V \gets \{\, X \in \Vars(L) \mid \delta(X) = \Omega \,\}$\;
+      \ForEach{subset $W \subseteq V$ s.t. $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, X \in \Vars(C) \mid (X, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
         \tcc{$\delta'$ restricts $\delta$ to the new set of variables}
-        $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (v, x) \mid (v \in V \setminus W) \,\}, \delta') \,\}$\;\label{line:generation}
+        $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (X, x) \mid (X \in V \setminus W) \,\}, \delta') \,\}$\;\label{line:generation}
       }
     }
-    $S \gets S \cup \{\, (\GDR_{d \gets d \setminus \{\, x \,\}}, \langle\phi'\rangle) \,\}$\;
+    $S \gets S \cup \{\, (\GDR_{\Omega \gets \Omega \setminus \{\, x \,\}}, \langle\phi'\rangle) \,\}$\;
   }
 \end{algorithm}
 
 % Description of GDR, in contrast to DR
 In contrast, GDR has only one precondition: for GDR to be applicable on domain
-$d \in \mathcal{D}$, there must be at least one variable with domain $d$ that is
-featured in a literal (and not just in constraints). Without such variables, GDR
-would have no effect on the formula. GDR is also simpler in that the expanded
-formula is left as-is to be handled by other compilation rules. Typically, after
-a few more rules are applied, a combination of $\CR$ and $\Reff$ nodes
-introduces a loop back to the $\GDR$ node, thus completing the definition of a
-recursive function. The GDR compilation rule is summarised as
+$\Omega \in \mathcal{D}$, there must be at least one variable with domain
+$\Omega$ that is featured in a literal (and not just in constraints). Without
+such variables, GDR would have no effect on the formula. GDR is also simpler in
+that the expanded formula is left as-is to be handled by other compilation
+rules. Typically, after a few more rules are applied, a combination of $\CR$ and
+$\Reff$ nodes introduces a loop back to the $\GDR$ node, thus completing the
+definition of a recursive function. The GDR compilation rule is summarised as
 \cref{alg:domainrecursion} and explained in more detail using the example below.
 
 \begin{example}
   Let $\phi \coloneqq \{\, c_1, c_2 \,\}$ be the formula from
   \cref{example:first}. While GDR is possible on both domains, here we
-  illustrate how it works on $a$. Having chosen a domain, the algorithm iterates
-  over the clauses of $\phi$. Suppose \cref{line:forclause} picks $c = c_1$ as
-  the first clause. Then, set $V$ is constructed to contain all variables with
-  domain $d = a$ that occur in the literals of clause $c$. In this case,
-  $V = \{\, X \,\}$.
+  illustrate how it works on $\Gamma$. Having chosen a domain, the algorithm
+  iterates over the clauses of $\phi$. Suppose \cref{line:forclause} picks
+  $c = c_1$ as the first clause. Then, set $V$ is constructed to contain all
+  variables with domain $\Omega = \Gamma$ that occur in the literals of clause
+  $c$. In this case, $V = \{\, X \,\}$.
 
   \Cref{line:conditions} iterates over all subsets $W \subseteq V$ of variables
   that can be replaced by a constant without resulting in formulas that are
@@ -746,11 +701,11 @@ recursive function. The GDR compilation rule is summarised as
   \cref{line:generation} generates two clauses for the output formula:
   \begin{multline*}
     (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z), (X, x) \,\}, \\
-    \{\, X \mapsto a, Y \mapsto b, Z \mapsto b \,\}),
+    \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
   \end{multline*}
   from $W = \emptyset$ and
   \[
-    (\{\, \neg p(x, Y), \neg p(x, Z) \,\}, \{\, (Y, Z) \,\}, \{\, Y \mapsto b, Z \mapsto b \,\})
+    (\{\, \neg p(x, Y), \neg p(x, Z) \,\}, \{\, (Y, Z) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\})
   \]
   from $W = V$.
 
@@ -760,15 +715,15 @@ recursive function. The GDR compilation rule is summarised as
   generate clauses for $\phi'$. Indeed, $W = \emptyset$ generates
   \begin{multline*}
     (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z), (X, x), (Z, x) \,\}, \\
-    \{\, X \mapsto a, Y \mapsto b, Z \mapsto a \,\}),
+    \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
   \end{multline*}
   $W = \{\, X \,\}$ generates
   \[
-    (\{\, \neg p(x, Y), \neg p(Z, Y) \,\}, \{\, (Z, x) \,\}, \{\, Y \mapsto b, Z \mapsto a \,\}),
+    (\{\, \neg p(x, Y), \neg p(Z, Y) \,\}, \{\, (Z, x) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
   \]
   and $W = \{\, Z \,\}$ generates
   \[
-    (\{\, \neg p(X, Y), \neg p(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto a, Y \mapsto b \,\}).
+    (\{\, \neg p(X, Y), \neg p(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta \,\}).
   \]
 \end{example}
 
@@ -776,61 +731,66 @@ recursive function. The GDR compilation rule is summarised as
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\CR$ nodes.}\label{alg:constraintremoval}
-  \KwIn{formula $\phi$, set of domains $\mathcal{D}$}
+  \KwIn{formula $\phi$, set of all relevant domains $\mathcal{D}$}
   \KwOut{set of chips $S$}
   $S \gets \emptyset$\;
-  \ForEach{domain $d \in \mathcal{D}$ and element $x \in d$ s.t. $x$ does not occur in any literal of any clause of $\phi$ {\bf and} for each clause $c = (L, C, \delta_c) \in \phi$ and variable $v \in \Vars(c)$, either $\delta_c(v) \ne d$ or $(v, x) \in C$\label{line:crconditions}}{
-    add a new domain $d'$ to $\mathcal{D}$\;
+  \ForEach{domain $\Omega \in \mathcal{D}$ and element $x \in \Omega$ s.t. $x$ does not occur in any literal of any clause of $\phi$ {\bf and} for each clause $c = (L, C, \delta_c) \in \phi$ and variable $X \in \Vars(c)$, either $\delta_c(X) \ne \Omega$ or $(X, x) \in C$\label{line:crconditions}}{
+    add a new domain $\Omega'$ to $\mathcal{D}$\;
     $\phi' \gets \emptyset$\;
     \ForEach{clause $(L, C, \delta) \in \phi$}{
       $C' \gets \{\, (a, b) \in C \mid b \ne x \,\}$\;\label{line:constraintremoval}
-      \nosemic$\delta' \gets v \mapsto \begin{cases} d' & \text{if} \delta(v) = d\\ \delta(v) & \text{otherwise;} \end{cases}$\;\label{line:newdelta}
+      \nosemic$\delta' \gets X \mapsto
+      \begin{cases}
+        \Omega' & \text{if } \delta(X) = \Omega\\
+        \delta(X) & \text{otherwise;}
+      \end{cases}$\;\label{line:newdelta}
       $\phi' \gets \phi' \cup \{\, (L, C', \delta') \,\}$\;
     }
-    $S \gets S \cup \{\, (\CR_{d \mapsto d'}, \langle\phi'\rangle) \,\}$\;
+    $S \gets S \cup \{\, (\CR_{\Omega \mapsto \Omega'}, \langle\phi'\rangle) \,\}$\;
   }
 \end{algorithm}
 
-Recall that GDR on a domain $d$ creates constraints of the form $X_i \ne x$ for
-some constant $x \in d$ and family of variables $X_i \in d$. Once certain
-conditions are satisfied, \cref{alg:constraintremoval} can eliminate these
-constraints and replace $d$ with a new domain $d'$, which can be interpreted as
-$d \setminus \{\, x \,\}$. These conditions (on \cref{line:crconditions} of the
-algorithm) are that a constraint of the form $X \ne e$ exists for all variables
-$X \in d$ across all clauses, and such constraints are the only place where $e$
-occurs. The algorithm then proceeds to construct the new formula by removing
-constraints (on \cref{line:constraintremoval}) and constructing a new domain map
-$\delta'$ that replaces $d$ with $d'$ (on \cref{line:newdelta}).
+Recall that GDR on a domain $\Omega$ creates constraints of the form $X_i \ne x$
+for some constant $x \in \Omega$ and family of variables $X_i \in \Omega$. Once
+certain conditions are satisfied, \cref{alg:constraintremoval} can eliminate
+these constraints and replace $\Omega$ with a new domain $\Omega'$, which can be
+interpreted as $\Omega \setminus \{\, x \,\}$. These conditions (on
+\cref{line:crconditions} of the algorithm) are that a constraint of the form
+$X \ne x$ exists for all variables $X \in \Omega$ across all clauses, and such
+constraints are the only place where $x$ occurs. The algorithm then proceeds to
+construct the new formula by removing constraints (on
+\cref{line:constraintremoval}) and constructing a new domain map $\delta'$ that
+replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
 
 \begin{example}
   Let $\phi = \{\, c_1, c_2, c_3 \,\}$ be a formula with clauses
   \begin{align*}
-    c_1 &= (\emptyset, \{\, (Y, X) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\}), \\
+    c_1 &= (\emptyset, \{\, (Y, X) \,\}, \{\, X \mapsto \Delta^\top, Y \mapsto \Delta^\top \,\}), \\
     c_2 &=
           \begin{multlined}[t]
             (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
-            \{\, X \mapsto a, Y \mapsto b^\bot, Z \mapsto b^\bot \,\}),
+            \{\, X \mapsto \Gamma, Y \mapsto \Delta^\bot, Z \mapsto \Delta^\bot \,\}),
           \end{multlined}\\
     c_3 &=
           \begin{multlined}[t]
             (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, x), (Z, X), (Z, x) \,\}, \\
-            \{\, X \mapsto a, Y \mapsto b^\bot, Z \mapsto a \,\}).
+            \{\, X \mapsto \Gamma, Y \mapsto \Delta^\bot, Z \mapsto \Gamma \,\}).
           \end{multlined}
   \end{align*}
-  Domain $a$ and with its element $x \in a$ satisfy the preconditions for
-  constraint removal. The rule introduces a new domain $a'$ and transforms
-  $\phi$ to $\phi' = (c_1', c_2', c_3')$, where
+  Domain $\Gamma$ and with its element $x \in \Gamma$ satisfy the preconditions
+  for CR\@. The rule introduces a new domain $\Gamma'$ and transforms $\phi$ to
+  $\phi' = (c_1', c_2', c_3')$, where
   \begin{align*}
     c_1' &= c_1, \\
     c_2' &=
            \begin{multlined}[t]
              (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
-             \{\, X \mapsto a', Y \mapsto b^\bot, Z \mapsto b^\bot \,\}),
+             \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Delta^\bot \,\}),
            \end{multlined} \\
     c_3' &=
            \begin{multlined}[t]
              (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (Z, X) \,\}, \\
-             \{\, X \mapsto a', Y \mapsto b^\bot, Z \mapsto a' \,\}).
+             \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Gamma' \,\}).
            \end{multlined}
   \end{align*}
 \end{example}
@@ -839,6 +799,8 @@ $\delta'$ that replaces $d$ with $d'$ (on \cref{line:newdelta}).
 
 TODO: write a short informal summary. Add the full info as an appendix and
 reference it.
+
+% TODO: do I still need the definition of a chip? What about tau?
 
 \section{How to Interpret an FCG}\label{sec:interpret}
 
@@ -867,29 +829,30 @@ from $v$.
 
 \begin{example}\label{example:interpretation}
   Let us use the FCG from \cref{fig:examplefcg} as an example. The input formula
-  (i.e., the formula in \cref{example:first}) has two domains: $a$ and $b$.
-  Thus, the interpretation of the FCG is a function
+  (i.e., the formula in \cref{example:first}) has two domains: $\Gamma$ and
+  $\Delta$. Thus, the interpretation of the FCG is a function
   $f\colon \mathbb{N}_{0} \times \mathbb{N}_{0} \to \mathbb{R}_{\ge 0}$. Let
-  $m \coloneqq |a|$, and $n \coloneqq |b|$. The node labelled
-  $\bigvee_{b^{\top} \subseteq b}$ tells us that
+  $m \coloneqq |\Gamma|$, and $n \coloneqq |\Delta|$. The node labelled
+  $\bigvee_{\Delta^{\top} \subseteq \Delta}$ tells us that
   $f(m, n) = \sum_{l = 0}^{n} \binom{n}{l} \square$, where $\square$ is the
   interpretation of the remaining subgraph, and $l$ iterates over all possible
-  sizes of $b^{\top}$. It also creates two subdomains
-  $b^{\top}, b^{\bot} \subseteq b$ that partition $b$, i.e., as the size of
-  $b^{\top}$ increases, the size of $b^{\bot}$ correspondingly decreases. Nodes
-  labelled $\land$ correspond to multiplication. Therefore,
+  sizes of $\Delta^{\top}$. It also creates two subdomains
+  $\Delta^{\top}, \Delta^{\bot} \subseteq b$ that partition $\Delta$, i.e., as
+  the size of $\Delta^{\top}$ increases, the size of $\Delta^{\bot}$
+  correspondingly decreases. Nodes labelled $\land$ correspond to
+  multiplication. Therefore,
   $f(m, n) = \sum_{l = 0}^{n} \binom{n}{l} \diamondsuit \times \heartsuit$,
   where $\diamondsuit$ is the interpretation of the contradiction (i.e., $\bot$)
   node, and $\heartsuit$ is the interpretation of the $\Reff$ node.
 
   A contradiction node with clause $c$ as a parameter is interpreted as one if
   the clause has groundings and zero otherwise. In this case, the parameter is
-  $c = (\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto b^\top, Y \mapsto b^\top \,\})$
+  $c = (\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto \Delta^\top, Y \mapsto \Delta^\top \,\})$
   (not shown in \cref{fig:examplefcg}), which can be read as
-  $\forall X, Y \in b^{\top}\text{. }X \ne Y \implies \bot$, i.e.,
-  $\forall X, Y \in b^{\top}\text{, }X = Y$. This latter sentence is true if and
-  only if $|b^{\top}| < 2$. Therefore, we can use the Iverson bracket notation
-  to write
+  $\forall X, Y \in \Delta^{\top}\text{. }X \ne Y \implies \bot$, i.e.,
+  $\forall X, Y \in \Delta^{\top}\text{. }X = Y$. This latter sentence is true
+  if and only if $|\Delta^{\top}| < 2$. Therefore, we can use the Iverson
+  bracket notation to write
   \[
     \diamondsuit = [l < 2] \coloneqq
     \begin{cases}
@@ -899,13 +862,14 @@ from $v$.
   \]
 
   It remains to interpret the $\Reff$ node. Parameter
-  $\{\, a \mapsto a', b \mapsto b^\bot \,\}$ tells us that the interpretation of
-  the $\Reff$ node should be the same as that of the source node, but with
-  domains $a$ and $b$ replaced with $a'$ and $b^{\bot}$, respectively. Domain
-  $a'$ was created by a constraint removal rule applied on $a$, so
-  $|a'| = m - 1$. Now $b^{\bot} = b \setminus b^{\top}$, and $|b^{\top}| = l$,
-  so $|b^{\bot}| = n - l$. Thus, the interpretation of the $\Reff$ node is a
-  recursive call to $f(m - 1, n - l)$. Therefore,
+  $\{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}$ tells us that
+  the interpretation of the $\Reff$ node should be the same as that of the
+  source node, but with domains $\Gamma$ and $\Delta$ replaced with $\Gamma'$
+  and $\Delta^{\bot}$, respectively. Domain $\Gamma'$ was created by the CR rule
+  applied on $\Gamma$, so $|\Gamma'| = m - 1$. Now
+  $\Delta^{\bot} = \Delta \setminus \Delta^{\top}$, and $|\Delta^{\top}| = l$,
+  so $|\Delta^{\bot}| = n - l$. Thus, the interpretation of the $\Reff$ node is
+  a recursive call to $f(m - 1, n - l)$. Therefore,
   \begin{align}
     f(m, n) &= \sum_{l = 0}^{n} \binom{n}{l} [l < 2] f(m-1, n-l)\nonumber \\
             &= f(m-1, n) + n f(m-1, n-1).\label{eq:solution}
@@ -927,7 +891,7 @@ from $v$.
     \rowcolor{gray!10}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
     \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
     \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
-    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $b$ to $a$} \\
+    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
     \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
     \rowcolor{gray!10}\xmark & \xmark & & $m$ & --- & $mn$ \\
     \rowcolor{gray!10}\xmark & \cmark & & $m$ & --- & $m^3$ \\
@@ -939,9 +903,9 @@ from $v$.
     \bottomrule
   \end{tabular}
   \caption{The worst-case complexity of counting various types of functions.
-    Here, $m$ is the size of domain $a$, and $n$ is the size of domain $b$. All
-    asymptotic complexities are in $\Theta(\cdot)$. A dash means that no
-    complete solution was found.}\label{tbl:results}
+    Here, $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
+    $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
+    that no complete solution was found.}\label{tbl:results}
 \end{table*}
 
 In this section, we compare \textsc{Crane} and \textsc{ForcLift}
@@ -954,28 +918,29 @@ be expressed in FOL\@. \textsc{ForcLift} then translates these sentences in FOL
 to formulas as defined in \cref{def:formula}.
 
 % Describe what kind of instances we're investigating
-Let $p \in a \times b$ be a predicate. To restrict all relations representable
-by $p$ to just functions from $a$ to $b$, in FOL one might write
+Let $p \in \Gamma \times \Delta$ be a predicate. To restrict all relations
+representable by $p$ to just functions from $\Gamma$ to $\Delta$, in FOL one
+might write
 \[
-  \forall X \in a\text{. }\forall Y, Z \in b\text{. }p(X, Y) \land p(X, Z) \implies Y = Z
+  \forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \implies Y = Z
 \]
 and
 \begin{equation}\label{eq:def2}
-  \forall X \in a\text{. }\exists Y \in b\text{. }p(X, Y).
+  \forall X \in \Gamma\text{. }\exists Y \in \Delta\text{. }p(X, Y).
 \end{equation}
-The former sentence says that one element of $a$ can map to at \emph{most} one
-element of $b$, and the latter sentence says that each element of $a$ must map
-to at \emph{least} one element of $b$. One can then add
+The former sentence says that one element of $\Gamma$ can map to at \emph{most}
+one element of $\Delta$, and the latter sentence says that each element of
+$\Gamma$ must map to at \emph{least} one element of $\Delta$. One can then add
 \[
-  \forall W, X \in a\text{. }\forall Y \in b\text{. }p(W, Y) \land p(X, Y) \implies W = X
+  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }p(X, Y) \land p(Z, Y) \implies X = Z
 \]
 to restrict $p$ to injections or
 \[
-  \forall Y \in b\text{. }\exists X \in a\text{. }p(X, Y)
+  \forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }p(X, Y)
 \]
 to ensure surjectivity or remove \cref{eq:def2} to consider partial functions.
-Lastly, one can replace all occurrences of $b$ with $a$ to model endofunctions
-(i.e., functions with the same domain and codomain) instead.
+Lastly, one can replace all occurrences of $\Delta$ with $\Gamma$ to model
+endofunctions (i.e., functions with the same domain and codomain) instead.
 
 % the process: both for running algorithms and for determining complexities
 In our experiments, we consider all sixteen combinations of these properties,
@@ -1013,38 +978,6 @@ of the codomain. Finally, note that $f(m, n)$ can be evaluated in $\Theta(mn)$
 time by a dynamic programming algorithm that computes $f(i, j)$ for all
 $i = 0, \dots, m$ and $j = 0, \dots, n$.
 
-  % \item The complexities assume that arithmetic operations on number such as
-  %       addition and multiplication take constant time.
-  % \item In some cases (e.g., when counting injections from... to...), we might
-  %       immediately recognize that the answer must be zero. Whether such cases
-  %       can be handled efficiently or not by our approach depends on the
-  %       definitions of functions and the order of evaluation. (We still get the
-  %       right answer, though.)
-  % \item All complexity results are for the worst case. In particular, optimal
-  %       best-case complexity is usually $\Theta(1)$ (see above for why).
-
-% Other results
-% \begin{itemize}
-%   \item 1d bijections and 1d injections (note that it's the same problem). Depth
-%         3 solution:
-%         \begin{align*}
-%           f(n) &= \sum_{m=0}^n \binom{n}{m} (-1)^{n-m}g(n, m) \\
-%           g(n, m) &= \sum_{l=0}^n \binom{n}{l}[l < 2]g(n-l, m-1) \\
-%                &= g(n, m - 1) + ng(n - 1, m - 1),
-%         \end{align*}
-%         which works with base case $g(n, 0) = 1$.
-%   \item 1d partial injections. 2 solutions at depth 6, but they're too
-%         complicated to check by hand. A contradiction with $X \ne x$ constraints
-%         makes things complicated.
-%   \item 2d bijections. Depth 3:
-%         \begin{align*}
-%           f(m, n) &= \sum_{l=0}^m \binom{m}{l} [l < 2] (1 - [l < 1])f(m-l, n-1) \\
-%                   &= mf(m-1, n-1),
-%         \end{align*}
-%         which works with base cases $f(0, 0) = 1$, $f(0, n) = 0$, $f(m, 0) = 0$.
-%   \item 2d partial injections, depth 2. Exactly the same circuit as for injections but with base case $f(m, 0) = 1$.
-% \end{itemize}
-
 \section{Conclusion and Future Work}
 
 % A summary of what's been done/achieved and how
@@ -1053,27 +986,37 @@ In this paper, we showed how a state-of-the-art (W)FOMC algorithm can be
 empowered by generalising domain recursion and adding support for cycles in the
 graph that encodes a solution. To construct such graphs, \textsc{Crane}
 supplements \textsc{ForcLift} \citep{DBLP:conf/ijcai/BroeckTMDR11} with three
-new compilation rules and a hybrid search algorithm. In \cref{sec:results}, we
-saw examples of instances that become liftable not just in theory
-\citep{DBLP:journals/jair/Kuzelka21} but with an implemented algorithm as well.
-However, our experiments cover only a small set of instances since some parts of
-\textsc{Crane} are yet to be fully automated. Specifically, our experiments
-focus on various function-counting problems---it remains to be seen what other
-types of instances become liftable as a result.
+new compilation rules and a hybrid search algorithm. The experiments in
+\cref{sec:results} revealed a range of counting problems that are liftable to
+\textsc{Crane} but not to any other (W)FOMC algorithm. The common thread across
+these newly liftable problems is (partial) injectivity. Thus, we can formulate
+the following conjecture.
 
-% An idea pivotal to our work is the generalisation of circuits to graphs. Despite
-% the wide variety of circuits that are used in artificial intelligence
-% \citep{DBLP:series/faia/Darwiche21}, this is the first time that the addition of
-% cycles is shown to make a class of circuits more powerful. An important strand
-% for future work is in developing an algorithm that learns FCGs from data
-% similarly to the way \textsc{ForcLift} has been utilised in learning Markov
-% logic networks \citep{DBLP:conf/aaai/BroeckMD13,DBLP:journals/ml/HaarenBMD16}.
-% One could also consider whether some of the many recent applications of circuits
-% are suitable for FCGs as well. These applications include the verification and
-% explainability of neural networks \citep{DBLP:conf/pods/Darwiche20}, causal
-% inference \citep{https://doi.org/10.48550/arxiv.2202.02891}, computing the
-% expectations of kernel functions \citep{DBLP:conf/uai/LiZVB21}, and variational
-% inference in discrete graphical models \citep{DBLP:conf/nips/ShihE20}.
+\begin{conjecture}
+  Let \IFO{} be the class of formulas in FOL that contain clauses with at most
+  two variables as well as any number of copies
+  \begin{align*}
+    &\begin{multlined}[t]
+      (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
+      Y \ne Z \implies \neg p(X, Y) \lor \neg p(X, Z)) \land
+    \end{multlined}\\
+    &\begin{multlined}[t]
+      (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
+      X \ne Z \implies \neg p(X, Y) \lor \neg p(Z, Y)).
+    \end{multlined}
+  \end{align*}
+  for some predicate $p$ and domains $\Gamma$ and $\Delta$. Then \IFO{} is
+  liftable by \textsc{Crane}.
+\end{conjecture}
+
+Since the tasks of counting injections and bijections fall into the \Ctwo{}
+fragment as well, we can formulate an even stronger conjecture.
+
+\begin{conjecture}
+  \Ctwo{} is liftable by \textsc{Crane} by either reformulating formulas in
+  \Ctwo{} to avoid counting quantifiers or extending \textsc{Crane} to support
+  them.
+\end{conjecture}
 
 However, the most important direction for future work is in fully automating
 this new way of computing the (W)FOMC of a formula. First, we need an algorithm
@@ -1082,18 +1025,15 @@ would also allow us to prove the correctness of the new compilation rules in
 constructing FCGs that indeed compute the right WMC\@. Second, these definitions
 must be simplified before they can be used, perhaps by a computer algebra
 system. Third, most importantly, we need a way to find the base cases for the
-recursive definitions provided by \textsc{Crane}. What makes this problem
-non-trivial is that the number of base cases is not constant for functions of
-arity greater than one (i.e., formulas that mention more than one domain). On
-the other hand, assuming that a domain is empty can greatly simplify a problem.
-Fourth, since the first solution found by \textsc{Crane} is not always optimal
-in terms of its complexity, an automated way to determine the asymptotic
-complexity of a solution would be helpful as well. Achieving these goals would
-make \textsc{Crane} capable of automatically constructing efficient ways to
-compute a function (e.g., a sequence) of interest. In addition to the potential
-impact to areas of artificial intelligence (AI) such as statistical relational
-AI \citep{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial
-to research in combinatorics as well \citep{DBLP:conf/ilp/BarvinekB0ZK21}.
+recursive definitions provided by \textsc{Crane}. Fourth, since the first
+solution found by \textsc{Crane} is not always optimal in terms of its
+complexity, an automated way to determine the asymptotic complexity of a
+solution would be helpful as well. Achieving these goals would make
+\textsc{Crane} capable of automatically constructing efficient ways to compute a
+function (e.g., a sequence) of interest. In addition to the potential impact to
+areas of artificial intelligence (AI) such as statistical relational AI
+\citep{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
+research in combinatorics as well \citep{DBLP:conf/ilp/BarvinekB0ZK21}.
 
 \bibliography{paper}
 \end{document}
