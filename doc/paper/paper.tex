@@ -149,8 +149,8 @@
 \SetKwFunction{get}{get}
 \SetKwFunction{put}{put}
 \SetKwFunction{constructDomainMap}{constructDomainMap}
-\SetKwFunction{identifyRecursion}{identifyRecursion}
-\SetKwFunction{generateMaps}{generateMaps}
+\SetKwFunction{identifyRecursion}{r}
+\SetKwFunction{generateMaps}{genMaps}
 \SetKwFunction{mergeFcgs}{mergeFcgs}
 \SetKwFunction{updateCache}{updCache}
 \newtheorem{assumption}{Assumption}
@@ -193,10 +193,10 @@
   restrictions that typically accompany domain recursion and generalise circuits
   used to express a solution to an FOMC problem to graphs that may contain
   cycles. To this end, we enhance the most well-established (weighted) FOMC
-  algorithm ForcLift with new compilation rules and an algorithm to check
-  whether a recursive call is feasible. These improvements allow us to find
-  efficient solutions to counting fundamental structures such as injections and
-  bijections.
+  algorithm \textsc{ForcLift} with new compilation rules and an algorithm to
+  check whether a recursive call is feasible. These improvements allow us to
+  find efficient solutions to counting fundamental structures such as injections
+  and bijections.
 \end{abstract}
 
 \section{Introduction}
@@ -715,8 +715,166 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
 
-TODO: write a short informal summary. Add the full info as an appendix and
-reference it.
+% TODO: will need to explain: hashing, caching, how the output of genMaps is filtered
+
+\paragraph*{Notation.}
+First, for partial functions $\alpha, \beta\colon A \pfun B$ s.t.
+$\alpha|_{\dom(\alpha) \cap \dom(\beta)} = \beta|_{\dom(\alpha) \cap \dom(\beta)}$,
+we write $\alpha \cup \beta$ for the unique partial function s.t.
+$\alpha \cup \beta|_{\dom(\alpha)} = \alpha$, and
+$\alpha \cup \beta|_{\dom(\beta)} = \beta$. Second, let $\Doms$ be a function
+that maps any clause or formula to the set of domains used within. Specifically,
+$\Doms(c) \coloneqq \Imm \delta_c$ for any clause $c$, and
+$\Doms(\phi) \coloneqq \bigcup_{c \in \phi} \Doms(c)$ for any formula $\phi$.
+
+\begin{algorithm}[t]
+  \caption{The compilation rule for $\Reff$ nodes.}\label{alg:trycache}
+  \KwIn{formula $\phi$, cache $C$}
+  \KwOut{a set of chips}
+
+  \ForEach{formula and node $(\psi, v) \in C(\#\phi)$}{
+    $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
+    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\, (\Reff_\rho(v), \langle\rangle) \,\}$}}
+  }
+  \Return{$\emptyset$}\;
+
+  \Fn{\identifyRecursion{$\phi$, $\psi$, $\rho = \emptyset$}}{
+    \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{\Return{\normalfont\texttt{null}}}
+    \lIf{$\phi = \emptyset$}{\Return{$\rho$}}
+    \ForEach{clause $c \in \psi$\label{line:for1}}{
+      \ForEach{clause $d \in \phi$ s.t. $\#d=\#c$\label{line:for2}}{
+        \ForAll{$(\beta, \gamma) \in \generateMaps{$c$, $d$, $\rho$}$\label{line:generateMaps}}{
+          $\rho' \gets \identifyRecursion{$\phi\setminus\{\, d \,\}$, $\psi\setminus\{\, c \,\}$, $\rho\cup\gamma$}$\;\label{line:recursion}
+          \lIf{$\rho' \ne {\normalfont \texttt{null}}$}{\Return{$\rho'$}}
+        }
+      }
+      \Return{\normalfont\texttt{null}}\;
+    }
+  }
+\end{algorithm}
+
+% Cache $C$ is used to partition all previously-encountered formulas based on
+% their hash codes.
+\Cref{alg:trycache} describes the compilation rule for creating $\Reff$ nodes.
+For every formula $\psi$ s.t. $\#\psi = \#\phi$ that we have encountered so far,
+function \texttt{r} is called to check whether a recursive call
+is actually feasible. If it is, the function returns a (total) map
+$\rho\colon \Doms(\psi) \to \Doms(\phi)$ that shows how $\psi$ can be
+transformed into $\phi$ by replacing each domain $\Omega \in \Doms(\psi)$ with
+$\rho(\Omega) \in \Doms(\phi)$. Otherwise, \texttt{r} returns
+\texttt{null} to signify that $\phi$ and $\psi$ are too different for recursion
+to work. This happens if $\phi$ and $\psi$ (or their subformulas explored in
+recursive calls) are structurally different (i.e., the numbers of clauses or the
+hash codes fail to match) or if a clause of $\psi$ cannot be paired with a
+sufficiently similar clause of $\phi$.
+
+Function \texttt{r} iterates over pairs of clauses of $\phi$ and
+$\psi$ that have the same hash codes. It uses function \texttt{genMaps} to
+check whether the two clauses are sufficiently similar. If so, the function
+calls itself on the remaining clauses until the map
+$\rho\colon \Doms(\psi) \pfun \Doms(\phi)$ becomes total, and all clauses are
+successfully coupled.
+
+Given two clauses $c \in \psi$ and $d \in \phi$, \texttt{genMaps} considers
+all possible bijections\footnote{Although the number of bijections between two
+  sets of cardinality $n$ is $n!$, this part of the algorithm is unlikely to
+  cause performance issues for two reasons. First, in practice, $n$ is usually
+  at most two or three. Second, due to the manner in which formulas are modified
+  by compilation rules, if any bijection results in a successfully identified
+  recursive relationship, it is almost always the identity bijection.}
+$\beta\colon \Vars(c) \twoheadrightarrowtail \Vars(d)$ and calls
+\texttt{constructDomainMap}, which then attempts to construct a map
+$\gamma\colon \Doms(c) \to \Doms(d)$ consistent with both $\beta$ and (the as
+yet partial map) $\rho\colon \Doms(\psi) \pfun \Doms(\phi)$. The \textbf{yield}
+keyword in \texttt{genMaps} works as in programming languages such as C\#,
+JavaScript, and Python, and lazily returns a sequence of values, computing each
+element of the sequence as needed.
+
+Diagrammatically, \texttt{constructDomainMap} attempts to find a
+$\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
+\begin{equation}\label[diagram]{eq:commute}
+  \begin{tikzcd}
+    V = \Vars(c) \ar[r, tail, two heads, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
+    \Doms(c) \ar[r, dashed, "\gamma"] \ar[d, hookrightarrow] & \Doms(d) \ar[d, hookrightarrow] \\
+    \Doms(\psi) \ar[r, swap, "\rho", "|" marking, outer sep=5pt] & \Doms(\phi).
+  \end{tikzcd}
+\end{equation}
+commutes (and returns \texttt{null} if such a function does not exist). Indeed,
+for every variable in $V = \Vars(c)$, the function returns \texttt{null} if
+either the top rectangle from $V$ to $\Doms(d)$ or the outer rectangle from $V$
+to $\Doms(\phi)$ fails to commute. These checks also ensure that
+$\rho \cup \gamma$ is possible on \cref{line:recursion} of the algorithm, i.e.,
+$\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
+
+% \begin{example}\label{example}
+
+%   % definitions of formulas and intro
+%   As in \cref{example:first}, let $\psi \coloneqq \{\, c_1, c_2 \,\}$ be a
+%   formula with clauses
+%   \begin{align*}
+%     c_1 &= (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}), \\
+%     c_2 &= (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}).
+%   \end{align*}
+%   Let formula
+%   $\phi \coloneqq \psi[\id, \{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}]$
+%   be just like $\psi$ but with different domains. In other words,
+%   $\phi = \{\, d_1, d_2 \,\}$, where
+%   \begin{align*}
+%     d_1 &\coloneqq (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Delta^\bot \,\}),\\
+%     d_2 &\coloneqq (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Gamma' \,\}).
+%   \end{align*}
+%   Note that $\#\phi = \#\psi$ and assume that $(\psi, v) \in C(\#\phi)$ for some
+%   node $v$. We shall see how \cref{alg:trycache} identifies that the FCG for
+%   $\psi$ can be reused for $\phi$ as well.
+
+%   Since both formulas are non-empty, the algorithm proceeds with the for-loops
+%   on \cref{line:for1,line:for2,line:generateMaps}. Suppose $c = c_1$ and
+%   $d = d_1$ get picked. Since both clauses have three variables, in the worst
+%   case, function \texttt{genMaps} would have $3!=6$ bijections to check.
+%   Suppose the identity bijection is picked first. Then
+%   \texttt{constructDomainMap} is called with the following parameters:
+%   \begin{itemize}
+%     \item $V = \{\, X, Y, Z \,\}$,
+%     \item
+%           $\delta_c = \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}$,
+%     \item
+%           $\delta_d = \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Delta^\bot \,\}$,
+%     \item $\beta = \id = \{\, X \mapsto X, Y \mapsto Y, Z \mapsto Z \,\}$,
+%     \item $\rho = \emptyset$.
+%   \end{itemize}
+%   Since $\delta_c(Y) = \delta_c(Z)$, and $\delta_d(Y) = \delta_d(Z)$,
+%   \texttt{constructDomainMap} returns
+%   $\gamma = \{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}$. Thus,
+%   \texttt{genMaps} yields its first pair of maps $(\beta, \gamma)$ to
+%   \cref{line:generateMaps}. Furthermore, this pair satisfies
+%   $c[\beta, \gamma] = d$. On \cref{line:recursion}, a recursive call to
+%   \texttt{r($\{\,c_2\,\}$, $\{\,d_2\,\}$, $\gamma$)} is made.
+
+%   In this subproblem where both formulas are left with a single clause each,
+%   again we have two non-empty formulas with equal hash codes. Thus
+%   \texttt{genMaps} is called with $c = c_2$, $d = d_2$, and
+%   $\rho = \{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}$. Suppose
+%   \cref{line:bijection} picks the identity bijection gain. Then
+%   \texttt{constructDomainMap} is called with the following parameters:
+%   \begin{itemize}
+%     \item $V = \{\, X, Y, Z \,\}$,
+%     \item
+%           $\delta_c = \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}$,
+%     \item
+%           $\delta_d = \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Gamma' \,\}$,
+%     \item $\beta = \id = \{\, X \mapsto X, Y \mapsto Y, Z \mapsto Z \,\}$,
+%     \item $\rho = \{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}$.
+%   \end{itemize}
+%   Since $\beta$ and $\rho$ commute (as in \cref{eq:commute}), and there are no
+%   new domains in $\Doms(c)$ and $\Doms(d)$, $\gamma$ exists and is equal to
+%   $\rho$. Again, the returned pair $(\beta, \gamma)$ satisfies
+%   $c[\beta, \gamma] = d$. \Cref{line:recursion} calls
+%   \texttt{r($\emptyset$, $\emptyset$, $\rho$)}, which
+%   immediately returns
+%   $\rho = \{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}$ as the
+%   final answer. Therefore, one can indeed reuse an FCG for $\psi$ to compute the
+%   model count of $\phi$.
+% \end{example}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
 
