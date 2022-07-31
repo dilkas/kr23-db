@@ -16,8 +16,6 @@
 
 \usepackage{mathtools}
 \usepackage{amsthm}
-\usepackage{mathrsfs}
-\usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{pifont}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
@@ -26,8 +24,6 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{colortbl}
-\usepackage{subcaption}
-\usepackage[inline,shortlabels]{enumitem}
 \usepackage{complexity}
 
 % These are recommended to typeset algorithms but not required. See the subsubsection on algorithms. Remove them if you don't have algorithms in your paper.
@@ -106,16 +102,14 @@
 \author{Anonymous Submission}
 \affiliations{}
 
-\usetikzlibrary{fit,positioning,trees,cd}
+\usetikzlibrary{cd}
 \usetikzlibrary{shapes}
-\usetikzlibrary{arrows}
-\usetikzlibrary{arrows.meta}
-\newcommand{\crefrangeconjunction}{--}
+
 \crefname{algocf}{algorithm}{Algorithms}
 \Crefname{algocf}{Algorithm}{Algorithms}
+
+\newcommand{\crefrangeconjunction}{--}
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
-\newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
-\newcommand*{\twoheadrightarrowtail}{\mathrel{\rightarrowtail\kern-1.9ex\twoheadrightarrow}}
 \newcommand{\cmark}{\ding{51}}%
 \newcommand{\xmark}{\ding{55}}%
 \newcommand{\FOtwo}{$\mathsf{FO}^{2}$}
@@ -127,45 +121,17 @@
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\GDR}{\textsc{GDR}}
-\DeclareMathOperator{\IE}{\textsc{IE}}
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
-\DeclareMathOperator{\wwp}{w}
-\DeclareMathOperator{\wwn}{\overline{w}}
 \DeclareMathOperator{\dom}{dom}
-\DeclareMathOperator{\id}{id}
-\DeclareMathOperator{\Imm}{Im}
 \DeclareMathOperator{\Doms}{Doms}
-\DeclareMathOperator{\size}{\sigma}
 \DeclareMathOperator{\Vars}{Vars}
-\DeclareMathOperator{\WMC}{WMC}
-\DeclareMathOperator{\gr}{gr}
-\DeclareMathOperator{\leftlsquigarrow}{\text{\reflectbox{$\rightsquigarrow$}}}
-\SetKw{KwRet}{yield}
 \SetKwProg{Fn}{Function}{:}{}
-\SetKwFunction{applyAllRules}{applyAllRules}
-\SetKwFunction{applyGreedyRules}{applyGreedyRules}
-\SetKwFunction{applyGreedyRulesToFormulas}{applyGreedyRulesToFormulas}
-\SetKwFunction{emptyy}{empty}
-\SetKwFunction{get}{get}
-\SetKwFunction{put}{put}
-\SetKwFunction{constructDomainMap}{constructDomainMap}
 \SetKwFunction{identifyRecursion}{r}
 \SetKwFunction{generateMaps}{genMaps}
-\SetKwFunction{mergeFcgs}{mergeFcgs}
-\SetKwFunction{updateCache}{updCache}
-\newtheorem{assumption}{Assumption}
 \newtheorem{conjecture}{Conjecture}
-\newtheorem{constraint}{Constraint}
-\newtheorem{fact}{Fact}
-\newtheorem{proposition}{Proposition}
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
-\newtheorem{experiment}{Experiment}
-\theoremstyle{remark}
-\newtheorem*{remark}{Remark}
 \makeatletter
 \newcommand{\nosemic}{\renewcommand{\@endalgocfline}{\relax}}% Drop semi-colon ;
 \newcommand{\dosemic}{\renewcommand{\@endalgocfline}{\algocf@endline}}% Reinstate semi-colon ;
@@ -173,10 +139,6 @@
 \newcommand{\popline}{\Indm\dosemic}% Undent
 \makeatother
 \Crefname{algocf}{Algorithm}{Algorithms}
-\Crefname{constraint}{Constraint}{Constraints}
-\Crefname{experiment}{Experiment}{Experiments}
-\Crefname{clause}{Clause}{Clauses}
-\Crefname{diagram}{Diagram}{Diagrams}
 \crefname{line}{line}{lines}
 
 \begin{document}
