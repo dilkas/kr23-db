@@ -145,23 +145,32 @@
 
 \maketitle
 
+% TODO: FOMC algorithms -> of most algorithms to date
 \begin{abstract}
   First-order model counting (FOMC) is a computational problem that asks to
-  count the models of a sentence in first-order logic. Despite being around for
-  more than a decade, practical FOMC algorithms are still unable to compute
-  functions as simple as a factorial. We argue that the capabilities of FOMC
-  algorithms are severely limited by their inability to express arbitrary
-  recursive computations. To enable arbitrary recursion, we relax the
-  restrictions that typically accompany domain recursion and generalise circuits
-  used to express a solution to an FOMC problem to graphs that may contain
-  cycles. To this end, we enhance the most well-established (weighted) FOMC
-  algorithm \textsc{ForcLift} with new compilation rules and an algorithm to
-  check whether a recursive call is feasible. These improvements allow us to
-  find efficient solutions to counting fundamental structures such as injections
-  and bijections.
+  count the models of a sentence in finite-domain first-order logic. Despite
+  being around for more than a decade, practical FOMC algorithms are still
+  unable to compute functions as simple as a factorial. We argue that the
+  capabilities of FOMC algorithms are severely limited by their inability to
+  express arbitrary recursive computations. To enable arbitrary recursion, we
+  relax the restrictions that typically accompany domain recursion and
+  generalise circuits used to express a solution to an FOMC problem to graphs
+  that may contain cycles. To this end, we enhance the most well-established
+  (weighted) FOMC algorithm \textsc{ForcLift} with new compilation rules and an
+  algorithm to check whether a recursive call is feasible. These improvements
+  allow us to find efficient solutions to counting fundamental structures such
+  as injections and bijections.
 \end{abstract}
+% TODO: We conclude after report on empirical results and discuss a few
+% conjectures on what correctness might look like.
 
 \section{Introduction}
+
+% TODO: It might be worth remarking either in the abstract or in the intro that
+% generally the weighted version is what is studied but the nonweighted version
+% is also still interesting because of its connections to finite model theory.
+% You could make a reference to the work of Paul Beam on symmetric weighted
+% model counting.
 
 % 1. What is the problem?
 % 2. Why is it interesting and important?
@@ -194,11 +203,11 @@ have also been inspired by WFOMC
 % complexity/liftability -> murky boundary
 
 Traditionally in computational complexity theory, a problem is \emph{tractable}
-if it can be solved in time polynomial in the size of the instance. The
-equivalent notion in (W)FOMC is liftability. A (W)FOMC instance is
-\emph{(domain-)liftable} if it can be solved in time polynomial in the size(s)
-of the domain(s) \citep{jaeger2012liftability}. Over more than a decade, many
-classes of instances were shown to be liftable
+if it can be solved in time polynomial in the instance size. The equivalent
+notion in (W)FOMC is liftability. A (W)FOMC instance is \emph{(domain-)liftable}
+if it can be solved in time polynomial in the size(s) of the domain(s)
+\citep{jaeger2012liftability}. Over more than a decade, many classes of
+instances were shown to be liftable
 \citep{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
 First, \citet{DBLP:conf/nips/Broeck11} showed that the class of all sentences of
 FOL with up to two variables (denoted \FOtwo{}) is liftable. Then
@@ -224,6 +233,10 @@ proving \citep{DBLP:journals/cacm/GogateD16}.
 % solutions? How does mine differ?)
 % simple unliftable instances -> recursion
 
+% TODO (footnote): You need to explain this a little bit more. You say that it
+% is liftable in principle but you should clarif ythat factorial has never been
+% shown empirically and there is no correctness theorem claiming that a
+% factorial can be computed in a lifted manner. Or something like that.
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{The problem of computing
   the factorial can be described using two variables and counting quantifiers,
@@ -238,6 +251,8 @@ Intuitively, domain recursion partitions a domain of size $n$ into a single
 explicitly named constant and the remaining domain of size $n-1$. However, many
 stringent conditions are enforced to ensure that the search for a tractable
 solution always terminates.
+% TODO: Because this is the focus of your work you might want to give at least
+% one example of such a stringent condition
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -313,6 +328,12 @@ $\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all domains.
 Initially, $\mathcal{D}$ contains all domains mentioned by the input (W)FOMC
 instance. During compilation, new domains are added to $\mathcal{D}$ by some of
 the compilation rules.
+% TODO ('Let D... all domains'): You need to state explicitly or implicitly that
+% to set of domains is constructed from a finite set of constants. Either you
+% can define the set of constants in the langoage or you can say that in the
+% interest of simplicity the set of constants is a set of nullary functions
+% mentioned in the sentence, which only mentions relations or nullary functions.
+% Function that take arguments are not allowed.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
@@ -380,6 +401,9 @@ for equality constraints and constraints of the form $X \not\in \Delta$ for some
 variable $X$ and domain $\Delta$, we exclude such constraints simply because
 they are not needed.
 
+% TODO: You should mention that somewhat unusually, first order variables are in
+% capital letters, similar to the convention of logic programming. They are not
+% to be confused with second order qualification.
 One can read a formula from \cref{def:formula} as a sentence in a FOL\@. All
 variables in a clause are implicitly universally quantified (but note that
 variables are never shared among clauses), and all clauses in a formula are
@@ -402,9 +426,6 @@ predicates (interpreted as relations) have to satisfy. Hence, FOMC is the
 problem of counting the number of combinations of relations that satisfy these
 conditions.
 
-% \footnote{If some domain is not big enough to contain all of its constants,
-% the formula is unsatisfiable.}
-
 \begin{example}
   Let $\phi$ be as in \cref{example:first} and let $|\Gamma| = |\Delta| = 2$.
   There are $2^{2 \times 2} = 16$ possible relations between $\Gamma$ and
@@ -417,6 +438,13 @@ conditions.
   from \cref{example:first} specifically) as the main running example throughout
   the paper.
 \end{example}
+% TODO: It might be useful to give one or two readable examples with interesting
+% model counts. For example Px v Qx over domain n has 3^n/4^n solutions. I think
+% The Frends smokers example has a more complicated solution you can find in one
+% of the papers. It might motivate the framework generally speaking better
+% although of course you can continue to use the same running example for the
+% rest of your paper. Such examples are especially useful for readers who are
+% not familiar but still need to get excited by the problem
 
 \paragraph*{Notation.}
 We write $\langle\rangle$ and $\langle x \rangle$ to denote an empty list and a
@@ -424,9 +452,7 @@ list with one element $x$, respectively, and $|l|$ for the length of list $l$.
 We write $\pfun$ for partial functions. Let $S$ be a set of constraints or
 literals, $V$ a set of variables, and $x$ a variable or a constant. We write
 $S[x/V]$ to denote $S$ with all occurrences of all variables in $V$ replaced
-with $x$.\footnote{If $(X, Y)$ is a two-variable constraint, substituting a
-  constant $c$ for $X$ would result in $(c, Y)$, which would have to be
-  rewritten as $(Y, c)$ to fit the definition of a constraint.}
+with $x$.
 
 \section{From Circuits to Graphs}\label{sec:methods}
 
@@ -456,6 +482,10 @@ with $x$.\footnote{If $(X, Y)$ is a two-variable constraint, substituting a
     handles existential quantifiers.}\label{fig:examplefcg}
 \end{figure}
 
+% TODO: Again for the reader who is not very familiar with this area it might be
+% good to at least give the circuit for one of the examples such as a
+% disjunction just to show them how it is usually done.
+
 % From circuits to graphs.
 A \emph{first-order deterministic decomposable negation normal form
   computational graph} (FCG) is a (weakly connected) directed graph with a
@@ -463,6 +493,18 @@ single source, node labels, and ordered outgoing edges.\footnote{Imposing an
   ordering on outgoing edges is just a limited version of edge labelling.} Node
 labels consist of two parts: the \emph{type} and the \emph{parameters}. The type
 of a node determines its out-degree.
+
+% TODO: I think there is a point of confusion here. Firstly the work of guy
+% introduce circuits and I presume that you want to say that the node types are
+% present in both the circuits as well as your structure. Given that I think you
+% should start of the paragraph by saying that like with circuit introduced by
+% Guy, there are node type such as XYZN. In addition to those you will be
+% introducing the following new ones.
+%
+% I think the other point that is not made very clear is that you have no
+% formally defined circuits. So perhaps if you could introduce a quick
+% definition and then say that we have the same building blocks as those, ie
+% nodes, but with a different graphical structure it will become clearer
 
 Along with many node types defined previously
 \citep{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11}, \textsc{Crane}
@@ -650,6 +692,7 @@ construct the new formula by removing constraints (on
 \cref{line:constraintremoval}) and constructing a new domain map $\delta'$ that
 replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
 
+% TODO: explain notation (i.e., remove the bot)
 \begin{example}
   Let $\phi = \{\, c_1, c_2 \,\}$ be a formula with clauses
   \begin{align*}
@@ -875,6 +918,13 @@ from $v$.
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
     that no complete solution was found.}\label{tbl:results}
 \end{table*}
+% TODO: This is very neat but readers from the community will expect to see some
+% plots of time. Can you also give a few of those that reflect or mirror the
+% conclusions from the table? Also it is a standard to discuss a few lifted
+% theories like the smokers and friends example. Can you also include some
+% empirical results with plots of time on such theories as well to appeal to the
+% sanity of the reader that it actually works for problems in frameworks such
+% as Markov log networks
 
 We compare \textsc{Crane} and \textsc{ForcLift}
 \citep{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count various kinds of
@@ -982,6 +1032,10 @@ fragment as well, we can formulate an even stronger conjecture.
   \Ctwo{} to avoid counting quantifiers or extending \textsc{Crane} to support
   them.
 \end{conjecture}
+
+% TODO: You previously mentioned this class being discussed in another paper.
+% You will need to remind the reader what you are doing differently to that and
+% how you are improving to previous work.
 
 However, the most important direction for future work is to fully automate this
 new way of computing the (W)FOMC of a formula. First, we need an algorithm that
