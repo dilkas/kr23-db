@@ -1,0 +1,387 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[UKenglish]{babel}
+\usepackage[UKenglish]{isodate}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usepackage{complexity}
+
+\usetikzlibrary{shapes}
+\usetikzlibrary{arrows}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
+\usetikzlibrary{overlay-beamer-styles}
+
+\beamertemplatenavigationsymbolsempty
+\usetheme{default}
+\usecolortheme{rose}
+
+\definecolor{color1}{HTML}{1B9E77}
+\definecolor{color2}{HTML}{D95F02}
+
+\author{\textbf{Paulius Dilkas}, Vaishak Belle}
+\title{Recursive Solutions to First-Order Model Counting}
+\institute{University of Edinburgh, UK}
+\date{Workshop on Counting and Sampling 2022}
+
+\begin{document}
+\addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
+
+\begin{frame}[noframenumbering,plain]
+  \tikz[remember picture,overlay]{
+    \node at ([yshift=25pt,xshift=30pt]current page.south)
+    {\includegraphics[height=40pt]{inf.png}};
+    \node at ([yshift=25pt,xshift=75pt]current page.south)
+    {\includegraphics[height=40pt]{ecr.jpg}};
+    \node at ([yshift=20pt,xshift=140pt]current page.south)
+    {\includegraphics[height=20pt]{epsrc.png}};
+  }
+  \titlepage
+\end{frame}
+
+\begin{frame}{Some Elementary Counting}
+  \begin{exampleblock}{A Counting Problem}
+    Suppose this room has \structure{$n$} seats, and there are
+    \structure{$m \le n$} people in the audience. How many ways are there to
+    seat everyone?
+  \end{exampleblock}
+
+  \pause
+  More explicitly, we assume that:
+  \begin{itemize}
+  \item each attendee gets exactly one seat,
+  \item and a seat can accommodate at most one person.
+  \end{itemize}
+
+  \pause
+  \alert{Answer:} \structure{$n^{\underline{m}} = n \cdot (n-1)\cdots(n-m+1)$}.
+
+  Note: this problem is equivalent to counting \structure{$[m] \to [n]$} injections.
+
+\end{frame}
+% wouldn't it be nice if we could just describe this problem and have an algorithm solve it for us?
+
+\begin{frame}{Let's Express This Problem in Logic!}
+  \begin{itemize}
+  \item Let \structure{$M$} and \structure{$N$} be sets (i.e., \alert{domains}) such that \structure{$|M| = m$}, and \structure{$|N| = n$}
+  \item Let \structure{$P \subseteq M \times N$} be a relation (i.e., \alert{predicate}) over sets \structure{$M$} and \structure{$N$}
+  \item We can describe all of the constraints in first-order logic:
+    \begin{itemize}
+    \item \pause each attendee gets a seat (i.e., at least one seat)
+      \[
+      \forall x \in M\text{. }\exists y \in N\text{. }P(x, y)
+      \]
+    \item \pause one person cannot occupy multiple seats
+      \[
+      \forall x \in M\text{. }\forall y, z \in N\text{. }P(x, y) \land P(x, z) \Rightarrow y=z
+      \]
+    \item \pause one seat cannot accommodate multiple attendees
+      \[
+      \forall w, x \in M\text{. }\forall y \in N\text{. }P(w, y) \land P(x, y) \Rightarrow w=x
+      \]
+    \end{itemize}
+  \end{itemize}
+  \pause
+  The first two sentences constrain \structure{$P$} to be a function, and the last one makes it injective.
+\end{frame}
+% one could also add probabilities to these sentences to say that, e.g., there is a 1% probability of somebody taking up two seats, somebody sitting on somebody else's lap, somebody sitting on the floor, etc.
+
+\begin{frame}{Overview of the Problem}
+  \begin{itemize}
+    \item \alert{First-order model counting} (FOMC) is the problem of counting
+          the models of a sentence in first-order logic.
+    \item The \alert{(symmetric) weighted} variation of the problem adds weights
+          (e.g., probabilities) to predicates.
+          \begin{itemize}
+            \item It is used for efficient \alert{probabilistic inference} in
+                  relational models such as Markov logic networks.
+          \end{itemize}
+    \item None of the (implemented) (W)FOMC algorithms are able to count, e.g.,
+          \alert{injective} and \alert{bijective} functions.
+  \end{itemize}
+  \begin{block}{Claim}
+    This shortcoming can be addressed via support for (almost arbitrary)
+    \alert{recursive functions}.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Back to Our Example}
+  For instance, the following function counts injections
+  \[
+  f(m, n) =
+  \begin{cases}
+    1 & \text{if } m = 0 \text{ and } n = 0 \\
+    0 & \text{if } m > 0 \text{ and } n = 0 \\
+    f(m, n-1) + mf(m-1, n-1) & \text{otherwise.}
+  \end{cases}
+  \]
+  \pause
+  \begin{itemize}
+  \item \structure{$f$} can be computed in \structure{$\Theta(mn)$} time (via dynamic programming).
+  \item Optimal time complexity to compute \structure{$n^{\underline{m}}$} is \structure{$\Theta(\log m)$}.
+  \item But \structure{$\Theta(mn)$} is still much better than solving an equivalent \alert{$\#\P$-complete} problem in propositional logic.
+  \item The rest of this talk is about how such functions can be found automatically.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{First-Order Knowledge Compilation with \textsc{ForcLift}}
+  \begin{columns}
+    \begin{column}{0.25\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node[fill=red!50,fill on=<2>] (dr) {}
+        child {node {}
+          child {node[fill=red!50,fill on=<2>] {}
+            child {node {}
+              child {node {}}
+              child {node[fill=red!50,fill on=<2>] (ref) {}}
+            }}};
+        \draw[-latex, bend right,alt=<2>{red}{black}] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.75\textwidth}
+      \begin{block}{Workflow Before}
+        \begin{enumerate}
+        \item Compile the formula to a \alert{circuit}
+        \item Evaluate to get the answer
+        \end{enumerate}
+      \end{block}
+      \pause
+      \begin{block}{Workflow After}
+        \begin{enumerate}
+        \item Compile the formula to a \alert{graph}
+        \item Extract the definitions of functions
+        \item Simplify
+        \item Supplement with \alert{base cases}
+        \item Evaluate to get the answer
+        \end{enumerate}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+% Only Step 1 is fully automated at this point. The other steps are executed by hand.
+% Two parts: compilation and inference/evaluation.
+
+\begin{frame}{More Formally\ldots}
+  \begin{definition}
+    A \alert{first-order deterministic decomposable negation normal form computational graph} (FCG) is a
+    \begin{itemize}
+    \item directed graph
+    \item (which is weakly connected)
+    \item with a single source,
+    \item labelled vertices,
+    \item and ordered outgoing edges.
+    \end{itemize}
+  \end{definition}
+\end{frame}
+
+\begin{frame}{How to Interpret an FCG}
+  \begin{columns}
+    \begin{column}{0.25\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node[fill=red!50,fill on=<2>] (dr) {}
+        child {node[fill=red!50,fill on=<3>] {}
+                child {node[fill=red!50, fill on=<4>] {}
+                  child {node[fill=red!50, fill on=<5>] {}
+                    child {node[fill=red!50, fill on=<6>] {}}
+                    child {node[fill=red!50, fill on=<7>] (ref) {}}
+        }}};
+        \draw[-latex, bend right] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.75\textwidth}
+      \begin{align*}
+        f(m, n) &= \onslide<3->{\sum_{l=0}^m \binom{m}{l}} \onslide<6->{[l<2]} \onslide<5->{\times} \onslide<7->{f(m-l, n-1)}\\
+        \onslide<8>{&= f(m, n-1) + mf(m-1, n-1)}
+      \end{align*}
+      \onslide<6>{
+        \[
+          [\phi] =
+          \begin{cases}
+            1 & \text{if } \phi \\
+            0 & \text{if } \neg\phi
+          \end{cases}
+          \]
+      }
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Compilation Rules}
+  \begin{definition}
+    A \alert{(compilation) rule} is a function that takes a \alert{formula} and returns a set of \structure{$(G, L)$} pairs, where
+    \begin{itemize}
+    \item \structure{$G$} is an FCG,
+    \item and \structure{$L$} is a list of formulas.
+    \end{itemize}
+  \end{definition}
+\end{frame}
+
+\begin{frame}{Example Rule: Independence}
+  Input formula:
+  \begin{gather}
+    ({\color{color1} \forall x, y \in L\text{. }x=y}) \land \label{eq:1} \tag{{\color{color1} 1}} \\
+    ({\color{color2} \forall x \in M\text{. }\forall y, z \in N\text{. }P(x, y) \land P(x, z) \Rightarrow y=z}) \land \label{eq:2} \tag{{\color{color2} 2}} \\
+    ({\color{color2} \forall w, x \in M\text{. }\forall y \in N\text{. }P(w, y) \land P(x, y) \Rightarrow w=x}) \label{eq:3} \tag{{\color{color2} 3}}
+  \end{gather}
+  \pause
+  Only one \structure{(G, L)} pair:
+  \[
+  G = 
+  \begin{tikzpicture}[edge from parent/.style={draw,-latex},baseline=(current bounding box.center)]
+    \node[draw,circle] {$\land$}
+    child {node {\color{color1} $\star$}}
+    child {node {\color{color2} $\star$}}
+    ;
+  \end{tikzpicture},
+  \qquad
+  L = \langle {\color{color1} \eqref{eq:1}}, {\color{color2} \eqref{eq:2} \land \eqref{eq:3}} \rangle
+  \]
+  %% Later, both \structure{$G$} and \structure{$L$} are incorporated into a larger \alert{search state}.
+\end{frame}
+% stars mark edges to nowhere and they are associated with the formulas in L via a certain order
+
+\begin{frame}
+  \frametitle<1>{New Rule 1: Generalised Domain Recursion}
+  \frametitle<2>{New Rule 2: Constraint Removal}
+  \frametitle<3>{New Rule 3: Identifying Possibilities for Recursion}
+  \begin{columns}
+    \begin{column}{0.15\textwidth}
+      \centering
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+        \node[fill=red!50, fill on=<1>] (dr) {}
+        child {node {}
+          child {node[fill=red!50, fill on=<2>] {}
+            child {node {}
+              child {node {}}
+              child {node[fill=red!50, fill on=<3>] (ref) {}}
+            }}};
+        \draw[-latex, bend right,alt=<3>{red}{black}] (ref) to (dr);
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.85\textwidth}
+      \begin{overprint}
+        \onslide<1>
+          \begin{example}
+            Input formula:
+            \[
+              \forall x \in M\text{. }\forall y, z \in N\text{. }y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z)
+            \]
+            Output formula (with a new constant \structure{$c \in M$}):
+            \begin{gather*}
+              \forall y, z \in N\text{. }y \ne z \Rightarrow \neg P(\alert{c}, y) \lor \neg P(\alert{c}, z) \\
+              \begin{multlined}
+                \forall x \in M\text{. }\forall y, z \in N\text{. }\alert{x \ne c} \land y \ne z \Rightarrow \\
+                \neg P(x, y) \lor \neg P(x, z)
+              \end{multlined}
+            \end{gather*}
+            %% Output FCG:
+            %% \begin{tikzpicture}[edge from parent/.style={draw,-latex}]
+            %%   \node[draw,circle] {$\textsc{DR}$}
+            %%   child {node {$\star$}}
+            %%   ;
+            %% \end{tikzpicture}
+            %% Here, domain recursion is applied to domain \structure{$M$}. It could similarly be applied to \structure{$N$} as well.
+          \end{example}
+        \onslide<2>
+          \begin{example}
+            Input formula (with a constant \structure{$c \in M$}):
+            \begin{gather*}
+              \begin{multlined}
+                \forall x \in \alert{M}\text{. }\forall y, z \in N\text{. }\alert{x \ne c} \land y \ne z \Rightarrow \\
+                \neg P(x, y) \lor \neg P(x, z)
+              \end{multlined} \\
+              \begin{multlined}
+                \forall w,x \in \alert{M}\text{. }\forall y \in N\text{. }\alert{w \ne c} \land \alert{x \ne c} \land w \ne x \Rightarrow \\
+                \neg P(w, y) \lor \neg P(x, y)
+              \end{multlined}
+            \end{gather*}
+            Output formula (with a new domain \structure{$M' \coloneqq M \setminus \{\, c \,\}$}):
+            \begin{gather*}
+              \forall x \in \alert{M'}\text{. }\forall y, z \in N\text{. }y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z) \\
+              \forall w,x \in \alert{M'}\text{. }\forall y \in N\text{. }w \ne x \Rightarrow \neg P(w, y) \lor \neg P(x, y)
+            \end{gather*}
+          \end{example}
+        \onslide<3>
+          \begin{block}{Goal}
+            Check if the input formula is isomorphic (up to domains) to a
+            previously encountered formula.
+          \end{block}
+          \begin{block}{Rough Outline}
+            \begin{enumerate}
+              \item Consider pairs of `similar' clauses.
+              \item Consider bijections between their sets of variables.
+              \item Extend each such bijection to a map between sets of domains.
+              \item If the bijection makes the clauses equal, and the domain map
+                    is compatible with previous domain maps, move on to another
+                    pair of clauses.
+            \end{enumerate}
+          \end{block}
+      \end{overprint}
+    \end{column}
+  \end{columns}
+\end{frame}
+% We're still creating a vertex in a graph with one outgoing edge.
+
+%% \begin{frame}{Compilation as Search}
+%%   \begin{definition}
+%%     A \alert{(search) state} is a tuple \structure{$(G, C, L)$}, where:
+%%     \begin{itemize}
+%%     \item \structure{$G$} is an FCG (or \texttt{null}),
+%%     \item \structure{$C$} is a compilation cache that maps integers to sets of pairs $(\phi, v)$, where $\phi$ is a formula, and $v$ is a vertex of $G$ (which is used to identify opportunities for recursion),
+%%     \item and \structure{$L$} is a list of formulas (that are yet to be compiled). (Note that the order is crucial!)
+%%     \end{itemize}
+%%   \end{definition}
+%%   The search algorithm combines greedy and breadth-first search:
+%% \end{frame}
+
+\begin{frame}{Resulting Improvements to Counting Functions}
+  Let \structure{$M$} and \structure{$N$} be two sets with cardinalities
+  \structure{$|M| = m$} and \structure{$|N| = n$}.
+
+  Our new rules enable \textsc{ForcLift} to efficiently count
+  \structure{$M \to N$} functions such as:
+  \begin{itemize}
+    \item injections in \structure{$\Theta(mn)$} time
+          \begin{itemize}
+            \item best: \structure{$\Theta(m)$}
+          \end{itemize}
+    \item partial injections in \structure{$\Theta(mn)$} time
+          \begin{itemize}
+            \item best: \structure{$\Theta({\min\{\, m, n \,\}}^2)$}
+          \end{itemize}
+          \item bijections in \structure{$\Theta(m)$} time
+          \begin{itemize}
+            \item \alert{optimal!}
+          \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary \& Future Work}
+  \begin{block}{Summary}
+    The circuits hitherto used for FOMC become more powerful with:
+    \begin{itemize}
+    \item cycles,
+    \item generalised domain recursion,
+    \item and some more new compilation rules that support domain recursion.
+    \end{itemize}
+  \end{block}
+  \begin{block}{Future Work}
+    \begin{itemize}
+    \item Automate:
+      \begin{itemize}
+      \item extracting and simplifying the definitions of functions,
+      \item finding all base cases.
+      \end{itemize}
+    \item Open questions:
+      \begin{itemize}
+      \item What kind of \alert{sequences} are computable in this way?
+      \item Would using a \alert{different logic} extend the capabilities of FOMC further?
+      \end{itemize}
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\end{document}
