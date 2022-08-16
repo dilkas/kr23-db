@@ -145,37 +145,27 @@
 
 \maketitle
 
-% TODO: FOMC algorithms -> of most algorithms to date
 \begin{abstract}
   First-order model counting (FOMC) is a computational problem that asks to
   count the models of a sentence in finite-domain first-order logic. Despite
   being around for more than a decade, practical FOMC algorithms are still
   unable to compute functions as simple as a factorial. We argue that the
-  capabilities of FOMC algorithms are severely limited by their inability to
+  capabilities of FOMC algorithms to date are limited by their inability to
   express arbitrary recursive computations. To enable arbitrary recursion, we
   relax the restrictions that typically accompany domain recursion and
   generalise circuits used to express a solution to an FOMC problem to graphs
   that may contain cycles. To this end, we enhance the most well-established
   (weighted) FOMC algorithm \textsc{ForcLift} with new compilation rules and an
   algorithm to check whether a recursive call is feasible. These improvements
-  allow us to find efficient solutions to counting fundamental structures such
-  as injections and bijections.
+  allow the algorithm to construct efficient solutions to counting fundamental
+  structures such as injections and bijections. We end with a few conjectures on
+  what classes of instances could be liftable as a result.
 \end{abstract}
-% TODO: We conclude after report on empirical results and discuss a few
-% conjectures on what correctness might look like.
 
 \section{Introduction}
 
-% TODO: It might be worth remarking either in the abstract or in the intro that
-% generally the weighted version is what is studied but the nonweighted version
-% is also still interesting because of its connections to finite model theory.
-% You could make a reference to the work of Paul Beam on symmetric weighted
-% model counting.
-
 % 1. What is the problem?
 % 2. Why is it interesting and important?
-
-% in fact, the WFOMC algorithm by \citet{DBLP:conf/ijcai/BroeckTMDR11} can do so when it is unable to solve the instance in a lifted manner.
 
 \emph{First-order model counting} (FOMC) is the problem of computing the number
 of models of a sentence in first-order logic (FOL) given the size(s) of its
@@ -198,6 +188,10 @@ relational \citep{DBLP:series/synthesis/2016Raedt} models. Lifted inference
 techniques for probabilistic databases, while developed somewhat independently,
 have also been inspired by WFOMC
 \citep{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
+While WFOMC tends to receive more attention in the literature, FOMC is an
+interesting problem in an of itself because of its connections to finite model
+theory \citep{DBLP:conf/kr/BremenK21} and applications in enumerative
+combinatorics \citep{DBLP:conf/ilp/BarvinekB0ZK21}.
 
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
@@ -233,26 +227,21 @@ proving \citep{DBLP:journals/cacm/GogateD16}.
 % solutions? How does mine differ?)
 % simple unliftable instances -> recursion
 
-% TODO (footnote): You need to explain this a little bit more. You say that it
-% is liftable in principle but you should clarif ythat factorial has never been
-% shown empirically and there is no correctness theorem claiming that a
-% factorial can be computed in a lifted manner. Or something like that.
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{The problem of computing
   the factorial can be described using two variables and counting quantifiers,
   so it is known to be liftable in principle
-  \citep{DBLP:journals/jair/Kuzelka21}.} We claim that this shortcoming is due
-to the inability of these algorithms to construct recursive solutions. The topic
-of recursion in the context of WFOMC has been studied before but in limited
-ways. \Citet{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data
-that is then used to conjecture recurrence relations that explain that data.
+  \citep{DBLP:journals/jair/Kuzelka21}, but an algorithm that can lift such an
+  instance in practice does not exist.} We claim that this shortcoming is due to
+the inability of these algorithms to construct recursive solutions. The topic of
+recursion in the context of WFOMC has been studied before but in limited ways.
+\Citet{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data that
+is then used to conjecture recurrence relations that explain that data.
 \Citet{DBLP:conf/nips/Broeck11} introduced the idea of \emph{domain recursion}.
 Intuitively, domain recursion partitions a domain of size $n$ into a single
 explicitly named constant and the remaining domain of size $n-1$. However, many
 stringent conditions are enforced to ensure that the search for a tractable
 solution always terminates.
-% TODO: Because this is the focus of your work you might want to give at least
-% one example of such a stringent condition
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -264,22 +253,23 @@ stronger (W)FOMC algorithm, capable of handling more instances (e.g., counting
 various injective mappings) in a lifted manner. The ideas presented in this
 paper are implemented in \textsc{Crane}---an extension of the arguably most
 well-known WFOMC algorithm \textsc{ForcLift}. \textsc{ForcLift} works in two
-stages: compilation and evaluation/propagation.\footnote{There is also an
-  intermediate stage called \emph{smoothing} that takes place between
-  compilation and evaluation. As our changes to smoothing are rather elementary,
-  we do not discuss them to not distract the reader from the main contributions
-  of this paper.} In the first stage, various \emph{(compilation) rules} are
-applied to the input (or some derivative) formula, gradually constructing a
-circuit. In the second stage, the weights of the instance are propagated through
-the circuit, computing the weighted model count. Along with new compilation
-rules, \textsc{Crane} introduces changes to both stages of the process. First,
-while \textsc{ForcLift} applies compilation rules via greedy\footnote{The
-  algorithm is not described in any paper on \textsc{ForcLift} but can be found
-  in its source code at \url{https://dtai.cs.kuleuven.be/drupal/wfomc}} search,
-\textsc{Crane} uses a hybrid search algorithm that applies some rules greedily
-and some using breadth-first search. Second, the product of compilation is not
-directly evaluated but rather interpreted as a collection of functions on domain
-sizes.
+stages: compilation and evaluation/propagation. In the first stage, various
+\emph{(compilation) rules} are applied to the input (or some derivative)
+formula, gradually constructing a circuit. In the second stage, the weights of
+the instance are propagated through the circuit, computing the weighted model
+count. Along with new compilation rules, \textsc{Crane} introduces changes to
+both stages of the process. First, while \textsc{ForcLift} applies compilation
+rules via greedy\footnote{The algorithm is not described in any paper but can be
+  found in its source code at \url{https://dtai.cs.kuleuven.be/drupal/wfomc}}
+search, \textsc{Crane} uses a hybrid search algorithm that applies some rules
+greedily and some using breadth-first search. Second, the product of compilation
+is not directly evaluated but rather interpreted as a collection of functions on
+domain sizes.
+
+% \footnote{There is also an intermediate stage called \emph{smoothing} that takes
+%   place between compilation and evaluation. As our changes to smoothing are
+%   rather elementary, we do not discuss them to not distract the reader from the
+%   main contributions of this paper.}
 
 % 5.2) The main idea: cycles that represent recursive calls.
 
@@ -293,10 +283,9 @@ additional transformations, the constraints in $\psi$ become `uniform' and can
 be removed, replacing the domain of size $n$ with a new domain of size
 $n-1$---this is the responsibility of the \emph{constraint removal} (CR)
 compilation rule. Afterwards, another compilation rule recognizes that the
-resulting formula is just like the input formula $\phi$ except it refers to a
-different domain. This observation allows us to add a cycle-forming edge to the
-graph, which can be interpreted as function $f$ relying on $f(n-1)$ to compute
-$f(n)$.
+resulting formula is just like the input formula $\phi$ but with a different
+domain. This observation allows us to add a cycle-forming edge to the graph,
+which can be interpreted as function $f$ relying on $f(n-1)$ to compute $f(n)$.
 
 % search
 % interpretation
@@ -321,19 +310,16 @@ Our representation of FOMC instances is largely based on the format used
 internally by \textsc{ForcLift}, some aspects of which are described by
 \citet{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can translate sentences
 in a variant of function-free many-sorted FOL with equality to this internal
-format. An \emph{atom} is $p(t_1, \dots, t_n)$ for some predicate $p$ and terms
+format. We use lowercase Latin letters for predicates and constants, uppercase
+Latin letters for variables, and uppercase Greek letters for domains. An
+\emph{atom} is $p(t_1, \dots, t_n)$ for some predicate $p$ and terms
 $t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
 \emph{literal} is either an atom or the negation of an atom (denoted by
-$\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all domains.
-Initially, $\mathcal{D}$ contains all domains mentioned by the input (W)FOMC
-instance. During compilation, new domains are added to $\mathcal{D}$ by some of
-the compilation rules.
-% TODO ('Let D... all domains'): You need to state explicitly or implicitly that
-% to set of domains is constructed from a finite set of constants. Either you
-% can define the set of constants in the langoage or you can say that in the
-% interest of simplicity the set of constants is a set of nullary functions
-% mentioned in the sentence, which only mentions relations or nullary functions.
-% Function that take arguments are not allowed.
+$\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all (finite)
+domains. Initially, $\mathcal{D}$ contains all domains mentioned by the input
+(W)FOMC instance. During compilation, new domains are added to $\mathcal{D}$ by
+some of the compilation rules. Each such new domain is interpreted as a subset
+of some element of $\mathcal{D}$.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
@@ -401,9 +387,6 @@ for equality constraints and constraints of the form $X \not\in \Delta$ for some
 variable $X$ and domain $\Delta$, we exclude such constraints simply because
 they are not needed.
 
-% TODO: You should mention that somewhat unusually, first order variables are in
-% capital letters, similar to the convention of logic programming. They are not
-% to be confused with second order qualification.
 One can read a formula from \cref{def:formula} as a sentence in a FOL\@. All
 variables in a clause are implicitly universally quantified (but note that
 variables are never shared among clauses), and all clauses in a formula are
@@ -476,21 +459,23 @@ with $x$.
     denotes conjunction, and $\bot$ denotes a contradiction---see the work by
     \citet{DBLP:conf/ijcai/BroeckTMDR11} for the descriptions of these node
     types. Here we omit some parameters as well as nodes whose only arithmetic
-    effect is multiplication by one. Some of these nodes play an important role
-    in the weighted version of the problem, whereas others are remnants of the
-    interaction between compilation rules and the way in which \textsc{ForcLift}
-    handles existential quantifiers.}\label{fig:examplefcg}
+    effect is multiplication by one.}\label{fig:examplefcg}
 \end{figure}
+% Some of these nodes play an important role in the weighted version of the
+% problem, whereas others are remnants of the interaction between compilation
+% rules and the way in which \textsc{ForcLift} handles existential quantifiers.
 
 % TODO: Again for the reader who is not very familiar with this area it might be
 % good to at least give the circuit for one of the examples such as a
 % disjunction just to show them how it is usually done.
 
+% \footnote{Imposing an ordering on outgoing edges is just a limited version of
+% edge labelling.}
+
 % From circuits to graphs.
 A \emph{first-order deterministic decomposable negation normal form
   computational graph} (FCG) is a (weakly connected) directed graph with a
-single source, node labels, and ordered outgoing edges.\footnote{Imposing an
-  ordering on outgoing edges is just a limited version of edge labelling.} Node
+single source, node labels, and ordered outgoing edges. Node
 labels consist of two parts: the \emph{type} and the \emph{parameters}. The type
 of a node determines its out-degree.
 
@@ -574,10 +559,11 @@ literal, consider two possibilities: $X = x$ and $X \ne x$.
 % Original domain recursion
 \citet{DBLP:conf/nips/Broeck11} imposes stringent preconditions on the input
 formula to ensure that the expanded version of the formula (as in
-\cref{example:dr}) can be handled efficiently. The clauses in this expanded
-formula are then partitioned into three parts based on whether the
-transformation introduced constants or constraints or both. The aforementioned
-conditions ensure that these parts can be treated independently.
+\cref{example:dr}) can be handled efficiently. For example, at least one clause
+must contain a variable that occurs in all of its atoms. The clauses in this
+expanded formula are then partitioned into three parts based on whether the
+transformation introduced constants or constraints or both. The preconditions
+ensure that these parts can be treated independently.
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\GDR$ nodes.}\label{alg:domainrecursion}
@@ -692,20 +678,19 @@ construct the new formula by removing constraints (on
 \cref{line:constraintremoval}) and constructing a new domain map $\delta'$ that
 replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
 
-% TODO: explain notation (i.e., remove the bot)
 \begin{example}
   Let $\phi = \{\, c_1, c_2 \,\}$ be a formula with clauses
   \begin{align*}
     c_1 &=
           \begin{multlined}[t]
             (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
-            \{\, X \mapsto \Gamma, Y \mapsto \Delta^\bot, Z \mapsto \Delta^\bot \,\}),
+            \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
           \end{multlined}\\
     c_2 &=
           \begin{multlined}[t]
             (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \\
             \{\, (X, x), (Z, X), (Z, x) \,\}, \\
-            \{\, X \mapsto \Gamma, Y \mapsto \Delta^\bot, Z \mapsto \Gamma \,\}).
+            \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}).
           \end{multlined}
   \end{align*}
   Domain $\Gamma$ and its element $x \in \Gamma$ satisfy the preconditions for
@@ -715,12 +700,12 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
     c_1' &=
            \begin{multlined}[t]
              (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
-             \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Delta^\bot \,\}),
+             \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
            \end{multlined} \\
     c_2' &=
            \begin{multlined}[t]
              (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (Z, X) \,\}, \\
-             \{\, X \mapsto \Gamma', Y \mapsto \Delta^\bot, Z \mapsto \Gamma' \,\}).
+             \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Gamma' \,\}).
            \end{multlined}
   \end{align*}
 \end{example}
@@ -732,11 +717,11 @@ Let $\Doms$ be a function that maps any clause or formula to the set of domains
 used within, and let $\dom(f)$ denote the domain of function $f$.
 
 \paragraph{Hashing.}
-We use (integer-valued) hash functions to efficiently discard pairs of formulas
-that are too different for recursion to be established. The hash code of a
-clause $c = (L, C, \delta_{c})$ (denoted by $\# c$) combines the hash codes of
-the sets of constants and predicates in $c$, the numbers of positive and
-negative literals, the number of inequality constraints $|C|$, and the number of
+We use (integer-valued) hash functions to discard pairs of formulas that are too
+different for recursion to work. The hash code of a clause
+$c = (L, C, \delta_{c})$ (denoted by $\# c$) combines the hash codes of the sets
+of constants and predicates in $c$, the numbers of positive and negative
+literals, the number of inequality constraints $|C|$, and the number of
 variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash
 codes of all its clauses and is denoted by $\#\phi$.
 
@@ -794,9 +779,9 @@ have the same hash codes. For every pair of sufficiently similar clauses,
 $\rho\colon \Doms(\psi) \pfun \Doms(\phi)$ becomes total, and all clauses are
 successfully coupled.
 
-The compatibility of a pair of clauses is checked by function \texttt{genMaps}.
-It considers every possible bijection $\beta\colon \Vars(c) \to \Vars(d)$ and
-map $\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
+Function \texttt{genMaps} checks the compatibility of a pair of clauses. It
+considers every possible bijection $\beta\colon \Vars(c) \to \Vars(d)$ and map
+$\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
 \[
   \begin{tikzcd}
     \Vars(c) \ar[r, dashed, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
@@ -818,25 +803,23 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 When \textsc{ForcLift} \citep{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
 inputs and parameters. These operations are then immediately performed while
-traversing the circuit and using domain sizes and weights as the initial inputs.
-With \textsc{Crane}, the interpretation of an FCG is a collection of functions.
-Each function has (some) domain sizes as parameters and may contain recursive
-calls to other functions, including itself. While there may be any number of
-subsidiary functions, there is always one main function that can be called with
-the sizes of the domains of the input formula as arguments. Henceforth, this
-function is always called $f$, and it is defined by the source node.
+traversing the circuit. With \textsc{Crane}, the interpretation of an FCG is a
+collection of functions. Each function has (some) domain sizes as parameters and
+may contain recursive calls to other functions, including itself. While there
+may be any number of subsidiary functions, there is always one main function
+that can be called with the sizes of the domains of the input formula as
+arguments. Henceforth, this function is always called $f$, and it is defined by
+the source node.
 
 The interpretation of a node is decided by its type. Here we describe the
 interpretations of new (or significantly changed) types and refer the reader to
 previous work \citep{DBLP:conf/ijcai/BroeckTMDR11} for information on other
-types. Both $\CR$ and $\GDR$ nodes do not contribute anything to the definitions
-of functions---the interpretation of such a node is simply the interpretation of
-its only direct successor. Obviously, $\star$ nodes also have no interpretation,
-although for a different reason: incomplete FCGs are not meant to be
-interpreted. The interpretation of a $\Reff$ node is a function call. The direct
-successor of the $\Reff$ node (say, $v$) then must introduce a function. The
-parameters of this function are the sizes of all domains used by nodes reachable
-from $v$.
+types. The interpretation of a $\CR$ or a $\GDR$ node is simply the
+interpretation of its only direct successor. Obviously, $\star$ nodes have no
+interpretation as incomplete FCGs are not meant to be interpreted. The
+interpretation of a $\Reff$ node is a function call. The direct successor of the
+$\Reff$ node (say, $v$) then must introduce a function. The parameters of this
+function are the sizes of all domains used by nodes reachable from $v$.
 
 \begin{example}\label{example:interpretation}
   Consider the FCG from \cref{fig:examplefcg}. The input formula (i.e., the
@@ -918,22 +901,21 @@ from $v$.
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
     that no complete solution was found.}\label{tbl:results}
 \end{table*}
-% TODO: This is very neat but readers from the community will expect to see some
-% plots of time. Can you also give a few of those that reflect or mirror the
-% conclusions from the table? Also it is a standard to discuss a few lifted
-% theories like the smokers and friends example. Can you also include some
-% empirical results with plots of time on such theories as well to appeal to the
-% sanity of the reader that it actually works for problems in frameworks such
-% as Markov log networks
+% TODO: It is a standard to discuss a few lifted theories like the smokers and
+% friends example. Can you also include some empirical results on such theories
+% as well to appeal to the sanity of the reader that it actually works for
+% problems in frameworks such as Markov log networks
 
 We compare \textsc{Crane} and \textsc{ForcLift}
 \citep{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count various kinds of
-functions. (Other WFOMC algorithms such as \textsc{L2C}
+functions. This class of instances is chosen because of its simplicity and
+ubiquity and the inability of state-of-the-art WFOMC algorithms to solve many
+such instances. Note that other WFOMC algorithms---\textsc{L2C}
 \citep{DBLP:conf/kr/KazemiP16} and probabilistic theorem proving
-\citep{DBLP:journals/cacm/GogateD16} are unable to solve any of the instances
-that \textsc{ForcLift} fails on.) We begin by describing how such functions can
-be expressed in FOL\@. \textsc{ForcLift} then translates these sentences in FOL
-to formulas as defined in \cref{def:formula}.
+\citep{DBLP:journals/cacm/GogateD16}---are unable to solve any of the instances
+that \textsc{ForcLift} fails on. We begin by describing how such
+function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
+translates these sentences in FOL to formulas as defined in \cref{def:formula}.
 
 % Describe what kind of instances we're investigating
 Let $p \in \Gamma \times \Delta$ be a predicate. To restrict all relations
@@ -974,23 +956,27 @@ First, we can compute the binomial coefficient $\binom{n}{k}$ in $\Theta(nk)$
 time. Second, techniques such as dynamic programming and memoization are used to
 avoid recomputing the same binomial coefficient or function call multiple times.
 
-The experimental results are summarised in \cref{tbl:results}. The best-known
-asymptotic complexity for computing total surjections is by \citet{30049}. All
-other best-known complexity results are inferred from the formulas and programs
-on the on-line encyclopedia of integer sequences \citep{oeis}. On instances that
-could already be solved by \textsc{ForcLift}, the two algorithms perform equally
-well. However, \textsc{Crane} can also solve all but one instances that
-\textsc{ForcLift} fails on in at most cubic time.
+The experimental results are in \cref{tbl:results}. Previous work often compares
+WFOMC algorithms by running them on a few instances with increasing domain sizes
+and measuring runtime
+\citep{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
+However, we can do better than that and identify the exact worst-case asymptotic
+complexity of a solution produced by either \textsc{Crane} or \textsc{ForcLift}.
+The best-known asymptotic complexity for computing total surjections is by
+\citet{30049}. All other best-known complexity results are inferred from the
+formulas and programs on the on-line encyclopedia of integer sequences
+\citep{oeis}. On instances that could already be solved by \textsc{ForcLift},
+the two algorithms perform equally well. However, \textsc{Crane} can also solve
+all but one instances that \textsc{ForcLift} fails on in at most cubic time.
 
 Let us examine the case of counting partial (non-endomorphic) injections more
 closely. The FCG in \cref{fig:examplefcg,example:interpretation} counts partial
 injections and is responsible for the $mn$ entry in the table. For a complete
 solution, \cref{eq:solution} must be combined with the base case $f(0, n) = 1$
-for all $n \in \mathbb{N}_{0}$. In other words, the base case says that the
-empty partial map is the only partial injection with an empty domain, regardless
-of the codomain. Finally, note that $f(m, n)$ can be evaluated in $\Theta(mn)$
-time by a dynamic programming algorithm that computes $f(i, j)$ for all
-$i = 0, \dots, m$ and $j = 0, \dots, n$.
+for all $n \in \mathbb{N}_{0}$. This base case says that the empty partial map
+is the only partial injection with an empty domain. Finally, note that $f(m, n)$
+can be evaluated in $\Theta(mn)$ time by a dynamic programming algorithm that
+computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
 
@@ -1009,7 +995,7 @@ can formulate the following conjecture.
 
 \begin{conjecture}
   Let \IFO{} be the class of formulas in FOL that contain clauses with at most
-  two variables as well as any number of copies
+  two variables as well as any number of copies of
   \begin{align*}
     &\begin{multlined}[t]
       (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
@@ -1017,15 +1003,18 @@ can formulate the following conjecture.
     \end{multlined}\\
     &\begin{multlined}[t]
       (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-      X \ne Z \implies \neg p(X, Y) \lor \neg p(Z, Y)).
+      X \ne Z \implies \neg p(X, Y) \lor \neg p(Z, Y))
     \end{multlined}
   \end{align*}
   for some predicate $p$ and domains $\Gamma$ and $\Delta$. Then \IFO{} is
   liftable by \textsc{Crane}.
 \end{conjecture}
 
-Since the tasks of counting injections and bijections fall into the \Ctwo{}
-fragment as well, we can formulate an even stronger conjecture.
+Recall that \Ctwo{} is the class of formulas with counting quantifiers and at
+most two variables. \Ctwo{} was recently shown to be liftable
+\citep{DBLP:journals/jair/Kuzelka21} but without providing a usable (W)FOMC
+algorithm. Since the tasks of counting injections and bijections fall into the
+\Ctwo{} fragment, we can conjecture the following.
 
 \begin{conjecture}
   \Ctwo{} is liftable by \textsc{Crane} by either reformulating formulas in
@@ -1033,24 +1022,19 @@ fragment as well, we can formulate an even stronger conjecture.
   them.
 \end{conjecture}
 
-% TODO: You previously mentioned this class being discussed in another paper.
-% You will need to remind the reader what you are doing differently to that and
-% how you are improving to previous work.
-
 However, the most important direction for future work is to fully automate this
-new way of computing the (W)FOMC of a formula. First, we need an algorithm that
-transforms FCGs into definitions of functions. Formalising this process would
-also allow us to prove the correctness of the new compilation rules in
-constructing FCGs that indeed compute the right (weighted) model counts. Second,
-these definitions must be simplified before they can be used, perhaps by a
-computer algebra system. Third, most importantly, we need a way to find the base
-cases for the recursive definitions provided by \textsc{Crane}. Fourth, since
-the first solution found by \textsc{Crane} is not always optimal in terms of its
-complexity, an automated way to determine the asymptotic complexity of a
-solution would be helpful as well. Achieving these goals would make
-\textsc{Crane} capable of automatically constructing efficient ways to compute a
-function (e.g., a sequence) of interest. In addition to the potential impact on
-areas of artificial intelligence (AI) such as statistical relational AI
+new process. First, we need an algorithm that transforms FCGs into definitions
+of functions. Formalising this process would also allow us to prove the
+correctness of the new compilation rules in constructing FCGs that indeed
+compute the right (weighted) model counts. Second, these definitions must be
+simplified before they can be used, perhaps by a computer algebra system. Third,
+we need a way to find the base cases for the recursive definitions provided by
+\textsc{Crane}. Fourth, since the first solution found by \textsc{Crane} is not
+always optimal in terms of its complexity, an automated way to determine the
+asymptotic complexity of a solution would be helpful as well. Achieving these
+goals would enable \textsc{Crane} to automatically constructing efficient ways
+to compute various functions and sequences. In addition to the potential impact
+on areas of artificial intelligence (AI) such as statistical relational AI
 \citep{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
 research in combinatorics as well \citep{DBLP:conf/ilp/BarvinekB0ZK21}.
 
