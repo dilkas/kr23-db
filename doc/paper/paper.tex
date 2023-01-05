@@ -145,6 +145,11 @@
 
 \maketitle
 
+% TODO: when describing experimental results, say that a solution for the last
+% (unsolved) instance can be found, but is too complicated to evaluate by hand.
+% Add that the linear order axiom is also liftable. Cite the same paper in the
+% introduction as well.
+
 \begin{abstract}
   First-order model counting (FOMC) is a computational problem that asks to
   count the models of a sentence in finite-domain first-order logic. Despite
@@ -228,10 +233,9 @@ proving \citep{DBLP:journals/cacm/GogateD16}.
 % simple unliftable instances -> recursion
 
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
-compute functions as simple as a factorial.\footnote{The problem of computing
-  the factorial can be described using two variables and counting quantifiers,
-  so it is known to be liftable in principle
-  \citep{DBLP:journals/jair/Kuzelka21}, but an algorithm that can lift such an
+compute functions as simple as a factorial.\footnote{There is previous work
+  \citep{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how FOMC
+  can compute factorials in principle, but an algorithm that can lift such an
   instance in practice does not exist.} We claim that this shortcoming is due to
 the inability of these algorithms to construct recursive solutions. The topic of
 recursion in the context of WFOMC has been studied before but in limited ways.
@@ -527,6 +531,7 @@ attempt to not miss a solution, \textsc{Crane} returns them all. In particular,
 if a rule returns an empty set, then that rule does not apply to the formula.
 
 \subsection{Generalised Domain Recursion}\label{sec:dr}
+% TODO: the thesis has some improvements to this section
 
 % Main idea
 The main idea behind domain recursion (both the original version by
@@ -644,6 +649,7 @@ example below.
 \end{example}
 
 \subsection{Constraint Removal}\label{sec:cr}
+% TODO: the thesis has an improved version of this section
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\CR$ nodes.}\label{alg:constraintremoval}
@@ -874,6 +880,8 @@ function are the sizes of all domains used by nodes reachable from $v$.
 \end{example}
 
 \section{Empirical Results}\label{sec:results} % Newly Domain-Liftable Formulas
+% TODO: the thesis has an improved version of this section
+% TODO: add the sample solutions as an appendix (they're already in the thesis)
 
 \begin{table*}[t]
   \centering
@@ -899,7 +907,7 @@ function are the sizes of all domains used by nodes reachable from $v$.
   \caption{The worst-case complexity of counting various types of functions.
     Here, $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
-    that no complete solution was found.}\label{tbl:results}
+    that the algorithm was not able to find a solution.}\label{tbl:results}
 \end{table*}
 % TODO: It is a standard to discuss a few lifted theories like the smokers and
 % friends example. Can you also include some empirical results on such theories

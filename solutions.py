@@ -46,13 +46,13 @@ def one_dimensional_bijections4(n):
     return sum(math.comb(n, m) * (-1) ** (n - m) * g(n, m) for m in range(n + 1))
 
 
-def one_dimensional_injections1(n):
-    def g(n, m):
-        if n == 0:
+def one_dimensional_injections1(m):
+    def g(m, l):
+        if m == 0:
             return 1
-        return g(n - 1, m) + m * g(n - 1, m - 1)
+        return g(m - 1, l) + l * g(m - 1, l - 1)
 
-    return sum(math.comb(n, m) * (-1) ** (n - m) * g(n, m) for m in range(n + 1))
+    return sum(math.comb(m, l) * (-1) ** (m - l) * g(m, l) for l in range(m + 1))
 
 
 def one_dimensional_injections2(n):
@@ -169,6 +169,19 @@ def crane_one_dimensional_surjections2(l, m):
     return (l + 1) * crane_one_dimensional_surjections2(l, m - 1)
 
 
+def crane_two_dimensional_surjections(m, n):
+    return sum(
+        math.comb(m, l)
+        * (-1) ** (m - l)
+        * sum(math.comb(n, k) * (-1) ** (n - k) * (k + 1) ** l for k in range(n + 1))
+        for l in range(m + 1)
+    )
+
+
+def my_two_dimensional_surjections(m, n):
+    return sum((-1) ** i * math.comb(n, i) * (n - i) ** m for i in range(n + 1))
+
+
 # ================================= MISC =================================
 
 
@@ -235,8 +248,10 @@ def partial_injections_final(m, n):
         m - 1, n - 1
     )
 
+def factorial(n):
+    return sum(math.comb(n, k) * sum(math.comb(n, l) * (l + 1) ** k * (-1) ** (2 * n - k - l) for l in range(n + 1)) for k in range(n + 1))
 
-MAX = 5
+MAX = 6
 
 # for m in range(1, MAX):
 #     for n in range(1, MAX):
@@ -247,22 +262,22 @@ MAX = 5
 #     for n in range(1, MAX):
 #         print("f({}, {}) = {}".format(m, n, forclift2_injections(m, n)))
 
-for m in range(0, MAX):
-    for n in range(0, MAX):
-        print(
-            "f({}, {}) = {} ({})".format(
-                m,
-                n,
-                partial_injections_final(m, n),
-                my_partial_injections(m, n),
-            )
-        )
-
-# for n in range(0, MAX):
-#     print(
-#         "f({}) = {} ({})".format(
-#             n,
-#             crane_one_dimensional_surjections(n),
-#             my_one_dimensional_surjections(n),
+# for m in range(0, MAX):
+#     for n in range(0, MAX):
+#         print(
+#             "f({}, {}) = {} ({})".format(
+#                 m,
+#                 n,
+#                 my_two_dimensional_surjections(m, n),
+#                 crane_two_dimensional_surjections(m, n),
+#             )
 #         )
-#     )
+
+for n in range(0, MAX):
+    print(
+        "f({}) = {} ({})".format(
+            n,
+            factorial(n),
+            one_dimensional_injections1(n),
+        )
+    )
