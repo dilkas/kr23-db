@@ -596,14 +596,33 @@ example below.
 \end{example}
 
 \subsection{Constraint Removal}\label{sec:cr}
-% TODO: the thesis has an improved version of this section
+
+Recall that GDR on a domain $\Omega$ creates constraints of the form $X_i \ne x$
+for some constant $x \in \Omega$ and family of variables $X_i \in \Omega$. Once
+certain conditions are satisfied, we can eliminate these constraints and replace
+$\Omega$ with a new domain $\Omega'$, which can be interpreted as
+$\Omega \setminus \{\, x \,\}$. These conditions are that a constraint of the
+form $X \ne x$ exists for all variables $X \in \Omega$ across all clauses, and
+such constraints are the only place where $x$ occurs. We formalise the
+conditions as \cref{def:replaceable}.
+
+\begin{definition}\label{def:replaceable}
+  With respect to a formula $\phi$, a pair $(\Omega, x)$ of a domain
+  $\Omega \in \mathcal{D}$ and its element $x \in \Omega$ is called
+  \emph{replaceable} if
+  \begin{itemize}
+    \item $x$ does not occur in any literal of any clause of $\phi$,
+    \item and for each clause $c = (L, C, \delta_c) \in \phi$ and variable
+          $X \in \Vars(c)$, either $\delta_c(X) \ne \Omega$ or $(X, x) \in C$.
+  \end{itemize}
+\end{definition}
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\CR$ nodes.}\label{alg:constraintremoval}
   \KwIn{formula $\phi$, set of all relevant domains $\mathcal{D}$}
   \KwOut{set of chips $S$}
   $S \gets \emptyset$\;
-  \ForEach{domain $\Omega \in \mathcal{D}$ and element $x \in \Omega$ s.t. $x$ does not occur in any literal of any clause of $\phi$ {\bf and} for each clause $c = (L, C, \delta_c) \in \phi$ and variable $X \in \Vars(c)$, either $\delta_c(X) \ne \Omega$ or $(X, x) \in C$\label{line:crconditions}}{
+  \ForEach{replaceable pair $(\Omega \in \mathcal{D}, x \in \Omega)$\label{line:crconditions}}{
     add a new domain $\Omega'$ to $\mathcal{D}$\;
     $\phi' \gets \emptyset$\;
     \ForEach{clause $(L, C, \delta) \in \phi$}{
@@ -619,14 +638,7 @@ example below.
   }
 \end{algorithm}
 
-Recall that GDR on a domain $\Omega$ creates constraints of the form $X_i \ne x$
-for some constant $x \in \Omega$ and family of variables $X_i \in \Omega$. Once
-certain conditions are satisfied, \cref{alg:constraintremoval} can eliminate
-these constraints and replace $\Omega$ with a new domain $\Omega'$, which can be
-interpreted as $\Omega \setminus \{\, x \,\}$. These conditions (on
-\cref{line:crconditions} of the algorithm) are that a constraint of the form
-$X \ne x$ exists for all variables $X \in \Omega$ across all clauses, and such
-constraints are the only place where $x$ occurs. The algorithm then proceeds to
+Once a replaceable pair is found, \cref{alg:constraintremoval} proceeds to
 construct the new formula by removing constraints (on
 \cref{line:constraintremoval}) and constructing a new domain map $\delta'$ that
 replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
