@@ -53,6 +53,7 @@
 
 % TODO: double check how the university names should be formatted and the emails
 % TODO: read the formatting instructions and their LaTeX source
+% TODO: make sure there are no overflow errors
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
@@ -124,34 +125,34 @@ vbelle@ed.ac.uk
 
 \emph{First-order model counting} (FOMC) is the problem of computing the number
 of models of a sentence in first-order logic (FOL) given the size(s) of its
-domain(s) \cite{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
+domain(s)~\cite{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
 (WFOMC) extends FOMC with (pairs of) weights on predicates and asks for a
 weighted sum across all models instead. By fixing the sizes of the domains, a
 WFOMC instance can be rewritten as an instance of (propositional) weighted model
-counting \cite{DBLP:journals/ai/ChaviraD08}. WFOMC emerged as the dominant
+counting~\cite{DBLP:journals/ai/ChaviraD08}. WFOMC emerged as the dominant
 approach to \emph{lifted (probabilistic) inference}. Lifted inference techniques
 exploit symmetries in probabilistic models by reasoning about sets rather than
-individuals \cite{DBLP:conf/ecai/Kersting12}. By doing so, many instances
-become solvable in polynomial time \cite{DBLP:conf/nips/Broeck11}. Lifted
+individuals~\cite{DBLP:conf/ecai/Kersting12}. By doing so, many instances
+become solvable in polynomial time~\cite{DBLP:conf/nips/Broeck11}. Lifted
 inference algorithms are typically used on probabilistic models such as
 probabilistic programming languages
 \cite{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17}, Markov logic
 networks
 \cite{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16,DBLP:journals/ml/RichardsonD06},
-and other lifted graphical \cite{DBLP:journals/ml/KimmigMG15} and statistical
-relational \cite{DBLP:series/synthesis/2016Raedt} models. Lifted inference
+and other lifted graphical~\cite{DBLP:journals/ml/KimmigMG15} and statistical
+relational~\cite{DBLP:series/synthesis/2016Raedt} models. Lifted inference
 techniques for probabilistic databases, while developed somewhat independently,
 have also been inspired by WFOMC
 \cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC tends to receive more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
-theory \cite{DBLP:conf/kr/BremenK21} and applications in enumerative
-combinatorics \cite{DBLP:conf/ilp/BarvinekB0ZK21}.
+theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
+combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
 
-% TODO: have ~ in front of every \cite
+% TODO: have ~ in front of every~\cite
 % TODO: fix doom emacs warnings
 Traditionally in computational complexity theory, a problem is \emph{tractable}
 if it can be solved in time polynomial in the instance size. The equivalent
@@ -166,19 +167,19 @@ Then Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15} proved that there exists
 a sentence with three variables for which FOMC is $\#\P_{1}$-complete (i.e.,
 \FOthree{} is not liftable). Since these two results came out, most of the
 research on (W)FOMC focused on developing faster solutions for the \FOtwo{}
-fragment \cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
+fragment~\cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
 new liftable fragments. These fragments include \SFO{} and \SRU{}
-\cite{DBLP:conf/nips/KazemiKBP16}, \Uone{} \cite{DBLP:conf/lics/KuusistoL18},
-\FOtwo{} with tree axioms \cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the
+\cite{DBLP:conf/nips/KazemiKBP16}, \Uone{}~\cite{DBLP:conf/lics/KuusistoL18},
+\FOtwo{} with tree axioms~\cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the
 two-variable fragment with counting quantifiers)
 \cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On the empirical
 front, there are several open-source implementations of exact WFOMC algorithms:
-\textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11}, probabilistic theorem
-proving \cite{DBLP:journals/cacm/GogateD16}, and \textsc{L2C}
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}, probabilistic theorem
+proving~\cite{DBLP:journals/cacm/GogateD16}, and \textsc{L2C}
 \cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
-\textsc{ApproxWFOMC} \cite{DBLP:conf/ijcai/BremenK20} as well as
-\textsc{ForcLift} \cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
-proving \cite{DBLP:journals/cacm/GogateD16}.
+\textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20} as well as
+\textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
+proving~\cite{DBLP:journals/cacm/GogateD16}.
 
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
@@ -186,7 +187,7 @@ proving \cite{DBLP:journals/cacm/GogateD16}.
 
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{There is previous work
-  \cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how FOMC
+ ~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how FOMC
   can compute factorials in principle, but an algorithm that can lift such an
   instance in practice does not exist.} We claim that this shortcoming is due to
 the inability of these algorithms to construct recursive solutions. The topic of
@@ -475,7 +476,6 @@ attempt to not miss a solution, \textsc{Crane} returns them all. In particular,
 if a rule returns an empty set, then that rule does not apply to the formula.
 
 \subsection{Generalised Domain Recursion}\label{sec:dr}
-% TODO: the thesis has some improvements to this section
 
 % Main idea
 The main idea behind domain recursion (both the original version by Van den
@@ -503,17 +503,19 @@ $X \ne x$.
       \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}
   \end{align*}
-    and $\Gamma' = \Gamma \setminus \{\, x \,\}$.
+  and $\Gamma' = \Gamma \setminus \{\, x \,\}$.
 \end{example}
 
 % Original domain recursion
-Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} imposes stringent
-preconditions on the input formula to ensure that the expanded version of the
-formula (as in \cref{example:dr}) can be handled efficiently. For example, at
-least one clause must contain a variable that occurs in all of its atoms. The
-clauses in this expanded formula are then partitioned into three parts based on
-whether the transformation introduced constants or constraints or both. The
-preconditions ensure that these parts can be treated independently.
+Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} imposes stringent conditions
+on the input formula to ensure that the expanded version of the formula (as in
+\cref{example:dr}) can be handled efficiently. For instance,
+\cref{example:first} cannot be handled by \textsc{ForcLift} because there is no
+root binding class, i.e., the two root variables belong to different equivalence
+classes with respect to the binding relationship. The clauses in this expanded
+formula are then partitioned into three parts based on whether the
+transformation introduced constants or constraints or both. The aforementioned
+conditions ensure that these parts can be treated independently.
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\GDR$ nodes.}\label{alg:domainrecursion}
@@ -677,7 +679,7 @@ variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash
 codes of all its clauses and is denoted by $\#\phi$.
 
 \paragraph{Caching.}
-\textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11} uses a cache to check if
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} uses a cache to check if
 a formula is identical to one of the formulas that have already been fully
 compiled. To facilitate recursion, we extend the caching scheme to include
 formulas that have been encountered but not fully compiled yet. Formally, we
@@ -751,7 +753,7 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 
 \section{How to Interpret an FCG}\label{sec:interpret}
 
-When \textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
+When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
 inputs and parameters. These operations are then immediately performed while
 traversing the circuit. With \textsc{Crane}, the interpretation of an FCG is a
@@ -764,7 +766,7 @@ the source node.
 
 The interpretation of a node is decided by its type. Here we describe the
 interpretations of new (or significantly changed) types and refer the reader to
-previous work \cite{DBLP:conf/ijcai/BroeckTMDR11} for information on other
+previous work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information on other
 types. The interpretation of a $\CR$ or a $\GDR$ node is simply the
 interpretation of its only direct successor. Obviously, $\star$ nodes have no
 interpretation as incomplete FCGs are not meant to be interpreted. The
@@ -941,7 +943,7 @@ computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$.
 In this paper, we showed how a state-of-the-art (W)FOMC algorithm can be
 empowered by generalising domain recursion and adding support for cycles in the
 graph that encodes a solution. To construct such graphs, \textsc{Crane}
-supplements \textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11} with three
+supplements \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} with three
 new compilation rules. Our experiments revealed a range of counting problems
 that are liftable to \textsc{Crane} but not to any other (W)FOMC algorithm.
 Although in this paper we focus on unweighted counting, \textsc{ForcLift}'s
@@ -992,7 +994,7 @@ goals would enable \textsc{Crane} to automatically constructing efficient ways
 to compute various functions and sequences. In addition to the potential impact
 on areas of artificial intelligence (AI) such as statistical relational AI
 \cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
-research in combinatorics as well \cite{DBLP:conf/ilp/BarvinekB0ZK21}.
+research in combinatorics as well~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
 % TODO: cite Lifted Reasoning for Combinatorial Counting
 
@@ -1000,7 +1002,7 @@ research in combinatorics as well \cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 \section{Solutions Found by \textsc{Crane}}
 
 whose complexity is in \cref{tbl:results} (including those findable by
-\textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11}). Both before and after
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}). Both before and after
 algebraic simplification, excluding multiplication by one. All of these
 solutions have been checked to be correct when combined with suitable base
 cases.
