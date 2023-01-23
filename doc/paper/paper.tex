@@ -1,109 +1,68 @@
-%File: anonymous-submission-latex-2023.tex
-\documentclass[letterpaper]{article} % DO NOT CHANGE THIS
-\usepackage[submission]{aaai23}  % DO NOT CHANGE THIS
-\usepackage{times}  % DO NOT CHANGE THIS
-\usepackage{helvet}  % DO NOT CHANGE THIS
-\usepackage{courier}  % DO NOT CHANGE THIS
-\usepackage[hyphens]{url}  % DO NOT CHANGE THIS
-\usepackage{graphicx} % DO NOT CHANGE THIS
-\urlstyle{rm} % DO NOT CHANGE THIS
-\def\UrlFont{\rm}  % DO NOT CHANGE THIS
-\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
-\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
-\frenchspacing  % DO NOT CHANGE THIS
-\setlength{\pdfpagewidth}{8.5in} % DO NOT CHANGE THIS
-\setlength{\pdfpageheight}{11in} % DO NOT CHANGE THIS
+\documentclass{article}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+
+\usepackage{kr}
+
+% Use the postscript times font!
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{booktabs}
+% \usepackage{algorithm}
+% \usepackage{algorithmic}
+\urlstyle{same}
 
 \usepackage{mathtools}
-\usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{pifont}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{tikz}
 \usepackage[capitalize]{cleveref}
-\usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{colortbl}
 \usepackage{complexity}
-
-% These are recommended to typeset algorithms but not required. See the subsubsection on algorithms. Remove them if you don't have algorithms in your paper.
-% \usepackage{algorithm}
-% \usepackage{algorithmic}
-
-% These are recommended to typeset listings but not required. See the subsubsection on listing. Remove this block if you don't have listings in your paper.
-% \usepackage{newfloat}
-% \usepackage{listings}
-% \DeclareCaptionStyle{ruled}{labelfont=normalfont,labelsep=colon,strut=off} % DO NOT CHANGE THIS
-% \lstset{%
-% 	basicstyle={\footnotesize\ttfamily},% footnotesize acceptable for monospace
-% 	numbers=left,numberstyle=\footnotesize,xleftmargin=2em,% show line numbers, remove this entire line if you don't want the numbers.
-% 	aboveskip=0pt,belowskip=0pt,%
-% 	showstringspaces=false,tabsize=2,breaklines=true}
-% \floatstyle{ruled}
-% \newfloat{listing}{tb}{lst}{}
-% \floatname{listing}{Listing}
-
-% Keep the \pdfinfo as shown here. There's no need
-% for you to add the /Title and /Author tags.
-\pdfinfo{
-/TemplateVersion (2023.1)
-}
-
-% DISALLOWED PACKAGES
-% \usepackage{authblk} -- This package is specifically forbidden
-% \usepackage{balance} -- This package is specifically forbidden
-% \usepackage{color (if used in text)
-% \usepackage{CJK} -- This package is specifically forbidden
-% \usepackage{float} -- This package is specifically forbidden
-% \usepackage{flushend} -- This package is specifically forbidden
-% \usepackage{fontenc} -- This package is specifically forbidden
-% \usepackage{fullpage} -- This package is specifically forbidden
-% \usepackage{geometry} -- This package is specifically forbidden
-% \usepackage{grffile} -- This package is specifically forbidden
-% \usepackage{hyperref} -- This package is specifically forbidden
-% \usepackage{navigator} -- This package is specifically forbidden
-% (or any other package that embeds links such as navigator or hyperref)
-% \indentfirst} -- This package is specifically forbidden
-% \layout} -- This package is specifically forbidden
-% \multicol} -- This package is specifically forbidden
-% \nameref} -- This package is specifically forbidden
-% \usepackage{savetrees} -- This package is specifically forbidden
-% \usepackage{setspace} -- This package is specifically forbidden
-% \usepackage{stfloats} -- This package is specifically forbidden
-% \usepackage{tabu} -- This package is specifically forbidden
-% \usepackage{titlesec} -- This package is specifically forbidden
-% \usepackage{tocbibind} -- This package is specifically forbidden
-% \usepackage{ulem} -- This package is specifically forbidden
-% \usepackage{wrapfig} -- This package is specifically forbidden
-% DISALLOWED COMMANDS
-% \nocopyright -- Your paper will not be published if you use this command
-% \addtolength -- This command may not be used
-% \balance -- This command may not be used
-% \baselinestretch -- Your paper will not be published if you use this command
-% \clearpage -- No page breaks of any kind may be used for the final version of your paper
-% \columnsep -- This command may not be used
-% \newpage -- No page breaks of any kind may be used for the final version of your paper
-% \pagebreak -- No page breaks of any kind may be used for the final version of your paperr
-% \pagestyle -- This command may not be used
-% \tiny -- This is not an acceptable font size.
-% \vspace{- -- No negative value may be used in proximity of a caption, figure, table, section, subsection, subsubsection, or reference
-% \vskip{- -- No negative value may be used to alter spacing above or below a caption, figure, table, section, subsection, subsubsection, or reference
-
-\setcounter{secnumdepth}{2} %May be changed to 1 or 2 if section numbers are desired.
-
-% Title
-
-% Your title must be in mixed case, not sentence case.
-% That means all verbs (including short verbs like be, is, using,and go),
-% nouns, adverbs, adjectives should be capitalized, including both words in hyphenated terms, while
-% articles, conjunctions, and prepositions are lower case unless they
-% directly follow a colon or long dash
-\title{Recursive Solutions to First-Order Model Counting}
-\author{Anonymous Submission}
-\affiliations{}
-
 \usetikzlibrary{cd}
 \usetikzlibrary{shapes}
+
+% the following package is optional:
+%\usepackage{latexsym}
+
+% See https://www.overleaf.com/learn/latex/theorems_and_proofs
+% for a nice explanation of how to define new theorems, but keep
+% in mind that the amsthm package is already included in this
+% template and that you must *not* alter the styling.
+% \newtheorem{example}{Example}
+% \newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+
+\pdfinfo{
+/TemplateVersion (KR.2022.0, KR.2023.0)
+}
+
+\title{Recursive Solutions to First-Order Model Counting}
+
+% TODO: double check how the university names should be formatted and the emails
+% TODO: read the formatting instructions and their LaTeX source
+\author{%
+Paulius Dilkas$^1$\and
+Vaishak Belle$^2$\\
+\affiliations
+$^1$National University of Singapore, Singapore\\
+$^2$University of Edinburgh, UK\\
+\emails
+paulius.dilkas@nus.edu.sg,
+vbelle@ed.ac.uk
+}
 
 \crefname{algocf}{algorithm}{Algorithms}
 \Crefname{algocf}{Algorithm}{Algorithms}
@@ -128,10 +87,6 @@
 \SetKwProg{Fn}{Function}{:}{}
 \SetKwFunction{identifyRecursion}{r}
 \SetKwFunction{generateMaps}{genMaps}
-\newtheorem{conjecture}{Conjecture}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\newtheorem{example}{Example}
 \makeatletter
 \newcommand{\nosemic}{\renewcommand{\@endalgocfline}{\relax}}% Drop semi-colon ;
 \newcommand{\dosemic}{\renewcommand{\@endalgocfline}{\algocf@endline}}% Reinstate semi-colon ;
@@ -144,11 +99,6 @@
 \begin{document}
 
 \maketitle
-
-% TODO: when describing experimental results, say that a solution for the last
-% (unsolved) instance can be found, but is too complicated to evaluate by hand.
-% Add that the linear order axiom is also liftable. Cite the same paper in the
-% introduction as well.
 
 \begin{abstract}
   First-order model counting (FOMC) is a computational problem that asks to
@@ -174,59 +124,61 @@
 
 \emph{First-order model counting} (FOMC) is the problem of computing the number
 of models of a sentence in first-order logic (FOL) given the size(s) of its
-domain(s) \citep{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
+domain(s) \cite{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
 (WFOMC) extends FOMC with (pairs of) weights on predicates and asks for a
 weighted sum across all models instead. By fixing the sizes of the domains, a
 WFOMC instance can be rewritten as an instance of (propositional) weighted model
-counting \citep{DBLP:journals/ai/ChaviraD08}. WFOMC emerged as the dominant
+counting \cite{DBLP:journals/ai/ChaviraD08}. WFOMC emerged as the dominant
 approach to \emph{lifted (probabilistic) inference}. Lifted inference techniques
 exploit symmetries in probabilistic models by reasoning about sets rather than
-individuals \citep{DBLP:conf/ecai/Kersting12}. By doing so, many instances
-become solvable in polynomial time \citep{DBLP:conf/nips/Broeck11}. Lifted
+individuals \cite{DBLP:conf/ecai/Kersting12}. By doing so, many instances
+become solvable in polynomial time \cite{DBLP:conf/nips/Broeck11}. Lifted
 inference algorithms are typically used on probabilistic models such as
 probabilistic programming languages
-\citep{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17}, Markov logic
+\cite{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17}, Markov logic
 networks
-\citep{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16,DBLP:journals/ml/RichardsonD06},
-and other lifted graphical \citep{DBLP:journals/ml/KimmigMG15} and statistical
-relational \citep{DBLP:series/synthesis/2016Raedt} models. Lifted inference
+\cite{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16,DBLP:journals/ml/RichardsonD06},
+and other lifted graphical \cite{DBLP:journals/ml/KimmigMG15} and statistical
+relational \cite{DBLP:series/synthesis/2016Raedt} models. Lifted inference
 techniques for probabilistic databases, while developed somewhat independently,
 have also been inspired by WFOMC
-\citep{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
+\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC tends to receive more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
-theory \citep{DBLP:conf/kr/BremenK21} and applications in enumerative
-combinatorics \citep{DBLP:conf/ilp/BarvinekB0ZK21}.
+theory \cite{DBLP:conf/kr/BremenK21} and applications in enumerative
+combinatorics \cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
 
+% TODO: have ~ in front of every \cite
+% TODO: fix doom emacs warnings
 Traditionally in computational complexity theory, a problem is \emph{tractable}
 if it can be solved in time polynomial in the instance size. The equivalent
 notion in (W)FOMC is liftability. A (W)FOMC instance is \emph{(domain-)liftable}
 if it can be solved in time polynomial in the size(s) of the domain(s)
-\citep{jaeger2012liftability}. Over more than a decade, many classes of
-instances were shown to be liftable
-\citep{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
-First, \citet{DBLP:conf/nips/Broeck11} showed that the class of all sentences of
-FOL with up to two variables (denoted \FOtwo{}) is liftable. Then
-\citet{DBLP:conf/pods/BeameBGS15} proved that there exists a sentence with three
-variables for which FOMC is $\#\P_{1}$-complete (i.e., \FOthree{} is not
-liftable). Since these two results came out, most of the research on (W)FOMC
-focused on developing faster solutions for the \FOtwo{} fragment
-\citep{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining new
-liftable fragments. These fragments include \SFO{} and \SRU{}
-\citep{DBLP:conf/nips/KazemiKBP16}, \Uone{} \citep{DBLP:conf/lics/KuusistoL18},
-\FOtwo{} with tree axioms \citep{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the
+\cite{jaeger2012liftability}. Over more than a decade, many classes of instances
+were shown to be liftable
+\cite{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
+First, Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} showed that the class
+of all sentences of FOL with up to two variables (denoted \FOtwo{}) is liftable.
+Then Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15} proved that there exists
+a sentence with three variables for which FOMC is $\#\P_{1}$-complete (i.e.,
+\FOthree{} is not liftable). Since these two results came out, most of the
+research on (W)FOMC focused on developing faster solutions for the \FOtwo{}
+fragment \cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
+new liftable fragments. These fragments include \SFO{} and \SRU{}
+\cite{DBLP:conf/nips/KazemiKBP16}, \Uone{} \cite{DBLP:conf/lics/KuusistoL18},
+\FOtwo{} with tree axioms \cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the
 two-variable fragment with counting quantifiers)
-\citep{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On the
-empirical front, there are several open-source implementations of exact WFOMC
-algorithms: \textsc{ForcLift} \citep{DBLP:conf/ijcai/BroeckTMDR11},
-probabilistic theorem proving \citep{DBLP:journals/cacm/GogateD16}, and
-\textsc{L2C} \citep{DBLP:conf/kr/KazemiP16}. Approximate counting is supported
-by \textsc{ApproxWFOMC} \citep{DBLP:conf/ijcai/BremenK20} as well as
-\textsc{ForcLift} \citep{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
-proving \citep{DBLP:journals/cacm/GogateD16}.
+\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On the empirical
+front, there are several open-source implementations of exact WFOMC algorithms:
+\textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11}, probabilistic theorem
+proving \cite{DBLP:journals/cacm/GogateD16}, and \textsc{L2C}
+\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
+\textsc{ApproxWFOMC} \cite{DBLP:conf/ijcai/BremenK20} as well as
+\textsc{ForcLift} \cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
+proving \cite{DBLP:journals/cacm/GogateD16}.
 
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
@@ -234,18 +186,18 @@ proving \citep{DBLP:journals/cacm/GogateD16}.
 
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{There is previous work
-  \citep{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how FOMC
+  \cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how FOMC
   can compute factorials in principle, but an algorithm that can lift such an
   instance in practice does not exist.} We claim that this shortcoming is due to
 the inability of these algorithms to construct recursive solutions. The topic of
 recursion in the context of WFOMC has been studied before but in limited ways.
-\Citet{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical data that
-is then used to conjecture recurrence relations that explain that data.
-\Citet{DBLP:conf/nips/Broeck11} introduced the idea of \emph{domain recursion}.
-Intuitively, domain recursion partitions a domain of size $n$ into a single
-explicitly named constant and the remaining domain of size $n-1$. However, many
-stringent conditions are enforced to ensure that the search for a tractable
-solution always terminates.
+Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to
+generate numerical data that is then used to conjecture recurrence relations
+that explain that data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}
+introduced the idea of \emph{domain recursion}. Intuitively, domain recursion
+partitions a domain of size $n$ into a single explicitly named constant and the
+remaining domain of size $n-1$. However, many stringent conditions are enforced
+to ensure that the search for a tractable solution always terminates.
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -291,9 +243,6 @@ resulting formula is just like the input formula $\phi$ but with a different
 domain. This observation allows us to add a cycle-forming edge to the graph,
 which can be interpreted as function $f$ relying on $f(n-1)$ to compute $f(n)$.
 
-% search
-% interpretation
-
 % 5.3) contributions, references to sections, shortcomings
 
 We begin by defining the representation used for sentences in FOL in
@@ -311,13 +260,13 @@ conclude by outlining some conjectures and directions for future work.
 \section{Preliminaries}\label{sec:recprelims}
 
 Our representation of FOMC instances is largely based on the format used
-internally by \textsc{ForcLift}, some aspects of which are described by
-\citet{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can translate sentences
-in a variant of function-free many-sorted FOL with equality to this internal
-format. We use lowercase Latin letters for predicates and constants, uppercase
-Latin letters for variables, and uppercase Greek letters for domains. An
-\emph{atom} is $p(t_1, \dots, t_n)$ for some predicate $p$ and terms
-$t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
+internally by \textsc{ForcLift}, some aspects of which are described by Van den
+Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can
+translate sentences in a variant of function-free many-sorted FOL with equality
+to this internal format. We use lowercase Latin letters for predicates and
+constants, uppercase Latin letters for variables, and uppercase Greek letters
+for domains. An \emph{atom} is $p(t_1, \dots, t_n)$ for some predicate $p$ and
+terms $t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
 \emph{literal} is either an atom or the negation of an atom (denoted by
 $\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all (finite)
 domains. Initially, $\mathcal{D}$ contains all domains mentioned by the input
@@ -331,11 +280,12 @@ of some element of $\mathcal{D}$.
 \end{definition}
 
 \begin{definition}[Clause]\label{def:clause}
-  A \emph{clause}\footnote{\citet{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses
-    as c-clauses.} is a triple $c = (L, C, \delta_c)$, where $L$ is a set of
-  literals, $C$ is a set of constraints, and $\delta_c$ is the domain map of
-  $c$. Let $\Vars$ be the function that maps clauses and sets of either literals
-  or constraints to the set of variables contained within. In particular,
+  A \emph{clause}\footnote{Van den Broeck et
+    al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses as c-clauses.}
+  is a triple $c = (L, C, \delta_c)$, where $L$ is a set of literals, $C$ is a
+  set of constraints, and $\delta_c$ is the domain map of $c$. Let $\Vars$ be
+  the function that maps clauses and sets of either literals or constraints to
+  the set of variables contained within. In particular,
   $\Vars(c) \coloneqq \Vars(L) \cup \Vars(C)$. \emph{Domain map}
   $\delta_{c}\colon \Vars(c) \to \mathcal{D}$ is a function that maps all
   variables in $c$ to their domains such that (s.t.) if $(X, Y) \in C$ for some
@@ -352,9 +302,9 @@ $p \in \Gamma \times \Delta$ to denote that $x$ is associated with $\Gamma$, and
 $p$ is associated with $\Gamma$ and $\Delta$ (in that order).
 
 \begin{definition}[Formula]\label{def:formula}
-  A \emph{formula} (called a c-theory by \citet{DBLP:conf/ijcai/BroeckTMDR11})
-  is a set of clauses s.t.\ all constraints and atoms `type check' with respect
-  to domains.
+  A \emph{formula} (called a c-theory by Van den Broeck et
+  al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}) is a set of clauses s.t.\ all
+  constraints and atoms `type check' with respect to domains.
 \end{definition}
 
 \begin{example}\label{example:first}
@@ -382,14 +332,14 @@ $p$ is associated with $\Gamma$ and $\Delta$ (in that order).
 
 There are two major differences between
 \cref{def:constraint,def:clause,def:formula} and the corresponding concepts
-introduced by \citet{DBLP:conf/ijcai/BroeckTMDR11}. First, we decouple
-variable-to-domain assignments from constraints and move them to a separate
-function $\delta_{c}$ in \cref{def:clause}. Formalising these assignments as a
-function unveils the (previously implicit) assumption that each variable must be
-assigned to a domain. Second, while \citet{DBLP:conf/ijcai/BroeckTMDR11} allow
-for equality constraints and constraints of the form $X \not\in \Delta$ for some
-variable $X$ and domain $\Delta$, we exclude such constraints simply because
-they are not needed.
+introduced by Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}.
+First, we decouple variable-to-domain assignments from constraints and move them
+to a separate function $\delta_{c}$ in \cref{def:clause}. Formalising these
+assignments as a function unveils the (previously implicit) assumption that each
+variable must be assigned to a domain. Second, while Van den Broeck et
+al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} allow for equality constraints and
+constraints of the form $X \not\in \Delta$ for some variable $X$ and domain
+$\Delta$, we exclude such constraints simply because they are not needed.
 
 One can read a formula from \cref{def:formula} as a sentence in a FOL\@. All
 variables in a clause are implicitly universally quantified (but note that
@@ -426,7 +376,7 @@ conditions.
   the paper.
 \end{example}
 % TODO: It might be useful to give one or two readable examples with interesting
-% model counts. For example Px v Qx over domain n has 3^n/4^n solutions. I think
+% model counts. For example Px v Qx over domain n has 3^n solutions. I think
 % The Frends smokers example has a more complicated solution you can find in one
 % of the papers. It might motivate the framework generally speaking better
 % although of course you can continue to use the same running example for the
@@ -461,22 +411,16 @@ with $x$.
     problem of counting partial injections from \cref{example:first}. Label
     $\bigvee_{\Delta^\top \subseteq \Delta}$ denotes set-disjunction, $\land$
     denotes conjunction, and $\bot$ denotes a contradiction---see the work by
-    \citet{DBLP:conf/ijcai/BroeckTMDR11} for the descriptions of these node
-    types. Here we omit some parameters as well as nodes whose only arithmetic
-    effect is multiplication by one.}\label{fig:examplefcg}
+    Van den Broeck et al.~\protect\shortcite{DBLP:conf/ijcai/BroeckTMDR11} for
+    the descriptions of these node types. Here we omit some parameters as well
+    as nodes whose only arithmetic effect is multiplication by
+    one.}\label{fig:examplefcg}
 \end{figure}
-% Some of these nodes play an important role in the weighted version of the
-% problem, whereas others are remnants of the interaction between compilation
-% rules and the way in which \textsc{ForcLift} handles existential quantifiers.
 
 % TODO: Again for the reader who is not very familiar with this area it might be
 % good to at least give the circuit for one of the examples such as a
 % disjunction just to show them how it is usually done.
 
-% \footnote{Imposing an ordering on outgoing edges is just a limited version of
-% edge labelling.}
-
-% From circuits to graphs.
 A \emph{first-order deterministic decomposable negation normal form
   computational graph} (FCG) is a (weakly connected) directed graph with a
 single source, node labels, and ordered outgoing edges. Node
@@ -496,7 +440,7 @@ of a node determines its out-degree.
 % nodes, but with a different graphical structure it will become clearer
 
 Along with many node types defined previously
-\citep{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11}, \textsc{Crane}
+\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11}, \textsc{Crane}
 uses three more:
 \begin{itemize}
   \item a type for constraint removal denoted by $\CR$,
@@ -505,11 +449,11 @@ uses three more:
   \item and $\star$---a placeholder type (with out-degree zero) for nodes that
         are going to be replaced.
 \end{itemize}
-Similarly to \citet{DBLP:conf/ijcai/BroeckTMDR11}, we write $T_p$ for an FCG
-that has a node with the label $T_p$ (i.e., type $T$ and parameter(s) $p$) and
-$\star$'s as all of its direct successors. See \cref{fig:examplefcg} for an
-example FCG\@. Its source node has out-degree 1, label
-$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$, and type $\GDR$.
+Similarly to Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}, we
+write $T_p$ for an FCG that has a node with the label $T_p$ (i.e., type $T$ and
+parameter(s) $p$) and $\star$'s as all of its direct successors. See
+\cref{fig:examplefcg} for an example FCG\@. Its source node has out-degree 1,
+label $\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$, and type $\GDR$.
 
 % Connecting FCGs with formulas
 Finally, we introduce a structure that represents a solution to a (W)FOMC
@@ -526,7 +470,7 @@ if its FCG is complete (or, equivalently, the list of formulas is empty).
 A \emph{(compilation) rule} takes a formula and returns a set of chips. The
 cardinality of this set is the number of different ways in which the rule can be
 applied to the input formula. While \textsc{ForcLift}
-\citep{DBLP:conf/ijcai/BroeckTMDR11} heuristically chooses one of them, in an
+\cite{DBLP:conf/ijcai/BroeckTMDR11} heuristically chooses one of them, in an
 attempt to not miss a solution, \textsc{Crane} returns them all. In particular,
 if a rule returns an empty set, then that rule does not apply to the formula.
 
@@ -534,11 +478,12 @@ if a rule returns an empty set, then that rule does not apply to the formula.
 % TODO: the thesis has some improvements to this section
 
 % Main idea
-The main idea behind domain recursion (both the original version by
-\citet{DBLP:conf/nips/Broeck11} and the one presented here) is as follows. Let
-$\Omega \in \mathcal{D}$ be a domain. Assuming that $\Omega \ne \emptyset$, pick
-some $x \in \Omega$. Then, for every variable $X \in \Omega$ that occurs in a
-literal, consider two possibilities: $X = x$ and $X \ne x$.
+The main idea behind domain recursion (both the original version by Van den
+Broeck~\shortcite{DBLP:conf/nips/Broeck11} and the one presented here) is as
+follows. Let $\Omega \in \mathcal{D}$ be a domain. Assuming that
+$\Omega \ne \emptyset$, pick some $x \in \Omega$. Then, for every variable
+$X \in \Omega$ that occurs in a literal, consider two possibilities: $X = x$ and
+$X \ne x$.
 
 \begin{example}\label{example:dr}
   Let $\phi$ be a formula with a single clause
@@ -562,13 +507,13 @@ literal, consider two possibilities: $X = x$ and $X \ne x$.
 \end{example}
 
 % Original domain recursion
-\citet{DBLP:conf/nips/Broeck11} imposes stringent preconditions on the input
-formula to ensure that the expanded version of the formula (as in
-\cref{example:dr}) can be handled efficiently. For example, at least one clause
-must contain a variable that occurs in all of its atoms. The clauses in this
-expanded formula are then partitioned into three parts based on whether the
-transformation introduced constants or constraints or both. The preconditions
-ensure that these parts can be treated independently.
+Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} imposes stringent
+preconditions on the input formula to ensure that the expanded version of the
+formula (as in \cref{example:dr}) can be handled efficiently. For example, at
+least one clause must contain a variable that occurs in all of its atoms. The
+clauses in this expanded formula are then partitioned into three parts based on
+whether the transformation introduced constants or constraints or both. The
+preconditions ensure that these parts can be treated independently.
 
 \begin{algorithm}[t]
   \caption{The compilation rule for $\GDR$ nodes.}\label{alg:domainrecursion}
@@ -732,7 +677,7 @@ variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash
 codes of all its clauses and is denoted by $\#\phi$.
 
 \paragraph{Caching.}
-\textsc{ForcLift} \citep{DBLP:conf/ijcai/BroeckTMDR11} uses a cache to check if
+\textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11} uses a cache to check if
 a formula is identical to one of the formulas that have already been fully
 compiled. To facilitate recursion, we extend the caching scheme to include
 formulas that have been encountered but not fully compiled yet. Formally, we
@@ -806,7 +751,7 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 
 \section{How to Interpret an FCG}\label{sec:interpret}
 
-When \textsc{ForcLift} \citep{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
+When \textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
 inputs and parameters. These operations are then immediately performed while
 traversing the circuit. With \textsc{Crane}, the interpretation of an FCG is a
@@ -819,7 +764,7 @@ the source node.
 
 The interpretation of a node is decided by its type. Here we describe the
 interpretations of new (or significantly changed) types and refer the reader to
-previous work \citep{DBLP:conf/ijcai/BroeckTMDR11} for information on other
+previous work \cite{DBLP:conf/ijcai/BroeckTMDR11} for information on other
 types. The interpretation of a $\CR$ or a $\GDR$ node is simply the
 interpretation of its only direct successor. Obviously, $\star$ nodes have no
 interpretation as incomplete FCGs are not meant to be interpreted. The
@@ -879,9 +824,12 @@ function are the sizes of all domains used by nodes reachable from $v$.
   $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
 \end{example}
 
-\section{Empirical Results}\label{sec:results} % Newly Domain-Liftable Formulas
+\section{Experimental Results}\label{sec:results}
 % TODO: the thesis has an improved version of this section
-% TODO: add the sample solutions as an appendix (they're already in the thesis)
+% TODO: when describing experimental results, say that a solution for the last
+% (unsolved) instance can be found, but is too complicated to evaluate by hand.
+% Add that the linear order axiom is also liftable. Cite the same paper in the
+% introduction as well.
 
 \begin{table*}[t]
   \centering
@@ -915,12 +863,12 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % problems in frameworks such as Markov log networks
 
 We compare \textsc{Crane} and \textsc{ForcLift}
-\citep{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count various kinds of
+\cite{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count various kinds of
 functions. This class of instances is chosen because of its simplicity and
 ubiquity and the inability of state-of-the-art WFOMC algorithms to solve many
 such instances. Note that other WFOMC algorithms---\textsc{L2C}
-\citep{DBLP:conf/kr/KazemiP16} and probabilistic theorem proving
-\citep{DBLP:journals/cacm/GogateD16}---are unable to solve any of the instances
+\cite{DBLP:conf/kr/KazemiP16} and probabilistic theorem proving
+\cite{DBLP:journals/cacm/GogateD16}---are unable to solve any of the instances
 that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
@@ -967,15 +915,15 @@ avoid recomputing the same binomial coefficient or function call multiple times.
 The experimental results are in \cref{tbl:results}. Previous work often compares
 WFOMC algorithms by running them on a few instances with increasing domain sizes
 and measuring runtime
-\citep{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
+\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
 However, we can do better than that and identify the exact worst-case asymptotic
 complexity of a solution produced by either \textsc{Crane} or \textsc{ForcLift}.
 The best-known asymptotic complexity for computing total surjections is by
-\citet{30049}. All other best-known complexity results are inferred from the
-formulas and programs on the on-line encyclopedia of integer sequences
-\citep{oeis}. On instances that could already be solved by \textsc{ForcLift},
-the two algorithms perform equally well. However, \textsc{Crane} can also solve
-all but one instances that \textsc{ForcLift} fails on in at most cubic time.
+Earnest~\shortcite{30049}. All other best-known complexity results are inferred
+from the formulas and programs on the on-line encyclopedia of integer sequences
+\cite{oeis}. On instances that could already be solved by \textsc{ForcLift}, the
+two algorithms perform equally well. However, \textsc{Crane} can also solve all
+but one instances that \textsc{ForcLift} fails on in at most cubic time.
 
 Let us examine the case of counting partial (non-endomorphic) injections more
 closely. The FCG in \cref{fig:examplefcg,example:interpretation} counts partial
@@ -993,7 +941,7 @@ computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$.
 In this paper, we showed how a state-of-the-art (W)FOMC algorithm can be
 empowered by generalising domain recursion and adding support for cycles in the
 graph that encodes a solution. To construct such graphs, \textsc{Crane}
-supplements \textsc{ForcLift} \citep{DBLP:conf/ijcai/BroeckTMDR11} with three
+supplements \textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11} with three
 new compilation rules. Our experiments revealed a range of counting problems
 that are liftable to \textsc{Crane} but not to any other (W)FOMC algorithm.
 Although in this paper we focus on unweighted counting, \textsc{ForcLift}'s
@@ -1020,7 +968,7 @@ can formulate the following conjecture.
 
 Recall that \Ctwo{} is the class of formulas with counting quantifiers and at
 most two variables. \Ctwo{} was recently shown to be liftable
-\citep{DBLP:journals/jair/Kuzelka21} but without providing a usable (W)FOMC
+\cite{DBLP:journals/jair/Kuzelka21} but without providing a usable (W)FOMC
 algorithm. Since the tasks of counting injections and bijections fall into the
 \Ctwo{} fragment, we can conjecture the following.
 
@@ -1043,8 +991,69 @@ asymptotic complexity of a solution would be helpful as well. Achieving these
 goals would enable \textsc{Crane} to automatically constructing efficient ways
 to compute various functions and sequences. In addition to the potential impact
 on areas of artificial intelligence (AI) such as statistical relational AI
-\citep{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
-research in combinatorics as well \citep{DBLP:conf/ilp/BarvinekB0ZK21}.
+\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
+research in combinatorics as well \cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
+% TODO: cite Lifted Reasoning for Combinatorial Counting
+
+\appendix
+\section{Solutions Found by \textsc{Crane}}
+
+whose complexity is in \cref{tbl:results} (including those findable by
+\textsc{ForcLift} \cite{DBLP:conf/ijcai/BroeckTMDR11}). Both before and after
+algebraic simplification, excluding multiplication by one. All of these
+solutions have been checked to be correct when combined with suitable base
+cases.
+
+\begin{enumerate}
+  \item $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:
+  \[
+    f(m) = {\left(-1 + \sum_{l=0}^{m} \binom{m}{l} [l < 2]\right)}^{m} = m^{m}.
+  \]
+  \item $\Theta(m^3 + n^3)$ solution for counting $\Gamma \to \Delta$
+  surjections:
+  \begin{align*}
+    \begin{split}
+      f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
+                 &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l}
+    \end{split}\\
+    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
+  \end{align*}
+  \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ surjections:
+  \begin{align*}
+    \begin{split}
+      f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
+              &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l}
+    \end{split}\\
+    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
+  \end{align*}
+  \item $\Theta(mn)$ solution for counting $\Gamma \to \Delta$ injections and
+  partial injections (with different base cases):
+  \begin{align*}
+    f(m, n) ={}& \sum_{l=0}^m \binom{m}{l} [l<2] f(m-l, n-1)\\
+    ={}& f(m, n-1) + mf(m-1, n-1).
+  \end{align*}
+  \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ injections:
+  \begin{align*}
+    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
+    \begin{split}
+      g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
+      ={}& g(m - 1, l) + lg(m - 1, l - 1).
+    \end{split}
+  \end{align*}
+  \item $\Theta(m)$ solution for counting $\Gamma \to \Delta$ bijections:
+  \[
+    f(m, n) = mf(m-1, n-1).
+  \]
+\end{enumerate}
+
+% TODO: the correctness of all of these was confirmed by finding the right base
+% cases and checking whether the function definitions produce the right values
+% for a sufficiently high number of domain sizes.
+
+% TODO: in the acknowledgements, mention that most of the work was done at UoE
+
+\bibliographystyle{kr}
 \bibliography{paper}
+
 \end{document}

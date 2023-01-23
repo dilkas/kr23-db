@@ -1,0 +1,5 @@
+person = {Guy, Nima, Wannes, Jesse, Luc}
+friends(person,person)
+smokes(person)
+
+forall x forall y friends(x,y) ^ smokes(x) => smokes(y).
