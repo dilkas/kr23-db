@@ -41,6 +41,7 @@
 % \newtheorem{example}{Example}
 % \newtheorem{theorem}{Theorem}
 \newtheorem{conjecture}{Conjecture}
+\newtheorem{proposition}{Proposition}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
@@ -54,6 +55,7 @@
 % TODO: double check how the university names should be formatted and the emails
 % TODO: read the formatting instructions and their LaTeX source
 % TODO: make sure there are no overflow errors
+% TODO: for arbitrary instances of '2022' (e.g., in citations), make it '2023'
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
@@ -132,18 +134,18 @@ WFOMC instance can be rewritten as an instance of (propositional) weighted model
 counting~\cite{DBLP:journals/ai/ChaviraD08}. WFOMC emerged as the dominant
 approach to \emph{lifted (probabilistic) inference}. Lifted inference techniques
 exploit symmetries in probabilistic models by reasoning about sets rather than
-individuals~\cite{DBLP:conf/ecai/Kersting12}. By doing so, many instances
-become solvable in polynomial time~\cite{DBLP:conf/nips/Broeck11}. Lifted
-inference algorithms are typically used on probabilistic models such as
-probabilistic programming languages
-\cite{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17}, Markov logic
-networks
-\cite{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16,DBLP:journals/ml/RichardsonD06},
+individuals~\cite{DBLP:conf/ecai/Kersting12}. By doing so, many instances become
+solvable in polynomial time~\cite{DBLP:conf/nips/Broeck11}. Lifted inference
+algorithms are typically used on probabilistic models such as probabilistic
+programming
+languages~\cite{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17},
+Markov logic
+networks~\cite{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16,DBLP:journals/ml/RichardsonD06},
 and other lifted graphical~\cite{DBLP:journals/ml/KimmigMG15} and statistical
 relational~\cite{DBLP:series/synthesis/2016Raedt} models. Lifted inference
 techniques for probabilistic databases, while developed somewhat independently,
-have also been inspired by WFOMC
-\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
+have also been inspired by
+WFOMC~\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC tends to receive more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
 theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
@@ -152,15 +154,14 @@ combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
 
-% TODO: have ~ in front of every~\cite
 % TODO: fix doom emacs warnings
 Traditionally in computational complexity theory, a problem is \emph{tractable}
 if it can be solved in time polynomial in the instance size. The equivalent
 notion in (W)FOMC is liftability. A (W)FOMC instance is \emph{(domain-)liftable}
-if it can be solved in time polynomial in the size(s) of the domain(s)
-\cite{jaeger2012liftability}. Over more than a decade, many classes of instances
-were shown to be liftable
-\cite{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
+if it can be solved in time polynomial in the size(s) of the
+domain(s)~\cite{jaeger2012liftability}. Over more than a decade, many classes of
+instances were shown to be
+liftable~\cite{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
 First, Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} showed that the class
 of all sentences of FOL with up to two variables (denoted \FOtwo{}) is liftable.
 Then Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15} proved that there exists
@@ -168,15 +169,16 @@ a sentence with three variables for which FOMC is $\#\P_{1}$-complete (i.e.,
 \FOthree{} is not liftable). Since these two results came out, most of the
 research on (W)FOMC focused on developing faster solutions for the \FOtwo{}
 fragment~\cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
-new liftable fragments. These fragments include \SFO{} and \SRU{}
-\cite{DBLP:conf/nips/KazemiKBP16}, \Uone{}~\cite{DBLP:conf/lics/KuusistoL18},
-\FOtwo{} with tree axioms~\cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the
-two-variable fragment with counting quantifiers)
-\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On the empirical
-front, there are several open-source implementations of exact WFOMC algorithms:
-\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}, probabilistic theorem
-proving~\cite{DBLP:journals/cacm/GogateD16}, and \textsc{L2C}
-\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
+new liftable fragments. These fragments include \SFO{} and
+\SRU{}~\cite{DBLP:conf/nips/KazemiKBP16},
+\Uone{}~\cite{DBLP:conf/lics/KuusistoL18}, \FOtwo{} with tree
+axioms~\cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the two-variable
+fragment with counting
+quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On
+the empirical front, there are several open-source implementations of exact
+WFOMC algorithms: \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11},
+probabilistic theorem proving~\cite{DBLP:journals/cacm/GogateD16}, and
+\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
 \textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20} as well as
 \textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
 proving~\cite{DBLP:journals/cacm/GogateD16}.
@@ -186,14 +188,14 @@ proving~\cite{DBLP:journals/cacm/GogateD16}.
 % simple unliftable instances -> recursion
 
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
-compute functions as simple as a factorial.\footnote{There is previous work
- ~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how FOMC
-  can compute factorials in principle, but an algorithm that can lift such an
-  instance in practice does not exist.} We claim that this shortcoming is due to
-the inability of these algorithms to construct recursive solutions. The topic of
-recursion in the context of WFOMC has been studied before but in limited ways.
-Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to
-generate numerical data that is then used to conjecture recurrence relations
+compute functions as simple as a factorial.\footnote{There is previous
+  work~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how
+  FOMC can compute factorials in principle, but an algorithm that can lift such
+  an instance in practice does not exist.} We claim that this shortcoming is due
+to the inability of these algorithms to construct recursive solutions. The topic
+of recursion in the context of WFOMC has been studied before but in limited
+ways. Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC
+to generate numerical data that is then used to conjecture recurrence relations
 that explain that data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}
 introduced the idea of \emph{domain recursion}. Intuitively, domain recursion
 partitions a domain of size $n$ into a single explicitly named constant and the
@@ -440,9 +442,9 @@ of a node determines its out-degree.
 % definition and then say that we have the same building blocks as those, ie
 % nodes, but with a different graphical structure it will become clearer
 
-Along with many node types defined previously
-\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11}, \textsc{Crane}
-uses three more:
+Along with many node types defined
+previously~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11},
+\textsc{Crane} uses three more:
 \begin{itemize}
   \item a type for constraint removal denoted by $\CR$,
   \item a type for generalised domain recursion denoted by $\GDR$ (both with
@@ -470,10 +472,11 @@ if its FCG is complete (or, equivalently, the list of formulas is empty).
 
 A \emph{(compilation) rule} takes a formula and returns a set of chips. The
 cardinality of this set is the number of different ways in which the rule can be
-applied to the input formula. While \textsc{ForcLift}
-\cite{DBLP:conf/ijcai/BroeckTMDR11} heuristically chooses one of them, in an
-attempt to not miss a solution, \textsc{Crane} returns them all. In particular,
-if a rule returns an empty set, then that rule does not apply to the formula.
+applied to the input formula. While
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} heuristically chooses one
+of them, in an attempt to not miss a solution, \textsc{Crane} returns them all.
+In particular, if a rule returns an empty set, then that rule does not apply to
+the formula.
 
 \subsection{Generalised Domain Recursion}\label{sec:dr}
 
@@ -594,6 +597,21 @@ example below.
     (\{\, \neg p(X, Y), \neg p(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta \,\}).
   \]
 \end{example}
+
+TODO: connecting sentence?
+
+\begin{proposition}[Correctness of GDR]
+  Let $\phi$ be the formula used as input to \cref{alg:domainrecursion} and
+  $\phi'$ be one of the formulas constructed by the algorithm. Then
+  $\phi \equiv \phi'$.
+\end{proposition}
+\begin{proof}
+  TODO
+  Assume that \cref{line:condition} selects domain $\Omega \in \mathcal{D}$.
+  \[
+    \forall X \in \Omega\text{. } \psi \equiv \psi[x/\{\, X \,\}] \land \forall X \in \Omega\text{. } X \ne x \implies \psi
+  \]
+\end{proof}
 
 \subsection{Constraint Removal}\label{sec:cr}
 
@@ -838,13 +856,14 @@ function are the sizes of all domains used by nodes reachable from $v$.
   $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
 \end{example}
 
-\section{Experimental Results}\label{sec:results}
-% TODO: the thesis has an improved version of this section
+\section{Empirical Results}\label{sec:results}
 % TODO: when describing experimental results, say that a solution for the last
 % (unsolved) instance can be found, but is too complicated to evaluate by hand.
 % Add that the linear order axiom is also liftable. Cite the same paper in the
 % introduction as well.
 
+% TODO: make sure this table floats to the right page and look at other floating
+% objects too (e.g., is [t] on?)
 \begin{table*}[t]
   \centering
   \begin{tabular}{cccccc}
@@ -852,22 +871,22 @@ function are the sizes of all domains used by nodes reachable from $v$.
     \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
     Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
     \midrule
-    \rowcolor{gray!10}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
+    \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
     \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
     \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
     \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
     \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
-    \rowcolor{gray!10}\xmark & \xmark & & $m$ & --- & $mn$ \\
-    \rowcolor{gray!10}\xmark & \cmark & & $m$ & --- & $m^3$ \\
-    \rowcolor{gray!10}\cmark & \xmark & & $\min\{\, m, n \,\}^2$ & --- & $mn$ \\
-    \rowcolor{gray!10}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
+    \rowcolor{gray!25}\xmark & \xmark & & $m$ & --- & $mn$ \\
+    \rowcolor{gray!25}\xmark & \cmark & & $m$ & --- & $m^3$ \\
+    \rowcolor{gray!25}\cmark & \xmark & & ${\min\{\, m, n \,\}}^2$ & --- & $mn$ \\
+    \rowcolor{gray!25}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
     \xmark & \xmark & \multirow{3}{*}{Bijections} & $m$ & --- & $m$ \\
     \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
     \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
     \bottomrule
   \end{tabular}
-  \caption{The worst-case complexity of counting various types of functions.
-    Here, $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
+  \caption{The worst-case complexity of counting various types of functions,
+    where $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
     that the algorithm was not able to find a solution.}\label{tbl:results}
 \end{table*}
@@ -876,14 +895,14 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % as well to appeal to the sanity of the reader that it actually works for
 % problems in frameworks such as Markov log networks
 
-We compare \textsc{Crane} and \textsc{ForcLift}
-\cite{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count various kinds of
-functions. This class of instances is chosen because of its simplicity and
-ubiquity and the inability of state-of-the-art WFOMC algorithms to solve many
-such instances. Note that other WFOMC algorithms---\textsc{L2C}
-\cite{DBLP:conf/kr/KazemiP16} and probabilistic theorem proving
-\cite{DBLP:journals/cacm/GogateD16}---are unable to solve any of the instances
-that \textsc{ForcLift} fails on. We begin by describing how such
+We compare \textsc{Crane} and
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count
+various kinds of functions. This class of instances is chosen because of its
+simplicity and ubiquity and the inability of state-of-the-art WFOMC algorithms
+to solve many such instances. Note that other WFOMC
+algorithms---\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16} and probabilistic
+theorem proving~\cite{DBLP:journals/cacm/GogateD16}---are unable to solve any of
+the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
 
@@ -892,7 +911,7 @@ Let $p \in \Gamma \times \Delta$ be a predicate. To restrict all relations
 representable by $p$ to just functions from $\Gamma$ to $\Delta$, in FOL one
 might write
 \[
-  \forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \implies Y = Z
+  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \implies Y = Z
 \]
 and
 \begin{equation}\label{eq:def2}
@@ -912,41 +931,49 @@ to ensure surjectivity or remove \cref{eq:def2} to consider partial functions.
 Lastly, one can replace all occurrences of $\Delta$ with $\Gamma$ to model
 endofunctions (i.e., functions with the same domain and codomain) instead.
 
+% the process: both for running algorithms and for determining complexities
 In our experiments, we consider all sixteen combinations of these properties,
-i.e., injectivity, surjectivity, partiality, and endo-. \textsc{ForcLift} is
-always run until it terminates. \textsc{Crane} is run until either five
-solutions are found or the search tree reaches height 6 (which happens in at
-most a few seconds). If successful, \textsc{ForcLift} generates a circuit, and
-\textsc{Crane} generates one or more (complete) FCGs. In both cases, we manually
-convert the resulting graphs into definitions of functions as described in
-\cref{sec:interpret}. We then assess the complexity of each solution and pick
-the best if \textsc{Crane} returns several solutions of varying complexities.
-When assessing the complexity of each such definition, we make two assumptions.
-First, we can compute the binomial coefficient $\binom{n}{k}$ in $\Theta(nk)$
-time. Second, techniques such as dynamic programming and memoization are used to
-avoid recomputing the same binomial coefficient or function call multiple times.
+i.e., injectivity, surjectivity, partiality, and endo-. We run each algorithm
+once on each of the sixteen instances.\footnote{While domain sizes have to be
+  specified as part of the input, they are immaterial to the search procedure.}
+\textsc{ForcLift} is always run until it terminates; \textsc{Crane} is run until
+either five solutions are found or the search tree reaches height
+six.\footnote{The search tree has a high branching factor, so exploring all
+  nodes at depth five takes at most a few seconds, whereas doing the same for
+  depth six can be computationally infeasible in some cases.} If successful,
+\textsc{ForcLift} generates a circuit, and \textsc{Crane} generates one or more
+(complete) FCGs. In both cases, we manually convert the resulting graphs into
+definitions of functions as described in \cref{sec:interpret}. We then assess
+the complexity of each solution by hand and pick the best in case \textsc{Crane}
+returns several solutions of varying complexities.
 
-The experimental results are in \cref{tbl:results}. Previous work often compares
-WFOMC algorithms by running them on a few instances with increasing domain sizes
-and measuring runtime
-\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
-However, we can do better than that and identify the exact worst-case asymptotic
+% how the complexity of a solution is determined
+Previous work often compares WFOMC algorithms by running them on a few instances
+with increasing domain sizes and measuring
+runtime~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
+However, we can do much better and identify the exact worst-case asymptotic
 complexity of a solution produced by either \textsc{Crane} or \textsc{ForcLift}.
-The best-known asymptotic complexity for computing total surjections is by
-Earnest~\shortcite{30049}. All other best-known complexity results are inferred
-from the formulas and programs on the on-line encyclopedia of integer sequences
-\cite{oeis}. On instances that could already be solved by \textsc{ForcLift}, the
-two algorithms perform equally well. However, \textsc{Crane} can also solve all
-but one instances that \textsc{ForcLift} fails on in at most cubic time.
+The asymptotic complexity of a solution can be determined by considering the
+total number of arithmetic operations needed to follow the definitions of
+constituent functions without recomputing the same quantity multiple times. In
+particular, we assume that each function call and binomial coefficient is
+computed at most once. We also assume that computing $\binom{n}{k}$ takes
+$\Theta(nk)$ time. For example, the complexity of \cref{eq:solution} is
+$\Theta(mn)$ since $f(m, n)$ can be computed by a dynamic programming algorithm
+that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
+a constant amount of time on the computation of each $f(i, j)$.
 
-Let us examine the case of counting partial (non-endomorphic) injections more
-closely. The FCG in \cref{fig:examplefcg,example:interpretation} counts partial
-injections and is responsible for the $mn$ entry in the table. For a complete
-solution, \cref{eq:solution} must be combined with the base case $f(0, n) = 1$
-for all $n \in \mathbb{N}_{0}$. This base case says that the empty partial map
-is the only partial injection with an empty domain. Finally, note that $f(m, n)$
-can be evaluated in $\Theta(mn)$ time by a dynamic programming algorithm that
-computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$.
+These results are summarised in \cref{tbl:results}, where we compare the
+solutions found by both algorithms to the best known ways of computing the same
+quantities. The best-known asymptotic complexity for computing total surjections
+is by Earnest~\shortcite{30049}. All other best-known complexity results are
+inferred from the formulas and programs on the on-line encyclopedia of integer
+sequences~\cite{oeis}. On instances that could already be solved by
+\textsc{ForcLift}, the two algorithms perform equally well. However,
+\textsc{Crane} can also solve all but one instances that \textsc{ForcLift} fails
+on in at most cubic time. See \cref{app:solutions} for the exact solutions
+produced by \textsc{Crane} that correspond to the complexity results in
+\cref{tbl:results}.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
 
@@ -981,10 +1008,10 @@ can formulate the following conjecture.
 \end{conjecture}
 
 Recall that \Ctwo{} is the class of formulas with counting quantifiers and at
-most two variables. \Ctwo{} was recently shown to be liftable
-\cite{DBLP:journals/jair/Kuzelka21} but without providing a usable (W)FOMC
-algorithm. Since the tasks of counting injections and bijections fall into the
-\Ctwo{} fragment, we can conjecture the following.
+most two variables. \Ctwo{} was recently shown to be
+liftable~\cite{DBLP:journals/jair/Kuzelka21} but without providing a usable
+(W)FOMC algorithm. Since the tasks of counting injections and bijections fall
+into the \Ctwo{} fragment, we can conjecture the following.
 
 \begin{conjecture}
   \Ctwo{} is liftable by \textsc{Crane} by either reformulating formulas in
@@ -1004,14 +1031,16 @@ always optimal in terms of its complexity, an automated way to determine the
 asymptotic complexity of a solution would be helpful as well. Achieving these
 goals would enable \textsc{Crane} to automatically constructing efficient ways
 to compute various functions and sequences. In addition to the potential impact
-on areas of artificial intelligence (AI) such as statistical relational AI
-\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
+on areas of artificial intelligence (AI) such as statistical relational
+AI~\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
 research in combinatorics as well~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
 % TODO: cite Lifted Reasoning for Combinatorial Counting
 
 \appendix
-\section{Solutions Found by \textsc{Crane}}
+\section{Solutions Found by \textsc{Crane}}\label{app:solutions}
+
+% TODO: fix the introductory description
 
 whose complexity is in \cref{tbl:results} (including those findable by
 \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}). Both before and after
@@ -1066,6 +1095,7 @@ cases.
 % for a sufficiently high number of domain sizes.
 
 % TODO: in the acknowledgements, mention that most of the work was done at UoE
+% TODO: should the appendix be in the same file or not?
 
 \bibliographystyle{kr}
 \bibliography{paper}
