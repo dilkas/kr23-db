@@ -13,6 +13,7 @@
 \usetikzlibrary{positioning}
 \usetikzlibrary{overlay-beamer-styles}
 \usetikzlibrary{shapes.callouts}
+\usetikzlibrary{cd}
 
 \beamertemplatenavigationsymbolsempty
 \usetheme{metropolis}
@@ -22,12 +23,21 @@
 \definecolor{color1}{HTML}{1B9E77}
 \definecolor{color2}{HTML}{D95F02}
 
+\newcommand{\WMC}{\textup{WMC}}
+\newcommand{\WFOMC}{\textup{(W)FOMC}}
+\newcommand{\WMI}{\textup{WMI}}
+\newcommand{\WFOMI}{\textup{WFOMI}}
+\newcommand{\AMC}{\textup{AMC}}
+\newcommand{\pbp}{\textup{PBP}}
+\newcommand{\SPPP}{\textup{SP}}
+
 % 15 min introduction
-% 25 min presentation
-% 5 min summary
+% 20-25 min presentation
+% 5-10 min summary
 % 20-25 slides
-% right now it's 15 slides and 20 min
+% before it was 15 slides and 20 min
 % TODO: use \alert instead of \structure
+% TODO: replace capital latin letters with capital Greek letters
 
 \author{\textbf{Paulius Dilkas} \inst{1} \and Vaishak Belle \inst{2}}
 \title{Recursive Solutions to \\First-Order Model Counting}
@@ -51,7 +61,6 @@
   \titlepage
 \end{frame}
 
-% TODO: must attribute vecteezy
 \begin{frame}{What Computers Can and Cannot Do}
   \begin{tikzpicture}[remember picture,overlay]
     \node[right=0.7cm] at (current page.west) (stickman) {\includegraphics[height=0.5\textheight]{stickman.png}};
@@ -64,21 +73,26 @@
     \node<4>[ellipse callout, draw, below=0.5cm, shift=({-0.5,0.5}), callout relative pointer={(0.5, -0.5)}] at (computer.north west) {It's a cat with its eyes closed.};
     \node<5>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)}, text width=5cm] at (stickman.north east) {If I shuffle a deck of \alert{$n$} cards, how many possible outcomes are there?};
     \node<5>[left,shift=({-1, -1})] at (current page.east) (computer2) {\includegraphics[height=0.5\textheight]{overheating_computer}};
+    \node[shift=({1.3, 0.1})] at (current page.south west) {\tiny \color{lightgray}{Vector art by Vecteezy.com}};
   \end{tikzpicture}
-  % 1. compute the integral
-  % 2. job scheduling
-  % 3. picture description
-  % 4. count matchings
 \end{frame}
+% TODO: replace cat with 'Generate a picture of a monkey with a funny hat'
 
-\begin{frame}{Flavours of Counting}
+\begin{frame}[fragile]{Many Ways to Count}
+  \begin{center}
+    \begin{tikzcd}
+      \WMI{} & \WFOMI{} \\
+      \#\SAT{}/\WMC{} & \WFOMC{} \\
+      \AMC{}, \pbp{} & \SPPP{}
+    \end{tikzcd}
+  \end{center}
 \end{frame}
+% maybe mention #CSP and other non-SAT ways of counting
 
 \begin{frame}{Some Elementary Counting}
   \begin{exampleblock}{A Counting Problem}
-    Suppose this room has \structure{$n$} seats, and there are
-    \structure{$m \le n$} people in the audience. How many ways are there to
-    seat everyone?
+    Suppose this room has \alert{$n$} seats, and there are \alert{$m \le n$}
+    people in the audience. How many ways are there to seat everyone?
   \end{exampleblock}
 
   \pause
@@ -89,35 +103,39 @@
   \end{itemize}
 
   \pause
-  \alert{Answer:} \structure{$n^{\underline{m}} = n \cdot (n-1)\cdots(n-m+1)$}.
+  \alert{Answer:} $n^{\underline{m}} = n \cdot (n-1)\cdots(n-m+1)$.
 
-  Note: this problem is equivalent to counting \structure{$[m] \to [n]$} injections.
+  Note: this problem is equivalent to counting \alert{$[m] \to [n]$} injections.
 
 \end{frame}
 % wouldn't it be nice if we could just describe this problem and have an algorithm solve it for us?
 
 \begin{frame}{Let's Express This Problem in Logic!}
   \begin{itemize}
-  \item Let \structure{$M$} and \structure{$N$} be sets (i.e., \alert{domains}) such that \structure{$|M| = m$}, and \structure{$|N| = n$}
-  \item Let \structure{$P \subseteq M \times N$} be a relation (i.e., \alert{predicate}) over sets \structure{$M$} and \structure{$N$}
-  \item We can describe all of the constraints in first-order logic:
+    \item Let \alert{$M$} and \alert{$N$} be sets (i.e., domains)
     \begin{itemize}
-    \item \pause each attendee gets a seat (i.e., at least one seat)
+      \item such that \alert{$|M| = m$}, and \alert{$|N| = n$}.
+    \end{itemize}
+    \item Let \alert{$P \subseteq M \times N$} be a relation (i.e., predicate)
+          over \alert{$M$} and \alert{$N$}.
+    \item We can describe all of the constraints in first-order logic:
+    \begin{itemize}
+      \item \pause each attendee gets a seat (i.e., at least one seat)
       \[
-      \forall x \in M\text{. }\exists y \in N\text{. }P(x, y)
+        \forall x \in M\text{. }\exists y \in N\text{. }P(x, y)
       \]
-    \item \pause one person cannot occupy multiple seats
+      \item \pause one person cannot occupy multiple seats
       \[
-      \forall x \in M\text{. }\forall y, z \in N\text{. }P(x, y) \land P(x, z) \Rightarrow y=z
+        \forall x \in M\text{. }\forall y, z \in N\text{. }P(x, y) \land P(x, z) \Rightarrow y=z
       \]
-    \item \pause one seat cannot accommodate multiple attendees
+      \item \pause one seat cannot accommodate multiple attendees
       \[
-      \forall w, x \in M\text{. }\forall y \in N\text{. }P(w, y) \land P(x, y) \Rightarrow w=x
+        \forall w, x \in M\text{. }\forall y \in N\text{. }P(w, y) \land P(x, y) \Rightarrow w=x
       \]
     \end{itemize}
   \end{itemize}
-  \pause
-  The first two sentences constrain \structure{$P$} to be a function, and the last one makes it injective.
+  \pause The first two sentences constrain \alert{$P$} to be a function, and the
+  last one makes it injective.
 \end{frame}
 % one could also add probabilities to these sentences to say that, e.g., there is a 1% probability of somebody taking up two seats, somebody sitting on somebody else's lap, somebody sitting on the floor, etc.
 
@@ -135,12 +153,21 @@
           \alert{injective} and \alert{bijective} functions.
   \end{itemize}
   \begin{block}{Claim}
-    This shortcoming can be addressed via support for (almost arbitrary)
-    \alert{recursive functions}.
+    This shortcoming can be addressed via support for \alert{recursive functions}.
   \end{block}
 \end{frame}
 
-\section{Main Content (TODO: remove later)}
+% TODO: maybe meat makes more sense than sandwich? Or a picture of recursion, e.g., fractals?
+{ % all template changes are local to this group.
+    \setbeamertemplate{navigation symbols}{}
+    \begin{frame}<article:0>[plain]
+        \begin{tikzpicture}[remember picture,overlay]
+            \node[at=(current page.center)] {
+                \includegraphics[keepaspectratio, width=\paperwidth]{sandwich.jpg}
+            };
+        \end{tikzpicture}
+     \end{frame}
+}
 
 \begin{frame}{Back to Our Example}
   For instance, the following function counts injections
@@ -399,7 +426,16 @@
   \end{itemize}
 \end{frame}
 
-\section{Summary (TODO: remove later)}
+{ % all template changes are local to this group.
+    \setbeamertemplate{navigation symbols}{}
+    \begin{frame}<article:0>[plain]
+        \begin{tikzpicture}[remember picture,overlay]
+            \node[at=(current page.center)] {
+                \includegraphics[keepaspectratio, height=\paperheight]{zoom.jpg}
+            };
+        \end{tikzpicture}
+     \end{frame}
+}
 
 \begin{frame}{Summary \& Future Work}
   \begin{block}{Summary}

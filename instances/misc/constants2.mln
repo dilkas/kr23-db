@@ -1,0 +1,5 @@
+person = {1,...,5}
+
+f(person,person)
+
+0.5 forall x forall y !f(x, y) v f(y, x)

@@ -42,6 +42,7 @@
 % \newtheorem{theorem}{Theorem}
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{proposition}{Proposition}
+\newtheorem{claim}{Claim}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
@@ -56,6 +57,8 @@
 % TODO: read the formatting instructions and their LaTeX source
 % TODO: make sure there are no overflow errors
 % TODO: for arbitrary instances of '2022' (e.g., in citations), make it '2023'
+% TODO: maybe mention the term 'data complexity'
+% TODO: fix doom emacs warnings
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
@@ -86,6 +89,7 @@ vbelle@ed.ac.uk
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
 \DeclareMathOperator{\dom}{dom}
 \DeclareMathOperator{\Doms}{Doms}
+\DeclareMathOperator{\MC}{MC}
 \DeclareMathOperator{\Vars}{Vars}
 \SetKwProg{Fn}{Function}{:}{}
 \SetKwFunction{identifyRecursion}{r}
@@ -154,7 +158,6 @@ combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
 
-% TODO: fix doom emacs warnings
 Traditionally in computational complexity theory, a problem is \emph{tractable}
 if it can be solved in time polynomial in the instance size. The equivalent
 notion in (W)FOMC is liftability. A (W)FOMC instance is \emph{(domain-)liftable}
@@ -182,25 +185,32 @@ probabilistic theorem proving~\cite{DBLP:journals/cacm/GogateD16}, and
 \textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20} as well as
 \textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
 proving~\cite{DBLP:journals/cacm/GogateD16}.
+% TODO: add FastWFOMC (only for \FOtwo{})
 
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
 % simple unliftable instances -> recursion
 
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
-compute functions as simple as a factorial.\footnote{There is previous
-  work~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/ijcai/Broeck16} showing how
-  FOMC can compute factorials in principle, but an algorithm that can lift such
-  an instance in practice does not exist.} We claim that this shortcoming is due
-to the inability of these algorithms to construct recursive solutions. The topic
-of recursion in the context of WFOMC has been studied before but in limited
-ways. Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC
-to generate numerical data that is then used to conjecture recurrence relations
-that explain that data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}
-introduced the idea of \emph{domain recursion}. Intuitively, domain recursion
-partitions a domain of size $n$ into a single explicitly named constant and the
-remaining domain of size $n-1$. However, many stringent conditions are enforced
-to ensure that the search for a tractable solution always terminates.
+compute functions as simple as a factorial.\footnote{There is some previous work
+  showing how FOMC can compute
+  factorials~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/kr/BremenK21,DBLP:conf/ijcai/Broeck16}.
+  One of them~\cite{DBLP:conf/ijcai/Broeck16} is an example `by hand' that does
+  not directly correspond to any algorithm.
+  Another~\cite{DBLP:journals/jair/Kuzelka21} proves that the problem is
+  liftable but contains no experimental results. The
+  third~\cite{DBLP:conf/kr/BremenK21} contains experimental results performed
+  with an algorithm, which is not publicly available.} We claim that this
+shortcoming is due to the inability of these algorithms to construct recursive
+solutions. The topic of recursion in the context of WFOMC has been studied
+before but in limited ways. Barv{\'{\i}}nek et
+al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical
+data that is then used to conjecture recurrence relations that explain that
+data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} introduced the idea of
+\emph{domain recursion}. Intuitively, domain recursion partitions a domain of
+size $n$ into a single explicitly named constant and the remaining domain of
+size $n-1$. However, many stringent conditions are enforced to ensure that the
+search for a tractable solution always terminates.
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -598,19 +608,24 @@ example below.
   \]
 \end{example}
 
-TODO: connecting sentence?
-
-\begin{proposition}[Correctness of GDR]
+\begin{proposition}[Correctness of $\GDR$]
   Let $\phi$ be the formula used as input to \cref{alg:domainrecursion} and
   $\phi'$ be one of the formulas constructed by the algorithm. Then
   $\phi \equiv \phi'$.
 \end{proposition}
-\begin{proof}
-  TODO
-  Assume that \cref{line:condition} selects domain $\Omega \in \mathcal{D}$.
+\begin{proof} % TODO: finish (Proof technique: if one is true then the other one will be true and vice versa)
+  Let $\Omega \in \mathcal{D}$ be the domain selected by
+  \cref{line:condition} of the algorithm.
+  \begin{claim}\label{claim:logic}
   \[
     \forall X \in \Omega\text{. } \psi \equiv \psi[x/\{\, X \,\}] \land \forall X \in \Omega\text{. } X \ne x \implies \psi
   \]
+  \end{claim}
+  \begin{claim}
+    Iteration of \cref{claim:logic} for all variables in some set of variables
+    $V$ produces the same clauses as subset enumeration on
+    \cref{line:conditions}.
+  \end{claim}
 \end{proof}
 
 \subsection{Constraint Removal}\label{sec:cr}
@@ -692,6 +707,14 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
            \end{multlined}
   \end{align*}
 \end{example}
+
+\begin{proposition}[Correctness of $\CR$]
+\end{proposition}
+\begin{proof} % TODO: finish (Proof technique: if one is true then the other one will be true and vice versa)
+  \[
+    \forall X \in \Omega \ni x\text{. } X \ne x \implies \psi \equiv \forall X \in \Omega \setminus \{\, x \,\}\text{. } \psi
+  \]
+\end{proof}
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
 
@@ -780,6 +803,16 @@ ensures that $\rho \cup \gamma$ is possible on \cref{line:recursion} of
 unique function s.t. $\rho \cup \gamma|_{\dom(\rho)} = \rho$, and
 $\rho \cup \gamma|_{\dom(\gamma)} = \gamma$. The operation is defined when
 $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
+
+% TODO: maybe something other than MC? Introduce the notation and the role of \sigma.
+% TODO: add an argument about why this recursion is (or can easily be made) finite
+\begin{proposition}[Correctness of $\Reff$]
+\end{proposition}
+\begin{proof} % TODO: finish (Proof technique: show a bijection between the sets of models)
+  For a given formula $\phi$, \cref{alg:trycache} attempts to find a formula
+  $\psi$ and a map $\rho\colon \Doms(\psi) \to \Doms(\phi)$ such that
+  $\MC(\psi, \sigma \circ \rho\colon \Doms(\psi) \to \mathbb{N}_{0}) = \MC(\phi, \sigma\colon \Doms(\phi) \to \mathbb{N}_{0})$.
+\end{proof}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
 
@@ -1096,6 +1129,7 @@ cases.
 
 % TODO: in the acknowledgements, mention that most of the work was done at UoE
 % TODO: should the appendix be in the same file or not?
+% TODO: also mention that most of the work for this paper was done at UoE
 
 \bibliographystyle{kr}
 \bibliography{paper}
