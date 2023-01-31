@@ -181,6 +181,21 @@ def crane_two_dimensional_surjections(m, n):
 def my_two_dimensional_surjections(m, n):
     return sum((-1) ** i * math.comb(n, i) * (n - i) ** m for i in range(n + 1))
 
+def crane_one_dimensional_partial_injections(m):
+    if m == 0:
+        return 1
+    return (crane_one_dimensional_partial_injections(m-1) +
+            m*2**(m-1)*crane_one_dimensional_partial_injections2(m-1, m-1) +
+            m*m*2**(m-1)*crane_one_dimensional_partial_injections2(m-1, m-2) +
+            math.comb(m, 2)*2**(m-2)*crane_one_dimensional_partial_injections2(m-2, m-1) +
+            math.comb(m, 2)*m*2**(m-2)*crane_one_dimensional_partial_injections2(m-2, m-2))
+
+def crane_one_dimensional_partial_injections2(i, j):
+    if i < 0 or j < 0:
+        return 0
+    if i == 0:
+        return 1
+    return crane_one_dimensional_partial_injections2(i-1, j) + j * crane_one_dimensional_partial_injections2(i-1, j-1)
 
 # ================================= MISC =================================
 
@@ -276,19 +291,20 @@ MAX = 6
 #             )
 #         )
 
-# for n in range(0, MAX):
-#     print(
-#         "f({}) = {} ({})".format(
-#             n,
-#             factorial(n),
-#             one_dimensional_injections1(n),
-#         )
-#     )
-
 for n in range(0, MAX):
     print(
-        "f({}) = {}".format(
+        "f({}) = {} ({}, {})".format(
             n,
-            friendsmoker(n)
+            crane_one_dimensional_partial_injections(n),
+            two_dimensional_partial_injections(n, n),
+            partial_injections_final(n, n)
         )
     )
+
+# for n in range(0, MAX):
+#     print(
+#         "f({}) = {}".format(
+#             n,
+#             friendsmoker(n)
+#         )
+#     )

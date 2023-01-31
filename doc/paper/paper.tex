@@ -28,6 +28,7 @@
 \usepackage{multirow}
 \usepackage{colortbl}
 \usepackage{complexity}
+\usepackage{siunitx}
 \usetikzlibrary{cd}
 \usetikzlibrary{shapes}
 
@@ -40,8 +41,8 @@
 % template and that you must *not* alter the styling.
 % \newtheorem{example}{Example}
 % \newtheorem{theorem}{Theorem}
+\newtheorem{theorem}{Theorem}
 \newtheorem{conjecture}{Conjecture}
-\newtheorem{proposition}{Proposition}
 \newtheorem{claim}{Claim}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -150,10 +151,12 @@ relational~\cite{DBLP:series/synthesis/2016Raedt} models. Lifted inference
 techniques for probabilistic databases, while developed somewhat independently,
 have also been inspired by
 WFOMC~\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
-While WFOMC tends to receive more attention in the literature, FOMC is an
+While WFOMC has received more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
 theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
-combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
+combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}. There is also a recent line
+of work that uses FOMC-based methods to count solutions to constraint
+satisfaction problems~\cite{DBLP:journals/jair/TotisDRK23}.
 
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
@@ -180,12 +183,12 @@ fragment with counting
 quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On
 the empirical front, there are several open-source implementations of exact
 WFOMC algorithms: \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11},
-probabilistic theorem proving~\cite{DBLP:journals/cacm/GogateD16}, and
-\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
-\textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20} as well as
+probabilistic theorem proving~\cite{DBLP:journals/cacm/GogateD16},
+\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}, and
+\textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21}. Approximate counting is
+supported by \textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20} as well as
 \textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
 proving~\cite{DBLP:journals/cacm/GogateD16}.
-% TODO: add FastWFOMC (only for \FOtwo{})
 
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
@@ -230,10 +233,10 @@ count. Along with new compilation rules, \textsc{Crane} introduces changes to
 both stages of the process. First, while \textsc{ForcLift} applies compilation
 rules via greedy\footnote{The algorithm is not described in any paper but can be
   found in its source code at \url{https://dtai.cs.kuleuven.be/drupal/wfomc}}
-search, \textsc{Crane} uses a hybrid search algorithm that applies some rules
-greedily and some using breadth-first search. Second, the product of compilation
-is not directly evaluated but rather interpreted as a collection of functions on
-domain sizes.
+search, \textsc{Crane} also supports a hybrid search algorithm that applies some
+rules greedily and some using breadth-first search. Second, the product of
+compilation is not directly evaluated but rather interpreted as a collection of
+functions on domain sizes.
 
 % \footnote{There is also an intermediate stage called \emph{smoothing} that takes
 %   place between compilation and evaluation. As our changes to smoothing are
@@ -608,11 +611,11 @@ example below.
   \]
 \end{example}
 
-\begin{proposition}[Correctness of $\GDR$]
+\begin{theorem}[Correctness of $\GDR$]
   Let $\phi$ be the formula used as input to \cref{alg:domainrecursion} and
   $\phi'$ be one of the formulas constructed by the algorithm. Then
   $\phi \equiv \phi'$.
-\end{proposition}
+\end{theorem}
 \begin{proof} % TODO: finish (Proof technique: if one is true then the other one will be true and vice versa)
   Let $\Omega \in \mathcal{D}$ be the domain selected by
   \cref{line:condition} of the algorithm.
@@ -656,7 +659,7 @@ conditions as \cref{def:replaceable}.
   \KwOut{set of chips $S$}
   $S \gets \emptyset$\;
   \ForEach{replaceable pair $(\Omega \in \mathcal{D}, x \in \Omega)$\label{line:crconditions}}{
-    add a new domain $\Omega'$ to $\mathcal{D}$\;
+    add a new domain $\Omega'$ to $\mathcal{D}$\;\label{line:newdomain}
     $\phi' \gets \emptyset$\;
     \ForEach{clause $(L, C, \delta) \in \phi$}{
       $C' \gets \{\, (a, b) \in C \mid b \ne x \,\}$\;\label{line:constraintremoval}
@@ -708,12 +711,29 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   \end{align*}
 \end{example}
 
-\begin{proposition}[Correctness of $\CR$]
-\end{proposition}
-\begin{proof} % TODO: finish (Proof technique: if one is true then the other one will be true and vice versa)
-  \[
-    \forall X \in \Omega \ni x\text{. } X \ne x \implies \psi \equiv \forall X \in \Omega \setminus \{\, x \,\}\text{. } \psi
-  \]
+\begin{theorem}[Correctness of $\CR$]
+  Let $\phi$ be the input formula of \cref{alg:constraintremoval}, $(\Omega, x)$
+  a replaceable pair, and $\phi'$ the formula constructed by the algorithm, when
+  $(\Omega, x)$ is selected on \cref{line:crconditions}. Then
+  $\phi \equiv \phi'$, where the domain $\Omega'$ introduced on
+  \cref{line:newdomain} is interpreted as $\Omega \setminus \{\, x \,\}$.
+\end{theorem}
+\begin{proof}
+  Since there is a natural bijection between the clauses of $\phi$ and $\phi'$,
+  we shall argue about the equivalence of each pair of clauses. Let $c$ be an
+  arbitrary clause of $\phi$ and $c'$ its corresponding clause of $\phi'$.
+
+  If $c$ has no variables with domain $\Omega$, then it cannot have any
+  constraints involving $x$, so $c' = c$. Otherwise, for notational simplicity,
+  let us assume that $X$ is the only variable in $c$ with domain $\Omega$ (the
+  proof for an arbitrary number of variables is virtually the same). By
+  \cref{def:replaceable}, we can rewrite $c$ as $\forall X \in \Omega\text{.
+  } X \ne x \implies \psi$, where $\psi$ is a formula with $X$ as the only free
+  variable and with no mention of either $x$ or $\Omega$. Then
+  $c' \equiv \forall X \in \Omega'\text{. } \psi$. Since
+  $\Omega' \coloneqq \Omega \setminus \{\, x \,\}$, we have that $c \equiv c'$.
+  Since $c$ was an arbitrary clause of $\phi$, this completes the proof that
+  $\phi \equiv \phi'$.
 \end{proof}
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
@@ -806,8 +826,8 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 
 % TODO: maybe something other than MC? Introduce the notation and the role of \sigma.
 % TODO: add an argument about why this recursion is (or can easily be made) finite
-\begin{proposition}[Correctness of $\Reff$]
-\end{proposition}
+\begin{theorem}[Correctness of $\Reff$]
+\end{theorem}
 \begin{proof} % TODO: finish (Proof technique: show a bijection between the sets of models)
   For a given formula $\phi$, \cref{alg:trycache} attempts to find a formula
   $\psi$ and a map $\rho\colon \Doms(\psi) \to \Doms(\phi)$ such that
@@ -889,14 +909,19 @@ function are the sizes of all domains used by nodes reachable from $v$.
   $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
 \end{example}
 
+\begin{theorem}
+  Any collection of functions returned by \textsc{Crane} can be evaluated in
+  time polynomial in domain sizes.
+\end{theorem}
+\begin{proof}% TODO (I have some handwritten notes)
+  % prove that all functions output by Crane can be computed in polytime (must, should be easy: 1) bound the number of possible arguments that any function can have, 2) prove that the computation time of any dynamic programming cell is always polytime (what about functions depending on other functions?))
+\end{proof}
+
 \section{Empirical Results}\label{sec:results}
-% TODO: when describing experimental results, say that a solution for the last
-% (unsolved) instance can be found, but is too complicated to evaluate by hand.
-% Add that the linear order axiom is also liftable. Cite the same paper in the
+% TODO: Add that the linear order axiom is also liftable. Cite the same paper in the
 % introduction as well.
 
-% TODO: make sure this table floats to the right page and look at other floating
-% objects too (e.g., is [t] on?)
+% TODO: make sure this table (as well as other floating objects) is on the right page
 \begin{table*}[t]
   \centering
   \begin{tabular}{cccccc}
@@ -933,8 +958,9 @@ We compare \textsc{Crane} and
 various kinds of functions. This class of instances is chosen because of its
 simplicity and ubiquity and the inability of state-of-the-art WFOMC algorithms
 to solve many such instances. Note that other WFOMC
-algorithms---\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16} and probabilistic
-theorem proving~\cite{DBLP:journals/cacm/GogateD16}---are unable to solve any of
+algorithms---\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}, probabilistic theorem
+proving~\cite{DBLP:journals/cacm/GogateD16}, and
+\textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21}---are unable to solve any of
 the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
@@ -969,16 +995,17 @@ In our experiments, we consider all sixteen combinations of these properties,
 i.e., injectivity, surjectivity, partiality, and endo-. We run each algorithm
 once on each of the sixteen instances.\footnote{While domain sizes have to be
   specified as part of the input, they are immaterial to the search procedure.}
-\textsc{ForcLift} is always run until it terminates; \textsc{Crane} is run until
-either five solutions are found or the search tree reaches height
-six.\footnote{The search tree has a high branching factor, so exploring all
-  nodes at depth five takes at most a few seconds, whereas doing the same for
-  depth six can be computationally infeasible in some cases.} If successful,
-\textsc{ForcLift} generates a circuit, and \textsc{Crane} generates one or more
-(complete) FCGs. In both cases, we manually convert the resulting graphs into
-definitions of functions as described in \cref{sec:interpret}. We then assess
-the complexity of each solution by hand and pick the best in case \textsc{Crane}
-returns several solutions of varying complexities.
+\textsc{Crane} is run in hybrid search mode until either five solutions are
+found or the search tree reaches height six.\footnote{The search tree has a high
+  branching factor, so exploring all nodes at depth five takes at most a few
+  seconds, whereas doing the same for depth six can be computationally
+  infeasible in some cases.} \textsc{ForcLift} is always run until it
+terminates. If successful, \textsc{ForcLift} generates a circuit, and
+\textsc{Crane} generates one or more (complete) FCGs. In both cases, we manually
+convert the resulting graphs into definitions of functions as described in
+\cref{sec:interpret}. We then assess the complexity of each solution by hand and
+pick the best in case \textsc{Crane} returns several solutions of varying
+complexities.
 
 % how the complexity of a solution is determined
 Previous work often compares WFOMC algorithms by running them on a few instances
@@ -1003,14 +1030,12 @@ is by Earnest~\shortcite{30049}. All other best-known complexity results are
 inferred from the formulas and programs on the on-line encyclopedia of integer
 sequences~\cite{oeis}. On instances that could already be solved by
 \textsc{ForcLift}, the two algorithms perform equally well. However,
-\textsc{Crane} can also solve all but one instances that \textsc{ForcLift} fails
-on in at most cubic time. See \cref{app:solutions} for the exact solutions
-produced by \textsc{Crane} that correspond to the complexity results in
-\cref{tbl:results}.
+\textsc{Crane} can also solve all but one of the instances that
+\textsc{ForcLift} fails on in at most cubic time. See \cref{app:solutions} for
+the exact solutions produced by \textsc{Crane} that correspond to the complexity
+results in \cref{tbl:results}.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
-
-% A summary of what's been done/achieved and how
 
 In this paper, we showed how a state-of-the-art (W)FOMC algorithm can be
 empowered by generalising domain recursion and adding support for cycles in the
@@ -1068,18 +1093,14 @@ on areas of artificial intelligence (AI) such as statistical relational
 AI~\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
 research in combinatorics as well~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
-% TODO: cite Lifted Reasoning for Combinatorial Counting
-
 \appendix
 \section{Solutions Found by \textsc{Crane}}\label{app:solutions}
 
-% TODO: fix the introductory description
-
-whose complexity is in \cref{tbl:results} (including those findable by
-\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}). Both before and after
-algebraic simplification, excluding multiplication by one. All of these
-solutions have been checked to be correct when combined with suitable base
-cases.
+In this appendix, we list the exact function definitions produced by
+\textsc{Crane} for all of the problem instances in \cref{sec:results} both
+before and after algebraic simplification (excluding multiplications by one).
+The correctness of all of them has been checked by identifying suitable base
+cases and verifying the numerical answers across a range of domain sizes.
 
 \begin{enumerate}
   \item $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:
@@ -1089,18 +1110,14 @@ cases.
   \item $\Theta(m^3 + n^3)$ solution for counting $\Gamma \to \Delta$
   surjections:
   \begin{align*}
-    \begin{split}
-      f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
-                 &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l}
-    \end{split}\\
+    f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
+               &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
     ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
   \end{align*}
   \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ surjections:
   \begin{align*}
-    \begin{split}
-      f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
-              &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l}
-    \end{split}\\
+    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
+            &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
     ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
   \end{align*}
   \item $\Theta(mn)$ solution for counting $\Gamma \to \Delta$ injections and
@@ -1112,11 +1129,21 @@ cases.
   \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ injections:
   \begin{align*}
     f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
-    \begin{split}
-      g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
-      ={}& g(m - 1, l) + lg(m - 1, l - 1).
-    \end{split}
+    g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
+    ={}& g(m - 1, l) + lg(m - 1, l - 1).
   \end{align*}
+  % \item $\Theta(m^{2})$ solution for counting $\Gamma \to \Gamma$ partial
+  %       injections:
+  % \begin{align*}
+  %   f(m) ={}& f(m - 1) + \sum_{l = 0}^{m} \binom{m}{l} \sum_{k = 0}^{m} \binom{m}{k}\\
+  %           &[1 \le l < 3] [k < 2] 2^{m - l} g(m - l, m - k - 1)\\
+  %   ={}& f(m - 1) + m2^{m-1}g(m-1, m-1)\\
+  %   +{}& m^{2}2^{m-1}g(m-1, m-2)\\
+  %   +{}& \binom{m}{2}2^{m-2}g(m-2, m-1) \\
+  %   +{}& \binom{m}{2}m2^{m-2}g(m-2, m-2)\\
+  %   g(i, j) ={}& \sum_{h = 0}^{j} \binom{j}{h} [h < 2] g(i - 1, j - h)\\
+  %   ={}& g(i-1, j) + jg(i-1, j-1).
+  %   \end{align*}
   \item $\Theta(m)$ solution for counting $\Gamma \to \Delta$ bijections:
   \[
     f(m, n) = mf(m-1, n-1).
