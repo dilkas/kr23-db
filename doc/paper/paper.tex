@@ -52,27 +52,39 @@
 /TemplateVersion (KR.2022.0, KR.2023.0)
 }
 
-\title{Recursive Solutions to First-Order Model Counting}
+\title{Synthesising Recursive Functions for First-Order Model Counting}
 
-% TODO: double check how the university names should be formatted and the emails
-% TODO: read the formatting instructions and their LaTeX source
+% TODO: read the formatting instructions and their LaTeX source (email font?)
 % TODO: make sure there are no overflow errors
-% TODO: for arbitrary instances of '2022' (e.g., in citations), make it '2023'
 % TODO: maybe mention the term 'data complexity'
-% TODO: fix doom emacs warnings
+% TODO: make claim numbers subordinate to theorem numbers
+% TODO: mention that most of the work for this paper was done at UoE
+% TODO: the appendix should be in a separate file
+% TODO: cite some works about synthesis
+% TODO: clean up unnecessary things from the header (e.g., packages and definitions)
+% TODO: don't use the '\in' syntax for predicates
+% TODO: make sure I'm using \sigma instead of || everywhere
+% TODO: (at the end): grammarly the whole thing, put the appendix in a separate file
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
 \affiliations
-$^1$National University of Singapore, Singapore\\
-$^2$University of Edinburgh, UK\\
+$^1$National University of Singapore, Singapore, Singapore\\
+$^2$University of Edinburgh, Edinburgh, UK\\
 \emails
 paulius.dilkas@nus.edu.sg,
 vbelle@ed.ac.uk
 }
 
-\crefname{algocf}{algorithm}{Algorithms}
+\crefalias{diagram}{equation}
+\crefname{diagram}{Diagram}{Diagrams}
+\Crefname{diagram}{Diagram}{Diagrams}
+\creflabelformat{diagram}{#2\textup{(#1)}#3}
+
+\crefname{algocf}{Algorithm}{Algorithms}
 \Crefname{algocf}{Algorithm}{Algorithms}
+\crefname{condition}{Condition}{Conditions}
+\Crefname{condition}{Condition}{Conditions}
 
 \newcommand{\crefrangeconjunction}{--}
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
@@ -90,8 +102,8 @@ vbelle@ed.ac.uk
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
 \DeclareMathOperator{\dom}{dom}
 \DeclareMathOperator{\Doms}{Doms}
-\DeclareMathOperator{\MC}{MC}
 \DeclareMathOperator{\Vars}{Vars}
+\DeclareMathOperator{\Preds}{Preds}
 \SetKwProg{Fn}{Function}{:}{}
 \SetKwFunction{identifyRecursion}{r}
 \SetKwFunction{generateMaps}{genMaps}
@@ -126,6 +138,15 @@ vbelle@ed.ac.uk
 \end{abstract}
 
 \section{Introduction}
+
+% TODO: In the introduction it is written: "Crane uses a hybrid search algorithm
+% that applies some rules greedily and some using breadth-first search". Which
+% rules are applied greedily and which are not? What is the reason for parting
+% from the usual greedy method?
+
+TODO: cite \textsc{Magician}~\cite{DBLP:conf/aaai/VenugopalSG15} and
+\textsc{Tuffy}~\cite{DBLP:journals/pvldb/NiuRDS11} (read the abstracts first,
+look at the code)
 
 % 1. What is the problem?
 % 2. Why is it interesting and important?
@@ -220,6 +241,12 @@ search for a tractable solution always terminates.
 
 % 5.1) An overview of how ForcLift/Crane work.
 
+% TODO: I am not sure the statement of note 2 is correct since, in [van den
+% Broeck, IJCAI 2011], the compilation is described as follows: "Compiling a set
+% of c-clauses C to Fo d-DNNF is performed by the Compile(C) function, which
+% tries to recursively apply the compilation rules in the order we present
+% here". But then maybe the algorithm was not yet ForcLift.
+
 In this work, we show how to relax these restrictions in a way that results in a
 stronger (W)FOMC algorithm, capable of handling more instances (e.g., counting
 various injective mappings) in a lifted manner. The ideas presented in this
@@ -232,7 +259,7 @@ the instance are propagated through the circuit, computing the weighted model
 count. Along with new compilation rules, \textsc{Crane} introduces changes to
 both stages of the process. First, while \textsc{ForcLift} applies compilation
 rules via greedy\footnote{The algorithm is not described in any paper but can be
-  found in its source code at \url{https://dtai.cs.kuleuven.be/drupal/wfomc}}
+  found in its source code at \url{https://dtaid.cs.kuleuven.be/wfomc}}
 search, \textsc{Crane} also supports a hybrid search algorithm that applies some
 rules greedily and some using breadth-first search. Second, the product of
 compilation is not directly evaluated but rather interpreted as a collection of
@@ -248,8 +275,8 @@ functions on domain sizes.
 The main conceptual difference between \textsc{Crane} and \textsc{ForcLift} is
 that we utilise labelled directed graphs instead of circuits, where cycles
 represent recursive calls. Suppose the input formula $\phi$ depends on a domain
-of size $n \in \mathbb{N}$. \emph{Generalised domain recursion} (GDR)---one of
-the new compilation rules---transforms $\phi$ into a different formula $\psi$
+of size $n \in \mathbb{N}_{0}$. \emph{Generalised domain recursion} (GDR)---one
+of the new compilation rules---transforms $\phi$ into a different formula $\psi$
 that has an additional constant and some new \emph{constraints}. After some
 additional transformations, the constraints in $\psi$ become `uniform' and can
 be removed, replacing the domain of size $n$ with a new domain of size
@@ -281,14 +308,16 @@ Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can
 translate sentences in a variant of function-free many-sorted FOL with equality
 to this internal format. We use lowercase Latin letters for predicates and
 constants, uppercase Latin letters for variables, and uppercase Greek letters
-for domains. An \emph{atom} is $p(t_1, \dots, t_n)$ for some predicate $p$ and
-terms $t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
-\emph{literal} is either an atom or the negation of an atom (denoted by
-$\neg p(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all (finite)
-domains. Initially, $\mathcal{D}$ contains all domains mentioned by the input
-(W)FOMC instance. During compilation, new domains are added to $\mathcal{D}$ by
-some of the compilation rules. Each such new domain is interpreted as a subset
-of some element of $\mathcal{D}$.
+for domains. Sometimes we write predicate $p$ as $p/n$, where
+$n \in \mathbb{N}^{+}$ is the \emph{arity} of $p$. An \emph{atom} is
+$p(t_1, \dots, t_n)$ for some predicate $p/n$ and terms $t_{1}, \dots, t_{n}$. A
+\emph{term} is either a constant or a variable. A \emph{literal} is either an
+atom or the negation of an atom (denoted by $\neg p(t_1, \dots, t_n)$). Let
+$\mathcal{D}$ be the set of all relevant (finite) domains. Initially,
+$\mathcal{D}$ contains all domains mentioned by the input formula. During
+compilation, new domains are added to $\mathcal{D}$ by some of the compilation
+rules. Each such new domain is interpreted as a subset of some other domain in
+$\mathcal{D}$.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
@@ -310,17 +339,29 @@ of some element of $\mathcal{D}$.
   into its three constituents.
 \end{definition}
 
-Similarly to variables in \cref{def:clause}, all constants are (implicitly)
-mapped to domains, and each $n$-ary predicate is implicitly mapped to a sequence
-of $n$ domains. For constant or variable $x$, predicate $p$, and domains
-$\Gamma$ and $\Delta$, we write, e.g., $x \in \Gamma$ and
-$p \in \Gamma \times \Delta$ to denote that $x$ is associated with $\Gamma$, and
-$p$ is associated with $\Gamma$ and $\Delta$ (in that order).
+\paragraph{Notation.}
+For any set $S$, let $2^{S}$ denote its power set and
+$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples of any
+finite length of elements of $S$. For any $n \in \mathbb{N}_{0}$, let
+$[n] \coloneqq \{\, 1, \dots, n \,\}$. For example, $[0] = \emptyset$, and
+$[2] = \{\, 1, 2 \,\}$. We write $\langle\rangle$ for an empty list,
+$\langle x \rangle$ for a list with one element $x$, $|l|$ for the length of
+list $l$, and $\pfun$ to denote partial functions. Let $S$ be a set of
+constraints or literals, $V$ a set of variables, and $x$ a variable or a
+constant. We write $S[x/V]$ to denote $S$ with all occurrences of all variables
+in $V$ replaced with $x$. Let $\Doms$ (respectively, $\Preds$) be the function
+that maps any clause or formula to the set of domains (respectively, predicates)
+used within, and let $\dom(f)$ denote the domain of function $f$.
 
 \begin{definition}[Formula]\label{def:formula}
   A \emph{formula} (called a c-theory by Van den Broeck et
   al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}) is a set of clauses s.t.\ all
-  constraints and atoms `type check' with respect to domains.
+  constraints and atoms `type check' with respect to domains. Each formula
+  $\phi$ has a map $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ such
+  that, for each predicate $p/n \in \Preds(\phi)$, we have that
+  $\pi_{\phi}(p) \in {\Doms(\phi)}^{n}$.\footnote{Similarly to variables and
+    predicates, constants are also mapped to domains, although we keep this
+    mapping implicit.}
 \end{definition}
 
 \begin{example}\label{example:first}
@@ -337,31 +378,28 @@ $p$ is associated with $\Gamma$ and $\Delta$ (in that order).
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\})
           \end{multlined}
   \end{align*}
-  for some predicate $p$, variables $X$, $Y$, $Z$, and domains $\Gamma$ and
-  $\Delta$. Then $\Vars(\{\, (Y, Z) \,\}) = \{\, Y, Z \,\}$, and
-  $\Vars(c_{1}) = \Vars(c_{2}) = \{\, X, Y, Z \,\}$. Based on the domain maps of
-  $c_{1}$ and $c_{2}$, we can infer that $p \in \Gamma \times \Delta$. All
-  variables (in both clauses) that occur as the first argument to $p$ are in
-  $\Gamma$, and, likewise, all variables that occur as the second argument to
-  $p$ are in $\Delta$. Therefore, $\phi$ `type checks' as a valid formula.
+  for some predicate $p/2$, variables $X$, $Y$, $Z$, and domains $\Gamma$ and
+  $\Delta$. Based on $\delta_{c_{1}}$ and $\delta_{c_{2}}$, we can infer that
+  $\pi_{\phi} = \{\, p \mapsto (\Gamma, \Delta) \,\}$. All variables that occur
+  as the first argument to $p$ are in $\Gamma$, and, likewise, all variables
+  that occur as the second argument to $p$ are in $\Delta$. Therefore, $\phi$
+  `type checks' as a valid formula.
 \end{example}
 
 There are two major differences between
 \cref{def:constraint,def:clause,def:formula} and the corresponding concepts
 introduced by Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}.
 First, we decouple variable-to-domain assignments from constraints and move them
-to a separate function $\delta_{c}$ in \cref{def:clause}. Formalising these
-assignments as a function unveils the (previously implicit) assumption that each
-variable must be assigned to a domain. Second, while Van den Broeck et
-al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} allow for equality constraints and
-constraints of the form $X \not\in \Delta$ for some variable $X$ and domain
-$\Delta$, we exclude such constraints simply because they are not needed.
+to a separate function $\delta_{c}$ in \cref{def:clause}. Second, while Van den
+Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} allow for equality
+constraints and constraints of the form $X \not\in \Delta$ for some variable $X$
+and domain $\Delta$, we exclude such constraints simply because they are not
+needed.
 
-One can read a formula from \cref{def:formula} as a sentence in a FOL\@. All
-variables in a clause are implicitly universally quantified (but note that
-variables are never shared among clauses), and all clauses in a formula are
-implicitly linked by a conjunction. Thus, formula $\phi$ from
-\cref{example:first} reads as
+One can read a formula in our format as a sentence in FOL\@. All variables in a
+clause are implicitly universally quantified (but note that variables are never
+shared among clauses), and all clauses in a formula are implicitly linked by a
+conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
 \begin{align*}
   &\begin{multlined}[t]
     (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
@@ -373,23 +411,45 @@ implicitly linked by a conjunction. Thus, formula $\phi$ from
     \end{multlined}
 \end{align*}
 
-Once domains are mapped to finite sets and constants to specific (and different)
-elements in those sets, a formula can be viewed as a set of conditions that the
-predicates (interpreted as relations) have to satisfy. Hence, FOMC is the
-problem of counting the number of combinations of relations that satisfy these
-conditions.
+Once domains are mapped to finite sets and constants to elements in those sets,
+a formula can be viewed as a set of conditions that the predicates (interpreted
+as relations) have to satisfy. Hence, FOMC is the problem of counting the number
+of combinations of relations that satisfy these conditions. To formalise this
+idea, let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size
+  function} that maps each domain to a non-negative integer.
+
+\begin{definition}\label{def:model}
+  Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
+  $(\phi, \sigma)$ is a map
+  $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ such that the
+  following two conditions are satisfied.
+  \begin{enumerate}
+    \item Let $p/n \in \Preds(\phi)$ be a predicate and let
+          $\pi_{\phi}(p) = {(d_{i})}_{i=1}^{n}$ for some domains
+          $d_{i} \in \Doms(\phi)$. Then
+          \begin{equation}\label{eq:subset}
+            \mathfrak{M}(p) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
+          \end{equation}
+    \item As a collection of relations, $\mathfrak{M}$ satisfies
+          $\phi$.
+  \end{enumerate}
+\end{definition}
 
 \begin{example}
-  Let $\phi$ be as in \cref{example:first} and let $|\Gamma| = |\Delta| = 2$.
-  There are $2^{2 \times 2} = 16$ possible relations between $\Gamma$ and
-  $\Delta$. Let us count how many of them satisfy the conditions imposed on
-  predicate $p$. The empty relation does. All four relations of cardinality one
-  do too. Finally, there are two relations of cardinality two that satisfy the
-  conditions as well. Thus, the FOMC of $\phi$ (when $|\Gamma| = |\Delta| = 2$)
-  is 7. Incidentally, the FOMC of $\phi$ counts partial injections. We will
-  continue to use the problem of counting partial injections (and the formula
-  from \cref{example:first} specifically) as the main running example throughout
-  the paper.
+  Let $\phi$ be as in \cref{example:first} and let
+  $\sigma(\Gamma) = \sigma(\Delta) = 2$. Then the right-hand side of
+  \cref{eq:subset} becomes
+  \[
+    [\sigma(\Gamma)] \times [\sigma(\Delta)] = [2] \times [2] = \{\,(1, 1), (1, 2), (2, 1), (2, 2)\,\}
+  \]
+  There are $2^{4} = 16$ possible relations between $\Gamma$ and $\Delta$. Let
+  us count how many of them satisfy the conditions imposed on predicate $p$. The
+  empty relation does. All four relations of cardinality one do too. Finally,
+  there are two relations of cardinality two that satisfy the conditions as
+  well. Thus, the FOMC of $(\phi, \sigma)$ is 7. Incidentally, it counts partial
+  injections. We will continue to use the problem of counting partial injections
+  (and the formula from \cref{example:first} specifically) as the main running
+  example throughout the paper.
 \end{example}
 % TODO: It might be useful to give one or two readable examples with interesting
 % model counts. For example Px v Qx over domain n has 3^n solutions. I think
@@ -398,14 +458,6 @@ conditions.
 % although of course you can continue to use the same running example for the
 % rest of your paper. Such examples are especially useful for readers who are
 % not familiar but still need to get excited by the problem
-
-\paragraph*{Notation.}
-We write $\langle\rangle$ and $\langle x \rangle$ to denote an empty list and a
-list with one element $x$, respectively, and $|l|$ for the length of list $l$.
-We write $\pfun$ for partial functions. Let $S$ be a set of constraints or
-literals, $V$ a set of variables, and $x$ a variable or a constant. We write
-$S[x/V]$ to denote $S$ with all occurrences of all variables in $V$ replaced
-with $x$.
 
 \section{From Circuits to Graphs}\label{sec:methods}
 
@@ -738,10 +790,6 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
 
-\paragraph{Notation.}
-Let $\Doms$ be a function that maps any clause or formula to the set of domains
-used within, and let $\dom(f)$ denote the domain of function $f$.
-
 \paragraph{Hashing.}
 We use (integer-valued) hash functions to discard pairs of formulas that are too
 different for recursion to work. The hash code of a clause
@@ -765,9 +813,9 @@ node.
   \KwIn{formula $\phi$, cache $C$}
   \KwOut{a set of chips}
 
-  \ForEach{formula and node $(\psi, v) \in C(\#\phi)$}{
+  \ForEach{formula and node $(\psi, v) \in C(\#\phi)$}{\label{line:selectformula}
     $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
-    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\, (\Reff_\rho(v), \langle\rangle) \,\}$}}
+    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\, (\Reff_\rho(v), \langle\rangle) \,\}$}}\label{line:rho}
   }
   \Return{$\emptyset$}\;
 
@@ -824,14 +872,39 @@ unique function s.t. $\rho \cup \gamma|_{\dom(\rho)} = \rho$, and
 $\rho \cup \gamma|_{\dom(\gamma)} = \gamma$. The operation is defined when
 $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 
-% TODO: maybe something other than MC? Introduce the notation and the role of \sigma.
-% TODO: add an argument about why this recursion is (or can easily be made) finite
 \begin{theorem}[Correctness of $\Reff$]
+  Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
+  any formula selected on \cref{line:selectformula} of the algorithm such that
+  $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Then the set of
+  models of $(\psi, \sigma \circ \rho)$ is equal to the set of models of
+  $(\phi, \sigma)$.
 \end{theorem}
-\begin{proof} % TODO: finish (Proof technique: show a bijection between the sets of models)
-  For a given formula $\phi$, \cref{alg:trycache} attempts to find a formula
-  $\psi$ and a map $\rho\colon \Doms(\psi) \to \Doms(\phi)$ such that
-  $\MC(\psi, \sigma \circ \rho\colon \Doms(\psi) \to \mathbb{N}_{0}) = \MC(\phi, \sigma\colon \Doms(\phi) \to \mathbb{N}_{0})$.
+\begin{proof}
+  We first show that the right-hand side of \cref{eq:subset} is the same for
+  models of both $(\phi, \sigma)$ and $(\psi, \sigma \circ \rho)$.
+  \Cref{alg:trycache} ensures that $\psi \equiv \phi$ up to domains. In
+  particular, this means that $\Preds(\psi) = \Preds(\phi)$. The square in
+  \begin{equation}\label[diagram]{diagram:ref}
+    \begin{tikzcd}
+      \Preds(\psi) \ar[equal]{r} \ar[d, swap, "\pi_{\psi}"] & \Preds(\phi) \ar[d, "\pi_{\phi}"] \\
+      {\Doms(\psi)}^{\ast} \ar[r, "\rho"] & {\Doms(\phi)}^{\ast} \ar[r, "\sigma"] & \mathbb{N}_{0}^{\ast}
+    \end{tikzcd}
+  \end{equation}
+  commutes by \cref{def:formula} and the definition of $\rho$. In other words,
+  for any predicate $p/n \in \Preds(\psi) = \Preds(\phi)$, function $\rho$
+  translates the domains associated with $p$ in $\psi$ to the domains associated
+  with $p$ in $\phi$. Let $\pi_{\phi}(p) = {(d_{i})}_{i=1}^{n}$ and
+  $\pi_{\psi}(p) = {(e_{i})}_{i=1}^{n}$ for some domains $d_{i} \in \Doms(\phi)$
+  and $e_{i} \in \Doms(\psi)$. Since $\rho(e_{i}) = d_{i}$ for all
+  $i = 1, \dots, n$ by the commutativity in \cref{diagram:ref}, we get that
+  \begin{equation}\label{eq:equality}
+    \prod_{i=1}^{n}[\sigma(d_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(e_{i})]
+  \end{equation}
+  as required. Certainly, any subset of the left-hand side of \cref{eq:equality}
+  (e.g., $\mathfrak{M}(p)$, where $\mathfrak{M}$ is a model of $(\phi, \sigma)$)
+  is a subset of the right-hand side and vice versa. Since $\phi$ and $\psi$
+  semantically only differ in what domains they refer to, every model of $\phi$
+  satisfies $\psi$ and vice versa, completing the proof.
 \end{proof}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
@@ -913,13 +986,41 @@ function are the sizes of all domains used by nodes reachable from $v$.
   Any collection of functions returned by \textsc{Crane} can be evaluated in
   time polynomial in domain sizes.
 \end{theorem}
-\begin{proof}% TODO (I have some handwritten notes)
-  % prove that all functions output by Crane can be computed in polytime (must, should be easy: 1) bound the number of possible arguments that any function can have, 2) prove that the computation time of any dynamic programming cell is always polytime (what about functions depending on other functions?))
+\begin{proof}
+  % 1) bound the number of possible arguments that any function can have
+  % 2) prove that the computation time of any dynamic programming cell is always polytime (what about functions depending on other functions?))
+  \begin{claim}
+    Infinite recursion is impossible because that would necessitate a sequence
+    of compilation rule applications that start with $\phi$ and end up with
+    exactly $\phi$ as one of the outcomes. This is impossible because... [argue
+    about formula length and the necessity to preserve domains and constants].
+  \end{claim}
+  \begin{claim}
+    Argument values cannot increase from one function call to another.
+  \end{claim}
+  \begin{claim}
+    Excluding functions, time to evaluate a function definition is polynomial
+    (e.g., binomials, linear sums, powers, multiplication, addition). The number
+    of operations within a definition is a constant that does not depend on
+    domain sizes.
+  \end{claim}
+  \begin{claim}
+    Describe a dynamic programming algorithm that:
+    \begin{itemize}
+      \item Gradually increases the sum of all domain sizes
+      \item Computes and stores the values of all function calls whose arguments
+            have that sum. Argue that there will always be an order in which
+            that's possible.
+    \end{itemize}
+  \end{claim}
+  NOTE: For proving that each cell is evaluated in polynomial time, I can just
+  cite the ForcLift completeness (and domain recursion) paper.
 \end{proof}
 
 \section{Empirical Results}\label{sec:results}
-% TODO: Add that the linear order axiom is also liftable. Cite the same paper in the
-% introduction as well.
+
+TODO: Incidentally, the linear order axiom is also liftable. Cite the same
+paper~\cite{DBLP:journals/corr/abs-2211-01164} in the introduction as well.
 
 % TODO: make sure this table (as well as other floating objects) is on the right page
 \begin{table*}[t]
@@ -1149,14 +1250,6 @@ cases and verifying the numerical answers across a range of domain sizes.
     f(m, n) = mf(m-1, n-1).
   \]
 \end{enumerate}
-
-% TODO: the correctness of all of these was confirmed by finding the right base
-% cases and checking whether the function definitions produce the right values
-% for a sufficiently high number of domain sizes.
-
-% TODO: in the acknowledgements, mention that most of the work was done at UoE
-% TODO: should the appendix be in the same file or not?
-% TODO: also mention that most of the work for this paper was done at UoE
 
 \bibliographystyle{kr}
 \bibliography{paper}
