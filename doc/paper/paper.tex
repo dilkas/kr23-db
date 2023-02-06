@@ -43,7 +43,7 @@
 % \newtheorem{theorem}{Theorem}
 \newtheorem{theorem}{Theorem}
 \newtheorem{conjecture}{Conjecture}
-\newtheorem{claim}{Claim}
+\newtheorem{claim}{Claim}[theorem]
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
@@ -54,17 +54,13 @@
 
 \title{Synthesising Recursive Functions for First-Order Model Counting}
 
-% TODO: read the formatting instructions and their LaTeX source (email font?)
-% TODO: make sure there are no overflow errors
-% TODO: maybe mention the term 'data complexity'
-% TODO: make claim numbers subordinate to theorem numbers
-% TODO: mention that most of the work for this paper was done at UoE
-% TODO: the appendix should be in a separate file
-% TODO: cite some works about synthesis
-% TODO: clean up unnecessary things from the header (e.g., packages and definitions)
-% TODO: don't use the '\in' syntax for predicates
-% TODO: make sure I'm using \sigma instead of || everywhere
-% TODO: (at the end): grammarly the whole thing, put the appendix in a separate file
+% TODO (at the very end)
+% put the appendix in a separate file
+% grammarly the whole thing
+% read the formatting instructions and their LaTeX source (email font?)
+% make sure there are no overflow errors
+% clean up unnecessary things from the header (e.g., packages and definitions)
+
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
@@ -138,6 +134,9 @@ vbelle@ed.ac.uk
 \end{abstract}
 
 \section{Introduction}
+
+% TODO: maybe mention the term 'data complexity'
+% TODO: cite some works about synthesis
 
 % TODO: In the introduction it is written: "Crane uses a hybrid search algorithm
 % that applies some rules greedily and some using breadth-first search". Which
@@ -403,11 +402,11 @@ conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
 \begin{align*}
   &\begin{multlined}[t]
     (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-    Y \ne Z \implies \neg p(X, Y) \lor \neg p(X, Z)) \land
+    Y \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(X, Z)) \land
     \end{multlined}\\
   &\begin{multlined}[t]
     (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-    X \ne Z \implies \neg p(X, Y) \lor \neg p(Z, Y)).
+    X \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(Z, Y)).
     \end{multlined}
 \end{align*}
 
@@ -592,10 +591,10 @@ conditions ensure that these parts can be treated independently.
   $S \gets \emptyset$\;
   \ForEach{domain $\Omega \in \mathcal{D}$ s.t.\ there is $c \in \phi$ and $X \in \Vars(L_c)$ s.t. $\delta_c(X) = \Omega$\label{line:condition}}{
     $\phi' \gets \emptyset$\;
-    $x \gets \text{a new constant in domain } \Omega$\;
+    $x \gets \text{a new constant in domain } \Omega$\;\label{line:constant}
     \ForEach{clause $c = (L, C, \delta) \in \phi$\label{line:forclause}}{
-      $V \gets \{\, X \in \Vars(L) \mid \delta(X) = \Omega \,\}$\;
-      \ForEach{subset $W \subseteq V$ s.t. $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, X \in \Vars(C) \mid (X, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
+      $V \gets \{\, X \in \Vars(L) \mid \delta(X) = \Omega \,\}$\;\label{line:V}
+      \ForEach{$W \subseteq V$ s.t. $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, X \in \Vars(C) \mid (X, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
         \tcc{$\delta'$ restricts $\delta$ to the new set of variables}
         $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (X, x) \mid (X \in V \setminus W) \,\}, \delta') \,\}$\;\label{line:generation}
       }
@@ -663,24 +662,48 @@ example below.
   \]
 \end{example}
 
-\begin{theorem}[Correctness of $\GDR$]
-  Let $\phi$ be the formula used as input to \cref{alg:domainrecursion} and
-  $\phi'$ be one of the formulas constructed by the algorithm. Then
-  $\phi \equiv \phi'$.
+\begin{theorem}[Correctness of $\GDR$\footnote{\Cref{thm:correctness1} is equivalent to
+    Proposition~3 by~\cite{DBLP:conf/nips/Broeck11}.}]\label{thm:correctness1}
+  Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
+  $\Omega \in \mathcal{D}$ the domain selected on \cref{line:condition}, and
+  $\phi'$ the formula constructed by the algorithm for $\Omega$. Assume that
+  $\Omega \ne \emptyset$. Then $\phi \equiv \phi'$.
 \end{theorem}
-\begin{proof} % TODO: finish (Proof technique: if one is true then the other one will be true and vice versa)
-  Let $\Omega \in \mathcal{D}$ be the domain selected by
-  \cref{line:condition} of the algorithm.
-  \begin{claim}\label{claim:logic}
+\begin{proof}
+  Let $x$ be the constant introduced on \cref{line:constant} and $c$ a clause of
+  $\phi$ selected on \cref{line:forclause} of the algorithm. We will show that
+  $c$ is equivalent to the conjunction of clauses added to $\phi'$ on
+  \cref{line:conditions,line:generation}.
+
+  If $c$ has no variables with domain $\Omega$, then
+  \cref{line:conditions,line:generation} simply add a copy of $c$ to $\phi'$. If
+  $c$ has one variable with domain $\Omega$, say, $X$, then
+  $c \equiv \forall X \in \Omega\text{. } \psi$ for some formula $\psi$ with one
+  free variable $X$. In this case, \cref{line:conditions,line:generation} create
+  two clauses: $\psi[x/\{\, X \,\}]$ and $\forall X \in \Omega\text{.
+  } X \ne x \Rightarrow \psi$. It is easy to see that their conjunction is
+  equivalent to $c$ provided that $\Omega \ne \emptyset$ and so $x$ is a
+  well-defined constant.
+
+  Let $V$ be the set of variables introduced on \cref{line:V}. It remains to
+  show that repeating the transformation
   \[
-    \forall X \in \Omega\text{. } \psi \equiv \psi[x/\{\, X \,\}] \land \forall X \in \Omega\text{. } X \ne x \implies \psi
+    \forall X \in \Omega\text{. } \psi \mapsto \{\, \psi[x/\{\, X \,\}], \forall X \in \Omega\text{. } X \ne x \Rightarrow \psi \,\}
   \]
-  \end{claim}
-  \begin{claim}
-    Iteration of \cref{claim:logic} for all variables in some set of variables
-    $V$ produces the same clauses as subset enumeration on
-    \cref{line:conditions}.
-  \end{claim}
+  for all variables $X \in V$ produces the same clauses as
+  \cref{line:conditions,line:generation} (except for some tautologies that the
+  latter method skips). Note that the order in which these operations are
+  applied is immaterial. In other words, if we add inequality constraints for
+  variables ${\{\, X_{i} \,\}}_{i=1}^{n}$, and apply substitution for variables
+  $V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$, then---regardless of the order of
+  operations---we get
+  \[
+    \forall X_{1}, \dots, X_{n} \in \Omega\text{.} \bigwedge_{i=1}^{n} X_{i} \ne x \Rightarrow \psi\left[x / \left(V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}\right)\right].
+  \]
+  This formula is equivalent to the clause generated on \cref{line:generation}
+  with $W = V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$. Thus, for every clause $c$
+  of $\phi$, the new formula $\phi'$ gets a set of clauses whose conjunction is
+  equivalent to $c$. Hence, the two formulas are equivalent.
 \end{proof}
 
 \subsection{Constraint Removal}\label{sec:cr}
@@ -780,7 +803,7 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   let us assume that $X$ is the only variable in $c$ with domain $\Omega$ (the
   proof for an arbitrary number of variables is virtually the same). By
   \cref{def:replaceable}, we can rewrite $c$ as $\forall X \in \Omega\text{.
-  } X \ne x \implies \psi$, where $\psi$ is a formula with $X$ as the only free
+  } X \ne x \Rightarrow \psi$, where $\psi$ is a formula with $X$ as the only free
   variable and with no mention of either $x$ or $\Omega$. Then
   $c' \equiv \forall X \in \Omega'\text{. } \psi$. Since
   $\Omega' \coloneqq \Omega \setminus \{\, x \,\}$, we have that $c \equiv c'$.
@@ -908,6 +931,7 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 \end{proof}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
+% TODO: make sure I'm using \sigma instead of || in this section
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
@@ -952,7 +976,7 @@ function are the sizes of all domains used by nodes reachable from $v$.
   the clause has groundings and zero otherwise. In this case, the parameter is
   $c = (\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto \Delta^\top, Y \mapsto \Delta^\top \,\})$
   (not shown in \cref{fig:examplefcg}), which can be read as
-  $\forall X, Y \in \Delta^{\top}\text{. }X \ne Y \implies \bot$, i.e.,
+  $\forall X, Y \in \Delta^{\top}\text{. }X \ne Y \Rightarrow \bot$, i.e.,
   $\forall X, Y \in \Delta^{\top}\text{. }X = Y$. This latter sentence is true
   if and only if $|\Delta^{\top}| < 2$. Therefore, we can use the Iverson
   bracket notation to write
@@ -1066,12 +1090,13 @@ the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
 
+% TODO: don't use the \in syntax
 % Describe what kind of instances we're investigating
 Let $p \in \Gamma \times \Delta$ be a predicate. To restrict all relations
 representable by $p$ to just functions from $\Gamma$ to $\Delta$, in FOL one
 might write
 \[
-  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \implies Y = Z
+  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \Rightarrow Y = Z
 \]
 and
 \begin{equation}\label{eq:def2}
@@ -1081,7 +1106,7 @@ The former sentence says that one element of $\Gamma$ can map to at \emph{most}
 one element of $\Delta$, and the latter sentence says that each element of
 $\Gamma$ must map to at \emph{least} one element of $\Delta$. One can then add
 \[
-  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }p(X, Y) \land p(Z, Y) \implies X = Z
+  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }p(X, Y) \land p(Z, Y) \Rightarrow X = Z
 \]
 to restrict $p$ to injections or
 \[
@@ -1155,11 +1180,11 @@ can formulate the following conjecture.
   \begin{align*}
     &\begin{multlined}[t]
       (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-      Y \ne Z \implies \neg p(X, Y) \lor \neg p(X, Z)) \land
+      Y \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(X, Z)) \land
     \end{multlined}\\
     &\begin{multlined}[t]
       (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-      X \ne Z \implies \neg p(X, Y) \lor \neg p(Z, Y))
+      X \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(Z, Y))
     \end{multlined}
   \end{align*}
   for some predicate $p$ and domains $\Gamma$ and $\Delta$. Then \IFO{} is

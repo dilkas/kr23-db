@@ -1,0 +1,13 @@
+a = {1, 2}
+b = {1, 2}
+
+rone(a, b)
+rtwo(a, b)
+pone(a)
+ptwo(b)
+
+forall x forall y (pone(x) v ptwo(y) v rone(x, y)) ^ (!pone(x) v !ptwo(y) v rtwo(x, y)).
+pone(1).
+!pone(2).
+ptwo(1).
+!ptwo(2).
