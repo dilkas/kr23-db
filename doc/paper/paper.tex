@@ -29,6 +29,7 @@
 \usepackage{colortbl}
 \usepackage{complexity}
 \usepackage{siunitx}
+\usepackage{forest}
 \usetikzlibrary{cd}
 \usetikzlibrary{shapes}
 
@@ -60,6 +61,7 @@
 % read the formatting instructions and their LaTeX source (email font?)
 % make sure there are no overflow errors
 % clean up unnecessary things from the header (e.g., packages and definitions)
+%  make sure the result table (as well as other floating objects) are on the right pages
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -111,6 +113,10 @@ vbelle@ed.ac.uk
 \makeatother
 \Crefname{algocf}{Algorithm}{Algorithms}
 \crefname{line}{line}{lines}
+
+\forestset{
+sn edges/.style={for tree={edge={-Latex}}}
+}
 
 \begin{document}
 
@@ -240,12 +246,6 @@ search for a tractable solution always terminates.
 
 % 5.1) An overview of how ForcLift/Crane work.
 
-% TODO: I am not sure the statement of note 2 is correct since, in [van den
-% Broeck, IJCAI 2011], the compilation is described as follows: "Compiling a set
-% of c-clauses C to Fo d-DNNF is performed by the Compile(C) function, which
-% tries to recursively apply the compilation rules in the order we present
-% here". But then maybe the algorithm was not yet ForcLift.
-
 In this work, we show how to relax these restrictions in a way that results in a
 stronger (W)FOMC algorithm, capable of handling more instances (e.g., counting
 various injective mappings) in a lifted manner. The ideas presented in this
@@ -257,12 +257,10 @@ formula, gradually constructing a circuit. In the second stage, the weights of
 the instance are propagated through the circuit, computing the weighted model
 count. Along with new compilation rules, \textsc{Crane} introduces changes to
 both stages of the process. First, while \textsc{ForcLift} applies compilation
-rules via greedy\footnote{The algorithm is not described in any paper but can be
-  found in its source code at \url{https://dtaid.cs.kuleuven.be/wfomc}}
-search, \textsc{Crane} also supports a hybrid search algorithm that applies some
-rules greedily and some using breadth-first search. Second, the product of
-compilation is not directly evaluated but rather interpreted as a collection of
-functions on domain sizes.
+rules via greedy search, \textsc{Crane} also supports a hybrid search algorithm
+that applies some rules greedily and some using breadth-first search. Second,
+the product of compilation is not directly evaluated but rather interpreted as a
+collection of functions on domain sizes.
 
 % \footnote{There is also an intermediate stage called \emph{smoothing} that takes
 %   place between compilation and evaluation. As our changes to smoothing are
@@ -460,20 +458,49 @@ idea, let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size
 
 \section{From Circuits to Graphs}\label{sec:methods}
 
+\begin{figure}
+  \centering
+  \begin{forest}
+    for tree={s sep=10mm, sn edges}
+    [$\bigwedge_{x \in \Delta}$,ellipse,draw,label=right:{\color{blue}{$3^{|\Delta|}$}}
+    [$\lor$,ellipse,draw,label=right:{\color{blue}{$2 + 1 = 3$}}
+    [$\land$,ellipse,draw,label=left:{\color{blue}{$2 \times 1 = 2$}}
+    [$p(x) \lor \neg p(x)$,rectangle,draw,fill=gray!25,label=below:{\color{blue}{2}}]
+    [$\land$,ellipse,draw,label={[label distance=0cm,text=blue]87:$1 \times 1 = 1$}
+    [$q(x)$,rectangle,draw,fill=gray!25,label=below:{\color{blue}{1}}]
+    [$\top$,rectangle,draw,fill=gray!25,label=below:{\color{blue}{1}}]
+    ]
+    ]
+    [$\land$,ellipse,draw,label=right:{\color{blue}{$1 \times 1 = 1$}}
+    [$\neg q(x)$,rectangle,draw,fill=gray!25,label=below:{\color{blue}{1}}]
+    [$p(x)$,rectangle,draw,fill=gray!25,label=below:{\color{blue}{1}}]
+    ]
+    ]
+    ]
+  \end{forest}
+  \caption{A circuit produced by \textsc{ForcLift} for the sentence
+    $\forall X \in \Delta\text{. } p(X) \lor q(X)$. Values and computations in
+    blue show how a bottom-up evaluation of the circuit computes the model
+    count of the sentence.}
+\end{figure}
+% TODO: integrate this figure into the text
+
 \begin{figure}[t]
   \centering
-  \begin{tikzpicture}[every node/.style={draw,ellipse},edge from
-    parent/.style={draw,-Latex},sibling distance=3cm]
-    \node (dr) {$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$}
-    child {node {$\bigvee_{\Delta^\top \subseteq \Delta}$}
-      child {node {$\CR_{\Gamma \mapsto \Gamma'}$}
-        child {
-          node[circle] {$\wedge$}
-          child {node {$\bot$}}
-          child {node (ref) {$\Reff_{\{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^{\bot} \,\}}$}}
-        }}};
-    \draw[-Latex, bend right] (ref) to (dr);
-  \end{tikzpicture}
+  \begin{forest}
+    for tree={sn edges}
+    [$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$,ellipse,draw,name=gdr
+    [$\bigvee_{\Delta^\top \subseteq \Delta}$,ellipse,draw
+    [$\CR_{\Gamma \mapsto \Gamma'}$,ellipse,draw
+    [$\land$,ellipse,draw
+    [$\bot$,rectangle,draw,fill=gray!25]
+    [$\Reff_{\{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^{\bot} \,\}}$,ellipse,draw,name=ref]
+    ]
+    ]
+    ]
+    ]
+    \draw[-Latex,bend right=45] (ref) to (gdr);
+  \end{forest}
   \caption{A simplified version of an FCG constructed by \textsc{Crane} for the
     problem of counting partial injections from \cref{example:first}. Label
     $\bigvee_{\Delta^\top \subseteq \Delta}$ denotes set-disjunction, $\land$
@@ -483,10 +510,6 @@ idea, let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size
     as nodes whose only arithmetic effect is multiplication by
     one.}\label{fig:examplefcg}
 \end{figure}
-
-% TODO: Again for the reader who is not very familiar with this area it might be
-% good to at least give the circuit for one of the examples such as a
-% disjunction just to show them how it is usually done.
 
 A \emph{first-order deterministic decomposable negation normal form
   computational graph} (FCG) is a (weakly connected) directed graph with a
@@ -898,9 +921,9 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 \begin{theorem}[Correctness of $\Reff$]
   Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
   any formula selected on \cref{line:selectformula} of the algorithm such that
-  $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Then the set of
-  models of $(\psi, \sigma \circ \rho)$ is equal to the set of models of
-  $(\phi, \sigma)$.
+  $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Let $\sigma$ be a
+  domain size function. Then the set of models of $(\psi, \sigma \circ \rho)$ is
+  equal to the set of models of $(\phi, \sigma)$.
 \end{theorem}
 \begin{proof}
   We first show that the right-hand side of \cref{eq:subset} is the same for
@@ -931,7 +954,6 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 \end{proof}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
-% TODO: make sure I'm using \sigma instead of || in this section
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
@@ -1041,12 +1063,11 @@ function are the sizes of all domains used by nodes reachable from $v$.
   cite the ForcLift completeness (and domain recursion) paper.
 \end{proof}
 
-\section{Empirical Results}\label{sec:results}
+\section{Experimental Results}\label{sec:results}
 
 TODO: Incidentally, the linear order axiom is also liftable. Cite the same
 paper~\cite{DBLP:journals/corr/abs-2211-01164} in the introduction as well.
 
-% TODO: make sure this table (as well as other floating objects) is on the right page
 \begin{table*}[t]
   \centering
   \begin{tabular}{cccccc}
@@ -1079,21 +1100,19 @@ paper~\cite{DBLP:journals/corr/abs-2211-01164} in the introduction as well.
 % problems in frameworks such as Markov log networks
 
 We compare \textsc{Crane} and
-\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} on their ability to count
-various kinds of functions. This class of instances is chosen because of its
-simplicity and ubiquity and the inability of state-of-the-art WFOMC algorithms
-to solve many such instances. Note that other WFOMC
-algorithms---\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}, probabilistic theorem
-proving~\cite{DBLP:journals/cacm/GogateD16}, and
+\textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
+on their ability to count various kinds of functions. This class of instances is
+chosen because of its simplicity and ubiquity and the inability of
+state-of-the-art WFOMC algorithms to solve many such instances. Note that other
+WFOMC algorithms---\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}, probabilistic
+theorem proving~\cite{DBLP:journals/cacm/GogateD16}, and
 \textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21}---are unable to solve any of
 the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
 
-% TODO: don't use the \in syntax
-% Describe what kind of instances we're investigating
-Let $p \in \Gamma \times \Delta$ be a predicate. To restrict all relations
-representable by $p$ to just functions from $\Gamma$ to $\Delta$, in FOL one
+Let $p$ be a predicate that models relations between sets $\Gamma$ and $\Delta$.
+To restrict all such relations to just $\Gamma \to \Delta$ functions, in FOL one
 might write
 \[
   \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \Rightarrow Y = Z

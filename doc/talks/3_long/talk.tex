@@ -6,6 +6,7 @@
 \usepackage{mathtools}
 \usepackage{tikz}
 \usepackage{complexity}
+\usepackage[style=authoryear]{biblatex}
 
 \usetikzlibrary{shapes}
 \usetikzlibrary{positioning}
@@ -17,11 +18,18 @@
 \beamertemplatenavigationsymbolsempty
 \usetheme{metropolis}
 \setbeamercolor{background canvas}{bg=white}
+\addbibresource{talk.bib}
 %\usecolortheme{rose}
 
 \definecolor{color1}{HTML}{1B9E77}
 \definecolor{color2}{HTML}{D95F02}
-\definecolor{highlightcolor}{HTML}{22373A}
+\definecolor{color3}{HTML}{7570b3}
+\definecolor{color4}{HTML}{e7298a}
+
+\newcommand{\x}{\textcolor{color1}{x}}
+\newcommand{\y}{\textcolor{color3}{y}}
+\newcommand{\pP}{\textcolor{color3}{P}}
+\newcommand{\dDelta}{\textcolor{color2}{\Delta}}
 
 \newcommand{\WMC}{\textup{WMC}}
 \newcommand{\WFOMC}{\textup{(W)FOMC}}
@@ -38,14 +46,13 @@
 % before it was 15 slides and 20 min
 % make sure there's a clear and coherent storyline
 % TODO: use \alert instead of \structure
-% TODO: replace capital latin letters with capital Greek letters
 % TODO: add a very clear example of what a model is
 % TODO: could add the step-by-step walkthrough of what FOKC looks like
 
 \author{\textbf{Paulius Dilkas} \inst{1} \and Vaishak Belle \inst{2}}
 \title{Recursive Solutions to \\First-Order Model Counting}
 \institute{\inst{1} National University of Singapore, Singapore \and \inst{2} University of Edinburgh, UK}
-\date{TODO}
+\date{TODO: date}
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -79,35 +86,93 @@
     \node[shift=({1.3, 0.1})] at (current page.south west) {\tiny \color{lightgray}{Vector art by Vecteezy.com}};
   \end{tikzpicture}
 \end{frame}
-% TODO: replace cat with 'Generate a picture of a monkey with a funny hat' (make sure it's legal to use)
 
-\begin{frame}[fragile]{There Are Many Ways to Count}
+\begin{frame}[fragile]{(Some of the) Many Ways to Count}
   \begin{center}
     \begin{tikzcd}[remember picture]
-      |[alias=WMI]|\WMI{} & \WFOMI{} \\
-      |[alias=WMC]|\#\SAT{}/\WMC{} \ar[u] \ar[d] \ar[r] & \WFOMC{} \ar[u] \ar[d] \\
-      |[alias=PBP]|\AMC{}, \pbp{} & |[alias=SP]|\SPPP{}
+      |[alias=WMI,visible on=<7->]|\WMI{} & |[visible on=<7->]|\WFOMI{} \\
+      |[alias=WMC]|\#\SAT{}/\WMC{} \arrow[u,visible on=<7->] \ar[d,visible on=<8->] \ar[r,visible on=<5->] & |[visible on=<5->]|\WFOMC{} \arrow[u,visible on=<7->] \ar[d,visible on=<8->] \\
+      |[alias=PBP,visible on=<8->]|\AMC{}, \pbp{} & |[alias=SP,visible on=<8->]|\SPPP{}
     \end{tikzcd}
   \end{center}
-  \begin{overprint}
-    foo
-  \end{overprint}
   \begin{tikzpicture}[overlay,remember picture]
     \begin{scope}[transform canvas={xshift=-3em}]
-      \draw[->,draw=gray] ($(WMC)+(0,0.1)$)--($(WMI)+(0,0.5)$) node[midway,left] {\color{gray}{$\sum \to \int$}};
-      \draw[->,draw=gray] ($(WMC)-(0,0.1)$)--($(PBP)-(0,0.5)$) node[midway,left] {\color{gray}{Generalising weights}};
+      \draw[->,draw=gray] ($(WMC)+(0,0.1)$)--($(WMI)+(0,0.5)$) node[midway,left,visible on=<7->] {\color{gray}{$\sum \to \int$}};
+      \draw[->,draw=gray] ($(WMC)-(0,0.1)$)--($(PBP)-(0,0.5)$) node[midway,left,visible on=<8->] {\color{gray}{Generalising weights}};
     \end{scope}
     \begin{scope}[transform canvas={yshift=-2em}]
-      \draw[->,draw=gray] ($(PBP)-(1,0)$)--($(SP)+(1,0)$) node[midway,below] {\color{gray}{From propositional to first-order logic}};
+      \draw[->,draw=gray] ($(PBP)-(1,0)$)--($(SP)+(1,0)$) node[midway,below,visible on=<5->] {\color{gray}{From propositional to first-order logic}};
     \end{scope}
   \end{tikzpicture}
+  \vfill
+    \begin{overprint}
+      \onslide<1,2>
+      \begin{block}{\#SAT~\color{gray}{\parencite{DBLP:journals/tcs/Valiant79}}}
+        \begin{itemize}
+          \item Input formula: $\x \lor \y$
+          \item Interpretations: $\emptyset$, $\{\, \x \,\}$, $\{\, \y \,\}$,
+                $\{\, \x, \y \,\}$
+          \item Models: $\{\, \x \,\}$, $\{\, \y \,\}$, $\{\, \x, \y \,\}$
+          \item<2-> Answer (model count): 3
+        \end{itemize}
+      \end{block}
+      \onslide<3,4>
+      \begin{block}{Weighted Model Counting~\color{gray}{\parencite{DBLP:journals/ai/ChaviraD08}}}
+        \begin{itemize}
+          \item Input formula: $\x \lor \y$
+          \item Input weights: $\begin{aligned}[t]
+                                  &w(\x) = 0.3\text{, }w(\neg \x) = 0.7,\\
+                                  &w(\y) = 0.2\text{, }w(\neg \y) = 0.8
+                                \end{aligned}$
+          \item<4-> Answer (weighted model count):
+                $w(\x)w(\y) + w(\x)w(\neg \y) + w(\neg \x)w(\y) = 0.44$
+        \end{itemize}
+      \end{block}
+      \onslide<5,6>
+      \begin{block}{(Weighted) (Symmetric) First-Order Model Counting\\
+          \color{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}}
+        \begin{itemize}
+          \item Input formula: $\forall \x \in \Delta\text{. }\pP(\x)$
+          \item Input weights: $w^{+}(\pP) = 0.3$, $w^{-}(\pP) = 0.7$
+          \item Input domain size(s): $|\dDelta| = 2$
+          \item<6-> Answer: ${(w^{+}(\pP))}^{|\dDelta|} = 0.09$
+        \end{itemize}
+      \end{block}
+      \onslide<7>
+      \begin{block}{Extensions to Continuous Domains}
+        \begin{itemize}
+          \item Weighted model integration
+          \begin{itemize}
+            \item \color{gray}{\parencite{DBLP:conf/ijcai/BellePB15}}
+          \end{itemize}
+          \item Weighted first-order model integration
+          \begin{itemize}
+            \item \color{gray}{\parencite{DBLP:conf/uai/FeldsteinB21}}
+          \end{itemize}
+        \end{itemize}
+      \end{block}
+      \onslide<8>
+      \begin{block}{Generalisations of the weight function}
+        \begin{itemize}
+          \item Algebraic model counting
+          \begin{itemize}
+            \item \textcolor{gray}{\parencite{DBLP:journals/japll/KimmigBR17}}
+            \item From $\mathbb{R}_{\ge 0}$ to commutative semirings
+          \end{itemize}
+          \item Pseudo-Boolean projection~\textcolor{gray}{\parencite{DBLP:conf/sat/DilkasB21}}
+          \begin{itemize}
+            \item Weights not necessarily on literals
+          \end{itemize}
+          \item Semiring programming~\color{gray}{\parencite{DBLP:journals/ijar/BelleR20}}
+        \end{itemize}
+      \end{block}
+    \end{overprint}
 \end{frame}
 % maybe mention #CSP and other non-SAT ways of counting (SMT?, counting paths in automata and directed graphs)
-% TODO: gradually reveal parts of this diagram (1. axes + #SAT + WMC, 2. extension to FOL (with bottom label), 3. integration 4. bottom row)
-% TODO: at the same time, show the full name and the reference for each at the bottom
+
 % TODO: for future work, come back to this slide and add more arrows (e.g., beyond FOL)
 
-% TODO: a big chunk of the introduction should provide motivation to my work (e.g., mention applications)
+% TODO: a big chunk of the introduction should provide motivation to my work (e.g., mention applications) (maybe before this slide?)
 
 \begin{frame}{Some Elementary Counting}
   \begin{exampleblock}{A Counting Problem}
@@ -132,25 +197,25 @@
 
 \begin{frame}{Let's Express This Problem in Logic!}
   \begin{itemize}
-    \item Let \alert{$M$} and \alert{$N$} be sets (i.e., domains)
+    \item Let \alert{$\Gamma$} and \alert{$\Delta$} be sets (i.e., domains)
     \begin{itemize}
-      \item such that \alert{$|M| = m$}, and \alert{$|N| = n$}.
+      \item such that \alert{$|\Gamma| = m$}, and \alert{$|\Delta| = n$}.
     \end{itemize}
-    \item Let \alert{$P \subseteq M \times N$} be a relation (i.e., predicate)
-          over \alert{$M$} and \alert{$N$}.
+    \item Let \alert{$P \subseteq \Gamma \times \Delta$} be a relation (i.e.,
+          predicate) over \alert{$\Gamma$} and \alert{$\Delta$}.
     \item We can describe all of the constraints in first-order logic:
     \begin{itemize}
       \item \pause each attendee gets a seat (i.e., at least one seat)
       \[
-        \forall x \in M\text{. }\exists y \in N\text{. }P(x, y)
+        \forall x \in \Gamma\text{. }\exists y \in \Delta\text{. }P(x, y)
       \]
       \item \pause one person cannot occupy multiple seats
       \[
-        \forall x \in M\text{. }\forall y, z \in N\text{. }P(x, y) \land P(x, z) \Rightarrow y=z
+        \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }P(x, y) \land P(x, z) \Rightarrow y=z
       \]
       \item \pause one seat cannot accommodate multiple attendees
       \[
-        \forall w, x \in M\text{. }\forall y \in N\text{. }P(w, y) \land P(x, y) \Rightarrow w=x
+        \forall w, x \in \Gamma\text{. }\forall y \in \Delta\text{. }P(w, y) \land P(x, y) \Rightarrow w=x
       \]
     \end{itemize}
   \end{itemize}
@@ -177,16 +242,10 @@
   \end{block}
 \end{frame}
 
-% TODO: maybe meat makes more sense than sandwich? Or a picture of recursion, e.g., fractals?
-{ % all template changes are local to this group.
-    \setbeamertemplate{navigation symbols}{}
-    \begin{frame}<article:0>[plain]
-        \begin{tikzpicture}[remember picture,overlay]
-            \node[at=(current page.center)] {
-                \includegraphics[keepaspectratio, width=\paperwidth]{sandwich.jpg}
-            };
-        \end{tikzpicture}
-     \end{frame}
+{
+  \usebackgroundtemplate{\includegraphics[keepaspectratio,width=\paperwidth]{matryoshka.jpg}}
+  \begin{frame}{Recursion}
+  \end{frame}
 }
 
 \begin{frame}{Back to Our Example}
@@ -309,9 +368,9 @@
 \begin{frame}{Example Rule: Independence}
   Input formula:
   \begin{gather}
-    ({\color{color1} \forall x, y \in L\text{. }x=y}) \land \label{eq:1} \tag{{\color{color1} 1}} \\
-    ({\color{color2} \forall x \in M\text{. }\forall y, z \in N\text{. }P(x, y) \land P(x, z) \Rightarrow y=z}) \land \label{eq:2} \tag{{\color{color2} 2}} \\
-    ({\color{color2} \forall w, x \in M\text{. }\forall y \in N\text{. }P(w, y) \land P(x, y) \Rightarrow w=x}) \label{eq:3} \tag{{\color{color2} 3}}
+    ({\color{color1} \forall x, y \in \Omega\text{. }x=y}) \land \label{eq:1} \tag{{\color{color1} 1}} \\
+    ({\color{color2} \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }P(x, y) \land P(x, z) \Rightarrow y=z}) \land \label{eq:2} \tag{{\color{color2} 2}} \\
+    ({\color{color2} \forall w, x \in \Gamma\text{. }\forall y \in \Delta\text{. }P(w, y) \land P(x, y) \Rightarrow w=x}) \label{eq:3} \tag{{\color{color2} 3}}
   \end{gather}
   \pause
   Only one \structure{(G, L)} pair:
@@ -354,13 +413,13 @@
           \begin{example}
             Input formula:
             \[
-              \forall x \in M\text{. }\forall y, z \in N\text{. }y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z)
+              \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z)
             \]
-            Output formula (with a new constant \structure{$c \in M$}):
+            Output formula (with a new constant \structure{$c \in \Gamma$}):
             \begin{gather*}
-              \forall y, z \in N\text{. }y \ne z \Rightarrow \neg P(\alert{c}, y) \lor \neg P(\alert{c}, z) \\
+              \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg P(\alert{c}, y) \lor \neg P(\alert{c}, z) \\
               \begin{multlined}
-                \forall x \in M\text{. }\forall y, z \in N\text{. }\alert{x \ne c} \land y \ne z \Rightarrow \\
+                \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }\alert{x \ne c} \land y \ne z \Rightarrow \\
                 \neg P(x, y) \lor \neg P(x, z)
               \end{multlined}
             \end{gather*}
@@ -370,25 +429,24 @@
             %%   child {node {$\star$}}
             %%   ;
             %% \end{tikzpicture}
-            %% Here, domain recursion is applied to domain \structure{$M$}. It could similarly be applied to \structure{$N$} as well.
           \end{example}
         \onslide<2>
           \begin{example}
-            Input formula (with a constant \structure{$c \in M$}):
+            Input formula (with a constant \structure{$c \in \Gamma$}):
             \begin{gather*}
               \begin{multlined}
-                \forall x \in \alert{M}\text{. }\forall y, z \in N\text{. }\alert{x \ne c} \land y \ne z \Rightarrow \\
+                \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta\text{. }\alert{x \ne c} \land y \ne z \Rightarrow \\
                 \neg P(x, y) \lor \neg P(x, z)
               \end{multlined} \\
               \begin{multlined}
-                \forall w,x \in \alert{M}\text{. }\forall y \in N\text{. }\alert{w \ne c} \land \alert{x \ne c} \land w \ne x \Rightarrow \\
+                \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \land \alert{x \ne c} \land w \ne x \Rightarrow \\
                 \neg P(w, y) \lor \neg P(x, y)
               \end{multlined}
             \end{gather*}
-            Output formula (with a new domain \structure{$M' \coloneqq M \setminus \{\, c \,\}$}):
+            Output formula (with a new domain \structure{$\Gamma' \coloneqq \Gamma \setminus \{\, c \,\}$}):
             \begin{gather*}
-              \forall x \in \alert{M'}\text{. }\forall y, z \in N\text{. }y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z) \\
-              \forall w,x \in \alert{M'}\text{. }\forall y \in N\text{. }w \ne x \Rightarrow \neg P(w, y) \lor \neg P(x, y)
+              \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg P(x, y) \lor \neg P(x, z) \\
+              \forall w,x \in \alert{\Gamma'}\text{. }\forall y \in \Delta\text{. }w \ne x \Rightarrow \neg P(w, y) \lor \neg P(x, y)
             \end{gather*}
           \end{example}
         \onslide<3>
@@ -425,11 +483,11 @@
 %% \end{frame}
 
 \begin{frame}{Resulting Improvements to Counting Functions}
-  Let \structure{$M$} and \structure{$N$} be two sets with cardinalities
-  \structure{$|M| = m$} and \structure{$|N| = n$}.
+  Let \structure{$\Gamma$} and \structure{$\Delta$} be two sets with
+  cardinalities \structure{$|\Gamma| = m$} and \structure{$|\Delta| = n$}.
 
   Our new rules enable \textsc{ForcLift} to efficiently count
-  \structure{$M \to N$} functions such as:
+  \structure{$\Gamma \to \Delta$} functions such as:
   \begin{itemize}
     \item injections in \structure{$\Theta(mn)$} time
           \begin{itemize}
@@ -445,6 +503,8 @@
           \end{itemize}
   \end{itemize}
 \end{frame}
+% TODO: mention Crane
+% TODO: mention that everything used to be unliftable (by any algorithm with a publicly available implementation)
 
 { % all template changes are local to this group.
     \setbeamertemplate{navigation symbols}{}
