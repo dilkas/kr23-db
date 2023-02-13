@@ -30,6 +30,8 @@
 \usepackage{complexity}
 \usepackage{siunitx}
 \usepackage{forest}
+\usepackage[inline]{enumitem}
+
 \usetikzlibrary{cd}
 \usetikzlibrary{shapes}
 
@@ -213,9 +215,8 @@ the empirical front, there are several implementations of exact WFOMC
 algorithms: \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
 \textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21},
 \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}, and
-\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is
-supported by \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
-\textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20},
+\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
+\textsc{Alchemy}, \textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20},
 \textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12},
 \textsc{Magician}~\cite{DBLP:conf/aaai/VenugopalSG15}, and
 \textsc{Tuffy}~\cite{DBLP:journals/pvldb/NiuRDS11}.
@@ -482,7 +483,7 @@ that maps each domain to a non-negative integer.
   \centering
   \begin{forest}
     for tree={s sep=10mm, sn edges}
-    [$\bigwedge_{x \in \Delta}$,ellipse,draw,label=right:{\color{blue}{$3^{|\Delta|}$}}
+    [$\bigwedge_{x \in \Delta}$,ellipse,draw,label=right:{\color{blue}{$3^{n}$}}
     [$\lor$,ellipse,draw,label=right:{\color{blue}{$2 + 1 = 3$}}
     [$\land$,ellipse,draw,label=left:{\color{blue}{$2 \times 1 = 2$}}
     [$p(x) \lor \neg p(x)$,rectangle,draw,fill=gray!25,label=below:{\color{blue}{2}}]
@@ -498,12 +499,28 @@ that maps each domain to a non-negative integer.
     ]
     ]
   \end{forest}
-  \caption{A circuit produced by \textsc{ForcLift} for the sentence
-    $\forall X \in \Delta\text{. } p(X) \lor q(X)$. Values and computations in
-    blue show how a bottom-up evaluation of the circuit computes the model
-    count of the sentence.}
+  \caption{A circuit produced by \textsc{ForcLift} for \cref{example:simple}.
+    Values and computations in blue (on the outside of each node) show how a
+    bottom-up evaluation of the circuit computes the model
+    count.}\label{fig:simplecircuit}
 \end{figure}
-% TODO: integrate this figure into the text
+
+Darwiche~\shortcite{DBLP:journals/jancl/Darwiche01} introduced
+\emph{deterministic decomposable negation normal form} (d-DNNF) circuits for
+propositional knowledge compilation and showed that the model count of a
+propositional formula can be computed in time linear in the size of the circuit.
+Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} generalised them
+to FOL via \emph{first-order d-DNNF (FO d-DNNF) circuits}. FO d-DNNF circuits
+(hereafter simply called \emph{circuits}) are directed acyclic graphs with nodes
+corresponding to formulas in FOL---see \cref{fig:simplecircuit} for an example.
+The following types of nodes are supported by \textsc{ForcLift}: caching
+($\Reff$), contradiction ($\bot$), tautology ($\top$), decomposable conjunction
+($\land$), decomposable set-conjunction ($\bigwedge$), deterministic disjunction
+($\lor$), deterministic set-disjunction ($\bigvee$), domain recursion,
+grounding, inclusion-exclusion, smoothing, and unit clause. We refer the reader
+to previous work~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11} for
+more information about node types and their interpretations for computing the
+(W)FOMC\@.
 
 \begin{figure}[t]
   \centering
@@ -521,49 +538,27 @@ that maps each domain to a non-negative integer.
     ]
     \draw[-Latex,bend right=45] (ref) to (gdr);
   \end{forest}
-  \caption{A simplified version of an FCG constructed by \textsc{Crane} for the
-    problem of counting partial injections from \cref{example:first}. Label
-    $\bigvee_{\Delta^\top \subseteq \Delta}$ denotes set-disjunction, $\land$
-    denotes conjunction, and $\bot$ denotes a contradiction---see the work by
-    Van den Broeck et al.~\protect\shortcite{DBLP:conf/ijcai/BroeckTMDR11} for
-    the descriptions of these node types. Here we omit some parameters as well
-    as nodes whose only arithmetic effect is multiplication by
-    one.}\label{fig:examplefcg}
+  \caption{A simplified version of the FCG constructed by \textsc{Crane} for the
+    problem of counting partial injections from \cref{example:first}. Here we
+    omit some parameters as well as nodes whose only arithmetic effect is
+    multiplication by one.}\label{fig:examplefcg}
 \end{figure}
 
-A \emph{first-order deterministic decomposable negation normal form
-  computational graph} (FCG) is a (weakly connected) directed graph with a
-single source, node labels, and ordered outgoing edges. Node
-labels consist of two parts: the \emph{type} and the \emph{parameters}. The type
-of a node determines its out-degree.
-
-% TODO: I think there is a point of confusion here. Firstly the work of guy
-% introduce circuits and I presume that you want to say that the node types are
-% present in both the circuits as well as your structure. Given that I think you
-% should start of the paragraph by saying that like with circuit introduced by
-% Guy, there are node type such as XYZN. In addition to those you will be
-% introducing the following new ones.
-%
-% I think the other point that is not made very clear is that you have no
-% formally defined circuits. So perhaps if you could introduce a quick
-% definition and then say that we have the same building blocks as those, ie
-% nodes, but with a different graphical structure it will become clearer
-
-Along with many node types defined
-previously~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11},
-\textsc{Crane} uses three more:
-\begin{itemize}
-  \item a type for constraint removal denoted by $\CR$,
-  \item a type for generalised domain recursion denoted by $\GDR$ (both with
-        out-degree one),
-  \item and $\star$---a placeholder type (with out-degree zero) for nodes that
-        are going to be replaced.
-\end{itemize}
-Similarly to Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}, we
-write $T_p$ for an FCG that has a node with the label $T_p$ (i.e., type $T$ and
-parameter(s) $p$) and $\star$'s as all of its direct successors. See
-\cref{fig:examplefcg} for an example FCG\@. Its source node has out-degree 1,
-label $\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$, and type $\GDR$.
+In this paper, we introduce \emph{FO d-DNNF computational graphs} (FCGs) that
+generalise circuits by dispensing with acyclicity. Formally, an FCG is a (weakly
+connected) directed graph with a single source, node labels, and ordered
+outgoing edges. Node labels consist of two parts: the \emph{type} and the
+\emph{parameters}. The type of a node determines its out-degree. We make the
+following changes and additions to the node types already supported by
+\textsc{ForcLift}. First, we introduce a new node type for constraint removal
+($\CR$). Second, we replace domain recursion with generalised domain recursion
+($\GDR$). And third, for reasoning about partially-constructed FCGs, we write
+$\star$ for a placeholder type that is yet to be replaced. Similarly to Van den
+Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}, we write $T_p$ for an
+FCG that has a node with the label $T_p$ (i.e., type $T$ and parameter(s) $p$)
+and $\star$'s as all of its direct successors. See \cref{fig:examplefcg} for an
+example FCG\@. Its source node has out-degree 1, label
+$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$, and type $\GDR$.
 
 % Connecting FCGs with formulas
 Finally, we introduce a structure that represents a solution to a (W)FOMC
