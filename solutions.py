@@ -267,9 +267,9 @@ def factorial(n):
     return sum(math.comb(n, k) * sum(math.comb(n, l) * (l + 1) ** k * (-1) ** (2 * n - k - l) for l in range(n + 1)) for k in range(n + 1))
 
 def friendsmoker(n):
-    return 2**n * sum(math.comb(n, m) * 2**((n-m)*n*m) for m in range(n + 1))
+    return 2**n * sum(math.comb(n, m) * 2**((n-m)*(n-m-1) + (n-m)*m + m*(m-1)) for m in range(n + 1))
 
-MAX = 6
+MAX = 10
 
 # for m in range(1, MAX):
 #     for n in range(1, MAX):
@@ -291,20 +291,20 @@ MAX = 6
 #             )
 #         )
 
-for n in range(0, MAX):
-    print(
-        "f({}) = {} ({}, {})".format(
-            n,
-            crane_one_dimensional_partial_injections(n),
-            two_dimensional_partial_injections(n, n),
-            partial_injections_final(n, n)
-        )
-    )
-
 # for n in range(0, MAX):
 #     print(
-#         "f({}) = {}".format(
+#         "f({}) = {} ({}, {})".format(
 #             n,
-#             friendsmoker(n)
+#             crane_one_dimensional_partial_injections(n),
+#             two_dimensional_partial_injections(n, n),
+#             partial_injections_final(n, n)
 #         )
 #     )
+
+for n in range(0, MAX):
+    print(
+        "f({}) = {}".format(
+            n,
+            friendsmoker(n)
+        )
+    )

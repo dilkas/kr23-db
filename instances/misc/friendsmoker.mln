@@ -1,4 +1,4 @@
-person = {Guy, Nima, Wannes, Jesse, Luc}
+person = {1, 2, 3, 4}
 friends(person,person)
 smokes(person)
 

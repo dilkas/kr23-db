@@ -1,0 +1,3 @@
+a = {1, ..., 3}
+p(a)
+forall X p(X) v !p(X).

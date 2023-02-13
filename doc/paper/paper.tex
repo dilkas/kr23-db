@@ -41,8 +41,9 @@
 % in mind that the amsthm package is already included in this
 % template and that you must *not* alter the styling.
 % \newtheorem{example}{Example}
-% \newtheorem{theorem}{Theorem}
 \newtheorem{theorem}{Theorem}
+\newtheorem{fact}{Fact}
+\newtheorem{proposition}{Proposition}
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{claim}{Claim}[theorem]
 \theoremstyle{definition}
@@ -62,6 +63,8 @@
 % make sure there are no overflow errors
 % clean up unnecessary things from the header (e.g., packages and definitions)
 %  make sure the result table (as well as other floating objects) are on the right pages
+
+% TODO: use \textt for predicates (e.g., p, q), introduce the notation, use DeclareMathOperator
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -95,6 +98,9 @@ vbelle@ed.ac.uk
 \newcommand{\Uone}{$\mathsf{U}_{1}$}
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
+
+\DeclareMathOperator{\friends}{\texttt{friends}}
+\DeclareMathOperator{\smokes}{\texttt{smokes}}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\GDR}{\textsc{GDR}}
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
@@ -105,6 +111,7 @@ vbelle@ed.ac.uk
 \SetKwProg{Fn}{Function}{:}{}
 \SetKwFunction{identifyRecursion}{r}
 \SetKwFunction{generateMaps}{genMaps}
+
 \makeatletter
 \newcommand{\nosemic}{\renewcommand{\@endalgocfline}{\relax}}% Drop semi-colon ;
 \newcommand{\dosemic}{\renewcommand{\@endalgocfline}{\algocf@endline}}% Reinstate semi-colon ;
@@ -139,19 +146,14 @@ sn edges/.style={for tree={edge={-Latex}}}
   what classes of instances could be liftable as a result.
 \end{abstract}
 
-\section{Introduction}
+\section{Introduction}\label{sec:introduction}
 
-% TODO: maybe mention the term 'data complexity'
 % TODO: cite some works about synthesis
 
 % TODO: In the introduction it is written: "Crane uses a hybrid search algorithm
 % that applies some rules greedily and some using breadth-first search". Which
 % rules are applied greedily and which are not? What is the reason for parting
 % from the usual greedy method?
-
-TODO: cite \textsc{Magician}~\cite{DBLP:conf/aaai/VenugopalSG15} and
-\textsc{Tuffy}~\cite{DBLP:journals/pvldb/NiuRDS11} (read the abstracts first,
-look at the code)
 
 % 1. What is the problem?
 % 2. Why is it interesting and important?
@@ -198,7 +200,7 @@ First, Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} showed that the class
 of all sentences of FOL with up to two variables (denoted \FOtwo{}) is liftable.
 Then Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15} proved that there exists
 a sentence with three variables for which FOMC is $\#\P_{1}$-complete (i.e.,
-\FOthree{} is not liftable). Since these two results came out, most of the
+\FOthree{} is not liftable). Since these two seminal results, most of the
 research on (W)FOMC focused on developing faster solutions for the \FOtwo{}
 fragment~\cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
 new liftable fragments. These fragments include \SFO{} and
@@ -207,14 +209,20 @@ new liftable fragments. These fragments include \SFO{} and
 axioms~\cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the two-variable
 fragment with counting
 quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On
-the empirical front, there are several open-source implementations of exact
-WFOMC algorithms: \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11},
-probabilistic theorem proving~\cite{DBLP:journals/cacm/GogateD16},
-\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}, and
-\textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21}. Approximate counting is
-supported by \textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20} as well as
-\textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12} and probabilistic theorem
-proving~\cite{DBLP:journals/cacm/GogateD16}.
+the empirical front, there are several implementations of exact WFOMC
+algorithms: \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
+\textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21},
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}, and
+\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is
+supported by \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
+\textsc{ApproxWFOMC}~\cite{DBLP:conf/ijcai/BremenK20},
+\textsc{ForcLift}~\cite{DBLP:conf/uai/BroeckCD12},
+\textsc{Magician}~\cite{DBLP:conf/aaai/VenugopalSG15}, and
+\textsc{Tuffy}~\cite{DBLP:journals/pvldb/NiuRDS11}.
+
+% Magician: an approach to improve the efficiency of sampling and local search
+% based MLN inference algorithms by utilising \#CSP algorithms. Tuffy: grounding
+% and stochastic local search.
 
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
@@ -411,9 +419,28 @@ conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
 Once domains are mapped to finite sets and constants to elements in those sets,
 a formula can be viewed as a set of conditions that the predicates (interpreted
 as relations) have to satisfy. Hence, FOMC is the problem of counting the number
-of combinations of relations that satisfy these conditions. To formalise this
-idea, let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size
-  function} that maps each domain to a non-negative integer.
+of combinations of relations that satisfy these conditions.
+
+\begin{example}\label{example:simple}
+  Let $\Delta$ be a domain of size $n \in \mathbb{N}_{0}$. The model count of
+  $\forall X \in \Delta\text{. } p(X) \lor q(X)$ is then $3^{n}$. Intuitively,
+  since both predicates are of arity one, they can be interpreted as subsets of
+  $\Delta$. Thus, the formula says that each element of $\Delta$ has to be
+  included in $p$ or in $q$ or in both, i.e., there are three possibilities.
+\end{example}
+
+\begin{example}
+  Consider a variant of the well-known `friends and smokers' example
+  $\forall X, Y \in \Delta\text{.
+  } \smokes(X) \land \friends(X, Y) \Rightarrow \smokes(Y)$. Letting
+  $n \coloneqq |\Delta|$ as in \cref{example:simple}, the model count can be
+  expressed as
+  $\sum_{k=0}^{n} \binom{n}{k}2^{n^{2} - k(n-k)}$~\cite{DBLP:conf/kr/BroeckMD14}.
+\end{example}
+
+To formalise the idea of a model, let
+$\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size function}
+that maps each domain to a non-negative integer.
 
 \begin{definition}\label{def:model}
   Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
@@ -448,13 +475,6 @@ idea, let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size
   (and the formula from \cref{example:first} specifically) as the main running
   example throughout the paper.
 \end{example}
-% TODO: It might be useful to give one or two readable examples with interesting
-% model counts. For example Px v Qx over domain n has 3^n solutions. I think
-% The Frends smokers example has a more complicated solution you can find in one
-% of the papers. It might motivate the framework generally speaking better
-% although of course you can continue to use the same running example for the
-% rest of your paper. Such examples are especially useful for readers who are
-% not familiar but still need to get excited by the problem
 
 \section{From Circuits to Graphs}\label{sec:methods}
 
@@ -1028,41 +1048,6 @@ function are the sizes of all domains used by nodes reachable from $v$.
   $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
 \end{example}
 
-\begin{theorem}
-  Any collection of functions returned by \textsc{Crane} can be evaluated in
-  time polynomial in domain sizes.
-\end{theorem}
-\begin{proof}
-  % 1) bound the number of possible arguments that any function can have
-  % 2) prove that the computation time of any dynamic programming cell is always polytime (what about functions depending on other functions?))
-  \begin{claim}
-    Infinite recursion is impossible because that would necessitate a sequence
-    of compilation rule applications that start with $\phi$ and end up with
-    exactly $\phi$ as one of the outcomes. This is impossible because... [argue
-    about formula length and the necessity to preserve domains and constants].
-  \end{claim}
-  \begin{claim}
-    Argument values cannot increase from one function call to another.
-  \end{claim}
-  \begin{claim}
-    Excluding functions, time to evaluate a function definition is polynomial
-    (e.g., binomials, linear sums, powers, multiplication, addition). The number
-    of operations within a definition is a constant that does not depend on
-    domain sizes.
-  \end{claim}
-  \begin{claim}
-    Describe a dynamic programming algorithm that:
-    \begin{itemize}
-      \item Gradually increases the sum of all domain sizes
-      \item Computes and stores the values of all function calls whose arguments
-            have that sum. Argue that there will always be an order in which
-            that's possible.
-    \end{itemize}
-  \end{claim}
-  NOTE: For proving that each cell is evaluated in polynomial time, I can just
-  cite the ForcLift completeness (and domain recursion) paper.
-\end{proof}
-
 \section{Experimental Results}\label{sec:results}
 
 TODO: Incidentally, the linear order axiom is also liftable. Cite the same
@@ -1104,9 +1089,7 @@ We compare \textsc{Crane} and
 on their ability to count various kinds of functions. This class of instances is
 chosen because of its simplicity and ubiquity and the inability of
 state-of-the-art WFOMC algorithms to solve many such instances. Note that other
-WFOMC algorithms---\textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}, probabilistic
-theorem proving~\cite{DBLP:journals/cacm/GogateD16}, and
-\textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21}---are unable to solve any of
+WFOMC algorithms mentioned in \cref{sec:introduction} are unable to solve any of
 the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
