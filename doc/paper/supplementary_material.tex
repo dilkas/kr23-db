@@ -1,0 +1,187 @@
+\documentclass{article}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+
+\usepackage{kr}
+
+% Use the postscript times font!
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{booktabs}
+% \usepackage{algorithm}
+% \usepackage{algorithmic}
+\urlstyle{same}
+
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{tikz}
+\usepackage[capitalize]{cleveref}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{complexity}
+\usepackage{siunitx}
+\usepackage{forest}
+\usepackage[inline]{enumitem}
+
+\usetikzlibrary{cd}
+\usetikzlibrary{shapes}
+
+% the following package is optional:
+%\usepackage{latexsym}
+
+% See https://www.overleaf.com/learn/latex/theorems_and_proofs
+% for a nice explanation of how to define new theorems, but keep
+% in mind that the amsthm package is already included in this
+% template and that you must *not* alter the styling.
+% \newtheorem{example}{Example}
+\newtheorem{theorem}{Theorem}
+\newtheorem{fact}{Fact}
+\newtheorem{proposition}{Proposition}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{claim}{Claim}[theorem]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+
+\pdfinfo{
+/TemplateVersion (KR.2022.0, KR.2023.0)
+}
+
+\title{Synthesising Recursive Functions for First-Order Model Counting}
+
+% TODO (at the very end)
+% put the appendix in a separate file
+% grammarly the whole thing
+% read the formatting instructions and their LaTeX source (email font?)
+% make sure there are no overflow errors
+% clean up unnecessary things from the header (e.g., packages and definitions)
+%  make sure the result table (as well as other floating objects) are on the right pages
+
+\author{%
+Paulius Dilkas$^1$\and
+Vaishak Belle$^2$\\
+\affiliations
+$^1$National University of Singapore, Singapore, Singapore\\
+$^2$University of Edinburgh, Edinburgh, UK\\
+\emails
+paulius.dilkas@nus.edu.sg,
+vbelle@ed.ac.uk
+}
+
+\crefalias{diagram}{equation}
+\crefname{diagram}{Diagram}{Diagrams}
+\Crefname{diagram}{Diagram}{Diagrams}
+\creflabelformat{diagram}{#2\textup{(#1)}#3}
+
+\crefname{algocf}{Algorithm}{Algorithms}
+\Crefname{algocf}{Algorithm}{Algorithms}
+\crefname{condition}{Condition}{Conditions}
+\Crefname{condition}{Condition}{Conditions}
+
+\newcommand{\crefrangeconjunction}{--}
+\newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\FOtwo}{$\mathsf{FO}^{2}$}
+\newcommand{\FOthree}{$\mathsf{FO}^{3}$}
+\newcommand{\SFO}{$\mathsf{S}^{2}\mathsf{FO}^{2}$}
+\newcommand{\SRU}{$\mathsf{S}^{2}\mathsf{RU}$}
+\newcommand{\Uone}{$\mathsf{U}_{1}$}
+\newcommand{\Ctwo}{$\mathsf{C}^{2}$}
+\newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
+
+\DeclareMathOperator{\friends}{\texttt{friends}}
+\DeclareMathOperator{\smokes}{\texttt{smokes}}
+\DeclareMathOperator{\CR}{\textsc{CR}}
+\DeclareMathOperator{\GDR}{\textsc{GDR}}
+\DeclareMathOperator{\Reff}{\textsc{Ref}}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\Doms}{Doms}
+\DeclareMathOperator{\Vars}{Vars}
+\DeclareMathOperator{\Preds}{Preds}
+\SetKwProg{Fn}{Function}{:}{}
+\SetKwFunction{identifyRecursion}{r}
+\SetKwFunction{generateMaps}{genMaps}
+
+\makeatletter
+\newcommand{\nosemic}{\renewcommand{\@endalgocfline}{\relax}}% Drop semi-colon ;
+\newcommand{\dosemic}{\renewcommand{\@endalgocfline}{\algocf@endline}}% Reinstate semi-colon ;
+\newcommand{\pushline}{\Indp}% Indent
+\newcommand{\popline}{\Indm\dosemic}% Undent
+\makeatother
+\Crefname{algocf}{Algorithm}{Algorithms}
+\crefname{line}{line}{lines}
+
+\forestset{
+sn edges/.style={for tree={edge={-Latex}}}
+}
+
+\begin{document}
+
+\appendix
+\section{Solutions Found by \textsc{Crane}}\label{app:solutions}
+
+In this appendix, we list the exact function definitions produced by
+\textsc{Crane} for all of the problem instances in Section~6 both before and
+after algebraic simplification (excluding multiplications by one). The
+correctness of all of them has been checked by identifying suitable base cases
+and verifying the numerical answers across a range of domain sizes.
+
+\begin{enumerate}
+  \item $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:
+  \[
+    f(m) = {\left(-1 + \sum_{l=0}^{m} \binom{m}{l} [l < 2]\right)}^{m} = m^{m}.
+  \]
+  \item $\Theta(m^3 + n^3)$ solution for counting $\Gamma \to \Delta$
+  surjections:
+  \begin{align*}
+    f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
+               &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
+    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
+  \end{align*}
+  \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ surjections:
+  \begin{align*}
+    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
+            &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
+    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
+  \end{align*}
+  \item $\Theta(mn)$ solution for counting $\Gamma \to \Delta$ injections and
+  partial injections (with different base cases):
+  \begin{align*}
+    f(m, n) ={}& \sum_{l=0}^m \binom{m}{l} [l<2] f(m-l, n-1)\\
+    ={}& f(m, n-1) + mf(m-1, n-1).
+  \end{align*}
+  \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ injections:
+  \begin{align*}
+    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
+    g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
+    ={}& g(m - 1, l) + lg(m - 1, l - 1).
+  \end{align*}
+  % \item $\Theta(m^{2})$ solution for counting $\Gamma \to \Gamma$ partial
+  %       injections:
+  % \begin{align*}
+  %   f(m) ={}& f(m - 1) + \sum_{l = 0}^{m} \binom{m}{l} \sum_{k = 0}^{m} \binom{m}{k}\\
+  %           &[1 \le l < 3] [k < 2] 2^{m - l} g(m - l, m - k - 1)\\
+  %   ={}& f(m - 1) + m2^{m-1}g(m-1, m-1)\\
+  %   +{}& m^{2}2^{m-1}g(m-1, m-2)\\
+  %   +{}& \binom{m}{2}2^{m-2}g(m-2, m-1) \\
+  %   +{}& \binom{m}{2}m2^{m-2}g(m-2, m-2)\\
+  %   g(i, j) ={}& \sum_{h = 0}^{j} \binom{j}{h} [h < 2] g(i - 1, j - h)\\
+  %   ={}& g(i-1, j) + jg(i-1, j-1).
+  %   \end{align*}
+  \item $\Theta(m)$ solution for counting $\Gamma \to \Delta$ bijections:
+  \[
+    f(m, n) = mf(m-1, n-1).
+  \]
+\end{enumerate}
+
+\end{document}

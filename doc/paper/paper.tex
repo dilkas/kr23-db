@@ -59,11 +59,9 @@
 \title{Synthesising Recursive Functions for First-Order Model Counting}
 
 % TODO (at the very end)
-% put the appendix in a separate file
 % grammarly the whole thing
 % read the formatting instructions and their LaTeX source (email font?)
 % make sure there are no overflow errors
-% clean up unnecessary things from the header (e.g., packages and definitions)
 %  make sure the result table (as well as other floating objects) are on the right pages
 
 \author{%
@@ -147,11 +145,6 @@ sn edges/.style={for tree={edge={-Latex}}}
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
-
-% TODO: In the introduction it is written: "Crane uses a hybrid search algorithm
-% that applies some rules greedily and some using breadth-first search". Which
-% rules are applied greedily and which are not? What is the reason for parting
-% from the usual greedy method?
 
 % 1. What is the problem?
 % 2. Why is it interesting and important?
@@ -264,11 +257,18 @@ the instance are propagated through the circuit, computing the weighted model
 count. Along with new compilation rules, \textsc{Crane} introduces changes to
 both stages of the process. First, while \textsc{ForcLift} applies compilation
 rules via greedy search, \textsc{Crane} also supports a hybrid search algorithm
-that applies some rules greedily and some using breadth-first search. Second,
-the product of compilation is not directly evaluated but rather interpreted as a
-collection of functions on domain sizes. Hence, our approach is reminiscent of
-previous work on lifted inference via compilation to C++
-programs~\cite{DBLP:conf/kr/KazemiP16} and the broader area of functional
+that applies some rules greedily and some using breadth-first
+search.\footnote{In the current implementation, the rules that are applied in a
+  non-greedy fashion are: atom counting, inclusion-exclusion, independent
+  partial groundings, Shannon decomposition, shattering, and two of our new
+  rules introduced in \cref{sec:dr,sec:ref}---see previous
+  work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for more information about the
+  rules.} This alternative was introduced since there is no reason to expect
+greedy search to be optimal. Second, the product of compilation is not directly
+evaluated but rather interpreted as a collection of functions on domain sizes.
+Hence, our approach is reminiscent of previous work on lifted inference via
+compilation to C++ programs~\cite{DBLP:conf/kr/KazemiP16} and the broader area
+of functional
 synthesis~\cite{DBLP:conf/cav/GoliaRM20,DBLP:conf/pldi/KuncakMPS10,sanathanan1963transfer}.
 
 % similarly to the other domains, there are many functions that fit the
@@ -492,7 +492,7 @@ that maps each domain to a non-negative integer.
 
 \section{From Circuits to Graphs}\label{sec:methods}
 
-\begin{figure}
+\begin{figure}[t]
   \centering
   \begin{forest}
     for tree={s sep=10mm, sn edges}
@@ -714,7 +714,7 @@ example below.
 \end{example}
 
 \begin{theorem}[Correctness of $\GDR$\footnote{\Cref{thm:correctness1} is equivalent to
-    Proposition~3 by~\cite{DBLP:conf/nips/Broeck11}.}]\label{thm:correctness1}
+    Proposition~3 by Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}.}]\label{thm:correctness1}
   Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
   $\Omega \in \mathcal{D}$ the domain selected on \cref{line:condition}, and
   $\phi'$ the formula constructed by the algorithm for $\Omega$. Assume that
@@ -1060,33 +1060,6 @@ function are the sizes of all domains used by nodes reachable from $v$.
 
 \section{Experimental Results}\label{sec:results}
 
-\begin{table*}[t]
-  \centering
-  \begin{tabular}{cccccc}
-    \toprule
-    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
-    Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
-    \midrule
-    \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
-    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
-    \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
-    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
-    \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
-    \rowcolor{gray!25}\xmark & \xmark & & $m$ & --- & $mn$ \\
-    \rowcolor{gray!25}\xmark & \cmark & & $m$ & --- & $m^3$ \\
-    \rowcolor{gray!25}\cmark & \xmark & & ${\min\{\, m, n \,\}}^2$ & --- & $mn$ \\
-    \rowcolor{gray!25}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
-    \xmark & \xmark & \multirow{3}{*}{Bijections} & $m$ & --- & $m$ \\
-    \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
-    \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
-    \bottomrule
-  \end{tabular}
-  \caption{The worst-case complexity of counting various types of functions,
-    where $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
-    $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
-    that the algorithm was not able to find a solution.}\label{tbl:results}
-\end{table*}
-
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
 on their ability to count various kinds of functions. This class of instances is
@@ -1156,6 +1129,33 @@ $\Theta(mn)$ since $f(m, n)$ can be computed by a dynamic programming algorithm
 that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
 a constant amount of time on the computation of each $f(i, j)$.
 
+\begin{table*}[t]
+  \centering
+  \begin{tabular}{cccccc}
+    \toprule
+    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
+    Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
+    \midrule
+    \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
+    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
+    \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
+    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
+    \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
+    \rowcolor{gray!25}\xmark & \xmark & & $m$ & --- & $mn$ \\
+    \rowcolor{gray!25}\xmark & \cmark & & $m$ & --- & $m^3$ \\
+    \rowcolor{gray!25}\cmark & \xmark & & ${\min\{\, m, n \,\}}^2$ & --- & $mn$ \\
+    \rowcolor{gray!25}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
+    \xmark & \xmark & \multirow{3}{*}{Bijections} & $m$ & --- & $m$ \\
+    \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
+    \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
+    \bottomrule
+  \end{tabular}
+  \caption{The worst-case complexity of counting various types of functions,
+    where $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
+    $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
+    that the algorithm was not able to find a solution.}\label{tbl:results}
+\end{table*}
+
 The experimental results are summarised in \cref{tbl:results}, where we compare
 the solutions found by both algorithms to the best known ways of computing the
 same quantities. The best-known asymptotic complexity for computing total
@@ -1164,7 +1164,7 @@ results are inferred from the formulas and programs on the on-line encyclopedia
 of integer sequences~\cite{oeis}. On instances that could already be solved by
 \textsc{ForcLift}, the two algorithms perform equally well. However,
 \textsc{Crane} can also solve all but one of the instances that
-\textsc{ForcLift} fails on in at most cubic time. See \cref{app:solutions} for
+\textsc{ForcLift} fails on in at most cubic time. See supplementary material for
 the exact solutions produced by \textsc{Crane} that correspond to the complexity
 results in \cref{tbl:results}. We also note that standard (W)FOMC benchmarks
 such as \cref{example:smokers} that are already supported by \textsc{ForcLift}
@@ -1230,63 +1230,6 @@ to compute various functions and sequences. In addition to the potential impact
 on areas of artificial intelligence (AI) such as statistical relational
 AI~\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
 research in combinatorics as well~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
-
-\appendix
-\section{Solutions Found by \textsc{Crane}}\label{app:solutions}
-
-In this appendix, we list the exact function definitions produced by
-\textsc{Crane} for all of the problem instances in \cref{sec:results} both
-before and after algebraic simplification (excluding multiplications by one).
-The correctness of all of them has been checked by identifying suitable base
-cases and verifying the numerical answers across a range of domain sizes.
-
-\begin{enumerate}
-  \item $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:
-  \[
-    f(m) = {\left(-1 + \sum_{l=0}^{m} \binom{m}{l} [l < 2]\right)}^{m} = m^{m}.
-  \]
-  \item $\Theta(m^3 + n^3)$ solution for counting $\Gamma \to \Delta$
-  surjections:
-  \begin{align*}
-    f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
-               &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
-    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
-  \end{align*}
-  \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ surjections:
-  \begin{align*}
-    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
-            &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
-    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
-  \end{align*}
-  \item $\Theta(mn)$ solution for counting $\Gamma \to \Delta$ injections and
-  partial injections (with different base cases):
-  \begin{align*}
-    f(m, n) ={}& \sum_{l=0}^m \binom{m}{l} [l<2] f(m-l, n-1)\\
-    ={}& f(m, n-1) + mf(m-1, n-1).
-  \end{align*}
-  \item $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ injections:
-  \begin{align*}
-    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
-    g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
-    ={}& g(m - 1, l) + lg(m - 1, l - 1).
-  \end{align*}
-  % \item $\Theta(m^{2})$ solution for counting $\Gamma \to \Gamma$ partial
-  %       injections:
-  % \begin{align*}
-  %   f(m) ={}& f(m - 1) + \sum_{l = 0}^{m} \binom{m}{l} \sum_{k = 0}^{m} \binom{m}{k}\\
-  %           &[1 \le l < 3] [k < 2] 2^{m - l} g(m - l, m - k - 1)\\
-  %   ={}& f(m - 1) + m2^{m-1}g(m-1, m-1)\\
-  %   +{}& m^{2}2^{m-1}g(m-1, m-2)\\
-  %   +{}& \binom{m}{2}2^{m-2}g(m-2, m-1) \\
-  %   +{}& \binom{m}{2}m2^{m-2}g(m-2, m-2)\\
-  %   g(i, j) ={}& \sum_{h = 0}^{j} \binom{j}{h} [h < 2] g(i - 1, j - h)\\
-  %   ={}& g(i-1, j) + jg(i-1, j-1).
-  %   \end{align*}
-  \item $\Theta(m)$ solution for counting $\Gamma \to \Delta$ bijections:
-  \[
-    f(m, n) = mf(m-1, n-1).
-  \]
-\end{enumerate}
 
 \bibliographystyle{kr}
 \bibliography{paper}
