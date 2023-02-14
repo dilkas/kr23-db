@@ -67,6 +67,8 @@
 %  make sure the result table (as well as other floating objects) are on the right pages
 
 % TODO: use \textt for predicates (e.g., p, q), introduce the notation, use DeclareMathOperator
+% TODO: cite the linear order axiom paper \cite{DBLP:journals/corr/abs-2211-01164} in the introduction
+% TODO: introduction: move the huge footnote to the main text
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -312,18 +314,19 @@ Our representation of FOMC instances is largely based on the format used
 internally by \textsc{ForcLift}, some aspects of which are described by Van den
 Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can
 translate sentences in a variant of function-free many-sorted FOL with equality
-to this internal format. We use lowercase Latin letters for predicates and
-constants, uppercase Latin letters for variables, and uppercase Greek letters
-for domains. Sometimes we write predicate $p$ as $p/n$, where
-$n \in \mathbb{N}^{+}$ is the \emph{arity} of $p$. An \emph{atom} is
-$p(t_1, \dots, t_n)$ for some predicate $p/n$ and terms $t_{1}, \dots, t_{n}$. A
-\emph{term} is either a constant or a variable. A \emph{literal} is either an
-atom or the negation of an atom (denoted by $\neg p(t_1, \dots, t_n)$). Let
-$\mathcal{D}$ be the set of all relevant (finite) domains. Initially,
-$\mathcal{D}$ contains all domains mentioned by the input formula. During
-compilation, new domains are added to $\mathcal{D}$ by some of the compilation
-rules. Each such new domain is interpreted as a subset of some other domain in
-$\mathcal{D}$.
+to this internal format. We use lowercase Latin letters for predicates (e.g.,
+$\texttt{p}$) and constants (e.g., $x$), uppercase Latin letters for variables
+(e.g., $X$), and uppercase Greek letters for domains (e.g., $\Delta$). Sometimes
+we write predicate $\texttt{p}$ as $\texttt{p}/n$, where $n \in \mathbb{N}^{+}$
+is the \emph{arity} of $\texttt{p}$. An \emph{atom} is
+$\texttt{p}(t_1, \dots, t_n)$ for some predicate $\texttt{p}/n$ and terms
+$t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
+\emph{literal} is either an atom or the negation of an atom (denoted by
+$\neg \texttt{p}(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all
+relevant (finite) domains. Initially, $\mathcal{D}$ contains all domains
+mentioned by the input formula. During compilation, new domains are added to
+$\mathcal{D}$ by some of the compilation rules. Each such new domain is
+interpreted as a subset of some other domain in $\mathcal{D}$.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
@@ -364,10 +367,10 @@ used within, and let $\dom(f)$ denote the domain of function $f$.
   al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}) is a set of clauses s.t.\ all
   constraints and atoms `type check' with respect to domains. Each formula
   $\phi$ has a map $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ such
-  that, for each predicate $p/n \in \Preds(\phi)$, we have that
-  $\pi_{\phi}(p) \in {\Doms(\phi)}^{n}$.\footnote{Similarly to variables and
-    predicates, constants are also mapped to domains, although we keep this
-    mapping implicit.}
+  that, for each predicate $\texttt{p}/n \in \Preds(\phi)$, we have that
+  $\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.\footnote{Similarly to
+    variables and predicates, constants are also mapped to domains, although we
+    keep this mapping implicit.}
 \end{definition}
 
 \begin{example}\label{example:first}
@@ -375,21 +378,21 @@ used within, and let $\dom(f)$ denote the domain of function $f$.
   \begin{align*}
     c_1 &\coloneqq
           \begin{multlined}[t]
-            (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
+            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
           \end{multlined}\\
     c_2 &\coloneqq
           \begin{multlined}[t]
-            (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z) \,\}, \\
+            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (X, Z) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\})
           \end{multlined}
   \end{align*}
-  for some predicate $p/2$, variables $X$, $Y$, $Z$, and domains $\Gamma$ and
-  $\Delta$. Based on $\delta_{c_{1}}$ and $\delta_{c_{2}}$, we can infer that
-  $\pi_{\phi} = \{\, p \mapsto (\Gamma, \Delta) \,\}$. All variables that occur
-  as the first argument to $p$ are in $\Gamma$, and, likewise, all variables
-  that occur as the second argument to $p$ are in $\Delta$. Therefore, $\phi$
-  `type checks' as a valid formula.
+  for some predicate $\texttt{p}/2$, variables $X$, $Y$, $Z$, and domains
+  $\Gamma$ and $\Delta$. Based on $\delta_{c_{1}}$ and $\delta_{c_{2}}$, we can
+  infer that $\pi_{\phi} = \{\, \texttt{p} \mapsto (\Gamma, \Delta) \,\}$. All
+  variables that occur as the first argument to $\texttt{p}$ are in $\Gamma$,
+  and, likewise, all variables that occur as the second argument to $\texttt{p}$
+  are in $\Delta$. Therefore, $\phi$ `type checks' as a valid formula.
 \end{example}
 
 There are two major differences between
@@ -409,11 +412,11 @@ conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
 \begin{align*}
   &\begin{multlined}[t]
     (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-    Y \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(X, Z)) \land
+    Y \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(X, Z)) \land
     \end{multlined}\\
   &\begin{multlined}[t]
     (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-    X \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(Z, Y)).
+    X \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(Z, Y)).
     \end{multlined}
 \end{align*}
 
@@ -424,13 +427,14 @@ of combinations of relations that satisfy these conditions.
 
 \begin{example}\label{example:simple}
   Let $\Delta$ be a domain of size $n \in \mathbb{N}_{0}$. The model count of
-  $\forall X \in \Delta\text{. } p(X) \lor q(X)$ is then $3^{n}$. Intuitively,
-  since both predicates are of arity one, they can be interpreted as subsets of
-  $\Delta$. Thus, the formula says that each element of $\Delta$ has to be
-  included in $p$ or in $q$ or in both, i.e., there are three possibilities.
+  $\forall X \in \Delta\text{. } \texttt{p}(X) \lor \texttt{q}(X)$ is then
+  $3^{n}$. Intuitively, since both predicates are of arity one, they can be
+  interpreted as subsets of $\Delta$. Thus, the formula says that each element
+  of $\Delta$ has to be included in $\texttt{p}$ or in $\texttt{q}$ or in both,
+  i.e., there are three possibilities.
 \end{example}
 
-\begin{example}
+\begin{example}\label{example:smokers}
   Consider a variant of the well-known `friends and smokers' example
   $\forall X, Y \in \Delta\text{.
   } \smokes(X) \land \friends(X, Y) \Rightarrow \smokes(Y)$. Letting
@@ -438,6 +442,7 @@ of combinations of relations that satisfy these conditions.
   expressed as
   $\sum_{k=0}^{n} \binom{n}{k}2^{n^{2} - k(n-k)}$~\cite{DBLP:conf/kr/BroeckMD14}.
 \end{example}
+% TODO: maybe add an extra sentence to explain what the formula means
 
 To formalise the idea of a model, let
 $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size function}
@@ -449,14 +454,13 @@ that maps each domain to a non-negative integer.
   $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ such that the
   following two conditions are satisfied.
   \begin{enumerate}
-    \item Let $p/n \in \Preds(\phi)$ be a predicate and let
-          $\pi_{\phi}(p) = {(d_{i})}_{i=1}^{n}$ for some domains
+    \item Let $\texttt{p}/n \in \Preds(\phi)$ be a predicate and let
+          $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ for some domains
           $d_{i} \in \Doms(\phi)$. Then
           \begin{equation}\label{eq:subset}
-            \mathfrak{M}(p) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
+            \mathfrak{M}(\texttt{p}) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
           \end{equation}
-    \item As a collection of relations, $\mathfrak{M}$ satisfies
-          $\phi$.
+    \item As a collection of relations, $\mathfrak{M}$ satisfies $\phi$.
   \end{enumerate}
 \end{definition}
 
@@ -468,13 +472,13 @@ that maps each domain to a non-negative integer.
     [\sigma(\Gamma)] \times [\sigma(\Delta)] = [2] \times [2] = \{\,(1, 1), (1, 2), (2, 1), (2, 2)\,\}
   \]
   There are $2^{4} = 16$ possible relations between $\Gamma$ and $\Delta$. Let
-  us count how many of them satisfy the conditions imposed on predicate $p$. The
-  empty relation does. All four relations of cardinality one do too. Finally,
-  there are two relations of cardinality two that satisfy the conditions as
-  well. Thus, the FOMC of $(\phi, \sigma)$ is 7. Incidentally, it counts partial
-  injections. We will continue to use the problem of counting partial injections
-  (and the formula from \cref{example:first} specifically) as the main running
-  example throughout the paper.
+  us count how many of them satisfy the conditions imposed on predicate
+  $\texttt{p}$. The empty relation does. All four relations of cardinality one
+  do too. Finally, there are two relations of cardinality two that satisfy the
+  conditions as well. Thus, the FOMC of $(\phi, \sigma)$ is 7. Incidentally, it
+  counts partial injections. We will continue to use the problem of counting
+  partial injections (and the formula from \cref{example:first} specifically) as
+  the main running example throughout the paper.
 \end{example}
 
 \section{From Circuits to Graphs}\label{sec:methods}
@@ -593,18 +597,18 @@ $X \ne x$.
 \begin{example}\label{example:dr}
   Let $\phi$ be a formula with a single clause
   \begin{multline*}
-    (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
+    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
     \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}).
   \end{multline*}
   Then we can introduce constant $x \in \Gamma$ and rewrite $\phi$ as
   $\phi' = \{\, c_{1}, c_{2} \,\}$, where
   \begin{align*}
     c_{1} &= \begin{multlined}[t]
-      (\{\, \neg p(x, Y), \neg p(x, Z) \,\}, \{\, (Y, Z) \,\}, \\
+      (\{\, \neg \texttt{p}(x, Y), \neg \texttt{p}(x, Z) \,\}, \{\, (Y, Z) \,\}, \\
       \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}\\
     c_{2} &= \begin{multlined}[t]
-      (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
+      (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
       \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}
   \end{align*}
@@ -673,12 +677,12 @@ example below.
   In this case, both subsets of $V$ satisfy these conditions, and
   \cref{line:generation} generates two clauses for the output formula:
   \begin{multline*}
-    (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z), (X, x) \,\}, \\
+    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z), (X, x) \,\}, \\
     \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
   \end{multline*}
   from $W = \emptyset$ and
   \[
-    (\{\, \neg p(x, Y), \neg p(x, Z) \,\}, \{\, (Y, Z) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\})
+    (\{\, \neg \texttt{p}(x, Y), \neg \texttt{p}(x, Z) \,\}, \{\, (Y, Z) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\})
   \]
   from $W = V$.
 
@@ -687,16 +691,16 @@ example below.
   because of the $X \ne Z$ constraint. The other three subsets of $V$ all
   generate clauses for $\phi'$. Indeed, $W = \emptyset$ generates
   \begin{multline*}
-    (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (X, Z), (X, x), (Z, x) \,\}, \\
+    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (X, Z), (X, x), (Z, x) \,\}, \\
     \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
   \end{multline*}
   $W = \{\, X \,\}$ generates
   \[
-    (\{\, \neg p(x, Y), \neg p(Z, Y) \,\}, \{\, (Z, x) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
+    (\{\, \neg \texttt{p}(x, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (Z, x) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
   \]
   and $W = \{\, Z \,\}$ generates
   \[
-    (\{\, \neg p(X, Y), \neg p(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta \,\}).
+    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta \,\}).
   \]
 \end{example}
 
@@ -797,12 +801,12 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   \begin{align*}
     c_1 &=
           \begin{multlined}[t]
-            (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
+            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
           \end{multlined}\\
     c_2 &=
           \begin{multlined}[t]
-            (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \\
+            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \\
             \{\, (X, x), (Z, X), (Z, x) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}).
           \end{multlined}
@@ -813,12 +817,12 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   \begin{align*}
     c_1' &=
            \begin{multlined}[t]
-             (\{\, \neg p(X, Y), \neg p(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
+             (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
              \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
            \end{multlined} \\
     c_2' &=
            \begin{multlined}[t]
-             (\{\, \neg p(X, Y), \neg p(Z, Y) \,\}, \{\, (Z, X) \,\}, \\
+             (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (Z, X) \,\}, \\
              \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Gamma' \,\}).
            \end{multlined}
   \end{align*}
@@ -952,20 +956,22 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
     \end{tikzcd}
   \end{equation}
   commutes by \cref{def:formula} and the definition of $\rho$. In other words,
-  for any predicate $p/n \in \Preds(\psi) = \Preds(\phi)$, function $\rho$
-  translates the domains associated with $p$ in $\psi$ to the domains associated
-  with $p$ in $\phi$. Let $\pi_{\phi}(p) = {(d_{i})}_{i=1}^{n}$ and
-  $\pi_{\psi}(p) = {(e_{i})}_{i=1}^{n}$ for some domains $d_{i} \in \Doms(\phi)$
-  and $e_{i} \in \Doms(\psi)$. Since $\rho(e_{i}) = d_{i}$ for all
-  $i = 1, \dots, n$ by the commutativity in \cref{diagram:ref}, we get that
+  for any predicate $\texttt{p}/n \in \Preds(\psi) = \Preds(\phi)$, function
+  $\rho$ translates the domains associated with $\texttt{p}$ in $\psi$ to the
+  domains associated with $\texttt{p}$ in $\phi$. Let
+  $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ and
+  $\pi_{\psi}(\texttt{p}) = {(e_{i})}_{i=1}^{n}$ for some domains
+  $d_{i} \in \Doms(\phi)$ and $e_{i} \in \Doms(\psi)$. Since
+  $\rho(e_{i}) = d_{i}$ for all $i = 1, \dots, n$ by the commutativity in
+  \cref{diagram:ref}, we get that
   \begin{equation}\label{eq:equality}
     \prod_{i=1}^{n}[\sigma(d_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(e_{i})]
   \end{equation}
   as required. Certainly, any subset of the left-hand side of \cref{eq:equality}
-  (e.g., $\mathfrak{M}(p)$, where $\mathfrak{M}$ is a model of $(\phi, \sigma)$)
-  is a subset of the right-hand side and vice versa. Since $\phi$ and $\psi$
-  semantically only differ in what domains they refer to, every model of $\phi$
-  satisfies $\psi$ and vice versa, completing the proof.
+  (e.g., $\mathfrak{M}(\texttt{p})$, where $\mathfrak{M}$ is a model of
+  $(\phi, \sigma)$) is a subset of the right-hand side and vice versa. Since
+  $\phi$ and $\psi$ semantically only differ in what domains they refer to,
+  every model of $\phi$ satisfies $\psi$ and vice versa, completing the proof.
 \end{proof}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
@@ -1045,9 +1051,6 @@ function are the sizes of all domains used by nodes reachable from $v$.
 
 \section{Experimental Results}\label{sec:results}
 
-TODO: Incidentally, the linear order axiom is also liftable. Cite the same
-paper~\cite{DBLP:journals/corr/abs-2211-01164} in the introduction as well.
-
 \begin{table*}[t]
   \centering
   \begin{tabular}{cccccc}
@@ -1074,10 +1077,6 @@ paper~\cite{DBLP:journals/corr/abs-2211-01164} in the introduction as well.
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
     that the algorithm was not able to find a solution.}\label{tbl:results}
 \end{table*}
-% TODO: It is a standard to discuss a few lifted theories like the smokers and
-% friends example. Can you also include some empirical results on such theories
-% as well to appeal to the sanity of the reader that it actually works for
-% problems in frameworks such as Markov log networks
 
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
@@ -1089,25 +1088,25 @@ the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
 translates these sentences in FOL to formulas as defined in \cref{def:formula}.
 
-Let $p$ be a predicate that models relations between sets $\Gamma$ and $\Delta$.
-To restrict all such relations to just $\Gamma \to \Delta$ functions, in FOL one
-might write
+Let $\texttt{p}$ be a predicate that models relations between sets $\Gamma$ and
+$\Delta$. To restrict all such relations to just $\Gamma \to \Delta$ functions,
+in FOL one might write
 \[
-  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }p(X, Y) \land p(X, Z) \Rightarrow Y = Z
+  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }\texttt{p}(X, Y) \land \texttt{p}(X, Z) \Rightarrow Y = Z
 \]
 and
 \begin{equation}\label{eq:def2}
-  \forall X \in \Gamma\text{. }\exists Y \in \Delta\text{. }p(X, Y).
+  \forall X \in \Gamma\text{. }\exists Y \in \Delta\text{. }\texttt{p}(X, Y).
 \end{equation}
 The former sentence says that one element of $\Gamma$ can map to at \emph{most}
 one element of $\Delta$, and the latter sentence says that each element of
 $\Gamma$ must map to at \emph{least} one element of $\Delta$. One can then add
 \[
-  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }p(X, Y) \land p(Z, Y) \Rightarrow X = Z
+  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\texttt{p}(X, Y) \land \texttt{p}(Z, Y) \Rightarrow X = Z
 \]
-to restrict $p$ to injections or
+to restrict $\texttt{p}$ to injections or
 \[
-  \forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }p(X, Y)
+  \forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }\texttt{p}(X, Y)
 \]
 to ensure surjectivity or remove \cref{eq:def2} to consider partial functions.
 Lastly, one can replace all occurrences of $\Delta$ with $\Gamma$ to model
@@ -1119,16 +1118,18 @@ i.e., injectivity, surjectivity, partiality, and endo-. We run each algorithm
 once on each of the sixteen instances.\footnote{While domain sizes have to be
   specified as part of the input, they are immaterial to the search procedure.}
 \textsc{Crane} is run in hybrid search mode until either five solutions are
-found or the search tree reaches height six.\footnote{The search tree has a high
-  branching factor, so exploring all nodes at depth five takes at most a few
-  seconds, whereas doing the same for depth six can be computationally
-  infeasible in some cases.} \textsc{ForcLift} is always run until it
-terminates. If successful, \textsc{ForcLift} generates a circuit, and
+found or the search tree reaches height six. \textsc{ForcLift} is always run
+until it terminates. If successful, \textsc{ForcLift} generates a circuit, and
 \textsc{Crane} generates one or more (complete) FCGs. In both cases, we manually
 convert the resulting graphs into definitions of functions as described in
 \cref{sec:interpret}. We then assess the complexity of each solution by hand and
 pick the best in case \textsc{Crane} returns several solutions of varying
 complexities.
+
+% \footnote{The search tree has a high
+%   branching factor, so exploring all nodes at depth five takes at most a few
+%   seconds, whereas doing the same for depth six can be computationally
+%   infeasible in some cases.}
 
 % how the complexity of a solution is determined
 Previous work often compares WFOMC algorithms by running them on a few instances
@@ -1146,17 +1147,22 @@ $\Theta(mn)$ since $f(m, n)$ can be computed by a dynamic programming algorithm
 that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
 a constant amount of time on the computation of each $f(i, j)$.
 
-These results are summarised in \cref{tbl:results}, where we compare the
-solutions found by both algorithms to the best known ways of computing the same
-quantities. The best-known asymptotic complexity for computing total surjections
-is by Earnest~\shortcite{30049}. All other best-known complexity results are
-inferred from the formulas and programs on the on-line encyclopedia of integer
-sequences~\cite{oeis}. On instances that could already be solved by
+The experimental results are summarised in \cref{tbl:results}, where we compare
+the solutions found by both algorithms to the best known ways of computing the
+same quantities. The best-known asymptotic complexity for computing total
+surjections is by Earnest~\shortcite{30049}. All other best-known complexity
+results are inferred from the formulas and programs on the on-line encyclopedia
+of integer sequences~\cite{oeis}. On instances that could already be solved by
 \textsc{ForcLift}, the two algorithms perform equally well. However,
 \textsc{Crane} can also solve all but one of the instances that
 \textsc{ForcLift} fails on in at most cubic time. See \cref{app:solutions} for
 the exact solutions produced by \textsc{Crane} that correspond to the complexity
-results in \cref{tbl:results}.
+results in \cref{tbl:results}. We also note that standard (W)FOMC benchmarks
+such as \cref{example:smokers} that are already supported by \textsc{ForcLift}
+remain feasible for \textsc{Crane} as well. Moreover, our algorithm can also
+handle the linear order axiom, for which a bespoke algorithm was recently
+proposed by T{\'{o}}th and
+Ku\v{z}elka~\shortcite{DBLP:journals/corr/abs-2211-01164}.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
 
@@ -1177,15 +1183,15 @@ can formulate the following conjecture.
   \begin{align*}
     &\begin{multlined}[t]
       (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-      Y \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(X, Z)) \land
+      Y \ne Z \Rightarrow \neg \texttt{\textup{p}}(X, Y) \lor \neg \texttt{\textup{p}}(X, Z)) \land
     \end{multlined}\\
     &\begin{multlined}[t]
       (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-      X \ne Z \Rightarrow \neg p(X, Y) \lor \neg p(Z, Y))
+      X \ne Z \Rightarrow \neg \texttt{\textup{p}}(X, Y) \lor \neg \texttt{\textup{p}}(Z, Y))
     \end{multlined}
   \end{align*}
-  for some predicate $p$ and domains $\Gamma$ and $\Delta$. Then \IFO{} is
-  liftable by \textsc{Crane}.
+  for some predicate $\texttt{\textup{p}}/2$ and domains $\Gamma$ and $\Delta$.
+  Then \IFO{} is liftable by \textsc{Crane}.
 \end{conjecture}
 
 Recall that \Ctwo{} is the class of formulas with counting quantifiers and at
