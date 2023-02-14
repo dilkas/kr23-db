@@ -66,10 +66,6 @@
 % clean up unnecessary things from the header (e.g., packages and definitions)
 %  make sure the result table (as well as other floating objects) are on the right pages
 
-% TODO: use \textt for predicates (e.g., p, q), introduce the notation, use DeclareMathOperator
-% TODO: cite the linear order axiom paper \cite{DBLP:journals/corr/abs-2211-01164} in the introduction
-% TODO: introduction: move the huge footnote to the main text
-
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
@@ -152,8 +148,6 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 \section{Introduction}\label{sec:introduction}
 
-% TODO: cite some works about synthesis
-
 % TODO: In the introduction it is written: "Crane uses a hybrid search algorithm
 % that applies some rules greedily and some using breadth-first search". Which
 % rules are applied greedily and which are not? What is the reason for parting
@@ -209,12 +203,13 @@ research on (W)FOMC focused on developing faster solutions for the \FOtwo{}
 fragment~\cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
 new liftable fragments. These fragments include \SFO{} and
 \SRU{}~\cite{DBLP:conf/nips/KazemiKBP16},
-\Uone{}~\cite{DBLP:conf/lics/KuusistoL18}, \FOtwo{} with tree
-axioms~\cite{DBLP:conf/kr/BremenK21}, and \Ctwo{} (i.e., the two-variable
+\Uone{}~\cite{DBLP:conf/lics/KuusistoL18}, \Ctwo{} (i.e., the two-variable
 fragment with counting
-quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}. On
-the empirical front, there are several implementations of exact WFOMC
-algorithms: \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
+quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}, and
+\Ctwo{} extended with tree axioms~\cite{DBLP:conf/kr/BremenK21} and linear order
+axiom~\cite{DBLP:journals/corr/abs-2211-01164}. On the empirical front, there
+are several implementations of exact WFOMC algorithms:
+\textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
 \textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21},
 \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}, and
 \textsc{L2C}~\cite{DBLP:conf/kr/KazemiP16}. Approximate counting is supported by
@@ -240,17 +235,17 @@ compute functions as simple as a factorial.\footnote{There is some previous work
   Another~\cite{DBLP:journals/jair/Kuzelka21} proves that the problem is
   liftable but contains no experimental results. The
   third~\cite{DBLP:conf/kr/BremenK21} contains experimental results performed
-  with an algorithm, which is not publicly available.} We claim that this
-shortcoming is due to the inability of these algorithms to construct recursive
-solutions. The topic of recursion in the context of WFOMC has been studied
-before but in limited ways. Barv{\'{\i}}nek et
-al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to generate numerical
-data that is then used to conjecture recurrence relations that explain that
-data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} introduced the idea of
-\emph{domain recursion}. Intuitively, domain recursion partitions a domain of
-size $n$ into a single explicitly named constant and the remaining domain of
-size $n-1$. However, many stringent conditions are enforced to ensure that the
-search for a tractable solution always terminates.
+  with an algorithm, which is not publicly available.} We claim that the
+capabilities of (W)FOMC algorithms can be significantly extended by empowering
+them with the ability to construct recursive solutions. The topic of recursion
+in the context of WFOMC has been studied before but in limited ways.
+Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to
+generate numerical data that is then used to conjecture recurrence relations
+that explain that data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}
+introduced the idea of \emph{domain recursion}. Intuitively, domain recursion
+partitions a domain of size $n$ into a single explicitly named constant and the
+remaining domain of size $n-1$. However, many stringent conditions are enforced
+to ensure that the search for a tractable solution always terminates.
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -271,7 +266,22 @@ both stages of the process. First, while \textsc{ForcLift} applies compilation
 rules via greedy search, \textsc{Crane} also supports a hybrid search algorithm
 that applies some rules greedily and some using breadth-first search. Second,
 the product of compilation is not directly evaluated but rather interpreted as a
-collection of functions on domain sizes.
+collection of functions on domain sizes. Hence, our approach is reminiscent of
+previous work on lifted inference via compilation to C++
+programs~\cite{DBLP:conf/kr/KazemiP16} and the broader area of functional
+synthesis~\cite{DBLP:conf/cav/GoliaRM20,DBLP:conf/pldi/KuncakMPS10,sanathanan1963transfer}.
+
+% similarly to the other domains, there are many functions that fit the
+% specification, i.e., can correctly count the number of models as a function of
+% domain size(s). Whereas in [...] one typically wants to select the smallest
+% definition of a function, we are primarily concerned with its worst-case
+% complexity as measured by the number of arithmetic operations needed for an
+% arbitrary function call
+% \begin{itemize}
+%   \item Boolean functions~\cite{DBLP:conf/cav/GoliaRM20}
+%   \item dynamical systems~\cite{sanathanan1963transfer}
+%   \item program fragments~\cite{DBLP:conf/pldi/KuncakMPS10}
+% \end{itemize}
 
 % \footnote{There is also an intermediate stage called \emph{smoothing} that takes
 %   place between compilation and evaluation. As our changes to smoothing are
@@ -442,7 +452,6 @@ of combinations of relations that satisfy these conditions.
   expressed as
   $\sum_{k=0}^{n} \binom{n}{k}2^{n^{2} - k(n-k)}$~\cite{DBLP:conf/kr/BroeckMD14}.
 \end{example}
-% TODO: maybe add an extra sentence to explain what the formula means
 
 To formalise the idea of a model, let
 $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size function}
