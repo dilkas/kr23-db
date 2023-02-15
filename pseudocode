@@ -1,7 +1,5 @@
 TODO: predicateWeights is also a parameter. It's used when visiting some of the leaf types.
 
-(For a shortened version, I could just describe these node types: )
-
 Input: \mathcal{D} - the set of domains featured in the input formula, s - the unique source of the FCG
 Data: functionNames = \emptyset
 Output: a list of Strings, each defining a function (the top one is the main one)
