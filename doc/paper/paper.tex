@@ -96,6 +96,7 @@ vbelle@ed.ac.uk
 \newcommand{\Uone}{$\mathsf{U}_{1}$}
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
+\newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
 
 \DeclareMathOperator{\friends}{\texttt{friends}}
 \DeclareMathOperator{\smokes}{\texttt{smokes}}
@@ -365,12 +366,13 @@ finite length of elements of $S$. For any $n \in \mathbb{N}_{0}$, let
 $[n] \coloneqq \{\, 1, \dots, n \,\}$. For example, $[0] = \emptyset$, and
 $[2] = \{\, 1, 2 \,\}$. We write $\langle\rangle$ for an empty list,
 $\langle x \rangle$ for a list with one element $x$, $|l|$ for the length of
-list $l$, and $\pfun$ to denote partial functions. Let $S$ be a set of
-constraints or literals, $V$ a set of variables, and $x$ a variable or a
-constant. We write $S[x/V]$ to denote $S$ with all occurrences of all variables
-in $V$ replaced with $x$. Let $\Doms$ (respectively, $\Preds$) be the function
-that maps any clause or formula to the set of domains (respectively, predicates)
-used within, and let $\dom(f)$ denote the domain of function $f$.
+list $l$, $\mdoubleplus$ for list concatenation, and $\pfun$ to denote partial
+functions. Let $S$ be a set of constraints or literals, $V$ a set of variables,
+and $x$ a variable or a constant. We write $S[x/V]$ to denote $S$ with all
+occurrences of all variables in $V$ replaced with $x$. Let $\Doms$
+(respectively, $\Preds$) be the function that maps any clause or formula to the
+set of domains (respectively, predicates) used within, and let $\dom(f)$ denote
+the domain of function $f$.
 
 \begin{definition}[Formula]\label{def:formula}
   A \emph{formula} (called a c-theory by Van den Broeck et
@@ -539,7 +541,7 @@ more information about node types and their interpretations for computing the
   \centering
   \begin{forest}
     for tree={sn edges}
-    [$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$,ellipse,draw,name=gdr
+    [$\GDR$,ellipse,draw,name=gdr
     [$\bigvee_{\Delta^\top \subseteq \Delta}$,ellipse,draw
     [$\CR_{\Gamma \mapsto \Gamma'}$,ellipse,draw
     [$\land$,ellipse,draw
@@ -570,8 +572,8 @@ $\star$ for a placeholder type that is yet to be replaced. Similarly to Van den
 Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}, we write $T_p$ for an
 FCG that has a node with the label $T_p$ (i.e., type $T$ and parameter(s) $p$)
 and $\star$'s as all of its direct successors. See \cref{fig:examplefcg} for an
-example FCG\@. Its source node has out-degree 1, label
-$\GDR_{\Gamma \gets \Gamma \setminus \{\, x \,\}}$, and type $\GDR$.
+example FCG\@. Its source node has out-degree 1, label $\GDR$, and type $\GDR$.
+% TODO: update the last sentence
 
 % Connecting FCGs with formulas
 Finally, we introduce a structure that represents a solution to a (W)FOMC
@@ -650,7 +652,7 @@ conditions ensure that these parts can be treated independently.
         $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (X, x) \mid (X \in V \setminus W) \,\}, \delta') \,\}$\;\label{line:generation}
       }
     }
-    $S \gets S \cup \{\, (\GDR_{\Omega \gets \Omega \setminus \{\, x \,\}}, \langle\phi'\rangle) \,\}$\;
+    $S \gets S \cup \{\, (\GDR, \langle\phi'\rangle) \,\}$\;
   }
 \end{algorithm}
 
@@ -989,75 +991,79 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   \caption{Construct functions from an FCG}
   \SetKwProg{Fn}{Function}{:}{}
 
-  \SetKwData{domains}{domains}
   \SetKwData{functionCall}{call}
   \SetKwData{functionSignature}{signature}
   \SetKwData{functionNames}{F}
-  \SetKwData{variableNames}{V} % TODO: mathcal? Same for function names?
+  \SetKwData{variableNames}{V}
   \SetKwData{newVariableNames}{V'}
   \SetKwData{expression}{e}
   \SetKwData{functions}{funs}
+  \SetKwData{args}{args}
 
   \SetKwFunction{newFunctionName}{newFunctionName}
   \SetKwFunction{newVariableName}{newVarName}
-  \SetKwFunction{visit}{visit}
-  \SetKwFunction{actuallyVisit}{actuallyVisit}
+  \SetKwFunction{visit}{v}
+  \SetKwFunction{actuallyVisit}{visit}
 
   \KwIn{$\mathcal{D}$---the set of domains of the input formula}
-  \KwIn{$s$---the source of the FCG}
-  \KwData{$\functionNames = \emptyset$}
-  \KwOut{a list of Strings, each defining a function (the top one is the main one)}
-  $\variableNames \gets \{\, d \mapsto \newVariableName{} \mid d \in \mathcal{D} \,\}$\;
-  \uIf{$s$ is a direct successor of a $\Reff$ node}{
+  \KwIn{$s$---the source node of the FCG}
+  \KwData{$\functionNames = \emptyset$ (function names)}
+  \KwOut{a list of function definitions}
+  $\variableNames \gets \{\, \Omega \mapsto \newVariableName{} \mid \Omega \in \mathcal{D} \,\}$\;
+  \If{$s$ is a direct successor of a $\Reff$ node}{
     $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
     \Return{\functions}\;
   }
-  \Else{
-    $f \gets \newFunctionName{$s$}$\;
-    $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
-    \Return{$\langle f(\langle \variableNames{$d$} \mid d \in \mathcal{D} \rangle) = \expression \rangle + \functions$}\;
-  }
-  \Fn{\visit{node $v$, \variableNames}}{
-    \If{$v$ is not a direct successor of a $\Reff$ node}{ % TODO: boldface the NOT
+  $f \gets \newFunctionName{$s$}$\;
+  $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
+  \Return{$\langle f(\langle \variableNames{$\Omega$} \mid \Omega \in \mathcal{D} \rangle) = \expression \rangle \mdoubleplus \functions$}\;
+  \Fn{\visit{node $v$, variable names \variableNames}}{
+    \If{$v$ is \textbf{not} a direct successor of a $\Reff$ node}{
       \Return{\actuallyVisit{$v$, \variableNames}}\;
     }
     $f \gets \newFunctionName{$v$}$\;
-    $\newVariableNames \gets \{\, \text{if } d \in v.\domains \text{ and } n \text{ contains subtraction then } d \mapsto \newVariableName{} \text{ else } d \mapsto n \mid d \mapsto n \in \variableNames \,\}$\;
+    $\newVariableNames \gets \variableNames$\;
+    \For{$\Omega \in \mathfrak{D}(v)$ s.t. $\newVariableNames(\Omega)$ is non-atomic}{
+      $\newVariableNames(\Omega) \gets \newVariableName{}$\;
+    }
     $(\expression, \functions) \gets \actuallyVisit{$v$, \newVariableNames}$\;
-    $\functionCall \gets f(\langle \variableNames{$d$} \mid d \in v.\domains \rangle)$\;
-    $\functionSignature \gets f(\langle \newVariableNames{$d$} \mid d \in v.\domains \rangle)$\;
-    \Return{$(\functionCall, \langle \functionSignature = \expression \rangle + \functions)$}\;
+    $\functionCall \gets f(\langle \variableNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
+    $\functionSignature \gets f(\langle \newVariableNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
+    \Return{$(\functionCall, \langle \functionSignature = \expression \rangle \mdoubleplus \functions)$}\;
   }
-  \Fn{\actuallyVisit{node $v$, \variableNames}}{
-    \Switch{type of $v$}{
-      \uCase{$\Reff_{\rho}(v')$}{
-        \Return{$(\functionNames{$v'$}(\langle \variableNames{$\rho(d)$} \mid d \in v'.\domains \rangle), \langle \rangle)$}\;
-      }
+  \Fn{\actuallyVisit{node $v$, variable names \variableNames}}{
+    \Switch{label of $v$}{
       \lCase{$\GDR(v')$}{\Return{\visit{$v'$, \variableNames}}}
-      \uCase{$\CR_{d,d'}(v')$}{\Return{\visit{$v'$, $\variableNames \cup \{\, d' \mapsto (\variableNames(d) - 1) \,\}$}}\;}
+      \uCase{$\CR_{\Omega \mapsto \Omega'}(v')$}{
+        \Return{\visit{$v'$, $\variableNames \cup \{\, \Omega' \mapsto (\variableNames(\Omega) - 1) \,\}$}}\;
+      }
+      \uCase{$\Reff_{\rho}(v')$}{
+        $\args \gets \langle \variableNames{$\rho(\Omega)$} \mid \Omega \in \mathfrak{D}(v') \rangle$\;
+        \Return{$(\functionNames{$v'$}(\args), \langle \rangle)$}\;
+      }
       \dots
     }
   }
 \end{algorithm}
-% TODO: introduce symbol for list concatenation (4 places)
-% 'is a direct successor of a Ref node' = the in-degree is > 1
-% TODO: check if the distinction between data and function is appropriate and that all function calls use the right {} syntax
-% TODO: DeclareMathOperator for Or, etc.
-% TODO: check if all semicolons are there
+% TODO: have I introduced the GDR(v') syntax? (for other types as well)
 
 \begin{itemize}
-  \item for each node v, v.domains is a precomputed set of domains that are used
-        by v and all of its successors (except the ones that are introduced by v
-        or its successors) (this was already part of ForcLift, although had to
-        be reimplemented in a way that avoids infinite loops when dealing with
-        cycles in graphs)
-  \item NOTE: for list generators over a set of domains, we assume an arbitrary
-        fixed ordering over all domains
-  \item functionNames is a partial map (initially empty) from the set of nodes
-        of the FCG to Strings
-  \item newVariableName() just generates a unique identifier for a variable
-  \item newFunctionName(node n) does the same thing for function names and also
-        records the new name in functionNames
+  \item TODO: define atomic --- no subtraction, i.e., just a variable name
+  \item for each FCG node $v$, $\mathfrak{D}(v)$ is a precomputed set of domains
+        that are used by $v$ and all of its successors (except the ones that are
+        introduced by $v$ or one of its successors) (this was already part of
+        \textsc{ForcLift}, although had to be reimplemented in a way that avoids
+        infinite loops when dealing with cycles in graphs)
+  \item for list generators over a set of domains, we assume an arbitrary fixed
+        ordering over all domains
+  \item $\mathsf{F}$ is a partial map from the set of FCG nodes to Strings,
+        i.e., function names
+  \item \newVariableName just generates a unique identifier for a variable
+  \item \newFunctionName does the same thing for function names and also records
+        the new name in $\mathsf{F}$
+  \item the top function is the main one
+  \item `is a direct successor of a $\Reff$ node' --- the in-degree is greater
+        than 1
 \end{itemize}
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
@@ -1135,6 +1141,33 @@ function are the sizes of all domains used by nodes reachable from $v$.
 
 \section{Experimental Results}\label{sec:results}
 
+\begin{table*}[t]
+  \centering
+  \begin{tabular}{cccccc}
+    \toprule
+    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
+    Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
+    \midrule
+    \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
+    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
+    \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
+    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
+    \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
+    \rowcolor{gray!25}\xmark & \xmark & & $m$ & --- & $mn$ \\
+    \rowcolor{gray!25}\xmark & \cmark & & $m$ & --- & $m^3$ \\
+    \rowcolor{gray!25}\cmark & \xmark & & ${\min\{\, m, n \,\}}^2$ & --- & $mn$ \\
+    \rowcolor{gray!25}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
+    \xmark & \xmark & \multirow{3}{*}{Bijections} & $m$ & --- & $m$ \\
+    \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
+    \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
+    \bottomrule
+  \end{tabular}
+  \caption{The worst-case complexity of counting various types of functions,
+    where $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
+    $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
+    that the algorithm was not able to find a solution.}\label{tbl:results}
+\end{table*}
+
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
 on their ability to count various kinds of functions. This class of instances is
@@ -1203,33 +1236,6 @@ $\Theta(nk)$ time. For example, the complexity of \cref{eq:solution} is
 $\Theta(mn)$ since $f(m, n)$ can be computed by a dynamic programming algorithm
 that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
 a constant amount of time on the computation of each $f(i, j)$.
-
-\begin{table*}[t]
-  \centering
-  \begin{tabular}{cccccc}
-    \toprule
-    \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
-    Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
-    \midrule
-    \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
-    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
-    \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
-    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
-    \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
-    \rowcolor{gray!25}\xmark & \xmark & & $m$ & --- & $mn$ \\
-    \rowcolor{gray!25}\xmark & \cmark & & $m$ & --- & $m^3$ \\
-    \rowcolor{gray!25}\cmark & \xmark & & ${\min\{\, m, n \,\}}^2$ & --- & $mn$ \\
-    \rowcolor{gray!25}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
-    \xmark & \xmark & \multirow{3}{*}{Bijections} & $m$ & --- & $m$ \\
-    \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
-    \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
-    \bottomrule
-  \end{tabular}
-  \caption{The worst-case complexity of counting various types of functions,
-    where $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
-    $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
-    that the algorithm was not able to find a solution.}\label{tbl:results}
-\end{table*}
 
 The experimental results are summarised in \cref{tbl:results}, where we compare
 the solutions found by both algorithms to the best known ways of computing the
