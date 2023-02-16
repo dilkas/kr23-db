@@ -53,10 +53,13 @@ m <- newVariableName()
 return (\sum_{m=0}^{n} \binom{n}{m} \times expression, functions)
 }
 ConstraintRemoval_d,d'(v') -> visit(v', variableNames \cup { d' \mapsto (variableNames(d) - 1) })
+
 TODO: instead of talking about skolem functions, just introduce weights in general (based on WmcVisitor)
+
 UnitLeaf_c -> if (c is of the form ({\neg s(v_1, \dots, v_n)}, \emptyset, { v_1 \mapsto D_1, \dots, v_n \mapsto D_n }) for some non-negative integer n, variables v_i and (potentially repeating) domains D_i (AND s is a *Skolem* predicate)
 then ((-1)^{\prod_{i=1}^n variableNames(D_i)}, <>)
 else (1, <>)
+
 Contradiction_cl:
 We assume that:
 1. There is only one domain (this restriction can be removed, but I'm not convinced that such a node is ever constructed)

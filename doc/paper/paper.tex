@@ -986,10 +986,79 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 \section{How to Interpret an FCG}\label{sec:interpret}
 
 \begin{algorithm}[t]
-  \caption{TODO}
-  \KwIn{$\mathcal{D}$---the set of domains featured in the input formula,
-    $s$---the unique source of the FCG}
+  \caption{Construct functions from an FCG}
+  \SetKwProg{Fn}{Function}{:}{}
+
+  \SetKwData{domains}{domains}
+  \SetKwData{functionCall}{call}
+  \SetKwData{functionSignature}{signature}
+  \SetKwData{functionNames}{F}
+  \SetKwData{variableNames}{V} % TODO: mathcal? Same for function names?
+  \SetKwData{newVariableNames}{V'}
+  \SetKwData{expression}{e}
+  \SetKwData{functions}{funs}
+
+  \SetKwFunction{newFunctionName}{newFunctionName}
+  \SetKwFunction{newVariableName}{newVarName}
+  \SetKwFunction{visit}{visit}
+  \SetKwFunction{actuallyVisit}{actuallyVisit}
+
+  \KwIn{$\mathcal{D}$---the set of domains of the input formula}
+  \KwIn{$s$---the source of the FCG}
+  \KwData{$\functionNames = \emptyset$}
+  \KwOut{a list of Strings, each defining a function (the top one is the main one)}
+  $\variableNames \gets \{\, d \mapsto \newVariableName{} \mid d \in \mathcal{D} \,\}$\;
+  \uIf{$s$ is a direct successor of a $\Reff$ node}{
+    $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
+    \Return{\functions}\;
+  }
+  \Else{
+    $f \gets \newFunctionName{$s$}$\;
+    $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
+    \Return{$\langle f(\langle \variableNames{$d$} \mid d \in \mathcal{D} \rangle) = \expression \rangle + \functions$}\;
+  }
+  \Fn{\visit{node $v$, \variableNames}}{
+    \If{$v$ is not a direct successor of a $\Reff$ node}{ % TODO: boldface the NOT
+      \Return{\actuallyVisit{$v$, \variableNames}}\;
+    }
+    $f \gets \newFunctionName{$v$}$\;
+    $\newVariableNames \gets \{\, \text{if } d \in v.\domains \text{ and } n \text{ contains subtraction then } d \mapsto \newVariableName{} \text{ else } d \mapsto n \mid d \mapsto n \in \variableNames \,\}$\;
+    $(\expression, \functions) \gets \actuallyVisit{$v$, \newVariableNames}$\;
+    $\functionCall \gets f(\langle \variableNames{$d$} \mid d \in v.\domains \rangle)$\;
+    $\functionSignature \gets f(\langle \newVariableNames{$d$} \mid d \in v.\domains \rangle)$\;
+    \Return{$(\functionCall, \langle \functionSignature = \expression \rangle + \functions)$}\;
+  }
+  \Fn{\actuallyVisit{node $v$, \variableNames}}{
+    \Switch{type of $v$}{
+      \uCase{$\Reff_{\rho}(v')$}{
+        \Return{$(\functionNames{$v'$}(\langle \variableNames{$\rho(d)$} \mid d \in v'.\domains \rangle), \langle \rangle)$}\;
+      }
+      \lCase{$\GDR(v')$}{\Return{\visit{$v'$, \variableNames}}}
+      \uCase{$\CR_{d,d'}(v')$}{\Return{\visit{$v'$, $\variableNames \cup \{\, d' \mapsto (\variableNames(d) - 1) \,\}$}}\;}
+      \dots
+    }
+  }
 \end{algorithm}
+% TODO: introduce symbol for list concatenation (4 places)
+% 'is a direct successor of a Ref node' = the in-degree is > 1
+% TODO: check if the distinction between data and function is appropriate and that all function calls use the right {} syntax
+% TODO: DeclareMathOperator for Or, etc.
+% TODO: check if all semicolons are there
+
+\begin{itemize}
+  \item for each node v, v.domains is a precomputed set of domains that are used
+        by v and all of its successors (except the ones that are introduced by v
+        or its successors) (this was already part of ForcLift, although had to
+        be reimplemented in a way that avoids infinite loops when dealing with
+        cycles in graphs)
+  \item NOTE: for list generators over a set of domains, we assume an arbitrary
+        fixed ordering over all domains
+  \item functionNames is a partial map (initially empty) from the set of nodes
+        of the FCG to Strings
+  \item newVariableName() just generates a unique identifier for a variable
+  \item newFunctionName(node n) does the same thing for function names and also
+        records the new name in functionNames
+\end{itemize}
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
