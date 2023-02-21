@@ -9,6 +9,8 @@
 \usepackage[style=authoryear]{biblatex}
 \usepackage{forest}
 \usepackage{soul}
+\usepackage{csquotes}
+\usepackage{pifont}
 
 \usetikzlibrary{shapes}
 \usetikzlibrary{positioning}
@@ -30,11 +32,13 @@
 \beamertemplatenavigationsymbolsempty
 \usetheme{metropolis}
 \setbeamercolor{background canvas}{bg=white}
+
 \addbibresource{talk.bib}
 
 \definecolor{color1}{HTML}{1B9E77}
 \definecolor{color2}{HTML}{7570b3}
 \definecolor{color3}{HTML}{e7298a}
+\definecolor{forestgreen}{HTML}{009B55}
 
 \colorlet{redish}{color2!25}
 \sethlcolor{redish}
@@ -66,8 +70,9 @@ sn edges/.style={for tree={edge={-Latex}}},
       edge+={/tikz/visible on={#1}}}}
 }
 
-\newcommand{\x}{\textcolor{color1}{x}}
-\newcommand{\y}{\textcolor{color3}{y}}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xx}{\textcolor{color1}{x}}
+\newcommand{\yy}{\textcolor{color3}{y}}
 \newcommand{\pP}{\texttt{P}}
 \newcommand{\qQ}{\texttt{Q}}
 \newcommand{\dDelta}{\textcolor{color2}{\Delta}}
@@ -185,30 +190,30 @@ sn edges/.style={for tree={edge={-Latex}}},
       \onslide<1,2>
       \begin{block}{\#SAT~\color{gray}{\parencite{DBLP:journals/tcs/Valiant79}}}
         \begin{itemize}
-          \item Input formula: $\x \lor \y$
-          \item Interpretations: $\emptyset$, $\{\, \x \,\}$, $\{\, \y \,\}$,
-                $\{\, \x, \y \,\}$
-          \item Models: $\{\, \x \,\}$, $\{\, \y \,\}$, $\{\, \x, \y \,\}$
+          \item Input formula: $\xx \lor \yy$
+          \item Interpretations: $\emptyset$, $\{\, \xx \,\}$, $\{\, \yy \,\}$,
+                $\{\, \xx, \yy \,\}$
+          \item Models: $\{\, \xx \,\}$, $\{\, \yy \,\}$, $\{\, \xx, \yy \,\}$
           \item<2-> Answer (model count): 3
         \end{itemize}
       \end{block}
       \onslide<3,4>
       \begin{block}{Weighted Model Counting~\color{gray}{\parencite{DBLP:journals/ai/ChaviraD08}}}
         \begin{itemize}
-          \item Input formula: $\x \lor \y$
+          \item Input formula: $\xx \lor \yy$
           \item Input weights: $\begin{aligned}[t]
-                                  &w(\x) = 0.3\text{, }w(\neg \x) = 0.7,\\
-                                  &w(\y) = 0.2\text{, }w(\neg \y) = 0.8
+                                  &w(\xx) = 0.3\text{, }w(\neg \xx) = 0.7,\\
+                                  &w(\yy) = 0.2\text{, }w(\neg \yy) = 0.8
                                 \end{aligned}$
           \item<4-> Answer (weighted model count):
-                $w(\x)w(\y) + w(\x)w(\neg \y) + w(\neg \x)w(\y) = 0.44$
+                $w(\xx)w(\yy) + w(\xx)w(\neg \yy) + w(\neg \xx)w(\yy) = 0.44$
         \end{itemize}
       \end{block}
       \onslide<5,6>
       \begin{block}{(Weighted) (Symmetric) First-Order Model Counting\\
           \color{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}}
         \begin{itemize}
-          \item Input formula: $\forall \x \in \Delta\text{. }\pP(\x)$
+          \item Input formula: $\forall \xx \in \Delta\text{. }\pP(\xx)$
           \item Input weights: $w^{+}(\pP) = 0.3$, $w^{-}(\pP) = 0.7$
           \item Input domain size(s): $|\dDelta| = 2$
           \item<6-> Answer: ${(w^{+}(\pP))}^{|\dDelta|} = 0.09$
@@ -248,6 +253,7 @@ sn edges/.style={for tree={edge={-Latex}}},
 % automata and directed graphs)
 
 % TODO: add a very clear example of what a model is
+% TODO: introduce the problem from the next side, visualise P and Q as subsets of Delta?
 % TODO: (maybe) add a slide about other approaches to WFOMC, making it crystal clear what my contributions are
 \begin{frame}{First-Order Model Counting (in More Detail)}
   \begin{itemize}
@@ -268,35 +274,96 @@ sn edges/.style={for tree={edge={-Latex}}},
 \end{frame}
 
 \begin{frame}{First-Order Knowledge Compilation: An Approach to FOMC}
-  \centering
-  \begin{forest}
-    for tree={s sep=10mm, sn edges}
-    [\alt<2->{$\bigwedge_{c \in \Delta}$}{$\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$},inner on=<2->,label={[visible on=<{8-9,14-}>]right:{\alert{\alt<10->{$3^{n}$}{$\{\,\pP(c), \qQ(c)\,\}$}}}}
-    [\alt<3->{$\lor$}{$\pP(c) \lor \qQ(c)$},for tree={visible on=<2->},inner on=<3->,label={[visible on=<{7-9,13-}>]right:{\alert{\alt<10->{$2 + 1 = 3$}{$\{\,\pP(c), \qQ(c)\,\}$}}}}
-    [\alt<4->{$\land$}{$\begin{aligned}\qQ(c)\\ \pP(c) \lor \qQ(c)\end{aligned}$},name=and,for tree={visible on=<3->},inner on=<4->,label={[name=foobar,visible on=<{6-9,12-}>]left:{\alert<-8,12->{\alt<10->{$2 \times 1 = 2$}{$\{\,\qQ(c)\,\}$}}}}
-    [\alt<10->{$\pP(c) \lor \neg \pP(c)$}{$\qQ(c)$},name=smoothing,for tree={visible on=<4->},rectangle,draw,fill=gray!25,label={[visible on=<11->]below:{\alert{2}}}]
-    [\alt<10->{$\land$}{$\top$},for tree={visible on=<4->},leaf on=<4-9>,inner on=<10->,label={[label distance=0cm,visible on=<12->]87:{\alert{$1 \times 1 = 1$}}}
-    [$\qQ(c)$,for tree={visible on=<10->},rectangle,draw,fill=gray!25,label={[visible on=<11->]below:{\alert{1}}}]
-    [$\top$,for tree={visible on=<10->},rectangle,draw,fill=gray!25,label={[visible on=<11->]below:{\alert{1}}}]
-    ]
-    ]
-    [\alt<5->{$\land$}{$\begin{aligned}\neg\qQ(c)\\ \pP(c) \lor \qQ(c)\end{aligned}$},for tree={visible on=<3->},inner on=<5->,label={[visible on=<{6-9,12-}>]right:{\alert{\alt<10->{$1 \times 1 = 1$}{$\{\,\pP(c), \qQ(c)\,\}$}}}}
-    [$\neg \qQ(c)$,for tree={visible on=<5->},rectangle,draw,fill=gray!25,label={[visible on=<11->]below:{\alert{1}}}]
-    [$\pP(c)$,for tree={visible on=<5->},rectangle,draw,fill=gray!25,label={[visible on=<11->]below:{\alert{1}}}]
-    ]
-    ]
-    ]
-    \begin{scope}[on background layer]
-      \uncover<9>{\node [fill=redish, ellipse, fit=(foobar)] {};}
-      \uncover<10>{\node [fill=redish, ellipse, fit={(smoothing) (and)}, inner sep=0.5pt] {};}
-    \end{scope}
-  \end{forest}
+  \begin{minipage}[t][0.81\textheight][t]{\textwidth}
+    \centering
+    \begin{forest}
+      for tree={s sep=10mm, sn edges}
+      [\alt<3->{$\bigwedge_{c \in \Delta}$}{$\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$},
+      inner on=<3->,
+      label={[visible on=<{13-14,19-}>]right:{\alert{\alt<15->{$3^{|\Delta|}$}{$\{\,\pP(c), \qQ(c)\,\}$}}}}
+      [\alt<5->{$\lor$}{$\pP(c) \lor \qQ(c)$},
+      name=lor,
+      for tree={visible on=<3->},
+      inner on=<5->,
+      label={[visible on=<{12-14,18-}>]right:{\alert{\only<18->{$2 + 1 = 3$}\only<12-13>{\colorbox{white}{$\{\,\pP(c), \qQ(c)\,\}$}}\only<14>{\colorbox{redish}{$\{\,\pP(c), \qQ(c)\,\}$}}}}}
+      [\alt<7->{$\land$}{$\begin{aligned}\qQ(c)\\ \pP(c) \lor \qQ(c)\end{aligned}$},
+      name=and,
+      for tree={visible on=<5->},
+      inner on=<7->,
+      label={[visible on=<{11-14,17-}>]left:{\alert{\only<17->{$2 \times 1 = 2$}\only<11-13>{\colorbox{white}{$\{\,\qQ(c)\,\}$}}\only<14>{\colorbox{redish}{$\{\,\qQ(c)\,\}$}}}}}
+      [\alt<15->{$\pP(c) \lor \neg \pP(c)$}{$\qQ(c)$},
+      name=smoothing,
+      for tree={visible on=<7->},
+      rectangle,
+      draw,
+      fill=gray!25,
+      label={[visible on=<16->]below:{\alert{2}}}]
+      [\alt<15->{$\land$}{$\top$},
+      for tree={visible on=<7->},
+      leaf on=<6-14>,
+      inner on=<15->,
+      label={[label distance=0cm,visible on=<17->]87:{\alert{$1 \times 1 = 1$}}},
+      label={[visible on=<10>]below:{\alert{tautology}}},
+      [$\qQ(c)$,
+      for tree={visible on=<15->},
+      rectangle,
+      draw,
+      fill=gray!25,
+      label={[visible on=<16->]below:{\alert{1}}}]
+      [$\top$,
+      for tree={visible on=<15->},
+      rectangle,
+      draw,
+      fill=gray!25,
+      label={[visible on=<16->]below:{\alert{1}}}]
+      ]
+      ]
+      [\alt<9->{$\land$}{$\begin{aligned}\neg\qQ(c)\\ \pP(c) \lor \qQ(c)\end{aligned}$},
+      name=negformula,
+      for tree={visible on=<5->},
+      inner on=<9->,
+      label={[visible on=<{11-14,17-}>]right:{\alert{\alt<15->{$1 \times 1 = 1$}{$\{\,\pP(c), \qQ(c)\,\}$}}}}
+      [$\neg \qQ(c)$,
+      name=negq,
+      for tree={visible on=<9->},
+      rectangle,
+      draw,
+      fill=gray!25,
+      label={[visible on=<16->]below:{\alert{1}}}]
+      [$\pP(c)$,
+      name=pnode,
+      for tree={visible on=<9->},
+      rectangle,
+      draw,
+      fill=gray!25,
+      label={[visible on=<16->]below:{\alert{1}}}]
+      ]
+      ]
+      ]
+      \begin{scope}[on background layer]
+        \uncover<6>{\node[fill=redish, ellipse, fit={(and)}, inner sep=0.5pt] {};}
+        \uncover<8>{\node[fill=redish, ellipse, fit={(negformula)}, inner sep=0.5pt] {};}
+        \uncover<15>{\node[fill=redish, ellipse, fit={(smoothing) (and)}, inner sep=0.5pt] {};}
+      \end{scope}
+      \node<10>[below = 3cm of lor] (n1) {\alert{unit clauses}};
+      \path[-Latex,draw]<10> (n1) edge[bend right] (pnode);
+      \path[-Latex,draw]<10> (n1) edge (negq);
+      \path[-Latex,draw]<10> (n1) edge[bend left] (smoothing);
+    \end{forest}
+  \end{minipage}
+  \begin{minipage}{\textwidth}
+    \begin{overlayarea}{\textwidth}{4cm}
+      \only<2-3>{\centerline{Independent partial grounding (introduces a constant \alert{$c \in \Delta$})}}%
+      \only<4-5>{\centerline{Shannon decomposition (a.k.a. Boole's expansion theorem) on \alert{$\qQ(c)$}}}%
+      \only<6-7>{\centerline{Positive unit propagation of \alert{$\qQ(c)$}}}%
+      \only<8-9>{\centerline{Negative unit propagation of \alert{$\neg\qQ(c)$}}}%
+      \only<10>{\centerline{Compilation is complete \textcolor{forestgreen}{\cmark}}}%
+      \only<11-13>{\centerline{Smoothing: propagating atoms upwards}}%
+      \only<14-15>{\centerline{Smoothing: adding new atoms}}%
+      \only<16->{\centerline{Propagating the model count}}%
+    \end{overlayarea}
+  \end{minipage}
 \end{frame}
-% TODO: add compilation rule names at the bottom
-% TODO: add arrows explaining unit clauses and tautology
-% TODO: maybe use \alert instead of blue?
-% TODO: change both highlight colors (a light shade of red?)
-% TODO: maybe visualise P and Q as subsets of Delta?
 
 \begin{frame}{An Example Counting Problem}
   Suppose this room has \alert{$n$} seats, and there are \alert{$m \le n$}
@@ -481,7 +548,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \pause
   Only one \alert{(G, L)} pair:
   \[
-  G = 
+  G =
   \begin{tikzpicture}[edge from parent/.style={draw,-latex},baseline=(current bounding box.center)]
     \node[draw,circle] {$\land$}
     child {node {\color{color1} $\star$}}
@@ -647,6 +714,6 @@ sn edges/.style={for tree={edge={-Latex}}},
     \end{itemize}
   \end{block}
 \end{frame}
-% TODO: for future work, come back to the 'many ways to count' slide and add more arrows (e.g., beyond FOL)
-
+% TODO: for future work, come back to the 'many ways to count' slide and add
+% more arrows (e.g., beyond FOL)
 \end{document}

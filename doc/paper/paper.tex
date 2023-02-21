@@ -64,6 +64,11 @@
 % make sure there are no overflow errors
 % make sure the result table (as well as other floating objects) are on the right pages
 
+% TODO: I found the choice for what goes into a footnote and what doesn't rather
+% inconsistent, which made it a bit irritating to read for me. Maybe review if
+% the current use of footnotes is really necessary and helpful?
+% TODO: anna's feedback
+
 \author{%
 Paulius Dilkas$^1$\and
 Vaishak Belle$^2$\\
@@ -320,6 +325,10 @@ instances that \textsc{ForcLift} fails on. Finally, in \cref{sec:conclusion}, we
 conclude by outlining some conjectures and directions for future work.
 
 \section{Preliminaries}\label{sec:recprelims}
+% TODO: I find the writing mostly clear, but the structure of the Preliminaries
+% somewhat confusing. It starts with some notation, then some definitions, then
+% suddenly a paragraph titled "Notation", and so on. Maybe see if you can
+% rearrange some things and/or add some (more) helpful paragraph titles?
 
 Our representation of FOMC instances is largely based on the format used
 internally by \textsc{ForcLift}, some aspects of which are described by Van den
@@ -568,12 +577,11 @@ following changes and additions to the node types already supported by
 \textsc{ForcLift}. First, we introduce a new node type for constraint removal
 ($\CR$). Second, we replace domain recursion with generalised domain recursion
 ($\GDR$). And third, for reasoning about partially-constructed FCGs, we write
-$\star$ for a placeholder type that is yet to be replaced. Similarly to Van den
-Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}, we write $T_p$ for an
-FCG that has a node with the label $T_p$ (i.e., type $T$ and parameter(s) $p$)
-and $\star$'s as all of its direct successors. See \cref{fig:examplefcg} for an
-example FCG\@. Its source node has out-degree 1, label $\GDR$, and type $\GDR$.
-% TODO: update the last sentence
+$\star$ for a placeholder type that is yet to be replaced. We write $T_p$ for an
+FCG that has a node with label $T_p$ (i.e., type $T$ and parameter(s) $p$) and
+$\star$'s as all of its direct successors. We also write $T_p(v)$ for an FCG
+with one edge from a node labelled $T_{p}$ to some other node $v$ (and no other
+nodes or edges). See \cref{fig:examplefcg} for an example FCG\@.
 
 % Connecting FCGs with formulas
 Finally, we introduce a structure that represents a solution to a (W)FOMC
@@ -986,6 +994,7 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 \end{proof}
 
 \section{How to Interpret an FCG}\label{sec:interpret}
+% TODO: rewrite this section
 
 \begin{algorithm}[t]
   \caption{Construct functions from an FCG}
@@ -1045,37 +1054,36 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
     }
   }
 \end{algorithm}
-% TODO: have I introduced the GDR(v') syntax? (for other types as well)
 
-\begin{itemize}
-  \item TODO: define atomic --- no subtraction, i.e., just a variable name
-  \item for each FCG node $v$, $\mathfrak{D}(v)$ is a precomputed set of domains
-        that are used by $v$ and all of its successors (except the ones that are
-        introduced by $v$ or one of its successors) (this was already part of
-        \textsc{ForcLift}, although had to be reimplemented in a way that avoids
-        infinite loops when dealing with cycles in graphs)
-  \item for list generators over a set of domains, we assume an arbitrary fixed
-        ordering over all domains
-  \item $\mathsf{F}$ is a partial map from the set of FCG nodes to Strings,
-        i.e., function names
-  \item \newVariableName just generates a unique identifier for a variable
-  \item \newFunctionName does the same thing for function names and also records
-        the new name in $\mathsf{F}$
-  \item the top function is the main one
-  \item `is a direct successor of a $\Reff$ node' --- the in-degree is greater
-        than 1
-\end{itemize}
+% \begin{itemize}
+%   \item atomic --- no subtraction, i.e., just a variable name
+%   \item for each FCG node $v$, $\mathfrak{D}(v)$ is a precomputed set of domains
+%         that are used by $v$ and all of its successors (except the ones that are
+%         introduced by $v$ or one of its successors) (this was already part of
+%         \textsc{ForcLift}, although had to be reimplemented in a way that avoids
+%         infinite loops when dealing with cycles in graphs)
+%   \item for list generators over a set of domains, we assume an arbitrary fixed
+%         ordering over all domains
+%   \item $\mathsf{F}$ is a partial map from the set of FCG nodes to Strings,
+%         i.e., function names
+%   \item \newVariableName just generates a unique identifier for a variable
+%   \item \newFunctionName does the same thing for function names and also records
+%         the new name in $\mathsf{F}$
+%   \item the top function is the main one
+%   \item `is a direct successor of a $\Reff$ node' --- the in-degree is greater
+%         than 1
+% \end{itemize}
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
 inputs and parameters. These operations are then immediately performed while
 traversing the circuit. With \textsc{Crane}, the interpretation of an FCG is a
-collection of functions. Each function has (some) domain sizes as parameters and
-may contain recursive calls to other functions, including itself. While there
-may be any number of subsidiary functions, there is always one main function
-that can be called with the sizes of the domains of the input formula as
-arguments. Henceforth, this function is always called $f$, and it is defined by
-the source node.
+list of functions. Each function has (some) domain sizes as parameters and may
+contain recursive calls to other functions, including itself. While there may be
+any number of subsidiary functions, there is always one main function that can
+be called with the sizes of the domains of the input formula as arguments.
+Henceforth, this function is always called $f$, and it is defined by the source
+node.
 
 The interpretation of a node is decided by its type. Here we describe the
 interpretations of new (or significantly changed) types and refer the reader to
