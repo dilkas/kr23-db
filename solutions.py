@@ -269,7 +269,10 @@ def factorial(n):
 def friendsmoker(n):
     return 2**n * sum(math.comb(n, m) * 2**((n-m)*(n-m-1) + (n-m)*m + m*(m-1)) for m in range(n + 1))
 
-MAX = 10
+def friendsmoker_simple(n):
+    return sum(math.comb(n, k)*2**(n*n-k*(n-k)) for k in range(n+1))
+
+MAX = 100
 
 # for m in range(1, MAX):
 #     for n in range(1, MAX):
@@ -302,9 +305,4 @@ MAX = 10
 #     )
 
 for n in range(0, MAX):
-    print(
-        "f({}) = {}".format(
-            n,
-            friendsmoker(n)
-        )
-    )
+    print(str(friendsmoker_simple(n)) + ", ", end="")

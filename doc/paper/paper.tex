@@ -67,7 +67,12 @@
 % TODO: I found the choice for what goes into a footnote and what doesn't rather
 % inconsistent, which made it a bit irritating to read for me. Maybe review if
 % the current use of footnotes is really necessary and helpful?
-% TODO: anna's feedback
+% TODO: replace references with the condensed version
+% TODO: feedback2.pdf
+% TODO: feedback1.pdf
+
+% TODO: what's the punchline? make sure the introduction tells the reader what
+% to expect from section 5
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -102,6 +107,9 @@ vbelle@ed.ac.uk
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
 \newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
+\newcommand{\Vone}{\mathsf{V}_{1}}
+\newcommand{\Vtwo}{\mathsf{V}_{2}}
+\newcommand{\Vthree}{\mathsf{V}_{3}}
 
 \DeclareMathOperator{\friends}{\texttt{friends}}
 \DeclareMathOperator{\smokes}{\texttt{smokes}}
@@ -151,6 +159,15 @@ sn edges/.style={for tree={edge={-Latex}}}
 \end{abstract}
 
 \section{Introduction}\label{sec:introduction}
+
+% TODO: also cite 'WFOMC with DAG axioms'
+% \cite{DBLP:journals/corr/abs-2302-09830}
+
+% TODO: add a flow graph: \phi -> Box (Compilation) -> \G_\phi -> Box (Algorithm
+% 4) -> \mathcal{F}_\phi -> Box (simplification) -> \mathcal{F|_\phi, base
+% cases, domain sizes -> Box (Propagation (?))
+
+% TODO: too many acronyms (e.g., FOL)
 
 % 1. What is the problem?
 % 2. Why is it interesting and important?
@@ -225,6 +242,7 @@ are several implementations of exact WFOMC algorithms:
 % solutions? How does mine differ?)
 % simple unliftable instances -> recursion
 
+% TODO: must remove this footnote
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{There is some previous work
   showing how FOMC can compute
@@ -425,6 +443,10 @@ Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} allow for equality
 constraints and constraints of the form $X \not\in \Delta$ for some variable $X$
 and domain $\Delta$, we exclude such constraints simply because they are not
 needed.
+% TODO: explain why we're not losing anything by dropping equality constraints
+% (e.g., X = Y). Answer: having two variables that are equal is the same thing
+% as having one variable (since by the definition of a clause, this equality can
+% only be at the beginning of a clause.
 
 One can read a formula in our format as a sentence in FOL\@. All variables in a
 clause are implicitly universally quantified (but note that variables are never
@@ -567,6 +589,12 @@ more information about node types and their interpretations for computing the
     omit some parameters as well as nodes whose only arithmetic effect is
     multiplication by one.}\label{fig:examplefcg}
 \end{figure}
+
+% TODO: the definition of FCG is hard to miss (highlight its importance, maybe
+% remind the reader later on in the paper)
+
+% TODO: instead of FO d-DNNF computational graph, say 'first-order computational
+% graph' (FOCG?)
 
 In this paper, we introduce \emph{FO d-DNNF computational graphs} (FCGs) that
 generalise circuits by dispensing with acyclicity. Formally, an FCG is a (weakly
@@ -993,11 +1021,10 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   every model of $\phi$ satisfies $\psi$ and vice versa, completing the proof.
 \end{proof}
 
-\section{How to Interpret an FCG}\label{sec:interpret}
-% TODO: rewrite this section
+\section{Converting FCGs to Function Definitions}\label{sec:interpret}
 
 \begin{algorithm}[t]
-  \caption{Construct functions from an FCG}
+  \caption{Construct functions from an FCG}\label{alg:interpretation}
   \SetKwProg{Fn}{Function}{:}{}
 
   \SetKwData{functionCall}{call}
@@ -1018,10 +1045,10 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   \KwIn{$s$---the source node of the FCG}
   \KwData{$\functionNames = \emptyset$ (function names)}
   \KwOut{a list of function definitions}
-  $\variableNames \gets \{\, \Omega \mapsto \newVariableName{} \mid \Omega \in \mathcal{D} \,\}$\;
+  $\variableNames \gets \{\, \Omega \mapsto \newVariableName{} \mid \Omega \in \mathcal{D} \,\}$\;\label{line:varnames}
   \If{$s$ is a direct successor of a $\Reff$ node}{
-    $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
-    \Return{\functions}\;
+    $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;\label{line:initialcall}
+    \Return{\functions}\;\label{line:initialcalltwo}
   }
   $f \gets \newFunctionName{$s$}$\;
   $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
@@ -1032,10 +1059,10 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
     }
     $f \gets \newFunctionName{$v$}$\;
     $\newVariableNames \gets \variableNames$\;
-    \For{$\Omega \in \mathfrak{D}(v)$ s.t. $\newVariableNames(\Omega)$ is non-atomic}{
-      $\newVariableNames(\Omega) \gets \newVariableName{}$\;
+    \For{$\Omega \in \mathfrak{D}(v)$ s.t. $\newVariableNames(\Omega)$ is non-atomic}{\label{line:nonone}
+      $\newVariableNames(\Omega) \gets \newVariableName{}$\;\label{line:nontwo}
     }
-    $(\expression, \functions) \gets \actuallyVisit{$v$, \newVariableNames}$\;
+    $(\expression, \functions) \gets \actuallyVisit{$v$, \newVariableNames}$\;\label{line:actuallyvisit}
     $\functionCall \gets f(\langle \variableNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
     $\functionSignature \gets f(\langle \newVariableNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
     \Return{$(\functionCall, \langle \functionSignature = \expression \rangle \mdoubleplus \functions)$}\;
@@ -1044,10 +1071,10 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
     \Switch{label of $v$}{
       \lCase{$\GDR(v')$}{\Return{\visit{$v'$, \variableNames}}}
       \uCase{$\CR_{\Omega \mapsto \Omega'}(v')$}{
-        \Return{\visit{$v'$, $\variableNames \cup \{\, \Omega' \mapsto (\variableNames(\Omega) - 1) \,\}$}}\;
+        \Return{\visit{$v'$, $\variableNames \cup \{\, \Omega' \mapsto (\variableNames(\Omega) - 1) \,\}$}}\;\label{line:cr}
       }
       \uCase{$\Reff_{\rho}(v')$}{
-        $\args \gets \langle \variableNames{$\rho(\Omega)$} \mid \Omega \in \mathfrak{D}(v') \rangle$\;
+        $\args \gets \langle \variableNames\circ\rho(\Omega) \mid \Omega \in \mathfrak{D}(v') \rangle$\;\label{line:args}
         \Return{$(\functionNames{$v'$}(\args), \langle \rangle)$}\;
       }
       \dots
@@ -1055,24 +1082,49 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   }
 \end{algorithm}
 
-% \begin{itemize}
-%   \item atomic --- no subtraction, i.e., just a variable name
-%   \item for each FCG node $v$, $\mathfrak{D}(v)$ is a precomputed set of domains
-%         that are used by $v$ and all of its successors (except the ones that are
-%         introduced by $v$ or one of its successors) (this was already part of
-%         \textsc{ForcLift}, although had to be reimplemented in a way that avoids
-%         infinite loops when dealing with cycles in graphs)
-%   \item for list generators over a set of domains, we assume an arbitrary fixed
-%         ordering over all domains
-%   \item $\mathsf{F}$ is a partial map from the set of FCG nodes to Strings,
-%         i.e., function names
-%   \item \newVariableName just generates a unique identifier for a variable
-%   \item \newFunctionName does the same thing for function names and also records
-%         the new name in $\mathsf{F}$
-%   \item the top function is the main one
-%   \item `is a direct successor of a $\Reff$ node' --- the in-degree is greater
-%         than 1
-% \end{itemize}
+\begin{itemize}
+  \item TODO: is maybe `parameter name' (or something similar) would be more
+        appropriate than `variable name'?
+  \item We call a variable name is \emph{atomic} if it is free of subtraction
+        (e.g., $m$, $n$); otherwise it is \emph{non-atomic} (e.g., $m-1$,
+        $n-l$).
+  \item For each node $v$, let $\mathfrak{D}(v)$ denote the (precomputed) set of
+        domains, the sizes of which we would use as parameters if we were to
+        define a function that begins at $v$. This set is computed by
+        iteratively setting
+        $\mathfrak{D}(v) \gets \left(\bigcup_{u} \mathfrak{D}(u) \setminus I_{v}\right) \cup U_{v}$
+        until convergence, where
+        \begin{itemize}
+          \item $u$ is any direct successor of $v$,
+          \item $I_{v}$ is the set of domains \emph{introduced} at node $v$, and
+          \item $U_{v}$ is the set of domains \emph{used} by $v$.
+        \end{itemize}
+  \item We assume a fixed total ordering of all domains names. In particular, in
+        our running example we assume that $\Gamma$ goes before $\Delta$.
+  \item $\mathsf{F}$ is a partial map from the set of FCG nodes to function
+        names (e.g., $f$, $g$).
+  \item \newVariableName just generates a unique identifier for a variable
+  \item \newFunctionName does the same thing for function names and also records
+        the new name in $\mathsf{F}$
+  \item The first function in the list is the main one.
+  \item Note that a node is a direct successor of a $\Reff$ node if and only if
+        it has an in-degree greater than one.
+  \item For simplicity, we refer to FCG nodes using their types.
+  \item The algorithm consists of two main functions: \visit and \actuallyVisit.
+        The former handles new function definitions, and the latter produces an
+        algebraic interpretation of each node depending on its type. As there
+        are many node types, \cref{alg:interpretation} only includes the ones
+        pertinent to the contributions of this paper; see previous
+        work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information about the other
+        types.
+  \item Given some node $v$ as input, both \visit and \actuallyVisit return a
+        pair $(\mathsf{e}, \mathsf{funs})$. Here, $\mathsf{e}$ is the algebraic
+        expression that should be used to evaluate $v$ or use it in another
+        expression, and $\mathsf{funs}$ is a list of auxiliary functions that
+        were created while constructing $\mathsf{e}$.
+  \item TODO: $\mathfrak{D}$ must be a list. That's the ordering of domain names
+        comes in, not in list comprehensions.
+\end{itemize}
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
 instance into a circuit, each node type encodes an arithmetic operation on its
@@ -1095,49 +1147,84 @@ interpretation of a $\Reff$ node is a function call. The direct successor of the
 $\Reff$ node (say, $v$) then must introduce a function. The parameters of this
 function are the sizes of all domains used by nodes reachable from $v$.
 
-\begin{example}\label{example:interpretation}
-  Consider the FCG from \cref{fig:examplefcg}. The input formula (i.e., the
-  formula from \cref{example:first}) has two domains: $\Gamma$ and $\Delta$.
-  Thus, the interpretation of the FCG is a function
-  $f\colon \mathbb{N}_{0} \times \mathbb{N}_{0} \to \mathbb{R}_{\ge 0}$. Let
-  $m \coloneqq |\Gamma|$, and $n \coloneqq |\Delta|$. The node labelled
-  $\bigvee_{\Delta^{\top} \subseteq \Delta}$ tells us that
-  $f(m, n) = \sum_{l = 0}^{n} \binom{n}{l} \square$, where $\square$ is the
-  interpretation of the remaining subgraph, and $l$ iterates over all possible
-  sizes of $\Delta^{\top}$. It also creates two subdomains
-  $\Delta^{\top}, \Delta^{\bot} \subseteq \Delta$ that partition $\Delta$, i.e.,
-  as the size of $\Delta^{\top}$ increases, the size of $\Delta^{\bot}$
-  correspondingly decreases. Nodes labelled $\land$ correspond to
-  multiplication. Therefore,
-  $f(m, n) = \sum_{l = 0}^{n} \binom{n}{l} \diamondsuit \times \heartsuit$,
-  where $\diamondsuit$ is the interpretation of the contradiction (i.e., $\bot$)
-  node, and $\heartsuit$ is the interpretation of the $\Reff$ node.
+\begin{figure}
+  \centering
+  \begin{tikzcd}
+    \ar[d] & \\
+    \text{\Cref{alg:interpretation}} \ar[d] \ar[u, swap, shift right=0.7ex, "{\left\langle f(m, n) = \sum_{l=0}^{n}[l<2]f(m-1,n-l) \right\rangle}"] & \\
+    \visit{$\GDR$, $\Vone$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({f(m, n), \left\langle f(m, n) = \sum_{l=0}^{n}[l<2]f(m-1,n-l) \right\rangle}\right)"] & \\
+    \actuallyVisit{$\GDR$, $\Vone$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({\sum_{l=0}^{n}[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\bigvee$, $\Vone$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({\sum_{l=0}^{n}[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\CR$, $\Vtwo$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\land$, $\Vthree$} \ar[d] \ar[dr] \ar[u, swap, shift right=0.7ex, "\left({[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\bot$, $\Vthree$} \ar[u, swap, shift right=0.7ex, "\left({[l<2], \langle\rangle}\right)"] & \visit/\actuallyVisit{$\Reff$, $\Vthree$} \ar[ul, swap, shift right=0.7ex, "\left({f(m-1, n-l), \langle\rangle}\right)"]
+  \end{tikzcd}
+  \caption{Function calls and their return values when \cref{alg:interpretation}
+    is run on the FCG from \cref{fig:examplefcg}. When \protect\visit calls
+    \protect\actuallyVisit and returns its output unchanged, the two function
+    calls are shortened as a single call to
+    $\protect\visit/\protect\actuallyVisit$. TODO: this last sentence should be
+    explained in text.}\label{fig:functioncalls}
+\end{figure}
 
-  A contradiction node with clause $c$ as a parameter is interpreted as one if
-  the clause has groundings and zero otherwise. In this case, the parameter is
+\begin{example}\label{example:interpretation}
+  Let us see how \cref{alg:interpretation} handles the FCG from
+  \cref{fig:examplefcg}. Here, $\mathcal{D} = \{\, \Gamma, \Delta \,\}$. Let
+  $\Vone \coloneqq \{\, \Gamma \mapsto m, \Delta \mapsto n \,\}$,
+  $\Vtwo \coloneqq \Vone \cup \{\, \Delta^{\top} \mapsto l, \Delta^{\bot} \mapsto (n-l) \,\}$,
+  and $\Vthree \coloneqq \Vtwo \cup \{\, \Gamma' \mapsto (m-1) \,\}$ denote
+  versions of $\mathsf{V}$ at various points throughout the algorithm's
+  execution. Here, $l$, $m$, and $n$ are all arbitrary variable names generated
+  by \newVariableName. \Cref{line:varnames} initialises $\mathsf{V}$ to $\Vone$.
+
+  \Cref{fig:functioncalls} shows the outline of function calls and their return
+  values. Once \visit{$\GDR$, $\Vone$} is called on \cref{line:initialcall},
+  \newFunctionName updates $\mathsf{F}$ to $\{\, \GDR \mapsto f \,\}$, where $f$
+  is a new function name. There are no non-atomic names in $\Vone$, so
+  \cref{line:nonone,line:nontwo} are skipped, and calls to
+  \actuallyVisit{$\GDR$, $\Vone$} and
+  $\visit/\actuallyVisit{$\bigvee$, $\Vone$}$ follow. Here, $\Vone$ becomes
+  $\Vtwo$, i.e., the $\bigvee$ node introduces two domains $\Delta^{\top}$ and
+  $\Delta^{\bot}$ that `partition' $\Delta$, i.e.,
+  $\Vtwo(\Delta^{\top}) + \Vtwo(\Delta^{\bot}) = l + (n-l) = n = \Vtwo(\Delta)$.
+  Similarly, \actuallyVisit{$\CR$, $\Vtwo$} on \cref{line:cr} adds $\Gamma'$,
+  replacing $\Vtwo$ with $\Vthree$.
+
+  Eventually, \actuallyVisit{$\bot$, $\Vthree$} is called. A contradiction node
+  with clause $c$ as a parameter is interpreted as one if the clause has
+  groundings and zero otherwise. In this case, the parameter is
   $c = (\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto \Delta^\top, Y \mapsto \Delta^\top \,\})$
-  (not shown in \cref{fig:examplefcg}), which can be read as
+  (not shown in \cref{fig:examplefcg}). Equivalently,
   $\forall X, Y \in \Delta^{\top}\text{. }X \ne Y \Rightarrow \bot$, i.e.,
-  $\forall X, Y \in \Delta^{\top}\text{. }X = Y$. This latter sentence is true
-  if and only if $|\Delta^{\top}| < 2$. Therefore, we can use the Iverson
-  bracket notation to write
+  $\forall X, Y \in \Delta^{\top}\text{. }X = Y$. This sentence is true if and
+  only if $\Vthree(\Delta^{\top}) < 2$. Thus, we can use the Iverson bracket
+  notation to write
   \[
-    \diamondsuit = [l < 2] \coloneqq
+    [l < 2] \coloneqq
     \begin{cases}
       1 & \text{if } l < 2 \\
       0 & \text{otherwise.}
     \end{cases}
   \]
+  for the output expression of \actuallyVisit{$\bot$, $\Vthree$}.
 
-  It remains to interpret the $\Reff$ node. Parameter
-  $\{\, \Gamma \mapsto \Gamma', \Delta \mapsto \Delta^\bot \,\}$ tells us that
-  the interpretation of the $\Reff$ node should be the same as that of the
-  source node, but with domains $\Gamma$ and $\Delta$ replaced with $\Gamma'$
-  and $\Delta^{\bot}$, respectively. Domain $\Gamma'$ was created by the CR rule
-  applied on $\Gamma$, so $|\Gamma'| = m - 1$. Now
-  $\Delta^{\bot} = \Delta \setminus \Delta^{\top}$, and $|\Delta^{\top}| = l$,
-  so $|\Delta^{\bot}| = n - l$. Thus, the interpretation of the $\Reff$ node is
-  a recursive call to $f(m - 1, n - l)$. Therefore,
+  Next, \actuallyVisit{$\land$, $\Vthree$} calls
+  $\visit/\actuallyVisit{$\Reff$, $\Vthree$}$. Since
+  $\mathfrak{D}(\GDR) = \langle \Gamma, \Delta \rangle$, and
+  $\begin{tikzcd} \langle\Gamma, \Delta\rangle \ar[r, mapsto, "\rho"] & \langle\Gamma', \Delta^{\bot}\rangle \ar[r, mapsto, "\Vthree"] & \langle m-1, n-l \rangle\end{tikzcd}$,
+  \textsf{args} is set to $\langle m-1, n-l \rangle$ on \cref{line:args}, and
+  the output expression becomes $f(m-1, n-l)$. The call to
+  \actuallyVisit{$\land$, $\Vthree$} then returns the product of the two
+  expressions $[l<2]f(m-1, n-l)$. Next, the call to \actuallyVisit{$\bigvee$,
+    $\Vone$} prepends a summation and returns $\sum_{l=0}^{n}[l<2]f(m-1,n-l)$.
+  The same expression (and an empty list of functions) is then returned to
+  \cref{line:actuallyvisit} of the call to \visit{$\GDR$, $\Vone$}. Here, both
+  \textsf{call} and \textsf{signature} are set to $f(m, n)$. As the definition
+  of $f$ is the final answer and not part of some other algebraic expression,
+  \cref{line:initialcall,line:initialcalltwo} discard the function call
+  expression and return the definition of $f$.
+
+  Therefore,
   \begin{align}
     f(m, n) &= \sum_{l = 0}^{n} \binom{n}{l} [l < 2] f(m-1, n-l)\nonumber \\
             &= f(m-1, n) + n f(m-1, n-1).\label{eq:solution}
@@ -1148,6 +1235,21 @@ function are the sizes of all domains used by nodes reachable from $v$.
 \end{example}
 
 \section{Experimental Results}\label{sec:results}
+% TODO: rename 'experimental results' -> 'complexity results' (not just the
+% title of the section but review every mention of the word 'experimental')
+% TODO: make it clear that I'm not doing this by hand anymore, but I'm still
+% removing multiplications by one.
+% TODO (here or somewhere else): emphasise that there are two parts: search
+% (with some artificial limit) + inference (whose complexity we can easily
+% determine)
+% TODO: Must do one of these:
+% 1. determine the complexity of the counting quantifiers algorithm when run on
+% these instances
+% 2. find instances that are not in C^2 and make the paper about them
+% 3. run the counting quantifiers algorithm on these instances with increasing
+% domain sizes, statistically estimating the degree of the polynomial and
+% juxtaposing it with my complexity results shifted to overlap as much as
+% possible
 
 \begin{table*}[t]
   \centering
@@ -1175,6 +1277,16 @@ function are the sizes of all domains used by nodes reachable from $v$.
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
     that the algorithm was not able to find a solution.}\label{tbl:results}
 \end{table*}
+% TODO: 'Asymptotic Complexity of Counting' -> 'Complexity of \mathcal{F}_\phi'
+% (introduce \mathcal{F}_\phi in the introduction, together with the flow graph)
+
+% TODO: remove the rows that say 'same as..', putting the explanation about them
+% in text. And don't say 'same as', instead say that the formulas are in some
+% sence equivalent (maybe in a stronger sense than the usual equivalence).
+
+% TODO: emphasise that the reader should focus on the last two columns
+% TODO: the last sentence of the caption could be confusing
+% TODO: 'best known' sounds disappointing. Find a better alternative.
 
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
@@ -1244,6 +1356,7 @@ $\Theta(nk)$ time. For example, the complexity of \cref{eq:solution} is
 $\Theta(mn)$ since $f(m, n)$ can be computed by a dynamic programming algorithm
 that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
 a constant amount of time on the computation of each $f(i, j)$.
+% TODO: look for a better place to put the 'In particular...' remark
 
 The experimental results are summarised in \cref{tbl:results}, where we compare
 the solutions found by both algorithms to the best known ways of computing the

@@ -11,6 +11,7 @@
 \usepackage{soul}
 \usepackage{csquotes}
 \usepackage{pifont}
+\usepackage{venndiagram}
 
 \usetikzlibrary{shapes}
 \usetikzlibrary{positioning}
@@ -37,7 +38,7 @@
 
 \definecolor{color1}{HTML}{1B9E77}
 \definecolor{color2}{HTML}{7570b3}
-\definecolor{color3}{HTML}{e7298a}
+\definecolor{color3}{HTML}{e7298a} % TODO: I don't like pink
 \definecolor{forestgreen}{HTML}{009B55}
 
 \colorlet{redish}{color2!25}
@@ -71,11 +72,19 @@ sn edges/.style={for tree={edge={-Latex}}},
 }
 
 \newcommand{\cmark}{\ding{51}}%
+
 \newcommand{\xx}{\textcolor{color1}{x}}
 \newcommand{\yy}{\textcolor{color3}{y}}
 \newcommand{\pP}{\texttt{P}}
 \newcommand{\qQ}{\texttt{Q}}
 \newcommand{\dDelta}{\textcolor{color2}{\Delta}}
+
+\newcommand{\pone}{\textcolor{color1}{\pP(1)}}
+\newcommand{\ptwo}{\textcolor{color1}{\pP(2)}}
+\newcommand{\qone}{\textcolor{color2}{\qQ(1)}}
+\newcommand{\qtwo}{\textcolor{color2}{\qQ(2)}}
+\newcommand{\pqone}{\textcolor{color3}{\pP(1)}, \textcolor{color3}{\qQ(1)}}
+\newcommand{\pqtwo}{\textcolor{color3}{\pP(2)}, \textcolor{color3}{\qQ(2)}}
 
 \newcommand{\WMC}{\textup{WMC}}
 \newcommand{\WMI}{\textup{WMI}}
@@ -92,7 +101,7 @@ sn edges/.style={for tree={edge={-Latex}}},
 % make sure there's a clear and coherent storyline
 
 \author{\textbf{Paulius Dilkas} \inst{1} \and Vaishak Belle \inst{2}}
-\title{Recursive Solutions to \\First-Order Model Counting}
+\title{Synthesising Recursive Functions for\\ First-Order Model Counting}
 \institute{\inst{1} National University of Singapore, Singapore \and \inst{2} University of Edinburgh, UK}
 \date{TODO: date}
 
@@ -252,26 +261,77 @@ sn edges/.style={for tree={edge={-Latex}}},
 % maybe mention #CSP and other non-SAT ways of counting (SMT?, counting paths in
 % automata and directed graphs)
 
-% TODO: add a very clear example of what a model is
-% TODO: introduce the problem from the next side, visualise P and Q as subsets of Delta?
 % TODO: (maybe) add a slide about other approaches to WFOMC, making it crystal clear what my contributions are
-\begin{frame}{First-Order Model Counting (in More Detail)}
-  \begin{itemize}
-    \item \alert{First-order model counting} (FOMC) is the problem of counting
-          the models of a sentence in first-order logic.
-    \item The \alert{(symmetric) weighted} variation of the problem adds weights
-          (e.g., probabilities) to predicates.
-          \begin{itemize}
-            \item It is used for efficient \alert{probabilistic inference} in
-                  relational models such as Markov logic networks.
-          \end{itemize}
-    \item None of the (implemented) (W)FOMC algorithms are able to count, e.g.,
-          \alert{injective} and \alert{bijective} functions.
-  \end{itemize}
-  \begin{block}{Claim}
-    This shortcoming can be addressed via support for \alert{recursive functions}.
-  \end{block}
+
+\begin{frame}{(Unweighted) First-Order Model Counting}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item Example formula: $\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$
+        \item Let $\Delta \coloneqq \{\, 1, 2 \,\}$
+        \item Interpretations: all subsets of $\{\, \pP(1), \qQ(1), \pP(2), \qQ(2) \,\}$
+        \item Models:
+        \[
+          \begin{matrix}
+            \{\, \pone, \ptwo \,\}, & \{\, \pone, \qtwo \,\}, & \{\, \pone, \pqtwo \,\},\\
+            \{\, \qone, \ptwo \,\}, & \{\, \qone, \qtwo \,\}, & \{\, \qone, \pqtwo \,\},\\
+            \{\, \pqone, \ptwo \,\}, & \{\, \pqone, \qtwo \,\}, & \{\, \pqone, \pqtwo \,\}\\
+          \end{matrix}
+        \]
+        \item Each 1-ary predicate...
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \begin{overlayarea}{\textwidth}{4cm}
+        \only<1>{
+          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
+          \end{venndiagram2sets}
+        }%
+        \only<2>{
+          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
+            \fillOnlyA;
+          \end{venndiagram2sets}
+        }%
+        \only<3>{
+          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
+            \fillOnlyB;
+          \end{venndiagram2sets}
+        }%
+        \only<4>{
+          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
+            \fillACapB;
+          \end{venndiagram2sets}
+        }%
+        \only<5>{
+          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
+            \fillA;
+            \fillB;
+          \end{venndiagram2sets}
+        }%
+      \end{overlayarea}
+    \end{column}
+  \end{columns}
 \end{frame}
+% TODO: mention that n-ary predicates ~= relations
+
+% \begin{frame}{First-Order Model Counting (in More Detail)}
+%   \begin{itemize}
+%     \item \alert{First-order model counting} (FOMC) is the problem of counting
+%           the models of a sentence in first-order logic.
+%     \item The \alert{(symmetric) weighted} variation of the problem adds weights
+%           (e.g., probabilities) to predicates.
+%           \begin{itemize}
+%             \item It is used for efficient \alert{probabilistic inference} in
+%                   relational models such as Markov logic networks.
+%           \end{itemize}
+%     \item None of the (implemented) (W)FOMC algorithms are able to count, e.g.,
+%           \alert{injective} and \alert{bijective} functions.
+%   \end{itemize}
+%   \begin{block}{Claim}
+%     This shortcoming can be addressed via support for \alert{recursive functions}.
+%   \end{block}
+% \end{frame}
 
 \begin{frame}{First-Order Knowledge Compilation: An Approach to FOMC}
   \begin{minipage}[t][0.81\textheight][t]{\textwidth}
