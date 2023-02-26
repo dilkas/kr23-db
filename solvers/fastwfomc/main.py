@@ -4,7 +4,7 @@ from collections import defaultdict
 from aima3.logic import to_cnf
 from aima3.utils import expr, Expr
 
-from wfomc import WFOMC
+from wfomc_cc import WFOMCWithCC
 
 
 def main():
@@ -27,7 +27,7 @@ def main():
         '(~E(x,y) | (~(C1(x) & C1(y)) & ~(C2(x) & C2(y)) & ~(C3(x) & C3(y)) & ~(C4(x) & C4(y))))'
     )
 
-    counter = WFOMC(four_coloured, n)
+    counter = WFOMCWithCC(four_coloured, n)
     print(counter.get_wfomc(defaultdict(lambda: (1, 1))))
 
 
