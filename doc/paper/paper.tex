@@ -56,7 +56,8 @@
 /TemplateVersion (KR.2022.0, KR.2023.0)
 }
 
-\title{Synthesising Recursive Functions for First-Order Model Counting}
+\title{Synthesising Recursive Functions for First-Order Model Counting:\\
+  Challenges, Progress, and Conjectures}
 
 % TODO (at the very end)
 % grammarly the whole thing
@@ -68,11 +69,6 @@
 % inconsistent, which made it a bit irritating to read for me. Maybe review if
 % the current use of footnotes is really necessary and helpful?
 % TODO: replace references with the condensed version
-% TODO: feedback2.pdf
-% TODO: feedback1.pdf
-
-% TODO: what's the punchline? make sure the introduction tells the reader what
-% to expect from section 5
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -137,6 +133,13 @@ vbelle@ed.ac.uk
 sn edges/.style={for tree={edge={-Latex}}}
 }
 
+\hyphenation{ForcLift}
+\hyphenation{Crane}
+\hyphenation{Alchemy}
+\hyphenation{FastWFOMC}
+\hyphenation{Magician}
+\hyphenation{Tuffy}
+
 \begin{document}
 
 \maketitle
@@ -169,9 +172,16 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 % TODO: too many acronyms (e.g., FOL)
 
+% TODO: what's the punchline? make sure the introduction tells the reader what
+% to expect from section 5
+
 % 1. What is the problem?
 % 2. Why is it interesting and important?
 
+% TODO (about the sentence "Lifted ... (Kersting)"): This developed
+% simultaneously, with the development of so-called probabilistic relational
+% models, that combined syntactic power of FOL with, b networks & m networks,
+% allowing for a more relational view of uncertainty modelling
 \emph{First-order model counting} (FOMC) is the problem of computing the number
 of models of a sentence in first-order logic (FOL) given the size(s) of its
 domain(s)~\cite{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
@@ -247,14 +257,14 @@ are several implementations of exact WFOMC algorithms:
 % 2. cite the new paper "On Discovering Interesting Combinatorial Integer Sequences" as another example of computing n! using publicly unavailable code and as an example of applications to combinatorics
 However, none of the publicly available exact (W)FOMC algorithms can efficiently
 compute functions as simple as a factorial.\footnote{There is some previous work
-  showing how FOMC can compute
+  discussing FOMC for
   factorials~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/kr/BremenK21,DBLP:conf/ijcai/Broeck16}.
   One of them~\cite{DBLP:conf/ijcai/Broeck16} is an example `by hand' that does
   not directly correspond to any algorithm.
   Another~\cite{DBLP:journals/jair/Kuzelka21} proves that the problem is
   liftable but contains no experimental results. The
   third~\cite{DBLP:conf/kr/BremenK21} contains experimental results performed
-  with an algorithm, which is not publicly available.} We claim that the
+  with an algorithm that is not publicly available.} We claim that the
 capabilities of (W)FOMC algorithms can be significantly extended by empowering
 them with the ability to construct recursive solutions. The topic of recursion
 in the context of WFOMC has been studied before but in limited ways.
@@ -289,30 +299,13 @@ search.\footnote{In the current implementation, the rules that are applied in a
   partial groundings, Shannon decomposition, shattering, and two of our new
   rules introduced in \cref{sec:dr,sec:ref}---see previous
   work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for more information about the
-  rules.} This alternative was introduced since there is no reason to expect
+  rules.} This alternative was introduced because there is no reason to expect
 greedy search to be optimal. Second, the product of compilation is not directly
 evaluated but rather interpreted as a collection of functions on domain sizes.
 Hence, our approach is reminiscent of previous work on lifted inference via
 compilation to C++ programs~\cite{DBLP:conf/kr/KazemiP16} and the broader area
 of functional
 synthesis~\cite{DBLP:conf/cav/GoliaRM20,DBLP:conf/pldi/KuncakMPS10,sanathanan1963transfer}.
-
-% similarly to the other domains, there are many functions that fit the
-% specification, i.e., can correctly count the number of models as a function of
-% domain size(s). Whereas in [...] one typically wants to select the smallest
-% definition of a function, we are primarily concerned with its worst-case
-% complexity as measured by the number of arithmetic operations needed for an
-% arbitrary function call
-% \begin{itemize}
-%   \item Boolean functions~\cite{DBLP:conf/cav/GoliaRM20}
-%   \item dynamical systems~\cite{sanathanan1963transfer}
-%   \item program fragments~\cite{DBLP:conf/pldi/KuncakMPS10}
-% \end{itemize}
-
-% \footnote{There is also an intermediate stage called \emph{smoothing} that takes
-%   place between compilation and evaluation. As our changes to smoothing are
-%   rather elementary, we do not discuss them to not distract the reader from the
-%   main contributions of this paper.}
 
 % 5.2) The main idea: cycles that represent recursive calls.
 
@@ -372,14 +365,17 @@ interpreted as a subset of some other domain in $\mathcal{D}$.
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
   and $b$ is either a variable or a constant.
 \end{definition}
+% TODO: what is its semantic meaning? Meaning what logically: a \ne b? (say
+% that)
 
+% TODO: c = (L, E, \delta), E - inequality constraints
 \begin{definition}[Clause]\label{def:clause}
   A \emph{clause}\footnote{Van den Broeck et
     al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses as c-clauses.}
   is a triple $c = (L, C, \delta_c)$, where $L$ is a set of literals, $C$ is a
   set of constraints, and $\delta_c$ is the domain map of $c$. Let $\Vars$ be
   the function that maps clauses and sets of either literals or constraints to
-  the set of variables contained within. In particular,
+  the set of variables in them. In particular,
   $\Vars(c) \coloneqq \Vars(L) \cup \Vars(C)$. \emph{Domain map}
   $\delta_{c}\colon \Vars(c) \to \mathcal{D}$ is a function that maps all
   variables in $c$ to their domains such that (s.t.) if $(X, Y) \in C$ for some
@@ -388,11 +384,13 @@ interpreted as a subset of some other domain in $\mathcal{D}$.
   into its three constituents.
 \end{definition}
 
+% TODO: The first paragraph already introduced some notation.
+% TODO: so S^2 \coloneqq {(a, b) \mid a, b \in S}
 \paragraph{Notation.}
 For any set $S$, let $2^{S}$ denote its power set and
 $S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples of any
 finite length of elements of $S$. For any $n \in \mathbb{N}_{0}$, let
-$[n] \coloneqq \{\, 1, \dots, n \,\}$. For example, $[0] = \emptyset$, and
+$[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g., $[0] = \emptyset$, and
 $[2] = \{\, 1, 2 \,\}$. We write $\langle\rangle$ for an empty list,
 $\langle x \rangle$ for a list with one element $x$, $|l|$ for the length of
 list $l$, $\mdoubleplus$ for list concatenation, and $\pfun$ to denote partial
@@ -403,6 +401,8 @@ occurrences of all variables in $V$ replaced with $x$. Let $\Doms$
 set of domains (respectively, predicates) used within, and let $\dom(f)$ denote
 the domain of function $f$.
 
+% TODO: why was 'c-clause' a footnote but not this? Combine with previous
+% footnote.
 \begin{definition}[Formula]\label{def:formula}
   A \emph{formula} (called a c-theory by Van den Broeck et
   al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}) is a set of clauses s.t.\ all
@@ -413,6 +413,7 @@ the domain of function $f$.
     variables and predicates, constants are also mapped to domains, although we
     keep this mapping implicit.}
 \end{definition}
+% TODO: why is this a footnote?
 
 \begin{example}\label{example:first}
   Let $\phi \coloneqq \{\, c_1, c_2 \,\}$ be a formula with clauses
@@ -450,6 +451,8 @@ needed.
 % as having one variable (since by the definition of a clause, this equality can
 % only be at the beginning of a clause.
 
+% TODO: the 'but note' part is confusing
+% TODO: add \, for when a line ends with a \land
 One can read a formula in our format as a sentence in FOL\@. All variables in a
 clause are implicitly universally quantified (but note that variables are never
 shared among clauses), and all clauses in a formula are implicitly linked by a
@@ -465,6 +468,7 @@ conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
     \end{multlined}
 \end{align*}
 
+% TODO: the first sentence comes out of nowhere
 Once domains are mapped to finite sets and constants to elements in those sets,
 a formula can be viewed as a set of conditions that the predicates (interpreted
 as relations) have to satisfy. Hence, FOMC is the problem of counting the number
@@ -495,7 +499,7 @@ that maps each domain to a non-negative integer.
 \begin{definition}\label{def:model}
   Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
   $(\phi, \sigma)$ is a map
-  $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ such that the
+  $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ s.t.\ the
   following two conditions are satisfied.
   \begin{enumerate}
     \item Let $\texttt{p}/n \in \Preds(\phi)$ be a predicate and let
@@ -507,7 +511,12 @@ that maps each domain to a non-negative integer.
     \item As a collection of relations, $\mathfrak{M}$ satisfies $\phi$.
   \end{enumerate}
 \end{definition}
+% TODO (about the second condition): inductive defin?
+% M entails p(a) /\ p'(b) iff M entails p(a) and M entails p'(b)
+% M entails \neg p(a) iff M \not\entails p(a)
+% M entails \forall X. p(a) iff M entails p(d) \forall d \in D.
 
+% TODO: make the relations more concrete
 \begin{example}
   Let $\phi$ be as in \cref{example:first} and let
   $\sigma(\Gamma) = \sigma(\Delta) = 2$. Then the right-hand side of
@@ -753,11 +762,16 @@ example below.
   \]
 \end{example}
 
+% TODO (about the footnote): say: this shows that there is no loss of
+% expressiveness/compilation completeness with our new algorithm. Would be nice
+% if you could also show formally how it has improved on Guy, e.g., Prop.
+% \exists formula \phi such that AlgoGuy(\phi) may fail but NewAlg(\phi) \ne
+% \emptyset. Therefore, our algorithms is `more' complete than Guy's
 \begin{theorem}[Correctness of $\GDR$\footnote{\Cref{thm:correctness1} is equivalent to
     Proposition~3 by Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}.}]\label{thm:correctness1}
   Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
   $\Omega \in \mathcal{D}$ the domain selected on \cref{line:condition}, and
-  $\phi'$ the formula constructed by the algorithm for $\Omega$. Assume that
+  $\phi'$ the formula constructed by the algorithm for $\Omega$. Suppose that
   $\Omega \ne \emptyset$. Then $\phi \equiv \phi'$.
 \end{theorem}
 \begin{proof}
@@ -901,6 +915,8 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   Since $c$ was an arbitrary clause of $\phi$, this completes the proof that
   $\phi \equiv \phi'$.
 \end{proof}
+% TODO: Does this have analogue in Guy? If yes, explain difference. If no,
+% emphasize this point. Same for Theorem 3.
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
 
@@ -988,7 +1004,7 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 
 \begin{theorem}[Correctness of $\Reff$]
   Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
-  any formula selected on \cref{line:selectformula} of the algorithm such that
+  any formula selected on \cref{line:selectformula} of the algorithm s.t.\
   $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Let $\sigma$ be a
   domain size function. Then the set of models of $(\psi, \sigma \circ \rho)$ is
   equal to the set of models of $(\phi, \sigma)$.
@@ -1289,6 +1305,13 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % TODO: emphasise that the reader should focus on the last two columns
 % TODO: the last sentence of the caption could be confusing
 % TODO: 'best known' sounds disappointing. Find a better alternative.
+
+% TODO: I think I said this the last time, but alog with the complexities as a
+% way of representing the empirical evaluation, I think you should also include
+% a few plots, even if they say nothing more than what the table already says.
+% The point is that the readers can see what this behaviour looks like so even
+% if you include a few plots and say we just give a few representative examples
+% and the rest follow the table of all that will be better
 
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}

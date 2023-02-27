@@ -1,0 +1,6 @@
+a = {1, 2}
+
+p(a, a, a)
+
+p(x, y, z) ^ p(x, y, w) => z=w.
+p(k, y, z) ^ p(x, y, z) => k=x.
