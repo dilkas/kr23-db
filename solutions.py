@@ -272,16 +272,32 @@ def friendsmoker(n):
 def friendsmoker_simple(n):
     return sum(math.comb(n, k)*2**(n*n-k*(n-k)) for k in range(n+1))
 
-MAX = 100
+def weird(n):
+    return weird1(n)**n
+
+def weird2(m, n):
+    if m == 0 and n == 0:
+        return 1
+    if m == 0:
+        return 0
+    return weird2(m-1, n) + n*weird2(m-1, n-1)
+
+def weird1(n, fun=weird2): # should compute partial injections from [n] to [n]
+    if n == 0: return 1
+    if n == 1: return 2
+    return (weird1(n-1) +
+            2**n * (fun(n, n-1) + n * fun(n, n-2)) +
+            2**(n-1) * n * (fun(n-1, n-1) + n * fun(n-1, n-2)) +
+            2**(n-2) * (n-1) * (fun(n-2, n-1) + n * fun(n-2, n-2)))
+
+MAX = 10
 
 # for m in range(1, MAX):
 #     for n in range(1, MAX):
 #         print("f({}, {}) = {}".format(m, n, my_partial_injections(m, n)))
 
-# print()
-# for m in range(1, MAX):
-#     for n in range(1, MAX):
-#         print("f({}, {}) = {}".format(m, n, forclift2_injections(m, n)))
+for n in range(1, MAX):
+    print("f({}) = {} ({})".format(n, weird1(n), two_dimensional_partial_injections(n, n)))
 
 # for m in range(0, MAX):
 #     for n in range(0, MAX):
@@ -289,20 +305,11 @@ MAX = 100
 #             "f({}, {}) = {} ({})".format(
 #                 m,
 #                 n,
-#                 my_two_dimensional_surjections(m, n),
-#                 crane_two_dimensional_surjections(m, n),
+#                 weird2(m, n),
+#                 two_dimensional_injections(n, m),
 #             )
 #         )
 
 # for n in range(0, MAX):
-#     print(
-#         "f({}) = {} ({}, {})".format(
-#             n,
-#             crane_one_dimensional_partial_injections(n),
-#             two_dimensional_partial_injections(n, n),
-#             partial_injections_final(n, n)
-#         )
-#     )
-
-for n in range(0, MAX):
-    print(str(friendsmoker_simple(n)) + ", ", end="")
+#     print(str(weird1(n)) + ", ", end="")
+# print()

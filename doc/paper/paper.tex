@@ -68,7 +68,6 @@
 % TODO: I found the choice for what goes into a footnote and what doesn't rather
 % inconsistent, which made it a bit irritating to read for me. Maybe review if
 % the current use of footnotes is really necessary and helpful?
-% TODO: replace references with the condensed version
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -163,8 +162,7 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 \section{Introduction}\label{sec:introduction}
 
-% TODO: also cite 'WFOMC with DAG axioms'
-% \cite{DBLP:journals/corr/abs-2302-09830}
+TODO: also cite 'WFOMC with DAG axioms'~\cite{DBLP:journals/corr/abs-2302-09830}
 
 % TODO: add a flow graph: \phi -> Box (Compilation) -> \G_\phi -> Box (Algorithm
 % 4) -> \mathcal{F}_\phi -> Box (simplification) -> \mathcal{F|_\phi, base
@@ -217,8 +215,8 @@ Traditionally in computational complexity theory, a problem is \emph{tractable}
 if it can be solved in time polynomial in the instance size. The equivalent
 notion in (W)FOMC is liftability. A (W)FOMC instance is \emph{(domain-)liftable}
 if it can be solved in time polynomial in the size(s) of the
-domain(s)~\cite{jaeger2012liftability}. Over more than a decade, many classes of
-instances were shown to be
+domain(s)~\cite{DBLP:conf/starai/JaegerB12}. Over more than a decade, many
+classes of instances were shown to be
 liftable~\cite{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
 First, Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} showed that the class
 of all sentences of FOL with up to two variables (denoted \FOtwo{}) is liftable.
@@ -1268,6 +1266,8 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % domain sizes, statistically estimating the degree of the polynomial and
 % juxtaposing it with my complexity results shifted to overlap as much as
 % possible
+% TODO: describe ternary.mln as an example instance that's not in C^2 that can
+% be lifted
 
 \begin{table*}[t]
   \centering
