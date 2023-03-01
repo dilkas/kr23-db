@@ -31,6 +31,8 @@
 \usepackage{siunitx}
 \usepackage{forest}
 \usepackage[inline]{enumitem}
+\usepackage{xr}
+\externaldocument{paper}
 
 \usetikzlibrary{cd}
 \usetikzlibrary{shapes}
@@ -128,7 +130,115 @@ sn edges/.style={for tree={edge={-Latex}}}
 \begin{document}
 
 \appendix
-\section{Solutions Found by \textsc{Crane}}\label{app:solutions}
+
+\section{Proofs}
+
+\begin{theorem}[Correctness of $\GDR$]
+  Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
+  $\Omega \in \mathcal{D}$ the domain selected on \cref{line:condition}, and
+  $\phi'$ the formula constructed by the algorithm for $\Omega$. Suppose that
+  $\Omega \ne \emptyset$. Then $\phi \equiv \phi'$.
+\end{theorem}
+\begin{proof}
+  Let $x$ be the constant introduced on \cref{line:constant} and $c$ a clause of
+  $\phi$ selected on \cref{line:forclause} of the algorithm. We will show that
+  $c$ is equivalent to the conjunction of clauses added to $\phi'$ on
+  \cref{line:conditions,line:generation}.
+
+  If $c$ has no variables with domain $\Omega$, then
+  \cref{line:conditions,line:generation} simply add a copy of $c$ to $\phi'$. If
+  $c$ has one variable with domain $\Omega$, say, $X$, then
+  $c \equiv \forall X \in \Omega\text{. } \psi$ for some formula $\psi$ with one
+  free variable $X$. In this case, \cref{line:conditions,line:generation} create
+  two clauses: $\psi[x/\{\, X \,\}]$ and $\forall X \in \Omega\text{.
+  } X \ne x \Rightarrow \psi$. It is easy to see that their conjunction is
+  equivalent to $c$ provided that $\Omega \ne \emptyset$ and so $x$ is a
+  well-defined constant.
+
+  Let $V$ be the set of variables introduced on \cref{line:V}. It remains to
+  show that repeating the transformation
+  \[
+    \forall X \in \Omega\text{. } \psi \mapsto \{\, \psi[x/\{\, X \,\}], \forall X \in \Omega\text{. } X \ne x \Rightarrow \psi \,\}
+  \]
+  for all variables $X \in V$ produces the same clauses as
+  \cref{line:conditions,line:generation} (except for some tautologies that the
+  latter method skips). Note that the order in which these operations are
+  applied is immaterial. In other words, if we add inequality constraints for
+  variables ${\{\, X_{i} \,\}}_{i=1}^{n}$, and apply substitution for variables
+  $V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$, then---regardless of the order of
+  operations---we get
+  \[
+    \forall X_{1}, \dots, X_{n} \in \Omega\text{.} \bigwedge_{i=1}^{n} X_{i} \ne x \Rightarrow \psi\left[x / \left(V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}\right)\right].
+  \]
+  This formula is equivalent to the clause generated on \cref{line:generation}
+  with $W = V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$. Thus, for every clause $c$
+  of $\phi$, the new formula $\phi'$ gets a set of clauses whose conjunction is
+  equivalent to $c$. Hence, the two formulas are equivalent.
+\end{proof}
+
+\begin{theorem}[Correctness of $\CR$]
+  Let $\phi$ be the input formula of \cref{alg:constraintremoval}, $(\Omega, x)$
+  a replaceable pair, and $\phi'$ the formula constructed by the algorithm, when
+  $(\Omega, x)$ is selected on \cref{line:crconditions}. Then
+  $\phi \equiv \phi'$, where the domain $\Omega'$ introduced on
+  \cref{line:newdomain} is interpreted as $\Omega \setminus \{\, x \,\}$.
+\end{theorem}
+\begin{proof}
+  Since there is a natural bijection between the clauses of $\phi$ and $\phi'$,
+  we shall argue about the equivalence of each pair of clauses. Let $c$ be an
+  arbitrary clause of $\phi$ and $c'$ its corresponding clause of $\phi'$.
+
+  If $c$ has no variables with domain $\Omega$, then it cannot have any
+  constraints involving $x$, so $c' = c$. Otherwise, for notational simplicity,
+  let us assume that $X$ is the only variable in $c$ with domain $\Omega$ (the
+  proof for an arbitrary number of variables is virtually the same). By
+  \cref{def:replaceable}, we can rewrite $c$ as $\forall X \in \Omega\text{.
+  } X \ne x \Rightarrow \psi$, where $\psi$ is a formula with $X$ as the only free
+  variable and with no mention of either $x$ or $\Omega$. Then
+  $c' \equiv \forall X \in \Omega'\text{. } \psi$. Since
+  $\Omega' \coloneqq \Omega \setminus \{\, x \,\}$, we have that $c \equiv c'$.
+  Since $c$ was an arbitrary clause of $\phi$, this completes the proof that
+  $\phi \equiv \phi'$.
+\end{proof}
+
+\begin{theorem}[Correctness of $\Reff$]
+  Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
+  any formula selected on \cref{line:selectformula} of the algorithm s.t.\
+  $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Let $\sigma$ be a
+  domain size function. Then the set of models of $(\psi, \sigma \circ \rho)$ is
+  equal to the set of models of $(\phi, \sigma)$.
+\end{theorem}
+\begin{proof}
+  We first show that the right-hand side of \cref{eq:subset} is the same for
+  models of both $(\phi, \sigma)$ and $(\psi, \sigma \circ \rho)$.
+  \Cref{alg:trycache} ensures that $\psi \equiv \phi$ up to domains. In
+  particular, this means that $\Preds(\psi) = \Preds(\phi)$. The square in
+  \begin{equation}\label[diagram]{diagram:ref}
+    \begin{tikzcd}
+      \Preds(\psi) \ar[equal]{r} \ar[d, swap, "\pi_{\psi}"] & \Preds(\phi) \ar[d, "\pi_{\phi}"] \\
+      {\Doms(\psi)}^{\ast} \ar[r, "\rho"] & {\Doms(\phi)}^{\ast} \ar[r, "\sigma"] & \mathbb{N}_{0}^{\ast}
+    \end{tikzcd}
+  \end{equation}
+  commutes by \cref{def:formula} and the definition of $\rho$. In other words,
+  for any predicate $\texttt{p}/n \in \Preds(\psi) = \Preds(\phi)$, function
+  $\rho$ translates the domains associated with $\texttt{p}$ in $\psi$ to the
+  domains associated with $\texttt{p}$ in $\phi$. Let
+  $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ and
+  $\pi_{\psi}(\texttt{p}) = {(e_{i})}_{i=1}^{n}$ for some domains
+  $d_{i} \in \Doms(\phi)$ and $e_{i} \in \Doms(\psi)$. Since
+  $\rho(e_{i}) = d_{i}$ for all $i = 1, \dots, n$ by the commutativity in
+  \cref{diagram:ref}, we get that
+  \begin{equation}\label{eq:equality}
+    \prod_{i=1}^{n}[\sigma(d_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(e_{i})]
+  \end{equation}
+  as required. Certainly, any subset of the left-hand side of \cref{eq:equality}
+  (e.g., $\mathfrak{M}(\texttt{p})$, where $\mathfrak{M}$ is a model of
+  $(\phi, \sigma)$) is a subset of the right-hand side and vice versa. Since
+  $\phi$ and $\psi$ semantically only differ in what domains they refer to,
+  every model of $\phi$ satisfies $\psi$ and vice versa, completing the proof.
+\end{proof}
+
+\section{Solutions Found by \textsc{Crane}}
 
 In this appendix, we list the exact function definitions produced by
 \textsc{Crane} for all of the problem instances in Section~6 both before and

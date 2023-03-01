@@ -51,6 +51,8 @@
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
 
 \pdfinfo{
 /TemplateVersion (KR.2022.0, KR.2023.0)
@@ -64,10 +66,6 @@
 % read the formatting instructions and their LaTeX source (email font?)
 % make sure there are no overflow errors
 % make sure the result table (as well as other floating objects) are on the right pages
-
-% TODO: I found the choice for what goes into a footnote and what doesn't rather
-% inconsistent, which made it a bit irritating to read for me. Maybe review if
-% the current use of footnotes is really necessary and helpful?
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -160,15 +158,15 @@ sn edges/.style={for tree={edge={-Latex}}}
   what classes of instances could be liftable as a result.
 \end{abstract}
 
-\section{Introduction}\label{sec:introduction}
+% TODO: I found the choice for what goes into a footnote and what doesn't rather
+% inconsistent, which made it a bit irritating to read for me. Maybe review if
+% the current use of footnotes is really necessary and helpful?
 
-TODO: also cite 'WFOMC with DAG axioms'~\cite{DBLP:journals/corr/abs-2302-09830}
+\section{Introduction}\label{sec:introduction}
 
 % TODO: add a flow graph: \phi -> Box (Compilation) -> \G_\phi -> Box (Algorithm
 % 4) -> \mathcal{F}_\phi -> Box (simplification) -> \mathcal{F|_\phi, base
 % cases, domain sizes -> Box (Propagation (?))
-
-% TODO: too many acronyms (e.g., FOL)
 
 % TODO: what's the punchline? make sure the introduction tells the reader what
 % to expect from section 5
@@ -176,12 +174,8 @@ TODO: also cite 'WFOMC with DAG axioms'~\cite{DBLP:journals/corr/abs-2302-09830}
 % 1. What is the problem?
 % 2. Why is it interesting and important?
 
-% TODO (about the sentence "Lifted ... (Kersting)"): This developed
-% simultaneously, with the development of so-called probabilistic relational
-% models, that combined syntactic power of FOL with, b networks & m networks,
-% allowing for a more relational view of uncertainty modelling
 \emph{First-order model counting} (FOMC) is the problem of computing the number
-of models of a sentence in first-order logic (FOL) given the size(s) of its
+of models of a sentence in first-order logic given the size(s) of its
 domain(s)~\cite{DBLP:conf/pods/BeameBGS15}. \emph{Symmetric weighted FOMC}
 (WFOMC) extends FOMC with (pairs of) weights on predicates and asks for a
 weighted sum across all models instead. By fixing the sizes of the domains, a
@@ -190,16 +184,14 @@ counting~\cite{DBLP:journals/ai/ChaviraD08}. WFOMC emerged as the dominant
 approach to \emph{lifted (probabilistic) inference}. Lifted inference techniques
 exploit symmetries in probabilistic models by reasoning about sets rather than
 individuals~\cite{DBLP:conf/ecai/Kersting12}. By doing so, many instances become
-solvable in polynomial time~\cite{DBLP:conf/nips/Broeck11}. Lifted inference
-algorithms are typically used on probabilistic models such as probabilistic
-programming
-languages~\cite{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17},
-Markov logic
-networks~\cite{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16,DBLP:journals/ml/RichardsonD06},
-and other lifted graphical~\cite{DBLP:journals/ml/KimmigMG15} and statistical
-relational~\cite{DBLP:series/synthesis/2016Raedt} models. Lifted inference
-techniques for probabilistic databases, while developed somewhat independently,
-have also been inspired by
+solvable in polynomial time~\cite{DBLP:conf/nips/Broeck11}. The development of
+lifted inference algorithms coincided with work on probabilistic relational
+models that combine the syntactic power of first-order logic with probabilistic
+models such as Bayesian and Markov networks, allowing for a more relational view
+of uncertainty
+modelling~\cite{DBLP:series/synthesis/2016Raedt,DBLP:journals/ml/KimmigMG15,DBLP:journals/ml/RichardsonD06}.
+Lifted inference techniques for probabilistic databases, while developed
+somewhat independently, have also been inspired by
 WFOMC~\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC has received more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
@@ -207,6 +199,12 @@ theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
 combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}. There is also a recent line
 of work that uses FOMC-based methods to count solutions to constraint
 satisfaction problems~\cite{DBLP:journals/jair/TotisDRK23}.
+
+% Lifted inference algorithms are typically used on probabilistic models such as
+% probabilistic programming
+% languages~\cite{DBLP:journals/ml/RaedtK15,DBLP:journals/ijar/RiguzziBZCL17},
+% Markov logic
+% networks~\cite{DBLP:conf/ijcai/BroeckTMDR11,DBLP:journals/cacm/GogateD16}.
 
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
@@ -216,22 +214,23 @@ if it can be solved in time polynomial in the instance size. The equivalent
 notion in (W)FOMC is liftability. A (W)FOMC instance is \emph{(domain-)liftable}
 if it can be solved in time polynomial in the size(s) of the
 domain(s)~\cite{DBLP:conf/starai/JaegerB12}. Over more than a decade, many
-classes of instances were shown to be
-liftable~\cite{DBLP:conf/kr/BremenK21,DBLP:conf/nips/KazemiKBP16,DBLP:conf/lics/KuusistoL18,DBLP:journals/jair/Kuzelka21}.
-First, Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11} showed that the class
-of all sentences of FOL with up to two variables (denoted \FOtwo{}) is liftable.
-Then Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15} proved that there exists
-a sentence with three variables for which FOMC is $\#\P_{1}$-complete (i.e.,
-\FOthree{} is not liftable). Since these two seminal results, most of the
-research on (W)FOMC focused on developing faster solutions for the \FOtwo{}
+classes of instances were shown to be liftable. First, Van den
+Broeck~\shortcite{DBLP:conf/nips/Broeck11} showed that the class of all
+sentences of first-order logic with up to two variables (denoted \FOtwo{}) is
+liftable. Then Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15} proved that
+there exists a sentence with three variables for which FOMC is
+$\#\P_{1}$-complete (i.e., \FOthree{} is not liftable). Since these two seminal
+results, most of the research on (W)FOMC focused on developing faster solutions
+for the \FOtwo{}
 fragment~\cite{DBLP:conf/uai/BremenK21,DBLP:conf/aaai/MalhotraS22} and defining
 new liftable fragments. These fragments include \SFO{} and
 \SRU{}~\cite{DBLP:conf/nips/KazemiKBP16},
 \Uone{}~\cite{DBLP:conf/lics/KuusistoL18}, \Ctwo{} (i.e., the two-variable
 fragment with counting
 quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}, and
-\Ctwo{} extended with tree axioms~\cite{DBLP:conf/kr/BremenK21} and linear order
-axiom~\cite{DBLP:journals/corr/abs-2211-01164}. On the empirical front, there
+\Ctwo{} extended with axioms describing trees~\cite{DBLP:conf/kr/BremenK21},
+directed acyclic graphs~\cite{DBLP:journals/corr/abs-2302-09830}, and linear
+order~\cite{DBLP:journals/corr/abs-2211-01164}. On the empirical front, there
 are several implementations of exact WFOMC algorithms:
 \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
 \textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21},
@@ -323,8 +322,8 @@ which can be interpreted as function $f$ relying on $f(n-1)$ to compute $f(n)$.
 
 % 5.3) contributions, references to sections, shortcomings
 
-We begin by defining the representation used for sentences in FOL in
-\cref{sec:recprelims}. Then, in \cref{sec:methods}, we define the graphs that
+We begin by defining the representation used for sentences in first-order logic
+in \cref{sec:recprelims}. Then, in \cref{sec:methods}, we define the graphs that
 replace circuits in representing a solution to a (W)FOMC problem.
 \Cref{sec:rules} introduces the new compilation rules. In \cref{sec:interpret},
 we discuss how a graph can be interpreted as a collection of (potentially
@@ -336,6 +335,10 @@ instances that \textsc{ForcLift} fails on. Finally, in \cref{sec:conclusion}, we
 conclude by outlining some conjectures and directions for future work.
 
 \section{Preliminaries}\label{sec:recprelims}
+
+% TODO: Maybe some of the info from the preliminaries is redundant now that I've
+% moved the proofs elsewhere?
+
 % TODO: I find the writing mostly clear, but the structure of the Preliminaries
 % somewhat confusing. It starts with some notation, then some definitions, then
 % suddenly a paragraph titled "Notation", and so on. Maybe see if you can
@@ -344,13 +347,13 @@ conclude by outlining some conjectures and directions for future work.
 Our representation of FOMC instances is largely based on the format used
 internally by \textsc{ForcLift}, some aspects of which are described by Van den
 Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can
-translate sentences in a variant of function-free many-sorted FOL with equality
-to this internal format. We use lowercase Latin letters for predicates (e.g.,
-$\texttt{p}$) and constants (e.g., $x$), uppercase Latin letters for variables
-(e.g., $X$), and uppercase Greek letters for domains (e.g., $\Delta$). Sometimes
-we write predicate $\texttt{p}$ as $\texttt{p}/n$, where $n \in \mathbb{N}^{+}$
-is the \emph{arity} of $\texttt{p}$. An \emph{atom} is
-$\texttt{p}(t_1, \dots, t_n)$ for some predicate $\texttt{p}/n$ and terms
+translate sentences in a variant of function-free many-sorted first-order logic
+with equality to this internal format. We use lowercase Latin letters for
+predicates (e.g., $\texttt{p}$) and constants (e.g., $x$), uppercase Latin
+letters for variables (e.g., $X$), and uppercase Greek letters for domains
+(e.g., $\Delta$). Sometimes we write predicate $\texttt{p}$ as $\texttt{p}/n$,
+where $n \in \mathbb{N}^{+}$ is the \emph{arity} of $\texttt{p}$. An \emph{atom}
+is $\texttt{p}(t_1, \dots, t_n)$ for some predicate $\texttt{p}/n$ and terms
 $t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
 \emph{literal} is either an atom or the negation of an atom (denoted by
 $\neg \texttt{p}(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all
@@ -361,15 +364,13 @@ interpreted as a subset of some other domain in $\mathcal{D}$.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
-  and $b$ is either a variable or a constant.
+  and $b$ is either a variable or a constant. As the name implies, it constrains
+  $a$ and $b$ to be unequal.
 \end{definition}
-% TODO: what is its semantic meaning? Meaning what logically: a \ne b? (say
-% that)
 
 % TODO: c = (L, E, \delta), E - inequality constraints
 \begin{definition}[Clause]\label{def:clause}
-  A \emph{clause}\footnote{Van den Broeck et
-    al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses as c-clauses.}
+  A \emph{clause}
   is a triple $c = (L, C, \delta_c)$, where $L$ is a set of literals, $C$ is a
   set of constraints, and $\delta_c$ is the domain map of $c$. Let $\Vars$ be
   the function that maps clauses and sets of either literals or constraints to
@@ -383,35 +384,33 @@ interpreted as a subset of some other domain in $\mathcal{D}$.
 \end{definition}
 
 % TODO: The first paragraph already introduced some notation.
-% TODO: so S^2 \coloneqq {(a, b) \mid a, b \in S}
 \paragraph{Notation.}
 For any set $S$, let $2^{S}$ denote its power set and
 $S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples of any
-finite length of elements of $S$. For any $n \in \mathbb{N}_{0}$, let
-$[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g., $[0] = \emptyset$, and
-$[2] = \{\, 1, 2 \,\}$. We write $\langle\rangle$ for an empty list,
-$\langle x \rangle$ for a list with one element $x$, $|l|$ for the length of
-list $l$, $\mdoubleplus$ for list concatenation, and $\pfun$ to denote partial
-functions. Let $S$ be a set of constraints or literals, $V$ a set of variables,
-and $x$ a variable or a constant. We write $S[x/V]$ to denote $S$ with all
-occurrences of all variables in $V$ replaced with $x$. Let $\Doms$
+finite length of elements of $S$. For example,
+$\{\,a, b\,\}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$. For any
+$n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
+$[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$. We write $\langle\rangle$ for an
+empty list, $\langle x \rangle$ for a list with one element $x$, $|l|$ for the
+length of list $l$, $\mdoubleplus$ for list concatenation, and $\pfun$ to denote
+partial functions. Let $S$ be a set of constraints or literals, $V$ a set of
+variables, and $x$ a variable or a constant. We write $S[x/V]$ to denote $S$
+with all occurrences of all variables in $V$ replaced with $x$. Let $\Doms$
 (respectively, $\Preds$) be the function that maps any clause or formula to the
 set of domains (respectively, predicates) used within, and let $\dom(f)$ denote
 the domain of function $f$.
 
-% TODO: why was 'c-clause' a footnote but not this? Combine with previous
-% footnote.
 \begin{definition}[Formula]\label{def:formula}
-  A \emph{formula} (called a c-theory by Van den Broeck et
-  al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}) is a set of clauses s.t.\ all
-  constraints and atoms `type check' with respect to domains. Each formula
-  $\phi$ has a map $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ such
-  that, for each predicate $\texttt{p}/n \in \Preds(\phi)$, we have that
-  $\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.\footnote{Similarly to
-    variables and predicates, constants are also mapped to domains, although we
-    keep this mapping implicit.}
+  A \emph{formula} is a set of clauses s.t.\ all constraints and atoms `type
+  check' with respect to domains. Each formula $\phi$ has a map
+  $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ such that, for each
+  predicate $\texttt{p}/n \in \Preds(\phi)$, we have that
+  $\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.
 \end{definition}
-% TODO: why is this a footnote?
+
+\begin{remark}
+  Constants are also mapped to domains, although we keep this mapping implicit.
+\end{remark}
 
 \begin{example}\label{example:first}
   Let $\phi \coloneqq \{\, c_1, c_2 \,\}$ be a formula with clauses
@@ -439,26 +438,25 @@ There are two major differences between
 \cref{def:constraint,def:clause,def:formula} and the corresponding concepts
 introduced by Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}.
 First, we decouple variable-to-domain assignments from constraints and move them
-to a separate function $\delta_{c}$ in \cref{def:clause}. Second, while Van den
-Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} allow for equality
-constraints and constraints of the form $X \not\in \Delta$ for some variable $X$
-and domain $\Delta$, we exclude such constraints simply because they are not
-needed.
+to a separate function $\delta_{c}$ in \cref{def:clause}. Second, while they
+allow for equality constraints and constraints of the form $X \not\in \Delta$
+for some variable $X$ and domain $\Delta$, we exclude such constraints simply
+because they are not needed. Moreover, note that Van den Broeck et
+al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses and formulas as
+c-clauses and c-theories, respectively.
 % TODO: explain why we're not losing anything by dropping equality constraints
 % (e.g., X = Y). Answer: having two variables that are equal is the same thing
 % as having one variable (since by the definition of a clause, this equality can
 % only be at the beginning of a clause.
 
-% TODO: the 'but note' part is confusing
-% TODO: add \, for when a line ends with a \land
-One can read a formula in our format as a sentence in FOL\@. All variables in a
-clause are implicitly universally quantified (but note that variables are never
-shared among clauses), and all clauses in a formula are implicitly linked by a
-conjunction. Thus, formula $\phi$ from \cref{example:first} reads as
+One can read a formula in our format as a sentence in first-order logic. All
+variables in a clause are implicitly universally quantified, and all clauses in
+a formula are implicitly linked by a conjunction. Thus, formula $\phi$ from
+\cref{example:first} reads as
 \begin{align*}
   &\begin{multlined}[t]
     (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-    Y \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(X, Z)) \land
+    Y \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(X, Z)) \land{}
     \end{multlined}\\
   &\begin{multlined}[t]
     (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
@@ -507,12 +505,20 @@ that maps each domain to a non-negative integer.
             \mathfrak{M}(\texttt{p}) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
           \end{equation}
     \item As a collection of relations, $\mathfrak{M}$ satisfies $\phi$.
+    \begin{itemize}
+      \item TODO: introduce the substitution for formulas, moving the definition from elsewhere
+      \item define inductively as...
+      \item (not exhaustive)
+      \item $\mathfrak{M} \models \phi \land \psi$ iff $\mathfrak{M} \models \phi$ and $\mathfrak{M} \models \psi$
+      \item $\mathfrak{M} \models \phi \lor \psi$ iff $\mathfrak{M} \models \phi$ or $\mathfrak{M} \models \psi$
+      \item $\mathfrak{M} \models \neg\phi$ iff $\mathfrak{M} \not\models \phi$
+      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. }\phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta$
+      \item One can then add inequality constraints to the semantics as follows
+      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. } X \ne c \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta \setminus \{\, c \,\}$
+      \item $\mathfrak{M} \models (\forall X,Y \in \Delta\text{. } X \ne Y \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}][y/\{\, Y \,\}]$ for all $x,y \in \Delta$ such that $x \ne y$
+    \end{itemize}
   \end{enumerate}
 \end{definition}
-% TODO (about the second condition): inductive defin?
-% M entails p(a) /\ p'(b) iff M entails p(a) and M entails p'(b)
-% M entails \neg p(a) iff M \not\entails p(a)
-% M entails \forall X. p(a) iff M entails p(d) \forall d \in D.
 
 % TODO: make the relations more concrete
 \begin{example}
@@ -565,16 +571,17 @@ Darwiche~\shortcite{DBLP:journals/jancl/Darwiche01} introduced
 propositional knowledge compilation and showed that the model count of a
 propositional formula can be computed in time linear in the size of the circuit.
 Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} generalised them
-to FOL via \emph{first-order d-DNNF (FO d-DNNF) circuits}. FO d-DNNF circuits
-(hereafter simply called \emph{circuits}) are directed acyclic graphs with nodes
-corresponding to formulas in FOL---see \cref{fig:simplecircuit} for an example.
-The following types of nodes are supported by \textsc{ForcLift}: caching
-($\Reff$), contradiction ($\bot$), tautology ($\top$), decomposable conjunction
-($\land$), decomposable set-conjunction ($\bigwedge$), deterministic disjunction
-($\lor$), deterministic set-disjunction ($\bigvee$), domain recursion,
-grounding, inclusion-exclusion, smoothing, and unit clause. We refer the reader
-to previous work~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11} for
-more information about node types and their interpretations for computing the
+to first-order logic via \emph{first-order d-DNNF (FO d-DNNF) circuits}. FO
+d-DNNF circuits (hereafter simply called \emph{circuits}) are directed acyclic
+graphs with nodes corresponding to formulas in first-order logic---see
+\cref{fig:simplecircuit} for an example. The following types of nodes are
+supported by \textsc{ForcLift}: caching ($\Reff$), contradiction ($\bot$),
+tautology ($\top$), decomposable conjunction ($\land$), decomposable
+set-conjunction ($\bigwedge$), deterministic disjunction ($\lor$), deterministic
+set-disjunction ($\bigvee$), domain recursion, grounding, inclusion-exclusion,
+smoothing, and unit clause. We refer the reader to previous
+work~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11} for more
+information about node types and their interpretations for computing the
 (W)FOMC\@.
 
 \begin{figure}[t]
@@ -760,54 +767,21 @@ example below.
   \]
 \end{example}
 
-% TODO (about the footnote): say: this shows that there is no loss of
-% expressiveness/compilation completeness with our new algorithm. Would be nice
-% if you could also show formally how it has improved on Guy, e.g., Prop.
-% \exists formula \phi such that AlgoGuy(\phi) may fail but NewAlg(\phi) \ne
-% \emptyset. Therefore, our algorithms is `more' complete than Guy's
-\begin{theorem}[Correctness of $\GDR$\footnote{\Cref{thm:correctness1} is equivalent to
-    Proposition~3 by Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}.}]\label{thm:correctness1}
+\begin{theorem}[Correctness of $\GDR$]\label{thm:correctness1}
   Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
   $\Omega \in \mathcal{D}$ the domain selected on \cref{line:condition}, and
   $\phi'$ the formula constructed by the algorithm for $\Omega$. Suppose that
   $\Omega \ne \emptyset$. Then $\phi \equiv \phi'$.
 \end{theorem}
-\begin{proof}
-  Let $x$ be the constant introduced on \cref{line:constant} and $c$ a clause of
-  $\phi$ selected on \cref{line:forclause} of the algorithm. We will show that
-  $c$ is equivalent to the conjunction of clauses added to $\phi'$ on
-  \cref{line:conditions,line:generation}.
 
-  If $c$ has no variables with domain $\Omega$, then
-  \cref{line:conditions,line:generation} simply add a copy of $c$ to $\phi'$. If
-  $c$ has one variable with domain $\Omega$, say, $X$, then
-  $c \equiv \forall X \in \Omega\text{. } \psi$ for some formula $\psi$ with one
-  free variable $X$. In this case, \cref{line:conditions,line:generation} create
-  two clauses: $\psi[x/\{\, X \,\}]$ and $\forall X \in \Omega\text{.
-  } X \ne x \Rightarrow \psi$. It is easy to see that their conjunction is
-  equivalent to $c$ provided that $\Omega \ne \emptyset$ and so $x$ is a
-  well-defined constant.
-
-  Let $V$ be the set of variables introduced on \cref{line:V}. It remains to
-  show that repeating the transformation
-  \[
-    \forall X \in \Omega\text{. } \psi \mapsto \{\, \psi[x/\{\, X \,\}], \forall X \in \Omega\text{. } X \ne x \Rightarrow \psi \,\}
-  \]
-  for all variables $X \in V$ produces the same clauses as
-  \cref{line:conditions,line:generation} (except for some tautologies that the
-  latter method skips). Note that the order in which these operations are
-  applied is immaterial. In other words, if we add inequality constraints for
-  variables ${\{\, X_{i} \,\}}_{i=1}^{n}$, and apply substitution for variables
-  $V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$, then---regardless of the order of
-  operations---we get
-  \[
-    \forall X_{1}, \dots, X_{n} \in \Omega\text{.} \bigwedge_{i=1}^{n} X_{i} \ne x \Rightarrow \psi\left[x / \left(V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}\right)\right].
-  \]
-  This formula is equivalent to the clause generated on \cref{line:generation}
-  with $W = V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$. Thus, for every clause $c$
-  of $\phi$, the new formula $\phi'$ gets a set of clauses whose conjunction is
-  equivalent to $c$. Hence, the two formulas are equivalent.
-\end{proof}
+Note that \Cref{thm:correctness1} is equivalent to Proposition~3 by Van den
+Broeck~\shortcite{DBLP:conf/nips/Broeck11}. For the proofs of this and other
+theorems, see supplementary material.
+% TODO (about the first sentence): say: this shows that there is no loss of
+% expressiveness/compilation completeness with our new algorithm. Would be nice
+% if you could also show formally how it has improved on Guy, e.g., Prop.
+% \exists formula \phi such that AlgoGuy(\phi) may fail but NewAlg(\phi) \ne
+% \emptyset. Therefore, our algorithms is `more' complete than Guy's
 
 \subsection{Constraint Removal}\label{sec:cr}
 
@@ -896,23 +870,6 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   $\phi \equiv \phi'$, where the domain $\Omega'$ introduced on
   \cref{line:newdomain} is interpreted as $\Omega \setminus \{\, x \,\}$.
 \end{theorem}
-\begin{proof}
-  Since there is a natural bijection between the clauses of $\phi$ and $\phi'$,
-  we shall argue about the equivalence of each pair of clauses. Let $c$ be an
-  arbitrary clause of $\phi$ and $c'$ its corresponding clause of $\phi'$.
-
-  If $c$ has no variables with domain $\Omega$, then it cannot have any
-  constraints involving $x$, so $c' = c$. Otherwise, for notational simplicity,
-  let us assume that $X$ is the only variable in $c$ with domain $\Omega$ (the
-  proof for an arbitrary number of variables is virtually the same). By
-  \cref{def:replaceable}, we can rewrite $c$ as $\forall X \in \Omega\text{.
-  } X \ne x \Rightarrow \psi$, where $\psi$ is a formula with $X$ as the only free
-  variable and with no mention of either $x$ or $\Omega$. Then
-  $c' \equiv \forall X \in \Omega'\text{. } \psi$. Since
-  $\Omega' \coloneqq \Omega \setminus \{\, x \,\}$, we have that $c \equiv c'$.
-  Since $c$ was an arbitrary clause of $\phi$, this completes the proof that
-  $\phi \equiv \phi'$.
-\end{proof}
 % TODO: Does this have analogue in Guy? If yes, explain difference. If no,
 % emphasize this point. Same for Theorem 3.
 
@@ -1007,35 +964,6 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   domain size function. Then the set of models of $(\psi, \sigma \circ \rho)$ is
   equal to the set of models of $(\phi, \sigma)$.
 \end{theorem}
-\begin{proof}
-  We first show that the right-hand side of \cref{eq:subset} is the same for
-  models of both $(\phi, \sigma)$ and $(\psi, \sigma \circ \rho)$.
-  \Cref{alg:trycache} ensures that $\psi \equiv \phi$ up to domains. In
-  particular, this means that $\Preds(\psi) = \Preds(\phi)$. The square in
-  \begin{equation}\label[diagram]{diagram:ref}
-    \begin{tikzcd}
-      \Preds(\psi) \ar[equal]{r} \ar[d, swap, "\pi_{\psi}"] & \Preds(\phi) \ar[d, "\pi_{\phi}"] \\
-      {\Doms(\psi)}^{\ast} \ar[r, "\rho"] & {\Doms(\phi)}^{\ast} \ar[r, "\sigma"] & \mathbb{N}_{0}^{\ast}
-    \end{tikzcd}
-  \end{equation}
-  commutes by \cref{def:formula} and the definition of $\rho$. In other words,
-  for any predicate $\texttt{p}/n \in \Preds(\psi) = \Preds(\phi)$, function
-  $\rho$ translates the domains associated with $\texttt{p}$ in $\psi$ to the
-  domains associated with $\texttt{p}$ in $\phi$. Let
-  $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ and
-  $\pi_{\psi}(\texttt{p}) = {(e_{i})}_{i=1}^{n}$ for some domains
-  $d_{i} \in \Doms(\phi)$ and $e_{i} \in \Doms(\psi)$. Since
-  $\rho(e_{i}) = d_{i}$ for all $i = 1, \dots, n$ by the commutativity in
-  \cref{diagram:ref}, we get that
-  \begin{equation}\label{eq:equality}
-    \prod_{i=1}^{n}[\sigma(d_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(e_{i})]
-  \end{equation}
-  as required. Certainly, any subset of the left-hand side of \cref{eq:equality}
-  (e.g., $\mathfrak{M}(\texttt{p})$, where $\mathfrak{M}$ is a model of
-  $(\phi, \sigma)$) is a subset of the right-hand side and vice versa. Since
-  $\phi$ and $\psi$ semantically only differ in what domains they refer to,
-  every model of $\phi$ satisfies $\psi$ and vice versa, completing the proof.
-\end{proof}
 
 \section{Converting FCGs to Function Definitions}\label{sec:interpret}
 
@@ -1320,12 +1248,13 @@ chosen because of its simplicity and ubiquity and the inability of
 state-of-the-art WFOMC algorithms to solve many such instances. Note that other
 WFOMC algorithms mentioned in \cref{sec:introduction} are unable to solve any of
 the instances that \textsc{ForcLift} fails on. We begin by describing how such
-function-counting problems can be expressed in FOL\@. \textsc{ForcLift} then
-translates these sentences in FOL to formulas as defined in \cref{def:formula}.
+function-counting problems can be expressed in first-order logic.
+\textsc{ForcLift} then translates these sentences in first-order logic to
+formulas as defined in \cref{def:formula}.
 
 Let $\texttt{p}$ be a predicate that models relations between sets $\Gamma$ and
 $\Delta$. To restrict all such relations to just $\Gamma \to \Delta$ functions,
-in FOL one might write
+in first-order logic one might write
 \[
   \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }\texttt{p}(X, Y) \land \texttt{p}(X, Z) \Rightarrow Y = Z
 \]
@@ -1414,12 +1343,12 @@ thread across these newly liftable problems is (partial) injectivity. Thus, we
 can formulate the following conjecture.
 
 \begin{conjecture}
-  Let \IFO{} be the class of formulas in FOL that contain clauses with at most
-  two variables as well as any number of copies of
+  Let \IFO{} be the class of formulas in first-order logic that contain clauses
+  with at most two variables as well as any number of copies of
   \begin{align*}
     &\begin{multlined}[t]
       (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-      Y \ne Z \Rightarrow \neg \texttt{\textup{p}}(X, Y) \lor \neg \texttt{\textup{p}}(X, Z)) \land
+      Y \ne Z \Rightarrow \neg \texttt{\textup{p}}(X, Y) \lor \neg \texttt{\textup{p}}(X, Z)) \land{}
     \end{multlined}\\
     &\begin{multlined}[t]
       (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
