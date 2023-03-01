@@ -78,15 +78,21 @@ paulius.dilkas@nus.edu.sg,
 vbelle@ed.ac.uk
 }
 
+\crefname{algocf}{Algorithm}{Algorithms}
+\Crefname{algocf}{Algorithm}{Algorithms}
+\crefname{condition}{Condition}{Conditions}
+\Crefname{condition}{Condition}{Conditions}
+\crefname{line}{line}{lines}
+
 \crefalias{diagram}{equation}
 \crefname{diagram}{Diagram}{Diagrams}
 \Crefname{diagram}{Diagram}{Diagrams}
 \creflabelformat{diagram}{#2\textup{(#1)}#3}
 
-\crefname{algocf}{Algorithm}{Algorithms}
-\Crefname{algocf}{Algorithm}{Algorithms}
-\crefname{condition}{Condition}{Conditions}
-\Crefname{condition}{Condition}{Conditions}
+\crefalias{formula}{equation}
+\crefname{formula}{Formula}{Formulas}
+\Crefname{formula}{Formula}{Formulas}
+\creflabelformat{formula}{#2\textup{(#1)}#3}
 
 \newcommand{\crefrangeconjunction}{--}
 \newcommand\pfun{\mathrel{\ooalign{\hfil$\mapstochar\mkern5mu$\hfil\cr$\to$\cr}}}
@@ -123,8 +129,6 @@ vbelle@ed.ac.uk
 \newcommand{\pushline}{\Indp}% Indent
 \newcommand{\popline}{\Indm\dosemic}% Undent
 \makeatother
-\Crefname{algocf}{Algorithm}{Algorithms}
-\crefname{line}{line}{lines}
 
 \forestset{
 sn edges/.style={for tree={edge={-Latex}}}
@@ -171,6 +175,10 @@ sn edges/.style={for tree={edge={-Latex}}}
 % TODO: what's the punchline? make sure the introduction tells the reader what
 % to expect from section 5
 
+% TODO: (everywhere in the paper): emphasise that the experimental results show
+% Crane to be strictly more capable than ForcLift in a sense that it can solve
+% everything that ForcLift can and more (including instances beyond C^2).
+
 % 1. What is the problem?
 % 2. Why is it interesting and important?
 
@@ -196,9 +204,10 @@ WFOMC~\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC has received more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
 theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
-combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}. There is also a recent line
-of work that uses FOMC-based methods to count solutions to constraint
-satisfaction problems~\cite{DBLP:journals/jair/TotisDRK23}.
+combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
+There is also a recent line of work that uses FOMC-based methods to count
+solutions to constraint satisfaction
+problems~\cite{DBLP:journals/jair/TotisDRK23}.
 
 % Lifted inference algorithms are typically used on probabilistic models such as
 % probabilistic programming
@@ -241,37 +250,38 @@ are several implementations of exact WFOMC algorithms:
 \textsc{Magician}~\cite{DBLP:conf/aaai/VenugopalSG15}, and
 \textsc{Tuffy}~\cite{DBLP:journals/pvldb/NiuRDS11}.
 
-% Magician: an approach to improve the efficiency of sampling and local search
-% based MLN inference algorithms by utilising \#CSP algorithms. Tuffy: grounding
-% and stochastic local search.
-
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
 % simple unliftable instances -> recursion
 
-% TODO: must remove this footnote. Also, two more papers to mention:
-% 1. the L2C paper has the factorial example as well. But then why doesn't L2C work on it?
-% 2. cite the new paper "On Discovering Interesting Combinatorial Integer Sequences" as another example of computing n! using publicly unavailable code and as an example of applications to combinatorics
-However, none of the publicly available exact (W)FOMC algorithms can efficiently
-compute functions as simple as a factorial.\footnote{There is some previous work
-  discussing FOMC for
-  factorials~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/kr/BremenK21,DBLP:conf/ijcai/Broeck16}.
-  One of them~\cite{DBLP:conf/ijcai/Broeck16} is an example `by hand' that does
-  not directly correspond to any algorithm.
-  Another~\cite{DBLP:journals/jair/Kuzelka21} proves that the problem is
-  liftable but contains no experimental results. The
-  third~\cite{DBLP:conf/kr/BremenK21} contains experimental results performed
-  with an algorithm that is not publicly available.} We claim that the
-capabilities of (W)FOMC algorithms can be significantly extended by empowering
-them with the ability to construct recursive solutions. The topic of recursion
-in the context of WFOMC has been studied before but in limited ways.
-Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21} use WFOMC to
-generate numerical data that is then used to conjecture recurrence relations
-that explain that data. Van den Broeck~\shortcite{DBLP:conf/nips/Broeck11}
-introduced the idea of \emph{domain recursion}. Intuitively, domain recursion
-partitions a domain of size $n$ into a single explicitly named constant and the
-remaining domain of size $n-1$. However, many stringent conditions are enforced
-to ensure that the search for a tractable solution always terminates.
+% However, none of the publicly available exact (W)FOMC algorithms can efficiently
+% compute functions as simple as a factorial.\footnote{There is some previous work
+%   discussing FOMC for
+%   factorials~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/kr/BremenK21,DBLP:conf/ijcai/Broeck16}.
+%   One of them~\cite{DBLP:conf/ijcai/Broeck16} is an example `by hand' that does
+%   not directly correspond to any algorithm.
+%   Another~\cite{DBLP:journals/jair/Kuzelka21} proves that the problem is
+%   liftable but contains no experimental results. The
+%   third~\cite{DBLP:conf/kr/BremenK21} contains experimental results performed
+%   with an algorithm that is not publicly available.}
+% Two more papers to mention:
+% 1. The L2C paper has the factorial example as well. But then why doesn't L2C
+% work on it?
+% 2. \cite{DBLP:journals/corr/abs-2302-04606} computes n! using publicly
+% unavailable code
+
+% TODO: add a different introductory problem statement
+We claim that the capabilities of (W)FOMC algorithms can be significantly
+extended by empowering them with the ability to construct recursive solutions.
+The topic of recursion in the context of WFOMC has been studied before but in
+limited ways. Barv{\'{\i}}nek et al.~\shortcite{DBLP:conf/ilp/BarvinekB0ZK21}
+use WFOMC to generate numerical data that is then used to conjecture recurrence
+relations that explain that data. Van den
+Broeck~\shortcite{DBLP:conf/nips/Broeck11} introduced the idea of \emph{domain
+  recursion}. Intuitively, domain recursion partitions a domain of size $n$ into
+a single explicitly named constant and the remaining domain of size $n-1$.
+However, many stringent conditions are enforced to ensure that the search for a
+tractable solution always terminates.
 
 % 5. What are the key components of my approach and results? Also include any
 % specific limitations.
@@ -368,16 +378,15 @@ interpreted as a subset of some other domain in $\mathcal{D}$.
   $a$ and $b$ to be unequal.
 \end{definition}
 
-% TODO: c = (L, E, \delta), E - inequality constraints
 \begin{definition}[Clause]\label{def:clause}
   A \emph{clause}
-  is a triple $c = (L, C, \delta_c)$, where $L$ is a set of literals, $C$ is a
+  is a triple $c = (L, E, \delta_c)$, where $L$ is a set of literals, $E$ is a
   set of constraints, and $\delta_c$ is the domain map of $c$. Let $\Vars$ be
   the function that maps clauses and sets of either literals or constraints to
   the set of variables in them. In particular,
-  $\Vars(c) \coloneqq \Vars(L) \cup \Vars(C)$. \emph{Domain map}
+  $\Vars(c) \coloneqq \Vars(L) \cup \Vars(E)$. \emph{Domain map}
   $\delta_{c}\colon \Vars(c) \to \mathcal{D}$ is a function that maps all
-  variables in $c$ to their domains such that (s.t.) if $(X, Y) \in C$ for some
+  variables in $c$ to their domains such that (s.t.) if $(X, Y) \in E$ for some
   variables $X$ and $Y$, then $\delta_c(X) = \delta_c(Y)$. For convenience, we
   sometimes write $\delta_c$ for the domain map of $c$ without unpacking $c$
   into its three constituents.
@@ -434,35 +443,39 @@ the domain of function $f$.
   are in $\Delta$. Therefore, $\phi$ `type checks' as a valid formula.
 \end{example}
 
-There are two major differences between
-\cref{def:constraint,def:clause,def:formula} and the corresponding concepts
-introduced by Van den Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}.
-First, we decouple variable-to-domain assignments from constraints and move them
-to a separate function $\delta_{c}$ in \cref{def:clause}. Second, while they
-allow for equality constraints and constraints of the form $X \not\in \Delta$
-for some variable $X$ and domain $\Delta$, we exclude such constraints simply
-because they are not needed. Moreover, note that Van den Broeck et
-al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses and formulas as
-c-clauses and c-theories, respectively.
-% TODO: explain why we're not losing anything by dropping equality constraints
-% (e.g., X = Y). Answer: having two variables that are equal is the same thing
-% as having one variable (since by the definition of a clause, this equality can
-% only be at the beginning of a clause.
-
 One can read a formula in our format as a sentence in first-order logic. All
 variables in a clause are implicitly universally quantified, and all clauses in
 a formula are implicitly linked by a conjunction. Thus, formula $\phi$ from
 \cref{example:first} reads as
-\begin{align*}
-  &\begin{multlined}[t]
-    (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-    Y \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(X, Z)) \land{}
+\begin{equation}\label[formula]{eq:formula}
+  \begin{split}
+    &\begin{multlined}[t]
+      (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
+      Y \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(X, Z)) \land{}
     \end{multlined}\\
-  &\begin{multlined}[t]
-    (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-    X \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(Z, Y)).
+    &\begin{multlined}[t]
+      (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
+      X \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(Z, Y)).
     \end{multlined}
-\end{align*}
+  \end{split}
+\end{equation}
+
+There are two major differences between
+\cref{def:constraint,def:clause,def:formula} and the corresponding concepts
+introduced by Van den Broeck et
+al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}.\footnote{Van den Broeck et
+  al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11} refer to clauses and formulas as
+  c-clauses and c-theories, respectively.} First, we decouple variable-to-domain
+assignments from constraints and move them to a separate function $\delta_{c}$
+in \cref{def:clause}. Second, while they allow for equality constraints and
+constraints of the form $X \not\in \Delta$ for some variable $X$ and domain
+$\Delta$, we exclude such constraints simply because they are not needed. Note
+that if, e.g., $Y \ne Z$ in \cref{eq:formula} is replaced by $Y = Z$, then
+\cref{eq:formula} can be simplified to have one fewer variables. Similarly, if
+the same inequality is replaced by $Y = c$ for some constant $c$, then $Y$ can
+be eliminated as well. Since constraints are always interpreted as preconditions
+for the disjunction of literals in the clause (as in \cref{eq:formula}),
+equality constraints can be eliminated without any loss in expressivity.
 
 % TODO: the first sentence comes out of nowhere
 Once domains are mapped to finite sets and constants to elements in those sets,
@@ -538,7 +551,7 @@ that maps each domain to a non-negative integer.
   the main running example throughout the paper.
 \end{example}
 
-\section{From Circuits to Graphs}\label{sec:methods}
+\section{First-Order Computational Graphs}\label{sec:methods}
 
 \begin{figure}[t]
   \centering
@@ -606,13 +619,7 @@ information about node types and their interpretations for computing the
     multiplication by one.}\label{fig:examplefcg}
 \end{figure}
 
-% TODO: the definition of FCG is hard to miss (highlight its importance, maybe
-% remind the reader later on in the paper)
-
-% TODO: instead of FO d-DNNF computational graph, say 'first-order computational
-% graph' (FOCG?)
-
-In this paper, we introduce \emph{FO d-DNNF computational graphs} (FCGs) that
+In this paper, we introduce \emph{first-order computational graphs} (FCGs) that
 generalise circuits by dispensing with acyclicity. Formally, an FCG is a (weakly
 connected) directed graph with a single source, node labels, and ordered
 outgoing edges. Node labels consist of two parts: the \emph{type} and the
@@ -697,11 +704,11 @@ conditions ensure that these parts can be treated independently.
   \ForEach{domain $\Omega \in \mathcal{D}$ s.t.\ there is $c \in \phi$ and $X \in \Vars(L_c)$ s.t. $\delta_c(X) = \Omega$\label{line:condition}}{
     $\phi' \gets \emptyset$\;
     $x \gets \text{a new constant in domain } \Omega$\;\label{line:constant}
-    \ForEach{clause $c = (L, C, \delta) \in \phi$\label{line:forclause}}{
+    \ForEach{clause $c = (L, E, \delta) \in \phi$\label{line:forclause}}{
       $V \gets \{\, X \in \Vars(L) \mid \delta(X) = \Omega \,\}$\;\label{line:V}
-      \ForEach{$W \subseteq V$ s.t. $W^2 \cap C = \emptyset$ {\bf and} $W \cap \{\, X \in \Vars(C) \mid (X, y) \in C \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
+      \ForEach{$W \subseteq V$ s.t. $W^2 \cap E = \emptyset$ {\bf and} $W \cap \{\, X \in \Vars(E) \mid (X, y) \in E \text{ for some constant } y \,\} = \emptyset$\label{line:conditions}}{
         \tcc{$\delta'$ restricts $\delta$ to the new set of variables}
-        $\phi' \gets \phi' \cup \{\, (L[x/W], C[x/W] \cup \{\, (X, x) \mid (X \in V \setminus W) \,\}, \delta') \,\}$\;\label{line:generation}
+        $\phi' \gets \phi' \cup \{\, (L[x/W], E[x/W] \cup \{\, (X, x) \mid (X \in V \setminus W) \,\}, \delta') \,\}$\;\label{line:generation}
       }
     }
     $S \gets S \cup \{\, (\GDR, \langle\phi'\rangle) \,\}$\;
@@ -732,7 +739,7 @@ example below.
   \Cref{line:conditions} iterates over all subsets $W \subseteq V$ of variables
   that can be replaced by a constant without resulting in evidently
   unsatisfiable formulas. We impose two restrictions on $W$. First,
-  $W^2 \cap C = \emptyset$ ensures that there are no pairs of variables in $W$
+  $W^2 \cap E = \emptyset$ ensures that there are no pairs of variables in $W$
   that are constrained to be distinct, since that would result in an $x \ne x$
   constraint after substitution. Similarly, we want to avoid variables in $W$
   that have inequality constraints with constants: after the substitution, such
@@ -777,11 +784,6 @@ example below.
 Note that \Cref{thm:correctness1} is equivalent to Proposition~3 by Van den
 Broeck~\shortcite{DBLP:conf/nips/Broeck11}. For the proofs of this and other
 theorems, see supplementary material.
-% TODO (about the first sentence): say: this shows that there is no loss of
-% expressiveness/compilation completeness with our new algorithm. Would be nice
-% if you could also show formally how it has improved on Guy, e.g., Prop.
-% \exists formula \phi such that AlgoGuy(\phi) may fail but NewAlg(\phi) \ne
-% \emptyset. Therefore, our algorithms is `more' complete than Guy's
 
 \subsection{Constraint Removal}\label{sec:cr}
 
@@ -798,11 +800,11 @@ conditions as \cref{def:replaceable}.
   With respect to a formula $\phi$, a pair $(\Omega, x)$ of a domain
   $\Omega \in \mathcal{D}$ and its element $x \in \Omega$ is called
   \emph{replaceable} if
-  \begin{itemize}
-    \item $x$ does not occur in any literal of any clause of $\phi$,
-    \item and for each clause $c = (L, C, \delta_c) \in \phi$ and variable
-          $X \in \Vars(c)$, either $\delta_c(X) \ne \Omega$ or $(X, x) \in C$.
-  \end{itemize}
+  \begin{enumerate*}[label=(\roman*)]
+    \item $x$ does not occur in any literal of any clause of $\phi$, and
+    \item for each clause $c = (L, E, \delta_c) \in \phi$ and variable
+    $X \in \Vars(c)$, either $\delta_c(X) \ne \Omega$ or $(X, x) \in E$.
+  \end{enumerate*}
 \end{definition}
 
 \begin{algorithm}[t]
@@ -813,14 +815,14 @@ conditions as \cref{def:replaceable}.
   \ForEach{replaceable pair $(\Omega \in \mathcal{D}, x \in \Omega)$\label{line:crconditions}}{
     add a new domain $\Omega'$ to $\mathcal{D}$\;\label{line:newdomain}
     $\phi' \gets \emptyset$\;
-    \ForEach{clause $(L, C, \delta) \in \phi$}{
-      $C' \gets \{\, (a, b) \in C \mid b \ne x \,\}$\;\label{line:constraintremoval}
+    \ForEach{clause $(L, E, \delta) \in \phi$}{
+      $E' \gets \{\, (a, b) \in E \mid b \ne x \,\}$\;\label{line:constraintremoval}
       \nosemic$\delta' \gets X \mapsto
       \begin{cases}
         \Omega' & \text{if } \delta(X) = \Omega\\
         \delta(X) & \text{otherwise;}
       \end{cases}$\;\label{line:newdelta}
-      $\phi' \gets \phi' \cup \{\, (L, C', \delta') \,\}$\;
+      $\phi' \gets \phi' \cup \{\, (L, E', \delta') \,\}$\;
     }
     $S \gets S \cup \{\, (\CR_{\Omega \mapsto \Omega'}, \langle\phi'\rangle) \,\}$\;
   }
@@ -870,17 +872,22 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   $\phi \equiv \phi'$, where the domain $\Omega'$ introduced on
   \cref{line:newdomain} is interpreted as $\Omega \setminus \{\, x \,\}$.
 \end{theorem}
-% TODO: Does this have analogue in Guy? If yes, explain difference. If no,
-% emphasize this point. Same for Theorem 3.
+
+There is no analogue to $\CR$ in previous work on first-order knowledge
+compilation. $\CR$ plays a key role by recognising when the constraints of a
+formula essentially reduce the size of a domain by one and extracting this
+observation into the definition of a new domain. This then allows us to relate
+maps between sets of domains to the arguments of a function call.
+\Cref{sec:ref,sec:interpret} describe this process.
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
 
 \paragraph{Hashing.}
 We use (integer-valued) hash functions to discard pairs of formulas that are too
 different for recursion to work. The hash code of a clause
-$c = (L, C, \delta_{c})$ (denoted by $\# c$) combines the hash codes of the sets
+$c = (L, E, \delta_{c})$ (denoted by $\# c$) combines the hash codes of the sets
 of constants and predicates in $c$, the numbers of positive and negative
-literals, the number of inequality constraints $|C|$, and the number of
+literals, the number of inequality constraints $|E|$, and the number of
 variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash
 codes of all its clauses and is denoted by $\#\phi$.
 
@@ -965,6 +972,10 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   equal to the set of models of $(\phi, \sigma)$.
 \end{theorem}
 
+As \textsc{ForcLift} only supports $\Reff$ nodes for when the two formulas are
+equal, our approach is significantly more general and can even construct more
+complex recursive calls such as $f(n-k-2)$.
+
 \section{Converting FCGs to Function Definitions}\label{sec:interpret}
 
 \begin{algorithm}[t]
@@ -1032,25 +1043,25 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
   \item We call a variable name is \emph{atomic} if it is free of subtraction
         (e.g., $m$, $n$); otherwise it is \emph{non-atomic} (e.g., $m-1$,
         $n-l$).
-  \item For each node $v$, let $\mathfrak{D}(v)$ denote the (precomputed) set of
-        domains, the sizes of which we would use as parameters if we were to
-        define a function that begins at $v$. This set is computed by
-        iteratively setting
-        $\mathfrak{D}(v) \gets \left(\bigcup_{u} \mathfrak{D}(u) \setminus I_{v}\right) \cup U_{v}$
-        until convergence, where
-        \begin{itemize}
-          \item $u$ is any direct successor of $v$,
-          \item $I_{v}$ is the set of domains \emph{introduced} at node $v$, and
-          \item $U_{v}$ is the set of domains \emph{used} by $v$.
-        \end{itemize}
   \item We assume a fixed total ordering of all domains names. In particular, in
         our running example we assume that $\Gamma$ goes before $\Delta$.
+  \item For each node $v$, let $\mathfrak{D}(v)$ denote the (precomputed) list
+        of domains, the sizes of which we would use as parameters if we were to
+        define a function that begins at $v$. As a set, it is computed by
+        iteratively setting
+        $\mathfrak{D}(v) \gets \left(\bigcup_{u} \mathfrak{D}(u) \setminus I_{v}\right) \cup U_{v}$
+        until convergence, where:
+        \begin{enumerate*}[label=(\roman*)]
+          \item the union is over all direct successors of $v$,
+          \item $I_{v}$ is the set of domains \emph{introduced} at node $v$, and
+          \item $U_{v}$ is the set of domains \emph{used} by $v$.
+        \end{enumerate*}
+        The set is then sorted according to the fixed ordering of domains.
   \item $\mathsf{F}$ is a partial map from the set of FCG nodes to function
         names (e.g., $f$, $g$).
-  \item \newVariableName just generates a unique identifier for a variable
-  \item \newFunctionName does the same thing for function names and also records
-        the new name in $\mathsf{F}$
-  \item The first function in the list is the main one.
+  \item Functions \newVariableName and \newFunctionName generate
+        previously-unused names for variables and functions, respectively. The
+        latter also records the new name in $\mathsf{F}$.
   \item Note that a node is a direct successor of a $\Reff$ node if and only if
         it has an in-degree greater than one.
   \item For simplicity, we refer to FCG nodes using their types.
@@ -1066,8 +1077,6 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
         expression that should be used to evaluate $v$ or use it in another
         expression, and $\mathsf{funs}$ is a list of auxiliary functions that
         were created while constructing $\mathsf{e}$.
-  \item TODO: $\mathfrak{D}$ must be a list. That's the ordering of domain names
-        comes in, not in list comprehensions.
 \end{itemize}
 
 When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
@@ -1166,9 +1175,7 @@ function are the sizes of all domains used by nodes reachable from $v$.
   \textsf{call} and \textsf{signature} are set to $f(m, n)$. As the definition
   of $f$ is the final answer and not part of some other algebraic expression,
   \cref{line:initialcall,line:initialcalltwo} discard the function call
-  expression and return the definition of $f$.
-
-  Therefore,
+  expression and return the definition of $f$. Therefore,
   \begin{align}
     f(m, n) &= \sum_{l = 0}^{n} \binom{n}{l} [l < 2] f(m-1, n-l)\nonumber \\
             &= f(m-1, n) + n f(m-1, n-1).\label{eq:solution}
@@ -1186,14 +1193,6 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % TODO (here or somewhere else): emphasise that there are two parts: search
 % (with some artificial limit) + inference (whose complexity we can easily
 % determine)
-% TODO: Must do one of these:
-% 1. determine the complexity of the counting quantifiers algorithm when run on
-% these instances
-% 2. find instances that are not in C^2 and make the paper about them
-% 3. run the counting quantifiers algorithm on these instances with increasing
-% domain sizes, statistically estimating the degree of the polynomial and
-% juxtaposing it with my complexity results shifted to overlap as much as
-% possible
 % TODO: describe ternary.mln as an example instance that's not in C^2 that can
 % be lifted
 
@@ -1205,17 +1204,13 @@ function are the sizes of all domains used by nodes reachable from $v$.
     Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
     \midrule
     \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
-    \xmark & \xmark & \multirow{4}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
+    \xmark & \xmark & \multirow{2}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
     \xmark & \cmark & & $m \log m$ & $m^{3}$ & $m^{3}$ \\
-    \cmark & \xmark & & \multicolumn{3}{c}{Same as injections from $\Delta$ to $\Gamma$} \\
-    \cmark & \cmark & & \multicolumn{3}{c}{Same as endo-injections} \\
     \rowcolor{gray!25}\xmark & \xmark & & $m$ & --- & $mn$ \\
     \rowcolor{gray!25}\xmark & \cmark & & $m$ & --- & $m^3$ \\
     \rowcolor{gray!25}\cmark & \xmark & & ${\min\{\, m, n \,\}}^2$ & --- & $mn$ \\
     \rowcolor{gray!25}\cmark & \cmark & \multirow{-4}{*}{Injections} & $m^2$ & --- & --- \\
-    \xmark & \xmark & \multirow{3}{*}{Bijections} & $m$ & --- & $m$ \\
-    \xmark & \cmark & & \multicolumn{3}{c}{\multirow{2}{*}{Same as (partial) (endo-)injections}} \\
-    \cmark & \cmark/\xmark & & \multicolumn{3}{c}{} \\
+    \xmark & \xmark & Bijections & $m$ & --- & $m$ \\
     \bottomrule
   \end{tabular}
   \caption{The worst-case complexity of counting various types of functions,
@@ -1226,12 +1221,12 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % TODO: 'Asymptotic Complexity of Counting' -> 'Complexity of \mathcal{F}_\phi'
 % (introduce \mathcal{F}_\phi in the introduction, together with the flow graph)
 
-% TODO: remove the rows that say 'same as..', putting the explanation about them
-% in text. And don't say 'same as', instead say that the formulas are in some
-% sence equivalent (maybe in a stronger sense than the usual equivalence).
+% TODO: Explain (in text) why there are fewer than 16 rows in the table. And
+% don't say 'same as', instead say that the formulas are in some sense
+% equivalent (maybe in a stronger sense than the usual equivalence).
 
 % TODO: emphasise that the reader should focus on the last two columns
-% TODO: the last sentence of the caption could be confusing
+% TODO: the caption sentence about not finding a solution could be confusing
 % TODO: 'best known' sounds disappointing. Find a better alternative.
 
 % TODO: I think I said this the last time, but alog with the complexities as a
@@ -1269,9 +1264,7 @@ $\Gamma$ must map to at \emph{least} one element of $\Delta$. One can then add
   \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\texttt{p}(X, Y) \land \texttt{p}(Z, Y) \Rightarrow X = Z
 \]
 to restrict $\texttt{p}$ to injections or
-\[
-  \forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }\texttt{p}(X, Y)
-\]
+  $\forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }\texttt{p}(X, Y)$
 to ensure surjectivity or remove \cref{eq:def2} to consider partial functions.
 Lastly, one can replace all occurrences of $\Delta$ with $\Gamma$ to model
 endofunctions (i.e., functions with the same domain and codomain) instead.
@@ -1385,7 +1378,8 @@ goals would enable \textsc{Crane} to automatically constructing efficient ways
 to compute various functions and sequences. In addition to the potential impact
 on areas of artificial intelligence (AI) such as statistical relational
 AI~\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
-research in combinatorics as well~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
+research in combinatorics as
+well~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
 
 \bibliographystyle{kr}
 \bibliography{paper}
