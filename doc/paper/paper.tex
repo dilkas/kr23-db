@@ -946,6 +946,7 @@ complex recursive calls such as $f(n-k-2)$.
   \KwData{$\functionNames = \emptyset$ (function names)}
   \KwOut{a list of function definitions}
   $\domainNames \gets \{\, \Omega \mapsto \newDomainName{} \mid \Omega \in \mathcal{D} \,\}$\;\label{line:varnames}
+  \tcc{Equivalent condition: $s$ has in-degree greater than one.}
   \If{$s$ is a direct successor of a $\Reff$ node}{
     $(\expression, \functions) \gets \visit{$s$, $\domainNames$}$\;\label{line:initialcall}
     \Return{\functions}\;\label{line:initialcalltwo}
@@ -982,63 +983,43 @@ complex recursive calls such as $f(n-k-2)$.
   }
 \end{algorithm}
 
-\begin{itemize}
-  \item We call a domain name \emph{atomic} if it is free of subtraction (e.g.,
-        $m$, $n$); otherwise it is \emph{non-atomic} (e.g., $m-1$, $n-l$).
-  \item We assume a fixed total ordering of all domains. In particular, in our
-        running example we assume that $\Gamma$ goes before $\Delta$.
-  \item For each node $v$, let $\mathfrak{D}(v)$ denote the (precomputed) list
-        of domains, the sizes of which we would use as parameters if we were to
-        define a function that begins at $v$. As a set, it is computed by
-        iteratively setting
-        $\mathfrak{D}(v) \gets \left(\bigcup_{u} \mathfrak{D}(u) \setminus I_{v}\right) \cup U_{v}$
-        until convergence, where:
-        \begin{enumerate*}[label=(\roman*)]
-          \item the union is over all direct successors of $v$,
-          \item $I_{v}$ is the set of domains \emph{introduced} at node $v$, and
-          \item $U_{v}$ is the set of domains \emph{used} by $v$.
-        \end{enumerate*}
-        The set is then sorted according to the fixed ordering of domains.
-  \item $\mathsf{F}$ is a partial map from the set of FCG nodes to function
-        names (e.g., $f$, $g$).
-  \item Functions \newDomainName and \newFunctionName both generate
-        previously-unused names. The latter also records the new name in
-        $\mathsf{F}$.
-  \item Note that a node is a direct successor of a $\Reff$ node if and only if
-        it has an in-degree greater than one.
-  \item The algorithm consists of two main functions: \visit and \actuallyVisit.
-        The former handles new function definitions, and the latter produces an
-        algebraic interpretation of each node depending on its type. As there
-        are many node types, \cref{alg:interpretation} only includes the ones
-        pertinent to the contributions of this paper; see previous
-        work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information about the other
-        types.
-  \item Given some node $v$ as input, both \visit and \actuallyVisit return a
-        pair $(\mathsf{e}, \mathsf{funs})$. Here, $\mathsf{e}$ is the algebraic
-        expression that should be used to evaluate $v$ or use it in another
-        expression, and $\mathsf{funs}$ is a list of auxiliary functions that
-        were created while constructing $\mathsf{e}$.
-\end{itemize}
+\Cref{alg:interpretation} describes how to construct a list of function
+definitions from a (complete) FCG\@. The algorithm consists of two main
+functions: \visit and \actuallyVisit. The former handles new function
+definitions while the latter produces an algebraic interpretation of each node
+depending on its type. As there are many node types, we only include the ones
+pertinent to the contributions of this paper; see previous
+work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information about the other types.
+Given some node $v$ as input, both \visit and \actuallyVisit return a pair
+$(\mathsf{e}, \mathsf{funs})$. Here, $\mathsf{e}$ is the algebraic expression
+that represent $v$, and $\mathsf{funs}$ is a list of auxiliary functions that
+were created while formulating $\mathsf{e}$.
 
-When \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} compiles a WFOMC
-instance into a circuit, each node type encodes an arithmetic operation on its
-inputs and parameters. These operations are then immediately performed while
-traversing the circuit. With \textsc{Crane}, the interpretation of an FCG is a
-list of functions. Each function has (some) domain sizes as parameters and may
-contain recursive calls to other functions, including itself. While there may be
-any number of subsidiary functions, there is always one main function that can
-be called with the sizes of the domains of the input formula as arguments.
-Henceforth, this function is always called $f$, and it is defined by the source
-node.
+The algorithm gradually constructs two partial maps $\mathsf{F}$ and
+$\mathsf{D}$ that give names to functions and domains, respectively.
+$\mathsf{F}$ is a global variable that maps FCG nodes to function names (e.g.,
+$f$, $g$). $\mathsf{D}$ maps domains to their names, and it is passed as an
+argument to \visit and \actuallyVisit. Here, a \emph{domain name} is either a
+parameter of a function or an algebraic expression consisting of function
+parameters, subtraction, and parentheses. We call a domain name \emph{atomic} if
+it is free of subtraction (e.g., $m$, $n$); otherwise it is \emph{non-atomic}
+(e.g., $m-1$, $n-l$). Functions \newDomainName and \newFunctionName both
+generate previously-unused names. The latter also takes an FCG node as input and
+links it with the new name in $\mathsf{F}$.
 
-The interpretation of a node is decided by its type. Here we describe the
-interpretations of new (or significantly changed) types and refer the reader to
-previous work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information on other
-types. The interpretation of a $\CR$ or a $\GDR$ node is simply the
-interpretation of its only direct successor. The interpretation of a $\Reff$
-node is a function call. The direct successor of the $\Reff$ node (say, $v$)
-then must introduce a function. The parameters of this function are the sizes of
-all domains used by nodes reachable from $v$.
+We assume a fixed total ordering of all domains. In particular, in
+\cref{example:interpretation} below we assume that $\Gamma$ goes before
+$\Delta$. For each node $v$, let $\mathfrak{D}(v)$ denote the (precomputed) list
+of domains, the sizes of which we would use as parameters if we were to define a
+function that begins at $v$. As a set, it is computed by iteratively setting
+$\mathfrak{D}(v) \gets \left(\bigcup_{u} \mathfrak{D}(u) \setminus I_{v}\right) \cup U_{v}$
+until convergence, where:
+\begin{enumerate*}[label=(\roman*)]
+  \item the union is over all direct successors of $v$,
+  \item $I_{v}$ is the set of domains \emph{introduced} at node $v$, and
+  \item $U_{v}$ is the set of domains \emph{used} by $v$.
+\end{enumerate*}
+The set is then sorted according to the fixed ordering of domains.
 
 \begin{figure}
   \centering
@@ -1053,12 +1034,11 @@ all domains used by nodes reachable from $v$.
     \visit/\actuallyVisit{$\bot$, $\Dthree$} \ar[u, swap, shift right=0.7ex, "\left({[l<2], \langle\rangle}\right)"] & \visit/\actuallyVisit{$\Reff$, $\Dthree$} \ar[ul, swap, shift right=0.7ex, "\left({f(m-1, n-l), \langle\rangle}\right)"]
   \end{tikzcd}
   \caption{Function calls and their return values when \cref{alg:interpretation}
-    is run on the FCG from \cref{fig:examplefcg}.}\label{fig:functioncalls} % TODO: do I need a dot?
+    is run on the FCG from \cref{fig:examplefcg}}\label{fig:functioncalls}
 \end{figure}
 
-% TODO: examine the order in which everything is introduced
 \begin{example}\label{example:interpretation}
-  Let us see how \cref{alg:interpretation} handles the FCG from
+  Here we examine how \cref{alg:interpretation} works on the FCG from
   \cref{fig:examplefcg}. In this case, $\mathcal{D} = \{\, \Gamma, \Delta \,\}$.
   Let $\Done \coloneqq \{\, \Gamma \mapsto m, \Delta \mapsto n \,\}$,
   $\Dtwo \coloneqq \Done \cup \{\, \Delta^{\top} \mapsto l, \Delta^{\bot} \mapsto (n-l) \,\}$,
@@ -1104,8 +1084,13 @@ all domains used by nodes reachable from $v$.
 
   Next, \actuallyVisit{$\land$, $\Dthree$} calls
   $\visit/\actuallyVisit{$\Reff$, $\Dthree$}$. Since
-  $\mathfrak{D}(\GDR) = \langle \Gamma, \Delta \rangle$, and
-  $\begin{tikzcd} \langle\Gamma, \Delta\rangle \ar[r, mapsto, "\rho"] & \langle\Gamma', \Delta^{\bot}\rangle \ar[r, mapsto, "\Dthree"] & \langle m-1, n-l \rangle\end{tikzcd}$,
+  $\mathfrak{D}(\GDR) = \langle \Gamma, \Delta \rangle$, and the pair
+  $\langle\Gamma, \Delta\rangle$ is transformed by $\Dthree{} \circ \rho$ as
+  \[
+    \begin{tikzcd}
+      \langle\Gamma, \Delta\rangle \ar[r, mapsto, "\rho"] & \langle\Gamma', \Delta^{\bot}\rangle \ar[r, mapsto, "\Dthree"] & \langle m-1, n-l \rangle,
+    \end{tikzcd}
+  \]
   \textsf{args} is set to $\langle m-1, n-l \rangle$ on \cref{line:args}, and
   the output expression becomes $f(m-1, n-l)$. The call to
   \actuallyVisit{$\land$, $\Dthree$} then returns the product of the two
@@ -1116,14 +1101,14 @@ all domains used by nodes reachable from $v$.
   \textsf{call} and \textsf{signature} are set to $f(m, n)$. As the definition
   of $f$ is the final answer and not part of some other algebraic expression,
   \cref{line:initialcall,line:initialcalltwo} discard the function call
-  expression and return the definition of $f$. Therefore,
+  expression and return the definition of $f$. Thus,
   \begin{align}
     f(m, n) &= \sum_{l = 0}^{n} \binom{n}{l} [l < 2] f(m-1, n-l)\nonumber \\
-            &= f(m-1, n) + n f(m-1, n-1).\label{eq:solution}
+            &= f(m-1, n) + n f(m-1, n-1)\label{eq:solution}
   \end{align}
-  To use this recursive function to compute the model count of the input formula
-  for any domain sizes, one just needs to find the base cases $f(0, n)$ and
-  $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
+  is the function that \textsc{Crane} constructed for computing partial
+  injections. To use $f$ in practice, one just needs to identify the base cases
+  $f(0, n)$ and $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
 \end{example}
 
 \section{Experimental Results}\label{sec:results}
@@ -1136,6 +1121,7 @@ all domains used by nodes reachable from $v$.
 % determine)
 % TODO: describe ternary.mln as an example instance that's not in C^2 that can
 % be lifted
+% TODO: say that 'f' will always denote the main function
 
 \begin{table*}[t]
   \centering
