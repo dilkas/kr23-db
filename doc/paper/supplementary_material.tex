@@ -58,29 +58,8 @@
 /TemplateVersion (KR.2022.0, KR.2023.0)
 }
 
-\title{Synthesising Recursive Functions for First-Order Model Counting}
-
-% TODO (at the very end)
-% put the appendix in a separate file
-% grammarly the whole thing
-% read the formatting instructions and their LaTeX source (email font?)
-% make sure there are no overflow errors
-% clean up unnecessary things from the header (e.g., packages and definitions)
-%  make sure the result table (as well as other floating objects) are on the right pages
-
-\author{%
-Paulius Dilkas$^1$\and
-Vaishak Belle$^2$\\
-\affiliations
-$^1$National University of Singapore, Singapore, Singapore\\
-$^2$University of Edinburgh, Edinburgh, UK\\
-\emails
-paulius.dilkas@nus.edu.sg,
-vbelle@ed.ac.uk
-}
-
 \crefalias{diagram}{equation}
-\crefname{diagram}{Diagram}{Diagrams}
+\crefname{diagram}{diagram}{diagrams}
 \Crefname{diagram}{Diagram}{Diagrams}
 \creflabelformat{diagram}{#2\textup{(#1)}#3}
 
@@ -132,6 +111,54 @@ sn edges/.style={for tree={edge={-Latex}}}
 \appendix
 
 \section{Proofs}
+
+TODO: finish arranging the definitions
+
+We begin with a few definitions that formalise the notion of a model.
+
+For any set $S$, let $2^{S}$ denote its power set and
+$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples of any
+finite length of elements of $S$. For example,
+$\{\,a, b\,\}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$.
+
+Let $\Preds$ be the function that maps any clause or formula to the set of
+predicates used within.
+
+For any $n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
+$[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$.
+
+Each formula $\phi$ has a map
+$\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ s.t., for each
+predicate $\texttt{p}/n \in \Preds(\phi)$, we have that
+$\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.
+
+\begin{definition}\label{def:model}
+  Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
+  $(\phi, \sigma)$ is a map
+  $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ s.t.\ the
+  following two conditions are satisfied.
+  \begin{enumerate}
+    \item Let $\texttt{p}/n \in \Preds(\phi)$ be a predicate and let
+          $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ for some domains
+          $d_{i} \in \Doms(\phi)$. Then
+          \begin{equation}\label{eq:subset}
+            \mathfrak{M}(\texttt{p}) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
+          \end{equation}
+    \item As a collection of relations, $\mathfrak{M}$ satisfies $\phi$.
+    \begin{itemize}
+      \item TODO: introduce the substitution for formulas, moving the definition from elsewhere
+      \item define inductively as...
+      \item (not exhaustive)
+      \item $\mathfrak{M} \models \phi \land \psi$ iff $\mathfrak{M} \models \phi$ and $\mathfrak{M} \models \psi$
+      \item $\mathfrak{M} \models \phi \lor \psi$ iff $\mathfrak{M} \models \phi$ or $\mathfrak{M} \models \psi$
+      \item $\mathfrak{M} \models \neg\phi$ iff $\mathfrak{M} \not\models \phi$
+      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. }\phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta$
+      \item One can then add inequality constraints to the semantics as follows
+      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. } X \ne c \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta \setminus \{\, c \,\}$
+      \item $\mathfrak{M} \models (\forall X,Y \in \Delta\text{. } X \ne Y \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}][y/\{\, Y \,\}]$ for all $x,y \in \Delta$ s.t. $x \ne y$
+    \end{itemize}
+  \end{enumerate}
+\end{definition}
 
 \begin{theorem}[Correctness of $\GDR$]
   Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
@@ -240,11 +267,11 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 \section{Solutions Found by \textsc{Crane}}
 
-In this appendix, we list the exact function definitions produced by
-\textsc{Crane} for all of the problem instances in Section~6 both before and
-after algebraic simplification (excluding multiplications by one). The
-correctness of all of them has been checked by identifying suitable base cases
-and verifying the numerical answers across a range of domain sizes.
+Here we list the exact function definitions produced by \textsc{Crane} for all
+of the problem instances in Section~6 both before and after algebraic
+simplification (excluding multiplications by one). The correctness of all of
+them has been checked by identifying suitable base cases and verifying the
+numerical answers across a range of domain sizes.
 
 \begin{enumerate}
   \item $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:

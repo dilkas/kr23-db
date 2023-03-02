@@ -106,9 +106,9 @@ vbelle@ed.ac.uk
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
 \newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
-\newcommand{\Vone}{\mathsf{V}_{1}}
-\newcommand{\Vtwo}{\mathsf{V}_{2}}
-\newcommand{\Vthree}{\mathsf{V}_{3}}
+\newcommand{\Done}{\mathsf{D}_{1}}
+\newcommand{\Dtwo}{\mathsf{D}_{2}}
+\newcommand{\Dthree}{\mathsf{D}_{3}}
 
 \DeclareMathOperator{\friends}{\texttt{friends}}
 \DeclareMathOperator{\smokes}{\texttt{smokes}}
@@ -147,24 +147,33 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 \begin{abstract}
   First-order model counting (FOMC) is a computational problem that asks to
-  count the models of a sentence in finite-domain first-order logic. Despite
-  being around for more than a decade, practical FOMC algorithms are still
-  unable to compute functions as simple as a factorial. We argue that the
-  capabilities of FOMC algorithms to date are limited by their inability to
-  express arbitrary recursive computations. To enable arbitrary recursion, we
-  relax the restrictions that typically accompany domain recursion and
-  generalise circuits used to express a solution to an FOMC problem to graphs
-  that may contain cycles. To this end, we enhance the most well-established
-  (weighted) FOMC algorithm \textsc{ForcLift} with new compilation rules and an
-  algorithm to check whether a recursive call is feasible. These improvements
-  allow the algorithm to construct efficient solutions to counting fundamental
-  structures such as injections and bijections. We end with a few conjectures on
-  what classes of instances could be liftable as a result.
+  count the models of a sentence in finite-domain first-order logic. In this
+  paper, we argue that the capabilities of FOMC algorithms to date are limited
+  by their inability to express many types of recursive computations. To enable
+  such computations, we relax the restrictions that typically accompany domain
+  recursion and generalise the circuits used to express a solution to an FOMC
+  problem to directed graphs that may contain cycles. To this end, we adapt the
+  most well-established (weighted) FOMC algorithm \textsc{ForcLift} to work with
+  such graphs and introduce new compilation rules that can create cycle-inducing
+  edges that encode recursive function calls. These improvements allow the
+  algorithm to find efficient solutions to counting problems that were
+  previously beyond its reach, including those that cannot be solved efficiently
+  by any other exact FOMC algorithm. We end with a few conjectures on what
+  classes of instances could be domain-liftable as a result.
 \end{abstract}
 
-% TODO: I found the choice for what goes into a footnote and what doesn't rather
-% inconsistent, which made it a bit irritating to read for me. Maybe review if
-% the current use of footnotes is really necessary and helpful?
+% KEYWORDS:
+% model counting
+% first-order logic
+% recursion
+% knowledge compilation
+
+% TOPICS:
+% KR & ML: probabilistic reasoning and learning
+% KR & ML: statistical relational learning
+% (no) computational aspects of knowledge representation
+% (no) knowledge representation languages
+% (no) KR & ML: graphical models for knowledge representation and reasoning
 
 \section{Introduction}\label{sec:introduction}
 
@@ -346,14 +355,6 @@ conclude by outlining some conjectures and directions for future work.
 
 \section{Preliminaries}\label{sec:recprelims}
 
-% TODO: Maybe some of the info from the preliminaries is redundant now that I've
-% moved the proofs elsewhere?
-
-% TODO: I find the writing mostly clear, but the structure of the Preliminaries
-% somewhat confusing. It starts with some notation, then some definitions, then
-% suddenly a paragraph titled "Notation", and so on. Maybe see if you can
-% rearrange some things and/or add some (more) helpful paragraph titles?
-
 Our representation of FOMC instances is largely based on the format used
 internally by \textsc{ForcLift}, some aspects of which are described by Van den
 Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can
@@ -372,6 +373,16 @@ mentioned by the input formula. During compilation, new domains are added to
 $\mathcal{D}$ by some of the compilation rules. Each such new domain is
 interpreted as a subset of some other domain in $\mathcal{D}$.
 
+We use $\langle\cdot\rangle$ to denote lists, $|\cdot|$ for the length of a
+list, and $\mdoubleplus$ for list concatenation. We write $\pfun$ to denote
+partial functions and $\dom(\cdot)$ for the domain of a function. Let $\Doms$ be
+the function that maps any clause or formula to the set of domains used within.
+Similarly, let $\Vars$ be the function that maps clauses and sets of either
+literals or constraints to the set of variables in them. Let $S$ be a set of
+constraints or literals, $V$ a set of variables, and $x$ a variable or a
+constant. We write $S[x/V]$ to denote $S$ with all occurrences of all variables
+in $V$ replaced with $x$.
+
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
   and $b$ is either a variable or a constant. As the name implies, it constrains
@@ -379,47 +390,19 @@ interpreted as a subset of some other domain in $\mathcal{D}$.
 \end{definition}
 
 \begin{definition}[Clause]\label{def:clause}
-  A \emph{clause}
-  is a triple $c = (L, E, \delta_c)$, where $L$ is a set of literals, $E$ is a
-  set of constraints, and $\delta_c$ is the domain map of $c$. Let $\Vars$ be
-  the function that maps clauses and sets of either literals or constraints to
-  the set of variables in them. In particular,
-  $\Vars(c) \coloneqq \Vars(L) \cup \Vars(E)$. \emph{Domain map}
-  $\delta_{c}\colon \Vars(c) \to \mathcal{D}$ is a function that maps all
-  variables in $c$ to their domains such that (s.t.) if $(X, Y) \in E$ for some
-  variables $X$ and $Y$, then $\delta_c(X) = \delta_c(Y)$. For convenience, we
-  sometimes write $\delta_c$ for the domain map of $c$ without unpacking $c$
-  into its three constituents.
+  A \emph{clause} is a triple $c = (L, E, \delta_c)$, where $L$ is a set of
+  literals, $E$ is a set of constraints, and $\delta_c$ is the domain map.
+  \emph{Domain map} $\delta_{c}\colon \Vars(c) \to \mathcal{D}$ is a function
+  that maps all variables in $c$ to their domains such that (s.t.) if
+  $(X, Y) \in E$ for some variables $X$ and $Y$, then
+  $\delta_c(X) = \delta_c(Y)$. For convenience, we sometimes write $\delta_c$
+  for the domain map of $c$ without unpacking $c$ into its three constituents.
 \end{definition}
-
-% TODO: The first paragraph already introduced some notation.
-\paragraph{Notation.}
-For any set $S$, let $2^{S}$ denote its power set and
-$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples of any
-finite length of elements of $S$. For example,
-$\{\,a, b\,\}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$. For any
-$n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
-$[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$. We write $\langle\rangle$ for an
-empty list, $\langle x \rangle$ for a list with one element $x$, $|l|$ for the
-length of list $l$, $\mdoubleplus$ for list concatenation, and $\pfun$ to denote
-partial functions. Let $S$ be a set of constraints or literals, $V$ a set of
-variables, and $x$ a variable or a constant. We write $S[x/V]$ to denote $S$
-with all occurrences of all variables in $V$ replaced with $x$. Let $\Doms$
-(respectively, $\Preds$) be the function that maps any clause or formula to the
-set of domains (respectively, predicates) used within, and let $\dom(f)$ denote
-the domain of function $f$.
 
 \begin{definition}[Formula]\label{def:formula}
   A \emph{formula} is a set of clauses s.t.\ all constraints and atoms `type
-  check' with respect to domains. Each formula $\phi$ has a map
-  $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ such that, for each
-  predicate $\texttt{p}/n \in \Preds(\phi)$, we have that
-  $\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.
+  check' with respect to domains.
 \end{definition}
-
-\begin{remark}
-  Constants are also mapped to domains, although we keep this mapping implicit.
-\end{remark}
 
 \begin{example}\label{example:first}
   Let $\phi \coloneqq \{\, c_1, c_2 \,\}$ be a formula with clauses
@@ -436,11 +419,10 @@ the domain of function $f$.
           \end{multlined}
   \end{align*}
   for some predicate $\texttt{p}/2$, variables $X$, $Y$, $Z$, and domains
-  $\Gamma$ and $\Delta$. Based on $\delta_{c_{1}}$ and $\delta_{c_{2}}$, we can
-  infer that $\pi_{\phi} = \{\, \texttt{p} \mapsto (\Gamma, \Delta) \,\}$. All
-  variables that occur as the first argument to $\texttt{p}$ are in $\Gamma$,
-  and, likewise, all variables that occur as the second argument to $\texttt{p}$
-  are in $\Delta$. Therefore, $\phi$ `type checks' as a valid formula.
+  $\Gamma$ and $\Delta$. All variables that occur as the first argument to
+  $\texttt{p}$ are in $\Gamma$, and, likewise, all variables that occur as the
+  second argument to $\texttt{p}$ are in $\Delta$. Therefore, $\phi$ `type
+  checks' as a valid formula.
 \end{example}
 
 One can read a formula in our format as a sentence in first-order logic. All
@@ -477,12 +459,6 @@ be eliminated as well. Since constraints are always interpreted as preconditions
 for the disjunction of literals in the clause (as in \cref{eq:formula}),
 equality constraints can be eliminated without any loss in expressivity.
 
-% TODO: the first sentence comes out of nowhere
-Once domains are mapped to finite sets and constants to elements in those sets,
-a formula can be viewed as a set of conditions that the predicates (interpreted
-as relations) have to satisfy. Hence, FOMC is the problem of counting the number
-of combinations of relations that satisfy these conditions.
-
 \begin{example}\label{example:simple}
   Let $\Delta$ be a domain of size $n \in \mathbb{N}_{0}$. The model count of
   $\forall X \in \Delta\text{. } \texttt{p}(X) \lor \texttt{q}(X)$ is then
@@ -501,54 +477,23 @@ of combinations of relations that satisfy these conditions.
   $\sum_{k=0}^{n} \binom{n}{k}2^{n^{2} - k(n-k)}$~\cite{DBLP:conf/kr/BroeckMD14}.
 \end{example}
 
-To formalise the idea of a model, let
-$\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain size function}
-that maps each domain to a non-negative integer.
+The model count of a formula $\phi$ also depends on the sizes of the domains in
+$\phi$. Let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain
+  size function} that maps each domain to a non-negative integer.
 
-\begin{definition}\label{def:model}
-  Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
-  $(\phi, \sigma)$ is a map
-  $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ s.t.\ the
-  following two conditions are satisfied.
-  \begin{enumerate}
-    \item Let $\texttt{p}/n \in \Preds(\phi)$ be a predicate and let
-          $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ for some domains
-          $d_{i} \in \Doms(\phi)$. Then
-          \begin{equation}\label{eq:subset}
-            \mathfrak{M}(\texttt{p}) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
-          \end{equation}
-    \item As a collection of relations, $\mathfrak{M}$ satisfies $\phi$.
-    \begin{itemize}
-      \item TODO: introduce the substitution for formulas, moving the definition from elsewhere
-      \item define inductively as...
-      \item (not exhaustive)
-      \item $\mathfrak{M} \models \phi \land \psi$ iff $\mathfrak{M} \models \phi$ and $\mathfrak{M} \models \psi$
-      \item $\mathfrak{M} \models \phi \lor \psi$ iff $\mathfrak{M} \models \phi$ or $\mathfrak{M} \models \psi$
-      \item $\mathfrak{M} \models \neg\phi$ iff $\mathfrak{M} \not\models \phi$
-      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. }\phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta$
-      \item One can then add inequality constraints to the semantics as follows
-      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. } X \ne c \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta \setminus \{\, c \,\}$
-      \item $\mathfrak{M} \models (\forall X,Y \in \Delta\text{. } X \ne Y \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}][y/\{\, Y \,\}]$ for all $x,y \in \Delta$ such that $x \ne y$
-    \end{itemize}
-  \end{enumerate}
-\end{definition}
-
-% TODO: make the relations more concrete
 \begin{example}
   Let $\phi$ be as in \cref{example:first} and let
-  $\sigma(\Gamma) = \sigma(\Delta) = 2$. Then the right-hand side of
-  \cref{eq:subset} becomes
-  \[
-    [\sigma(\Gamma)] \times [\sigma(\Delta)] = [2] \times [2] = \{\,(1, 1), (1, 2), (2, 1), (2, 2)\,\}
-  \]
-  There are $2^{4} = 16$ possible relations between $\Gamma$ and $\Delta$. Let
-  us count how many of them satisfy the conditions imposed on predicate
-  $\texttt{p}$. The empty relation does. All four relations of cardinality one
-  do too. Finally, there are two relations of cardinality two that satisfy the
-  conditions as well. Thus, the FOMC of $(\phi, \sigma)$ is 7. Incidentally, it
-  counts partial injections. We will continue to use the problem of counting
-  partial injections (and the formula from \cref{example:first} specifically) as
-  the main running example throughout the paper.
+  $\Gamma = \Delta = \{\,1, 2\,\}$, i.e., $\sigma(\Gamma) = \sigma(\Delta) = 2$.
+  There are $2^{2 \times 2} = 16$ possible relations between $\Gamma$ and
+  $\Delta$. Let us count how many of them satisfy the conditions imposed on
+  predicate $\texttt{p}$. The empty relation does. All four relations of
+  cardinality one (e.g., $\{\, (1, 1) \,\}$) do too. Finally, there are two
+  relations of cardinality two ($\{\, (1, 1), (2, 2) \,\}$ and
+  $\{\, (1, 2), (2, 1) \,\}$) that satisfy the conditions as well. Thus, the
+  FOMC of $(\phi, \sigma)$ is 7. Incidentally, the FOMC of $\phi$ counts partial
+  injections from $\Gamma$ to $\Delta$. We will continue to use the problem of
+  counting partial injections (and the formula from \cref{example:first}
+  specifically) as the main running example.
 \end{example}
 
 \section{First-Order Computational Graphs}\label{sec:methods}
@@ -985,14 +930,14 @@ complex recursive calls such as $f(n-k-2)$.
   \SetKwData{functionCall}{call}
   \SetKwData{functionSignature}{signature}
   \SetKwData{functionNames}{F}
-  \SetKwData{variableNames}{V}
-  \SetKwData{newVariableNames}{V'}
+  \SetKwData{domainNames}{D}
+  \SetKwData{newDomainNames}{D'}
   \SetKwData{expression}{e}
   \SetKwData{functions}{funs}
   \SetKwData{args}{args}
 
   \SetKwFunction{newFunctionName}{newFunctionName}
-  \SetKwFunction{newVariableName}{newVarName}
+  \SetKwFunction{newDomainName}{newDomainName}
   \SetKwFunction{visit}{v}
   \SetKwFunction{actuallyVisit}{visit}
 
@@ -1000,36 +945,36 @@ complex recursive calls such as $f(n-k-2)$.
   \KwIn{$s$---the source node of the FCG}
   \KwData{$\functionNames = \emptyset$ (function names)}
   \KwOut{a list of function definitions}
-  $\variableNames \gets \{\, \Omega \mapsto \newVariableName{} \mid \Omega \in \mathcal{D} \,\}$\;\label{line:varnames}
+  $\domainNames \gets \{\, \Omega \mapsto \newDomainName{} \mid \Omega \in \mathcal{D} \,\}$\;\label{line:varnames}
   \If{$s$ is a direct successor of a $\Reff$ node}{
-    $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;\label{line:initialcall}
+    $(\expression, \functions) \gets \visit{$s$, $\domainNames$}$\;\label{line:initialcall}
     \Return{\functions}\;\label{line:initialcalltwo}
   }
   $f \gets \newFunctionName{$s$}$\;
-  $(\expression, \functions) \gets \visit{$s$, $\variableNames$}$\;
-  \Return{$\langle f(\langle \variableNames{$\Omega$} \mid \Omega \in \mathcal{D} \rangle) = \expression \rangle \mdoubleplus \functions$}\;
-  \Fn{\visit{node $v$, variable names \variableNames}}{
+  $(\expression, \functions) \gets \visit{$s$, $\domainNames$}$\;
+  \Return{$\langle f(\langle \domainNames{$\Omega$} \mid \Omega \in \mathcal{D} \rangle) = \expression \rangle \mdoubleplus \functions$}\;
+  \Fn{\visit{node $v$, domain names \domainNames}}{
     \If{$v$ is \textbf{not} a direct successor of a $\Reff$ node}{
-      \Return{\actuallyVisit{$v$, \variableNames}}\;
+      \Return{\actuallyVisit{$v$, \domainNames}}\;
     }
     $f \gets \newFunctionName{$v$}$\;
-    $\newVariableNames \gets \variableNames$\;
-    \For{$\Omega \in \mathfrak{D}(v)$ s.t. $\newVariableNames(\Omega)$ is non-atomic}{\label{line:nonone}
-      $\newVariableNames(\Omega) \gets \newVariableName{}$\;\label{line:nontwo}
+    $\newDomainNames \gets \domainNames$\;
+    \For{$\Omega \in \mathfrak{D}(v)$ s.t. $\newDomainNames(\Omega)$ is non-atomic}{\label{line:nonone}
+      $\newDomainNames(\Omega) \gets \newDomainName{}$\;\label{line:nontwo}
     }
-    $(\expression, \functions) \gets \actuallyVisit{$v$, \newVariableNames}$\;\label{line:actuallyvisit}
-    $\functionCall \gets f(\langle \variableNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
-    $\functionSignature \gets f(\langle \newVariableNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
+    $(\expression, \functions) \gets \actuallyVisit{$v$, \newDomainNames}$\;\label{line:actuallyvisit}
+    $\functionCall \gets f(\langle \domainNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
+    $\functionSignature \gets f(\langle \newDomainNames{$\Omega$} \mid \Omega \in \mathfrak{D}(v) \rangle)$\;
     \Return{$(\functionCall, \langle \functionSignature = \expression \rangle \mdoubleplus \functions)$}\;
   }
-  \Fn{\actuallyVisit{node $v$, variable names \variableNames}}{
+  \Fn{\actuallyVisit{node $v$, domain names \domainNames}}{
     \Switch{label of $v$}{
-      \lCase{$\GDR(v')$}{\Return{\visit{$v'$, \variableNames}}}
+      \lCase{$\GDR(v')$}{\Return{\visit{$v'$, \domainNames}}}
       \uCase{$\CR_{\Omega \mapsto \Omega'}(v')$}{
-        \Return{\visit{$v'$, $\variableNames \cup \{\, \Omega' \mapsto (\variableNames(\Omega) - 1) \,\}$}}\;\label{line:cr}
+        \Return{\visit{$v'$, $\domainNames \cup \{\, \Omega' \mapsto (\domainNames(\Omega) - 1) \,\}$}}\;\label{line:cr}
       }
       \uCase{$\Reff_{\rho}(v')$}{
-        $\args \gets \langle \variableNames\circ\rho(\Omega) \mid \Omega \in \mathfrak{D}(v') \rangle$\;\label{line:args}
+        $\args \gets \langle \domainNames\circ\rho(\Omega) \mid \Omega \in \mathfrak{D}(v') \rangle$\;\label{line:args}
         \Return{$(\functionNames{$v'$}(\args), \langle \rangle)$}\;
       }
       \dots
@@ -1038,13 +983,10 @@ complex recursive calls such as $f(n-k-2)$.
 \end{algorithm}
 
 \begin{itemize}
-  \item TODO: is maybe `parameter name' (or something similar) would be more
-        appropriate than `variable name'?
-  \item We call a variable name is \emph{atomic} if it is free of subtraction
-        (e.g., $m$, $n$); otherwise it is \emph{non-atomic} (e.g., $m-1$,
-        $n-l$).
-  \item We assume a fixed total ordering of all domains names. In particular, in
-        our running example we assume that $\Gamma$ goes before $\Delta$.
+  \item We call a domain name \emph{atomic} if it is free of subtraction (e.g.,
+        $m$, $n$); otherwise it is \emph{non-atomic} (e.g., $m-1$, $n-l$).
+  \item We assume a fixed total ordering of all domains. In particular, in our
+        running example we assume that $\Gamma$ goes before $\Delta$.
   \item For each node $v$, let $\mathfrak{D}(v)$ denote the (precomputed) list
         of domains, the sizes of which we would use as parameters if we were to
         define a function that begins at $v$. As a set, it is computed by
@@ -1059,12 +1001,11 @@ complex recursive calls such as $f(n-k-2)$.
         The set is then sorted according to the fixed ordering of domains.
   \item $\mathsf{F}$ is a partial map from the set of FCG nodes to function
         names (e.g., $f$, $g$).
-  \item Functions \newVariableName and \newFunctionName generate
-        previously-unused names for variables and functions, respectively. The
-        latter also records the new name in $\mathsf{F}$.
+  \item Functions \newDomainName and \newFunctionName both generate
+        previously-unused names. The latter also records the new name in
+        $\mathsf{F}$.
   \item Note that a node is a direct successor of a $\Reff$ node if and only if
         it has an in-degree greater than one.
-  \item For simplicity, we refer to FCG nodes using their types.
   \item The algorithm consists of two main functions: \visit and \actuallyVisit.
         The former handles new function definitions, and the latter produces an
         algebraic interpretation of each node depending on its type. As there
@@ -1094,63 +1035,63 @@ The interpretation of a node is decided by its type. Here we describe the
 interpretations of new (or significantly changed) types and refer the reader to
 previous work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information on other
 types. The interpretation of a $\CR$ or a $\GDR$ node is simply the
-interpretation of its only direct successor. Obviously, $\star$ nodes have no
-interpretation as incomplete FCGs are not meant to be interpreted. The
-interpretation of a $\Reff$ node is a function call. The direct successor of the
-$\Reff$ node (say, $v$) then must introduce a function. The parameters of this
-function are the sizes of all domains used by nodes reachable from $v$.
+interpretation of its only direct successor. The interpretation of a $\Reff$
+node is a function call. The direct successor of the $\Reff$ node (say, $v$)
+then must introduce a function. The parameters of this function are the sizes of
+all domains used by nodes reachable from $v$.
 
 \begin{figure}
   \centering
   \begin{tikzcd}
     \ar[d] & \\
     \text{\Cref{alg:interpretation}} \ar[d] \ar[u, swap, shift right=0.7ex, "{\left\langle f(m, n) = \sum_{l=0}^{n}[l<2]f(m-1,n-l) \right\rangle}"] & \\
-    \visit{$\GDR$, $\Vone$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({f(m, n), \left\langle f(m, n) = \sum_{l=0}^{n}[l<2]f(m-1,n-l) \right\rangle}\right)"] & \\
-    \actuallyVisit{$\GDR$, $\Vone$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({\sum_{l=0}^{n}[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
-    \visit/\actuallyVisit{$\bigvee$, $\Vone$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({\sum_{l=0}^{n}[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
-    \visit/\actuallyVisit{$\CR$, $\Vtwo$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
-    \visit/\actuallyVisit{$\land$, $\Vthree$} \ar[d] \ar[dr] \ar[u, swap, shift right=0.7ex, "\left({[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
-    \visit/\actuallyVisit{$\bot$, $\Vthree$} \ar[u, swap, shift right=0.7ex, "\left({[l<2], \langle\rangle}\right)"] & \visit/\actuallyVisit{$\Reff$, $\Vthree$} \ar[ul, swap, shift right=0.7ex, "\left({f(m-1, n-l), \langle\rangle}\right)"]
+    \visit{$\GDR$, $\Done$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({f(m, n), \left\langle f(m, n) = \sum_{l=0}^{n}[l<2]f(m-1,n-l) \right\rangle}\right)"] & \\
+    \actuallyVisit{$\GDR$, $\Done$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({\sum_{l=0}^{n}[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\bigvee$, $\Done$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({\sum_{l=0}^{n}[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\CR$, $\Dtwo$} \ar[d] \ar[u, swap, shift right=0.7ex, "\left({[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\land$, $\Dthree$} \ar[d] \ar[dr] \ar[u, swap, shift right=0.7ex, "\left({[l<2]f(m-1,n-l), \langle\rangle}\right)"] & \\
+    \visit/\actuallyVisit{$\bot$, $\Dthree$} \ar[u, swap, shift right=0.7ex, "\left({[l<2], \langle\rangle}\right)"] & \visit/\actuallyVisit{$\Reff$, $\Dthree$} \ar[ul, swap, shift right=0.7ex, "\left({f(m-1, n-l), \langle\rangle}\right)"]
   \end{tikzcd}
   \caption{Function calls and their return values when \cref{alg:interpretation}
-    is run on the FCG from \cref{fig:examplefcg}. When \protect\visit calls
-    \protect\actuallyVisit and returns its output unchanged, the two function
-    calls are shortened as a single call to
-    $\protect\visit/\protect\actuallyVisit$. TODO: this last sentence should be
-    explained in text.}\label{fig:functioncalls}
+    is run on the FCG from \cref{fig:examplefcg}.}\label{fig:functioncalls} % TODO: do I need a dot?
 \end{figure}
 
+% TODO: examine the order in which everything is introduced
 \begin{example}\label{example:interpretation}
   Let us see how \cref{alg:interpretation} handles the FCG from
-  \cref{fig:examplefcg}. Here, $\mathcal{D} = \{\, \Gamma, \Delta \,\}$. Let
-  $\Vone \coloneqq \{\, \Gamma \mapsto m, \Delta \mapsto n \,\}$,
-  $\Vtwo \coloneqq \Vone \cup \{\, \Delta^{\top} \mapsto l, \Delta^{\bot} \mapsto (n-l) \,\}$,
-  and $\Vthree \coloneqq \Vtwo \cup \{\, \Gamma' \mapsto (m-1) \,\}$ denote
-  versions of $\mathsf{V}$ at various points throughout the algorithm's
-  execution. Here, $l$, $m$, and $n$ are all arbitrary variable names generated
-  by \newVariableName. \Cref{line:varnames} initialises $\mathsf{V}$ to $\Vone$.
+  \cref{fig:examplefcg}. In this case, $\mathcal{D} = \{\, \Gamma, \Delta \,\}$.
+  Let $\Done \coloneqq \{\, \Gamma \mapsto m, \Delta \mapsto n \,\}$,
+  $\Dtwo \coloneqq \Done \cup \{\, \Delta^{\top} \mapsto l, \Delta^{\bot} \mapsto (n-l) \,\}$,
+  and $\Dthree \coloneqq \Dtwo \cup \{\, \Gamma' \mapsto (m-1) \,\}$ denote
+  versions of $\mathsf{D}$ at various points throughout the algorithm's
+  execution. Here, $l$, $m$, and $n$ are all arbitrary names generated by
+  \newDomainName.
 
   \Cref{fig:functioncalls} shows the outline of function calls and their return
-  values. Once \visit{$\GDR$, $\Vone$} is called on \cref{line:initialcall},
-  \newFunctionName updates $\mathsf{F}$ to $\{\, \GDR \mapsto f \,\}$, where $f$
-  is a new function name. There are no non-atomic names in $\Vone$, so
-  \cref{line:nonone,line:nontwo} are skipped, and calls to
-  \actuallyVisit{$\GDR$, $\Vone$} and
-  $\visit/\actuallyVisit{$\bigvee$, $\Vone$}$ follow. Here, $\Vone$ becomes
-  $\Vtwo$, i.e., the $\bigvee$ node introduces two domains $\Delta^{\top}$ and
-  $\Delta^{\bot}$ that `partition' $\Delta$, i.e.,
-  $\Vtwo(\Delta^{\top}) + \Vtwo(\Delta^{\bot}) = l + (n-l) = n = \Vtwo(\Delta)$.
-  Similarly, \actuallyVisit{$\CR$, $\Vtwo$} on \cref{line:cr} adds $\Gamma'$,
-  replacing $\Vtwo$ with $\Vthree$.
+  values. For simplicity, we refer to FCG nodes by their types. When \visit
+  calls \actuallyVisit and returns its output unchanged, the two function calls
+  are shortened as a single call to $\visit/\actuallyVisit$.
 
-  Eventually, \actuallyVisit{$\bot$, $\Vthree$} is called. A contradiction node
+  \Cref{line:varnames} initialises $\mathsf{D}$ to $\Done$. Once \visit{$\GDR$,
+    $\Done$} is called on \cref{line:initialcall}, \newFunctionName updates
+  $\mathsf{F}$ to $\{\, \GDR \mapsto f \,\}$, where $f$ is a new function name.
+  There are no non-atomic names in $\Done$, so \cref{line:nonone,line:nontwo}
+  are skipped, and calls to \actuallyVisit{$\GDR$, $\Done$} and
+  $\visit/\actuallyVisit{$\bigvee$, $\Done$}$ follow. Here, $\Done$ becomes
+  $\Dtwo$, i.e., the $\bigvee$ node introduces two domains $\Delta^{\top}$ and
+  $\Delta^{\bot}$ that `partition' $\Delta$, i.e.,
+  $\Dtwo(\Delta^{\top}) + \Dtwo(\Delta^{\bot}) = l + (n-l) = n = \Dtwo(\Delta)$.
+  Similarly, \actuallyVisit{$\CR$, $\Dtwo$} on \cref{line:cr} adds $\Gamma'$,
+  replacing $\Dtwo$ with $\Dthree$.
+
+  Eventually, \actuallyVisit{$\bot$, $\Dthree$} is called. A contradiction node
   with clause $c$ as a parameter is interpreted as one if the clause has
   groundings and zero otherwise. In this case, the parameter is
   $c = (\emptyset, \{\, (X, Y) \,\}, \{\, X \mapsto \Delta^\top, Y \mapsto \Delta^\top \,\})$
   (not shown in \cref{fig:examplefcg}). Equivalently,
   $\forall X, Y \in \Delta^{\top}\text{. }X \ne Y \Rightarrow \bot$, i.e.,
   $\forall X, Y \in \Delta^{\top}\text{. }X = Y$. This sentence is true if and
-  only if $\Vthree(\Delta^{\top}) < 2$. Thus, we can use the Iverson bracket
+  only if $\Dthree(\Delta^{\top}) < 2$. Thus, we can use the Iverson bracket
   notation to write
   \[
     [l < 2] \coloneqq
@@ -1159,19 +1100,19 @@ function are the sizes of all domains used by nodes reachable from $v$.
       0 & \text{otherwise.}
     \end{cases}
   \]
-  for the output expression of \actuallyVisit{$\bot$, $\Vthree$}.
+  for the output expression of \actuallyVisit{$\bot$, $\Dthree$}.
 
-  Next, \actuallyVisit{$\land$, $\Vthree$} calls
-  $\visit/\actuallyVisit{$\Reff$, $\Vthree$}$. Since
+  Next, \actuallyVisit{$\land$, $\Dthree$} calls
+  $\visit/\actuallyVisit{$\Reff$, $\Dthree$}$. Since
   $\mathfrak{D}(\GDR) = \langle \Gamma, \Delta \rangle$, and
-  $\begin{tikzcd} \langle\Gamma, \Delta\rangle \ar[r, mapsto, "\rho"] & \langle\Gamma', \Delta^{\bot}\rangle \ar[r, mapsto, "\Vthree"] & \langle m-1, n-l \rangle\end{tikzcd}$,
+  $\begin{tikzcd} \langle\Gamma, \Delta\rangle \ar[r, mapsto, "\rho"] & \langle\Gamma', \Delta^{\bot}\rangle \ar[r, mapsto, "\Dthree"] & \langle m-1, n-l \rangle\end{tikzcd}$,
   \textsf{args} is set to $\langle m-1, n-l \rangle$ on \cref{line:args}, and
   the output expression becomes $f(m-1, n-l)$. The call to
-  \actuallyVisit{$\land$, $\Vthree$} then returns the product of the two
+  \actuallyVisit{$\land$, $\Dthree$} then returns the product of the two
   expressions $[l<2]f(m-1, n-l)$. Next, the call to \actuallyVisit{$\bigvee$,
-    $\Vone$} prepends a summation and returns $\sum_{l=0}^{n}[l<2]f(m-1,n-l)$.
+    $\Done$} prepends a summation and returns $\sum_{l=0}^{n}[l<2]f(m-1,n-l)$.
   The same expression (and an empty list of functions) is then returned to
-  \cref{line:actuallyvisit} of the call to \visit{$\GDR$, $\Vone$}. Here, both
+  \cref{line:actuallyvisit} of the call to \visit{$\GDR$, $\Done$}. Here, both
   \textsf{call} and \textsf{signature} are set to $f(m, n)$. As the definition
   of $f$ is the final answer and not part of some other algebraic expression,
   \cref{line:initialcall,line:initialcalltwo} discard the function call
@@ -1229,7 +1170,7 @@ function are the sizes of all domains used by nodes reachable from $v$.
 % TODO: the caption sentence about not finding a solution could be confusing
 % TODO: 'best known' sounds disappointing. Find a better alternative.
 
-% TODO: I think I said this the last time, but alog with the complexities as a
+% TODO: I think I said this the last time, but along with the complexities as a
 % way of representing the empirical evaluation, I think you should also include
 % a few plots, even if they say nothing more than what the table already says.
 % The point is that the readers can see what this behaviour looks like so even
