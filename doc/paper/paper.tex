@@ -184,7 +184,7 @@ sn edges/.style={for tree={edge={-Latex}}}
 % TODO: what's the punchline? make sure the introduction tells the reader what
 % to expect from section 5
 
-% TODO: (everywhere in the paper): emphasise that the experimental results show
+% TODO: (everywhere in the paper): emphasise that the (complexity) results show
 % Crane to be strictly more capable than ForcLift in a sense that it can solve
 % everything that ForcLift can and more (including instances beyond C^2).
 
@@ -262,22 +262,6 @@ are several implementations of exact WFOMC algorithms:
 % 4. Why hasn't it been solved before? (Or, what's wrong with previous proposed
 % solutions? How does mine differ?)
 % simple unliftable instances -> recursion
-
-% However, none of the publicly available exact (W)FOMC algorithms can efficiently
-% compute functions as simple as a factorial.\footnote{There is some previous work
-%   discussing FOMC for
-%   factorials~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/kr/BremenK21,DBLP:conf/ijcai/Broeck16}.
-%   One of them~\cite{DBLP:conf/ijcai/Broeck16} is an example `by hand' that does
-%   not directly correspond to any algorithm.
-%   Another~\cite{DBLP:journals/jair/Kuzelka21} proves that the problem is
-%   liftable but contains no experimental results. The
-%   third~\cite{DBLP:conf/kr/BremenK21} contains experimental results performed
-%   with an algorithm that is not publicly available.}
-% Two more papers to mention:
-% 1. The L2C paper has the factorial example as well. But then why doesn't L2C
-% work on it?
-% 2. \cite{DBLP:journals/corr/abs-2302-04606} computes n! using publicly
-% unavailable code
 
 % TODO: add a different introductory problem statement
 We claim that the capabilities of (W)FOMC algorithms can be significantly
@@ -1111,24 +1095,24 @@ The set is then sorted according to the fixed ordering of domains.
   $f(0, n)$ and $f(m, 0)$ for all $m, n \in \mathbb{N}_{0}$.
 \end{example}
 
-\section{Experimental Results}\label{sec:results}
-% TODO: rename 'experimental results' -> 'complexity results' (not just the
-% title of the section but review every mention of the word 'experimental')
+\section{Complexity Results}\label{sec:results}
 % TODO: make it clear that I'm not doing this by hand anymore, but I'm still
 % removing multiplications by one.
+
+% TODO: say that 'f' will always denote the main function
+
 % TODO (here or somewhere else): emphasise that there are two parts: search
 % (with some artificial limit) + inference (whose complexity we can easily
 % determine)
-% TODO: describe ternary.mln as an example instance that's not in C^2 that can
-% be lifted
-% TODO: say that 'f' will always denote the main function
+
+% TODO: I think I need to mention what m and n are in the text, not just in the caption.
 
 \begin{table*}[t]
   \centering
   \begin{tabular}{cccccc}
     \toprule
     \multicolumn{3}{c}{Function Class} & \multicolumn{3}{c}{Asymptotic Complexity of Counting} \\
-    Partial & Endo- & Class & Best Known & With \textsc{ForcLift} & With \textsc{Crane} \\
+    Partial & Endo- & Class & By Hand & With \textsc{ForcLift} & With \textsc{Crane} \\
     \midrule
     \rowcolor{gray!25}\cmark/\xmark & \cmark/\xmark & Functions & $\log m$ & $m$ & $m$ \\
     \xmark & \xmark & \multirow{2}{*}{Surjections} & $n \log m$ & $m^{3}+n^{3}$ & $m^{3}+n^{3}$ \\
@@ -1143,7 +1127,12 @@ The set is then sorted according to the fixed ordering of domains.
   \caption{The worst-case complexity of counting various types of functions,
     where $m$ is the size of domain $\Gamma$, and $n$ is the size of domain
     $\Delta$. All asymptotic complexities are in $\Theta(\cdot)$. A dash means
-    that the algorithm was not able to find a solution.}\label{tbl:results}
+    that the algorithm was not able to find a solution. In the case of
+    \textsc{ForcLift}, this means that the greedy search algorithm ended with a
+    formula not suitable for any compilation rule. In the case of
+    \textsc{Crane}, this means that a complete solution could not be found after
+    having explored the maximum allowed depth of the search
+    tree.}\label{tbl:results}
 \end{table*}
 % TODO: 'Asymptotic Complexity of Counting' -> 'Complexity of \mathcal{F}_\phi'
 % (introduce \mathcal{F}_\phi in the introduction, together with the flow graph)
@@ -1153,8 +1142,6 @@ The set is then sorted according to the fixed ordering of domains.
 % equivalent (maybe in a stronger sense than the usual equivalence).
 
 % TODO: emphasise that the reader should focus on the last two columns
-% TODO: the caption sentence about not finding a solution could be confusing
-% TODO: 'best known' sounds disappointing. Find a better alternative.
 
 % TODO: I think I said this the last time, but along with the complexities as a
 % way of representing the empirical evaluation, I think you should also include
@@ -1210,11 +1197,6 @@ convert the resulting graphs into definitions of functions as described in
 pick the best in case \textsc{Crane} returns several solutions of varying
 complexities.
 
-% \footnote{The search tree has a high
-%   branching factor, so exploring all nodes at depth five takes at most a few
-%   seconds, whereas doing the same for depth six can be computationally
-%   infeasible in some cases.}
-
 % how the complexity of a solution is determined
 Previous work often compares WFOMC algorithms by running them on a few instances
 with increasing domain sizes and measuring
@@ -1232,35 +1214,56 @@ that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
 a constant amount of time on the computation of each $f(i, j)$.
 % TODO: look for a better place to put the 'In particular...' remark
 
-The experimental results are summarised in \cref{tbl:results}, where we compare
-the solutions found by both algorithms to the best known ways of computing the
-same quantities. The best-known asymptotic complexity for computing total
-surjections is by Earnest~\shortcite{30049}. All other best-known complexity
-results are inferred from the formulas and programs on the on-line encyclopedia
-of integer sequences~\cite{oeis}. On instances that could already be solved by
-\textsc{ForcLift}, the two algorithms perform equally well. However,
-\textsc{Crane} can also solve all but one of the instances that
+The results are summarised in \cref{tbl:results}, where we compare the solutions
+found by both algorithms to the manually-constructed ways of computing the same
+functions that have been proposed before. In particular, the complexity for
+computing total surjections is by Earnest~\shortcite{30049}, and all other such
+complexities are inferred from the formulas and programs on the on-line
+encyclopedia of integer sequences~\cite{oeis}. On instances that could already
+be solved by \textsc{ForcLift}, the two algorithms perform equally well.
+However, \textsc{Crane} can also solve all but one of the instances that
 \textsc{ForcLift} fails on in at most cubic time. See supplementary material for
 the exact solutions produced by \textsc{Crane} that correspond to the complexity
-results in \cref{tbl:results}. We also note that standard (W)FOMC benchmarks
-such as \cref{example:smokers} that are already supported by \textsc{ForcLift}
-remain feasible for \textsc{Crane} as well. Moreover, our algorithm can also
-handle the linear order axiom, for which a bespoke algorithm was recently
-proposed by T{\'{o}}th and
-Ku\v{z}elka~\shortcite{DBLP:journals/corr/abs-2211-01164}.
+results in \cref{tbl:results}.
+
+\paragraph{Miscellaneous other instances.}
+We also note that standard (W)FOMC benchmarks such as \cref{example:smokers}
+that are already supported by \textsc{ForcLift} remain feasible for
+\textsc{Crane} as well. Moreover, our algorithm can also handle the linear order
+axiom, for which a bespoke algorithm was recently proposed by T{\'{o}}th and
+Ku\v{z}elka~\shortcite{DBLP:journals/corr/abs-2211-01164}. To demonstrate that
+\textsc{Crane} is capable of finding efficient solutions to problems beyond
+known domain-liftable fragments such as \Ctwo{}, we run \textsc{Crane} in greedy
+search mode on the following formula:
+\begin{equation}\label[formula]{eq:ternary}
+  \begin{split}
+    &\begin{multlined}[t]
+      (\forall X,W \in \Gamma\text{. }\forall Y \in \Delta\text{. }\forall Z \in \Lambda\text{. }\\
+      \texttt{p}(X, Y, Z) \land \texttt{p}(W, Y, Z) \Rightarrow X = W) \land{}
+    \end{multlined}\\
+    &\begin{multlined}[t]
+      (\forall X \in \Gamma\text{. }\forall Y,W \in \Delta\text{. }\forall Z \in \Lambda\text{. }\\
+      \texttt{p}(X, Y, Z) \land \texttt{p}(X, W, Z) \Rightarrow Y = W).
+    \end{multlined}
+  \end{split}
+\end{equation}
+For every element $z$ of $\Lambda$, \cref{eq:ternary} restricts
+$\texttt{p}(X, Y, z)$ to be a $\Gamma \to \Delta$ partial injection, independent
+of $\texttt{p}(X, Y, z')$ for any $z' \ne z$. \textsc{Crane} instantly returns a
+solution of complexity $\Theta(l+mn)$, where $l = |\Lambda|$.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
 
 In this paper, we showed how a state-of-the-art (W)FOMC algorithm can be
 empowered by generalising domain recursion and adding support for cycles in the
 graph that encodes a solution. To construct such graphs, \textsc{Crane}
-supplements \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} with three
-new compilation rules. Our experiments revealed a range of counting problems
-that are liftable to \textsc{Crane} but not to any other (W)FOMC algorithm.
-Although in this paper we focus on unweighted counting, \textsc{ForcLift}'s
-support for weights trivially transfers to \textsc{Crane} as well. The common
-thread across these newly liftable problems is (partial) injectivity. Thus, we
-can formulate the following conjecture.
+supplements \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} with three new
+compilation rules. Our results in \cref{sec:results} revealed a range of
+counting problems that are liftable to \textsc{Crane} but not to any other
+(W)FOMC algorithm. Although in this paper we focus on unweighted counting,
+\textsc{ForcLift}'s support for weights trivially transfers to \textsc{Crane} as
+well. The common thread across these newly liftable problems is (partial)
+injectivity. Thus, we can formulate the following conjecture.
 
 \begin{conjecture}
   Let \IFO{} be the class of formulas in first-order logic that contain clauses
@@ -1307,6 +1310,9 @@ on areas of artificial intelligence (AI) such as statistical relational
 AI~\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
 research in combinatorics as
 well~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
+
+% TODO: argue about the possibilities of optimising the recurrence formula
+% further, relate this to skolem function synthesis (maybe elsewhere as well)
 
 \bibliographystyle{kr}
 \bibliography{paper}

@@ -4,5 +4,5 @@ c = {1, 2, 3, 4, 5}
 
 p(a, b, c)
 
-p(x, y, z) ^ p(x, y, w) => z=w.
-p(k, y, z) ^ p(x, y, z) => k=x.
+p(x, y, z) ^ p(w, y, z) => x=w.
+p(x, y, z) ^ p(x, w, z) => y=w.
