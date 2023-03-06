@@ -28,13 +28,12 @@ def main():
     )
 
     bijections = expr(
-        '(S1(x) | ~P(x, y)) & ' +
-        '(S3(x) | ~P(y, x))'
+        'S(x) | ~P(x, y)'
     )
 
-    counter = WFOMCWithCC(bijections, n)
+    counter = WFOMCWithCC(bijections, n, [('P', n)])
     #print(counter.get_wfomc(defaultdict(lambda: (1, 1))))
-    print(counter.get_wfomc({'S1': (1, -1), 'S3': (1, -1), 'P': (1, 1)}))
+    print(counter.get_wfomc({'S': (1, -1), 'P': (1, 1)}))
 
 
 if __name__ == "__main__":
