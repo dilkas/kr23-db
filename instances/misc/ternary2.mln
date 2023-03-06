@@ -1,0 +1,7 @@
+a = {1, 2, 3, 4, 5}
+
+p(a, a, a)
+
+p(x, y, z) ^ p(x, y, k) => k=z.
+p(x, y, z) ^ p(k, y, z) => k=x.
+p(x, y, z) ^ p(x, k, z) => k=y.

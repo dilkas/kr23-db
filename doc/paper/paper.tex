@@ -56,6 +56,8 @@
 \theoremstyle{remark}
 \newtheorem*{remark}{Remark}
 
+\setlength{\multlinegap}{0pt}
+
 \pdfinfo{
 /TemplateVersion (KR.2022.0, KR.2023.0)
 }
@@ -226,7 +228,8 @@ sn edges/.style={for tree={edge={-Latex}}}
       In some cases, these functions can benefit from algebraic simplification.
       If some of the functions are defined recursively, base cases need to be
       established. One can then compute the model count of $\phi$ by running the
-      main function in $\mathcal{F}'_{\phi}$ with domain sizes as arguments.}
+      main function in $\mathcal{F}'_{\phi}$ with domain sizes as
+      arguments.}\label{fig:processcrane}
   \end{subfigure}
   \caption{A comparison of how \textsc{ForcLift} and \textsc{Crane} can be used
     to compute the model count of a formula $\phi$.}\label{fig:process}
@@ -1276,69 +1279,62 @@ solution of complexity $\Theta(l+mn)$, where $l = |\Lambda|$.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
 
-In this paper, we showed how a state-of-the-art (W)FOMC algorithm can be
-empowered by generalising domain recursion and adding support for cycles in the
-graph that encodes a solution. To construct such graphs, \textsc{Crane}
-supplements \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} with three new
-compilation rules. Our results in \cref{sec:results} revealed a range of
-counting problems that are liftable to \textsc{Crane} but not to any other
-(W)FOMC algorithm. Although in this paper we focus on unweighted counting,
-\textsc{ForcLift}'s support for weights trivially transfers to \textsc{Crane} as
-well. The common thread across these newly liftable problems is (partial)
-injectivity. Thus, we can formulate the following conjecture.
-
+This paper presents \textsc{Crane}---an extension of
+\textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} that benefits from a more
+general version of domain recursion and the support for graphs with cycles. Our
+results in \cref{sec:results} reveal a range of counting problems that became
+newly feasible as a result of these enhancements, including instances outside of
+currently-known domain-liftable fragments such as \Ctwo{}. (Although here we
+focus on unweighted counting, \textsc{ForcLift}'s support for weights trivially
+transfers to \textsc{Crane} as well.) The common thread across these newly
+liftable problems is a version of partial injectivity. Thus, we formulate the
+following conjecture.
 \begin{conjecture}
   Let \IFO{} be the class of formulas in first-order logic that contain clauses
   with at most two variables as well as any number of copies of
   \begin{align*}
-    &\begin{multlined}[t]
-      (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-      Y \ne Z \Rightarrow \neg \texttt{\textup{p}}(X, Y) \lor \neg \texttt{\textup{p}}(X, Z)) \land{}
+    &\begin{multlined}[t][0.9\linewidth]
+      (\forall X_{1} \in \Delta_{1}\text{. }\dots\,\forall X_{n} \in \Delta_{n}\text{. }\forall Y \in \Delta_{i}\text{. }\texttt{\textup{p}}(X_{1}, \dots, X_{n}) \land{}\\
+      \texttt{\textup{p}}(X_{1}, \dots, X_{i-1}, Y, X_{i+1}, \dots, X_{n}) \Rightarrow X_{i} = Y) \land{}
     \end{multlined}\\
-    &\begin{multlined}[t]
-      (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-      X \ne Z \Rightarrow \neg \texttt{\textup{p}}(X, Y) \lor \neg \texttt{\textup{p}}(Z, Y))
+    &\begin{multlined}[t][0.9\linewidth]
+      (\forall X_{1} \in \Delta_{1}\text{. }\dots\,\forall X_{n} \in \Delta_{n}\text{. }\forall Y \in \Delta_{j}\text{. }\texttt{\textup{p}}(X_{1}, \dots, X_{n}) \land{}\\
+      \texttt{\textup{p}}(X_{1}, \dots, X_{j-1}, Y, X_{j+1}, \dots, X_{n}) \Rightarrow X_{j} = Y)
     \end{multlined}
   \end{align*}
-  for some predicate $\texttt{\textup{p}}/2$ and domains $\Gamma$ and $\Delta$.
-  Then \IFO{} is liftable by \textsc{Crane}.
+  for some predicate $\texttt{\textup{p}}/n$, domains
+  $\Delta_{1}, \dots, \Delta_{n}$, and $i, j \in \{\, 1, \dots, n \,\}$. Then
+  \IFO{} is liftable by \textsc{Crane}.
 \end{conjecture}
-
 Recall that \Ctwo{} is the class of formulas with counting quantifiers and at
-most two variables. \Ctwo{} was recently shown to be
-liftable~\cite{DBLP:journals/jair/Kuzelka21} but without providing a usable
-(W)FOMC algorithm. Since the tasks of counting injections and bijections fall
-into the \Ctwo{} fragment, we can conjecture the following.
+most two variables that was recently shown to be
+liftable~\cite{DBLP:journals/jair/Kuzelka21}. Since most of the instances in
+\cref{sec:results} are in \Ctwo{}, we can also conjecture that \Ctwo{} is
+liftable by \textsc{Crane}.
 
-\begin{conjecture}
-  \Ctwo{} is liftable by \textsc{Crane} by either reformulating formulas in
-  \Ctwo{} to avoid counting quantifiers or extending \textsc{Crane} to support
-  them.
-\end{conjecture}
-
-However, the most important direction for future work is to fully automate this
-new process. First, we need an algorithm that transforms FCGs into definitions
-of functions. Formalising this process would also allow us to prove the
-correctness of the new compilation rules in constructing FCGs that indeed
-compute the right (weighted) model counts. Second, these definitions must be
-simplified before they can be used, perhaps by a computer algebra system. Third,
-we need a way to find the base cases for the recursive definitions provided by
-\textsc{Crane}. Fourth, since the first solution found by \textsc{Crane} is not
-always optimal in terms of its complexity, an automated way to determine the
-asymptotic complexity of a solution would be helpful as well. Achieving these
-goals would enable \textsc{Crane} to automatically constructing efficient ways
-to compute various functions and sequences. In addition to the potential impact
-on areas of artificial intelligence (AI) such as statistical relational
-AI~\cite{DBLP:series/synthesis/2016Raedt}, \textsc{Crane} could be beneficial to
-research in combinatorics as
+The most important direction for future work is in fully automating the process
+in \cref{fig:processcrane}. First, we need a way to find the base cases for the
+recursive definitions produced by \textsc{Crane}. Second, since the first
+solution found by \textsc{Crane} is not always optimal in terms of its
+complexity, an automated way to determine the asymptotic complexity of a
+solution would be helpful as well. Third, as we saw at the end of
+\cref{example:interpretation}, the functions constructed by \textsc{Crane} can
+often benefit from elementary algebraic simplifications, and this process can be
+automated using a computer algebra system. Furthermore, note that having the
+solution to a (W)FOMC problem expressed in terms of functions enables many new
+possibilities such as
+\begin{enumerate*}[label=(\roman*)]
+  \item the use of more sophisticated simplification techniques,
+  \item asymptotic analysis of, e.g., how the model count grows as the domain
+  size goes to infinity, and
+  \item answering questions parameterised by domain sizes, e.g., `how big does
+  domain $\Delta$ have to be for the probability of event $E$ to be above
+  \SI{95}{\percent}?'
+\end{enumerate*}
+In addition to the potential impact on areas of artificial intelligence (AI)
+such as statistical relational AI~\cite{DBLP:series/synthesis/2016Raedt},
+\textsc{Crane} could be beneficial to research in combinatorics as
 well~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
-
-% TODO: argue about the possibilities of optimising the recurrence formula
-% further, relate this to skolem function synthesis (maybe elsewhere as well)
-
-% TODO:: emphasise that the (complexity) results show Crane to be strictly more
-% capable than ForcLift in a sense that it can solve everything that ForcLift
-% can and more (including instances beyond C^2).
 
 \bibliographystyle{kr}
 \bibliography{paper}
