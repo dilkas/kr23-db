@@ -79,9 +79,8 @@
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
 \newcommand{\predicate}{\texttt{\textup{p}}}
+\newcommand{\nulll}{\texttt{\textup{null}}}
 
-\DeclareMathOperator{\friends}{\texttt{friends}}
-\DeclareMathOperator{\smokes}{\texttt{smokes}}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\GDR}{\textsc{GDR}}
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
@@ -242,9 +241,9 @@ $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
 \begin{theorem}[Correctness of $\Reff$]
   Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
   any formula selected on \cref{line:selectformula} of the algorithm s.t.\
-  $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Let $\sigma$ be a
-  domain size function. Then the set of models of $(\psi, \sigma \circ \rho)$ is
-  equal to the set of models of $(\phi, \sigma)$.
+  $\rho \ne \nulll$ on \cref{line:rho}. Let $\sigma$ be a domain size function.
+  Then the set of models of $(\psi, \sigma \circ \rho)$ is equal to the set of
+  models of $(\phi, \sigma)$.
 \end{theorem}
 \begin{proof}
   We first show that the right-hand side of \cref{eq:subset} is the same for

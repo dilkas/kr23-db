@@ -37,6 +37,22 @@
 \usetikzlibrary{shapes}
 \usetikzlibrary{fit}
 
+\SetKwProg{Fn}{Function}{:}{}
+
+\SetKwData{functionCall}{call}
+\SetKwData{functionSignature}{signature}
+\SetKwData{functionNames}{F}
+\SetKwData{domainNames}{D}
+\SetKwData{newDomainNames}{D'}
+\SetKwData{expression}{e}
+\SetKwData{functions}{funs}
+\SetKwData{args}{args}
+
+\SetKwFunction{newFunctionName}{newFunctionName}
+\SetKwFunction{newDomainName}{newDomainName}
+\SetKwFunction{visit}{v}
+\SetKwFunction{actuallyVisit}{visit}
+
 % the following package is optional:
 %\usepackage{latexsym}
 
@@ -105,13 +121,15 @@ vbelle@ed.ac.uk
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
 \newcommand\mdoubleplus{\mathbin{+\mkern-10mu+}}
-\newcommand{\Done}{\mathsf{D}_{1}}
-\newcommand{\Dtwo}{\mathsf{D}_{2}}
-\newcommand{\Dthree}{\mathsf{D}_{3}}
+\newcommand{\Done}{\domainNames_{1}}
+\newcommand{\Dtwo}{\domainNames_{2}}
+\newcommand{\Dthree}{\domainNames_{3}}
 \newcommand{\predicate}{\texttt{\textup{p}}}
+\newcommand{\predicateq}{\texttt{\textup{q}}}
+\newcommand{\nulll}{\texttt{\textup{null}}}
 
-\DeclareMathOperator{\friends}{\texttt{friends}}
-\DeclareMathOperator{\smokes}{\texttt{smokes}}
+\DeclareMathOperator{\friends}{\texttt{\textup{friends}}}
+\DeclareMathOperator{\smokes}{\texttt{\textup{smokes}}}
 \DeclareMathOperator{\CR}{\textsc{CR}}
 \DeclareMathOperator{\GDR}{\textsc{GDR}}
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
@@ -256,7 +274,7 @@ WFOMC~\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC has received more attention in the literature, FOMC is an
 interesting problem in an of itself because of its connections to finite model
 theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
-combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
+combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 There is also a recent line of work that uses FOMC-based methods to count
 solutions to constraint satisfaction
 problems~\cite{DBLP:journals/jair/TotisDRK23}.
@@ -283,10 +301,8 @@ new liftable fragments. These fragments include \SFO{} and
 \Uone{}~\cite{DBLP:conf/lics/KuusistoL18}, \Ctwo{} (i.e., the two-variable
 fragment with counting
 quantifiers)~\cite{DBLP:journals/jair/Kuzelka21,DBLP:conf/aaai/MalhotraS22}, and
-\Ctwo{} extended with axioms describing trees~\cite{DBLP:conf/kr/BremenK21},
-directed acyclic graphs~\cite{DBLP:journals/corr/abs-2302-09830}, and linear
-order~\cite{DBLP:journals/corr/abs-2211-01164}. On the empirical front, there
-are several implementations of exact WFOMC algorithms:
+\Ctwo{} extended with axioms for trees~\cite{DBLP:conf/kr/BremenK21}. On the
+empirical front, there are several implementations of exact WFOMC algorithms:
 \textsc{Alchemy}~\cite{DBLP:journals/cacm/GogateD16},
 \textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21},
 \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11}, and
@@ -384,14 +400,14 @@ internally by \textsc{ForcLift}, some aspects of which are described by Van den
 Broeck et al.~\shortcite{DBLP:conf/ijcai/BroeckTMDR11}. \textsc{ForcLift} can
 translate sentences in a variant of function-free many-sorted first-order logic
 with equality to this internal format. We use lowercase Latin letters for
-predicates (e.g., $\texttt{p}$) and constants (e.g., $x$), uppercase Latin
+predicates (e.g., $\predicate$) and constants (e.g., $x$), uppercase Latin
 letters for variables (e.g., $X$), and uppercase Greek letters for domains
-(e.g., $\Delta$). Sometimes we write predicate $\texttt{p}$ as $\texttt{p}/n$,
-where $n \in \mathbb{N}^{+}$ is the \emph{arity} of $\texttt{p}$. An \emph{atom}
-is $\texttt{p}(t_1, \dots, t_n)$ for some predicate $\texttt{p}/n$ and terms
+(e.g., $\Delta$). Sometimes we write predicate $\predicate$ as $\predicate/n$,
+where $n \in \mathbb{N}^{+}$ is the \emph{arity} of $\predicate$. An \emph{atom}
+is $\predicate(t_1, \dots, t_n)$ for some predicate $\predicate/n$ and terms
 $t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
 \emph{literal} is either an atom or the negation of an atom (denoted by
-$\neg \texttt{p}(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all
+$\neg \predicate(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all
 relevant (finite) domains. Initially, $\mathcal{D}$ contains all domains
 mentioned by the input formula. During compilation, new domains are added to
 $\mathcal{D}$ by some of the compilation rules. Each such new domain is
@@ -433,19 +449,19 @@ in $V$ replaced with $x$.
   \begin{align*}
     c_1 &\coloneqq
           \begin{multlined}[t]
-            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
+            (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
           \end{multlined}\\
     c_2 &\coloneqq
           \begin{multlined}[t]
-            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (X, Z) \,\}, \\
+            (\{\, \neg \predicate(X, Y), \neg \predicate(Z, Y) \,\}, \{\, (X, Z) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\})
           \end{multlined}
   \end{align*}
-  for some predicate $\texttt{p}/2$, variables $X$, $Y$, $Z$, and domains
+  for some predicate $\predicate/2$, variables $X$, $Y$, $Z$, and domains
   $\Gamma$ and $\Delta$. All variables that occur as the first argument to
-  $\texttt{p}$ are in $\Gamma$, and, likewise, all variables that occur as the
-  second argument to $\texttt{p}$ are in $\Delta$. Therefore, $\phi$ `type
+  $\predicate$ are in $\Gamma$, and, likewise, all variables that occur as the
+  second argument to $\predicate$ are in $\Delta$. Therefore, $\phi$ `type
   checks' as a valid formula.
 \end{example}
 
@@ -457,11 +473,11 @@ a formula are implicitly linked by a conjunction. Thus, formula $\phi$ from
   \begin{split}
     &\begin{multlined}[t]
       (\forall X \in \Gamma\text{. }\forall Y, Z \in \Delta\text{. }\\
-      Y \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(X, Z)) \land{}
+      Y \ne Z \Rightarrow \neg \predicate(X, Y) \lor \neg \predicate(X, Z)) \land{}
     \end{multlined}\\
     &\begin{multlined}[t]
       (\forall X, Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\\
-      X \ne Z \Rightarrow \neg \texttt{p}(X, Y) \lor \neg \texttt{p}(Z, Y)).
+      X \ne Z \Rightarrow \neg \predicate(X, Y) \lor \neg \predicate(Z, Y)).
     \end{multlined}
   \end{split}
 \end{equation}
@@ -485,10 +501,10 @@ equality constraints can be eliminated without any loss in expressivity.
 
 \begin{example}\label{example:simple}
   Let $\Delta$ be a domain of size $n \in \mathbb{N}_{0}$. The model count of
-  $\forall X \in \Delta\text{. } \texttt{p}(X) \lor \texttt{q}(X)$ is then
+  $\forall X \in \Delta\text{. } \predicate(X) \lor \predicateq(X)$ is then
   $3^{n}$. Intuitively, since both predicates are of arity one, they can be
   interpreted as subsets of $\Delta$. Thus, the formula says that each element
-  of $\Delta$ has to be included in $\texttt{p}$ or in $\texttt{q}$ or in both,
+  of $\Delta$ has to be included in $\predicate$ or in $\predicateq$ or in both,
   i.e., there are three possibilities.
 \end{example}
 
@@ -510,7 +526,7 @@ $\phi$. Let $\sigma\colon \mathcal{D} \to \mathbb{N}_{0}$ be the \emph{domain
   $\Gamma = \Delta = \{\,1, 2\,\}$, i.e., $\sigma(\Gamma) = \sigma(\Delta) = 2$.
   There are $2^{2 \times 2} = 16$ possible relations between $\Gamma$ and
   $\Delta$. Let us count how many of them satisfy the conditions imposed on
-  predicate $\texttt{p}$. The empty relation does. All four relations of
+  predicate $\predicate$. The empty relation does. All four relations of
   cardinality one (e.g., $\{\, (1, 1) \,\}$) do too. Finally, there are two
   relations of cardinality two---$\{\, (1, 1), (2, 2) \,\}$ and
   $\{\, (1, 2), (2, 1) \,\}$---that satisfy the conditions as well. Thus, the
@@ -636,18 +652,18 @@ $X \ne x$.
 \begin{example}\label{example:dr}
   Let $\phi$ be a formula with a single clause
   \begin{multline*}
-    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
+    (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
     \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}).
   \end{multline*}
   Then we can introduce constant $x \in \Gamma$ and rewrite $\phi$ as
   $\phi' = \{\, c_{1}, c_{2} \,\}$, where
   \begin{align*}
     c_{1} &= \begin{multlined}[t]
-      (\{\, \neg \texttt{p}(x, Y), \neg \texttt{p}(x, Z) \,\}, \{\, (Y, Z) \,\}, \\
+      (\{\, \neg \predicate(x, Y), \neg \predicate(x, Z) \,\}, \{\, (Y, Z) \,\}, \\
       \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}\\
     c_{2} &= \begin{multlined}[t]
-      (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
+      (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
       \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}
   \end{align*}
@@ -716,12 +732,12 @@ example below.
   In this case, both subsets of $V$ satisfy these conditions, and
   \cref{line:generation} generates two clauses for the output formula:
   \begin{multline*}
-    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z), (X, x) \,\}, \\
+    (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (Y, Z), (X, x) \,\}, \\
     \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
   \end{multline*}
   from $W = \emptyset$ and
   \[
-    (\{\, \neg \texttt{p}(x, Y), \neg \texttt{p}(x, Z) \,\}, \{\, (Y, Z) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\})
+    (\{\, \neg \predicate(x, Y), \neg \predicate(x, Z) \,\}, \{\, (Y, Z) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\})
   \]
   from $W = V$.
 
@@ -730,16 +746,16 @@ example below.
   because of the $X \ne Z$ constraint. The other three subsets of $V$ all
   generate clauses for $\phi'$. Indeed, $W = \emptyset$ generates
   \begin{multline*}
-    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (X, Z), (X, x), (Z, x) \,\}, \\
+    (\{\, \neg \predicate(X, Y), \neg \predicate(Z, Y) \,\}, \{\, (X, Z), (X, x), (Z, x) \,\}, \\
     \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
   \end{multline*}
   $W = \{\, X \,\}$ generates
   \[
-    (\{\, \neg \texttt{p}(x, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (Z, x) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
+    (\{\, \neg \predicate(x, Y), \neg \predicate(Z, Y) \,\}, \{\, (Z, x) \,\}, \{\, Y \mapsto \Delta, Z \mapsto \Gamma \,\}),
   \]
   and $W = \{\, Z \,\}$ generates
   \[
-    (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta \,\}).
+    (\{\, \neg \predicate(X, Y), \neg \predicate(x, Y) \,\}, \{\, (X, x) \,\}, \{\, X \mapsto \Gamma, Y \mapsto \Delta \,\}).
   \]
 \end{example}
 
@@ -807,12 +823,12 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   \begin{align*}
     c_1 &=
           \begin{multlined}[t]
-            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
+            (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
           \end{multlined}\\
     c_2 &=
           \begin{multlined}[t]
-            (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \\
+            (\{\, \neg \predicate(X, Y), \neg \predicate(Z, Y) \,\}, \\
             \{\, (X, x), (Z, X), (Z, x) \,\}, \\
             \{\, X \mapsto \Gamma, Y \mapsto \Delta, Z \mapsto \Gamma \,\}).
           \end{multlined}
@@ -823,12 +839,12 @@ replaces $\Omega$ with $\Omega'$ (on \cref{line:newdelta}).
   \begin{align*}
     c_1' &=
            \begin{multlined}[t]
-             (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
+             (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (Y, Z) \,\}, \\
              \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
            \end{multlined} \\
     c_2' &=
            \begin{multlined}[t]
-             (\{\, \neg \texttt{p}(X, Y), \neg \texttt{p}(Z, Y) \,\}, \{\, (Z, X) \,\}, \\
+             (\{\, \neg \predicate(X, Y), \neg \predicate(Z, Y) \,\}, \{\, (Z, X) \,\}, \\
              \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Gamma' \,\}).
            \end{multlined}
   \end{align*}
@@ -876,21 +892,21 @@ node.
 
   \ForEach{formula and node $(\psi, v) \in C(\#\phi)$}{\label{line:selectformula}
     $\rho \gets \identifyRecursion{$\phi$, $\psi$}$\;
-    \lIf{$\rho \ne {\normalfont \texttt{null}}$}{\Return{$\{\, (\Reff_\rho(v), \langle\rangle) \,\}$}}\label{line:rho}
+    \lIf{$\rho \ne \nulll$}{\Return{$\{\, (\Reff_\rho(v), \langle\rangle) \,\}$}}\label{line:rho}
   }
   \Return{$\emptyset$}\;
 
   \Fn{\identifyRecursion{formula $\phi$, formula $\psi$, map $\rho = \emptyset$}}{
-    \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{\Return{\normalfont\texttt{null}}}
+    \lIf{$|\phi| \ne |\psi|$ {\bf or} $\#\phi \ne \#\psi$}{\Return{\nulll}}
     \lIf{$\phi = \emptyset$}{\Return{$\rho$}}
     \ForEach{clause $c \in \psi$\label{line:for1}}{
       \ForEach{clause $d \in \phi$ s.t. $\#d=\#c$\label{line:for2}}{
         \ForAll{$\gamma \in \generateMaps{$c$, $d$, $\rho$}$\label{line:generateMaps}}{
           $\rho' \gets \identifyRecursion{$\phi\setminus\{\, d \,\}$, $\psi\setminus\{\, c \,\}$, $\rho\cup\gamma$}$\;\label{line:recursion}
-          \lIf{$\rho' \ne {\normalfont \texttt{null}}$}{\Return{$\rho'$}}
+          \lIf{$\rho' \ne \nulll$}{\Return{$\rho'$}}
         }
       }
-      \Return{\normalfont\texttt{null}}\;
+      \Return{\nulll}\;
     }
   }
 \end{algorithm}
@@ -899,22 +915,22 @@ node.
 % their hash codes.
 \Cref{alg:trycache} describes the compilation rule for creating $\Reff$ nodes.
 For every formula $\psi$ in the cache s.t. $\#\psi = \#\phi$, function
-\texttt{r} is called to check whether a recursive call is feasible. If it is,
-\texttt{r} returns a (total) map $\rho\colon \Doms(\psi) \to \Doms(\phi)$ that
-shows how $\psi$ can be transformed into $\phi$ by replacing each domain
-$\Omega \in \Doms(\psi)$ with $\rho(\Omega) \in \Doms(\phi)$. Otherwise,
-\texttt{r} returns \texttt{null} to signify that $\phi$ and $\psi$ are too
-different for recursion to work. This happens if $\phi$ and $\psi$ (or their
-subformulas explored in recursive calls) are structurally different (i.e., the
-numbers of clauses or the hash codes fail to match) or if a clause of $\psi$
-cannot be paired with a sufficiently similar clause of $\phi$. Function
-\texttt{r} works by iterating over pairs of clauses of $\phi$ and $\psi$ that
-have the same hash codes. For every pair of sufficiently similar clauses,
-\texttt{r} calls itself on the remaining clauses until the map
-$\rho\colon \Doms(\psi) \pfun \Doms(\phi)$ becomes total, and all clauses are
-successfully coupled.
+\identifyRecursion is called to check whether a recursive call is feasible. If
+it is, \identifyRecursion returns a (total) map
+$\rho\colon \Doms(\psi) \to \Doms(\phi)$ that shows how $\psi$ can be
+transformed into $\phi$ by replacing each domain $\Omega \in \Doms(\psi)$ with
+$\rho(\Omega) \in \Doms(\phi)$. Otherwise, \identifyRecursion returns \nulll{}
+to signify that $\phi$ and $\psi$ are too different for recursion to work. This
+happens if $\phi$ and $\psi$ (or their subformulas explored in recursive calls)
+are structurally different (i.e., the numbers of clauses or the hash codes fail
+to match) or if a clause of $\psi$ cannot be paired with a sufficiently similar
+clause of $\phi$. Function \identifyRecursion works by iterating over pairs of
+clauses of $\phi$ and $\psi$ that have the same hash codes. For every pair of
+sufficiently similar clauses, \identifyRecursion calls itself on the remaining
+clauses until the map $\rho\colon \Doms(\psi) \pfun \Doms(\phi)$ becomes total,
+and all clauses are successfully coupled.
 
-Function \texttt{genMaps} checks the compatibility of a pair of clauses. It
+Function \generateMaps checks the compatibility of a pair of clauses. It
 considers every possible bijection $\beta\colon \Vars(c) \to \Vars(d)$ and map
 $\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
 \[
@@ -936,9 +952,9 @@ $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
 \begin{theorem}[Correctness of $\Reff$]
   Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
   any formula selected on \cref{line:selectformula} of the algorithm s.t.\
-  $\rho \ne {\normalfont\texttt{null}}$ on \cref{line:rho}. Let $\sigma$ be a
-  domain size function. Then the set of models of $(\psi, \sigma \circ \rho)$ is
-  equal to the set of models of $(\phi, \sigma)$.
+  $\rho \ne \nulll$ on \cref{line:rho}. Let $\sigma$ be a domain size function.
+  Then the set of models of $(\psi, \sigma \circ \rho)$ is equal to the set of
+  models of $(\phi, \sigma)$.
 \end{theorem}
 
 As \textsc{ForcLift} only supports $\Reff$ nodes for when the two formulas are
@@ -949,22 +965,6 @@ complex recursive calls such as $f(n-k-2)$.
 
 \begin{algorithm}[t]
   \caption{Construct functions from an FCG}\label{alg:interpretation}
-  \SetKwProg{Fn}{Function}{:}{}
-
-  \SetKwData{functionCall}{call}
-  \SetKwData{functionSignature}{signature}
-  \SetKwData{functionNames}{F}
-  \SetKwData{domainNames}{D}
-  \SetKwData{newDomainNames}{D'}
-  \SetKwData{expression}{e}
-  \SetKwData{functions}{funs}
-  \SetKwData{args}{args}
-
-  \SetKwFunction{newFunctionName}{newFunctionName}
-  \SetKwFunction{newDomainName}{newDomainName}
-  \SetKwFunction{visit}{v}
-  \SetKwFunction{actuallyVisit}{visit}
-
   \KwIn{$\mathcal{D}$---the set of domains of the input formula}
   \KwIn{$s$---the source node of the FCG}
   \KwData{$\functionNames = \emptyset$ (function names)}
@@ -1015,21 +1015,21 @@ depending on its type. As there are many node types, we only include the ones
 pertinent to the contributions of this paper; see previous
 work~\cite{DBLP:conf/ijcai/BroeckTMDR11} for information about the other types.
 Given some node $v$ as input, both \visit and \actuallyVisit return a pair
-$(\mathsf{e}, \mathsf{funs})$. Here, $\mathsf{e}$ is the algebraic expression
-that represent $v$, and $\mathsf{funs}$ is a list of auxiliary functions that
-were created while formulating $\mathsf{e}$.
+$(\expression, \functions)$. Here, \expression is the algebraic expression that
+represent $v$, and \functions is a list of auxiliary functions that were created
+while formulating \expression.
 
-The algorithm gradually constructs two partial maps $\mathsf{F}$ and
-$\mathsf{D}$ that give names to functions and domains, respectively.
-$\mathsf{F}$ is a global variable that maps FCG nodes to function names (e.g.,
-$f$, $g$). $\mathsf{D}$ maps domains to their names, and it is passed as an
+The algorithm gradually constructs two partial maps \functionNames and
+\domainNames that give names to functions and domains, respectively.
+\functionNames is a global variable that maps FCG nodes to function names (e.g.,
+$f$, $g$). \domainNames maps domains to their names, and it is passed as an
 argument to \visit and \actuallyVisit. Here, a \emph{domain name} is either a
 parameter of a function or an algebraic expression consisting of function
 parameters, subtraction, and parentheses. We call a domain name \emph{atomic} if
 it is free of subtraction (e.g., $m$, $n$); otherwise it is \emph{non-atomic}
 (e.g., $m-1$, $n-l$). Functions \newDomainName and \newFunctionName both
 generate previously-unused names. The latter also takes an FCG node as input and
-links it with the new name in $\mathsf{F}$.
+links it with the new name in \functionNames.
 
 We assume a fixed total ordering of all domains. In particular, in
 \cref{example:interpretation} below we assume that $\Gamma$ goes before
@@ -1067,7 +1067,7 @@ The set is then sorted according to the fixed ordering of domains.
   Let $\Done \coloneqq \{\, \Gamma \mapsto m, \Delta \mapsto n \,\}$,
   $\Dtwo \coloneqq \Done \cup \{\, \Delta^{\top} \mapsto l, \Delta^{\bot} \mapsto (n-l) \,\}$,
   and $\Dthree \coloneqq \Dtwo \cup \{\, \Gamma' \mapsto (m-1) \,\}$ denote
-  versions of $\mathsf{D}$ at various points throughout the algorithm's
+  versions of \domainNames at various points throughout the algorithm's
   execution. Here, $l$, $m$, and $n$ are all arbitrary names generated by
   \newDomainName.
 
@@ -1076,11 +1076,12 @@ The set is then sorted according to the fixed ordering of domains.
   calls \actuallyVisit and returns its output unchanged, the two function calls
   are shortened as a single call to $\visit/\actuallyVisit$.
 
-  \Cref{line:varnames} initialises $\mathsf{D}$ to $\Done$. Once \visit{$\GDR$,
+  \Cref{line:varnames} initialises \domainNames to $\Done$. Once \visit{$\GDR$,
     $\Done$} is called on \cref{line:initialcall}, \newFunctionName updates
-  $\mathsf{F}$ to $\{\, \GDR \mapsto f \,\}$, where $f$ is a new function name.
-  There are no non-atomic names in $\Done$, so \cref{line:nonone,line:nontwo}
-  are skipped, and calls to \actuallyVisit{$\GDR$, $\Done$} and
+  \functionNames to $\{\, \GDR \mapsto f \,\}$, where $f$ is a new function
+  name. There are no non-atomic names in $\Done$, so
+  \cref{line:nonone,line:nontwo} are skipped, and calls to
+  \actuallyVisit{$\GDR$, $\Done$} and
   $\visit/\actuallyVisit{$\bigvee$, $\Done$}$ follow. Here, $\Done$ becomes
   $\Dtwo$, i.e., the $\bigvee$ node introduces two domains $\Delta^{\top}$ and
   $\Delta^{\bot}$ that `partition' $\Delta$, i.e.,
@@ -1115,14 +1116,14 @@ The set is then sorted according to the fixed ordering of domains.
       \langle\Gamma, \Delta\rangle \ar[r, mapsto, "\rho"] & \langle\Gamma', \Delta^{\bot}\rangle \ar[r, mapsto, "\Dthree"] & \langle m-1, n-l \rangle,
     \end{tikzcd}
   \]
-  \textsf{args} is set to $\langle m-1, n-l \rangle$ on \cref{line:args}, and
-  the output expression becomes $f(m-1, n-l)$. The call to
-  \actuallyVisit{$\land$, $\Dthree$} then returns the product of the two
-  expressions $[l<2]f(m-1, n-l)$. Next, the call to \actuallyVisit{$\bigvee$,
-    $\Done$} prepends a summation and returns $\sum_{l=0}^{n}[l<2]f(m-1,n-l)$.
-  The same expression (and an empty list of functions) is then returned to
+  \args is set to $\langle m-1, n-l \rangle$ on \cref{line:args}, and the output
+  expression becomes $f(m-1, n-l)$. The call to \actuallyVisit{$\land$,
+    $\Dthree$} then returns the product of the two expressions
+  $[l<2]f(m-1, n-l)$. Next, the call to \actuallyVisit{$\bigvee$, $\Done$}
+  prepends a summation and returns $\sum_{l=0}^{n}[l<2]f(m-1,n-l)$. The same
+  expression (and an empty list of functions) is then returned to
   \cref{line:actuallyvisit} of the call to \visit{$\GDR$, $\Done$}. Here, both
-  \textsf{call} and \textsf{signature} are set to $f(m, n)$. As the definition
+  \functionCall and \functionSignature are set to $f(m, n)$. As the definition
   of $f$ is the final answer and not part of some other algebraic expression,
   \cref{line:initialcall,line:initialcalltwo} discard the function call
   expression and return the definition of $f$. Thus,
@@ -1171,38 +1172,35 @@ The set is then sorted according to the fixed ordering of domains.
 % and the rest follow the table of all that will be better [an experiment with
 % non-partial endo injections?]
 
-% TODO: emphasise that there are two parts: search (with some artificial limit)
-% + inference (whose complexity we can easily determine)
-
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
 on their ability to count various kinds of functions. This class of instances is
-chosen because of its simplicity and ubiquity and the inability of
-state-of-the-art WFOMC algorithms to solve many such instances. Note that other
+chosen because of its simplicity and ubiquity and the inability of publicly
+available WFOMC algorithms to solve many such instances. Note that other exact
 WFOMC algorithms mentioned in \cref{sec:introduction} are unable to solve any of
 the instances that \textsc{ForcLift} fails on. We begin by describing how such
 function-counting problems can be expressed in first-order logic.
 \textsc{ForcLift} then translates these sentences in first-order logic to
-formulas as defined in \cref{def:formula}.
+formulas as in \cref{def:formula}.
 
-Let $\texttt{p}$ be a predicate that models relations between sets $\Gamma$ and
+Let $\predicate$ be a predicate that models relations between sets $\Gamma$ and
 $\Delta$. To restrict all such relations to just $\Gamma \to \Delta$ functions,
 in first-order logic one might write
 \[
-  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }\texttt{p}(X, Y) \land \texttt{p}(X, Z) \Rightarrow Y = Z
+  \forall X \in \Gamma\text{. }\forall Y,Z \in \Delta\text{. }\predicate(X, Y) \land \predicate(X, Z) \Rightarrow Y = Z
 \]
 and
 \begin{equation}\label{eq:def2}
-  \forall X \in \Gamma\text{. }\exists Y \in \Delta\text{. }\texttt{p}(X, Y).
+  \forall X \in \Gamma\text{. }\exists Y \in \Delta\text{. }\predicate(X, Y).
 \end{equation}
 The former sentence says that one element of $\Gamma$ can map to at \emph{most}
 one element of $\Delta$, and the latter sentence says that each element of
 $\Gamma$ must map to at \emph{least} one element of $\Delta$. One can then add
 \[
-  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\texttt{p}(X, Y) \land \texttt{p}(Z, Y) \Rightarrow X = Z
+  \forall X,Z \in \Gamma\text{. }\forall Y \in \Delta\text{. }\predicate(X, Y) \land \predicate(Z, Y) \Rightarrow X = Z
 \]
-to restrict $\texttt{p}$ to injections or
-  $\forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }\texttt{p}(X, Y)$
+to restrict $\predicate$ to injections or
+  $\forall Y \in \Delta\text{. }\exists X \in \Gamma\text{. }\predicate(X, Y)$
 to ensure surjectivity or remove \cref{eq:def2} to consider partial functions.
 Lastly, one can replace all occurrences of $\Delta$ with $\Gamma$ to model
 endofunctions (i.e., functions with the same domain and codomain) instead.
@@ -1220,57 +1218,67 @@ of each solution by hand and pick the best in case \textsc{Crane} returns
 several solutions of varying complexities.
 
 % how the complexity of a solution is determined
-Previous work often compares WFOMC algorithms by running them on a few instances
-with increasing domain sizes and measuring
-runtime~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
-However, we can do much better and identify the exact worst-case asymptotic
-complexity of a solution produced by either \textsc{Crane} or \textsc{ForcLift}.
-The asymptotic complexity of a solution can be determined by considering the
-total number of arithmetic operations needed to follow the definitions of
-constituent functions without recomputing the same quantity multiple times. In
-particular, we assume that each function call and binomial coefficient is
-computed at most once. We also assume that computing $\binom{n}{k}$ takes
-$\Theta(nk)$ time. For example, the complexity of \cref{eq:solution} is
-$\Theta(mn)$ since $f(m, n)$ can be computed by a dynamic programming algorithm
-that computes $f(i, j)$ for all $i = 0, \dots, m$ and $j = 0, \dots, n$, taking
-a constant amount of time on each $f(i, j)$.
+
+% Previous work often compares WFOMC algorithms by running them on a few instances
+% with increasing domain sizes and measuring
+% runtime~\cite{DBLP:conf/nips/Broeck11,DBLP:conf/ijcai/BroeckTMDR11,DBLP:conf/aaai/BroeckD12}.
+% However, we can do better and identify the exact worst-case asymptotic
+% complexity of a solution produced by either \textsc{Crane} or \textsc{ForcLift}.
+
+Recall that, in the case of \textsc{ForcLift}, the process of solving a (W)FOMC
+problem consists of two parts: compilation (via search) and propagation. (A
+similar dichotomy applies to \textsc{Crane} as well.) The complexity of the
+former depends only on the formula and so far has received very little attention
+with the exception of Beame et al.~\shortcite{DBLP:conf/pods/BeameBGS15}. The
+complexity of the latter, on the other hand, is a function of domain sizes and
+can be determined exactly (without measuring runtime). We establish the
+asymptotic complexity of a solution by counting the total number of arithmetic
+operations needed to follow the definitions of constituent functions without
+recomputing the same quantity multiple times. In particular, we assume that each
+function call and binomial coefficient is computed at most once. We also assume
+that computing $\binom{n}{k}$ takes $\Theta(nk)$ time. For example, the
+complexity of \cref{eq:solution} is $\Theta(mn)$ since $f(m, n)$ can be computed
+by a dynamic programming algorithm that computes $f(i, j)$ for all
+$i = 0, \dots, m$ and $j = 0, \dots, n$, taking a constant amount of time on
+each $f(i, j)$.
+
+% In particular, the complexity of computing total surjections is by
+% Earnest~\shortcite{30049}, and all other such complexities are inferred from the
+% formulas and programs on the on-line encyclopedia of integer
+% sequences~\cite{oeis}.
 
 Let $m = |\Gamma|$ and $n = |\Delta|$ be domain sizes. We summarise the results
 in \cref{tbl:results}, where we compare the solutions found by both algorithms
 to the manually-constructed ways of computing the same quantities that have been
-proposed before. In particular, the complexity of computing total surjections is
-by Earnest~\shortcite{30049}, and all other such complexities are inferred from
-the formulas and programs on the on-line encyclopedia of integer
-sequences~\cite{oeis}. Examining the last two columns of the table, we see that
-the two algorithms perform equally well on instances that could already be
-solved by \textsc{ForcLift}. However, \textsc{Crane} can also solve all but one
-of the instances that \textsc{ForcLift} fails on in at most cubic time. See
+proposed
+before.\footnote{\url{https://scicomp.stackexchange.com/q/30049}}\textsuperscript{,}\footnote{\url{https://oeis.org}}
+Examining the last two columns of the table, we see that the two algorithms
+perform equally well on instances that could already be solved by
+\textsc{ForcLift}. However, \textsc{Crane} can also solve all but one of the
+instances that \textsc{ForcLift} fails on in at most cubic time. See
 supplementary material for the exact solutions produced by \textsc{Crane}.
 
 \subsubsection{Miscellaneous Other Instances}
 We also note that standard (W)FOMC benchmarks such as \cref{example:smokers}
 that are already supported by \textsc{ForcLift} remain feasible for
-\textsc{Crane} as well. Moreover, our algorithm can also handle the linear order
-axiom, for which a bespoke algorithm was recently proposed by T{\'{o}}th and
-Ku\v{z}elka~\shortcite{DBLP:journals/corr/abs-2211-01164}. To demonstrate that
-\textsc{Crane} is capable of finding efficient solutions to problems beyond
-known domain-liftable fragments such as \Ctwo{}, we run \textsc{Crane} in greedy
-search mode on the following formula:
+\textsc{Crane} as well. To demonstrate that \textsc{Crane} is capable of finding
+efficient solutions to problems beyond known domain-liftable fragments such as
+\Ctwo{}, we run \textsc{Crane} in greedy search mode on the following formula:
 \begin{equation}\label[formula]{eq:ternary}
   \begin{split}
     &\begin{multlined}[t]
       (\forall X,W \in \Gamma\text{. }\forall Y \in \Delta\text{. }\forall Z \in \Lambda\text{. }\\
-      \texttt{p}(X, Y, Z) \land \texttt{p}(W, Y, Z) \Rightarrow X = W) \land{}
+      \predicate(X, Y, Z) \land \predicate(W, Y, Z) \Rightarrow X = W) \land{}
     \end{multlined}\\
     &\begin{multlined}[t]
       (\forall X \in \Gamma\text{. }\forall Y,W \in \Delta\text{. }\forall Z \in \Lambda\text{. }\\
-      \texttt{p}(X, Y, Z) \land \texttt{p}(X, W, Z) \Rightarrow Y = W).
+      \predicate(X, Y, Z) \land \predicate(X, W, Z) \Rightarrow Y = W).
     \end{multlined}
   \end{split}
 \end{equation}
 For every element $z$ of $\Lambda$, \cref{eq:ternary} restricts
-$\texttt{p}(X, Y, z)$ to be a $\Gamma \to \Delta$ partial injection, independent
-of $\texttt{p}(X, Y, z')$ for any $z' \ne z$. \textsc{Crane} instantly returns a
+$\predicate(X, Y, z)$ to be a $\Gamma \to \Delta$ partial injection, independent
+of $\predicate(X, Y, z')$ for any $z' \ne z$. \textsc{Crane} instantly returns a
 solution of complexity $\Theta(l+mn)$, where $l = |\Lambda|$.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
@@ -1291,15 +1299,15 @@ following conjecture.
   with at most two variables as well as any number of copies of
   \begin{align*}
     &\begin{multlined}[t][0.9\linewidth]
-      (\forall X_{1} \in \Delta_{1}\text{. }\dots\,\forall X_{n} \in \Delta_{n}\text{. }\forall Y \in \Delta_{i}\text{. }\texttt{\textup{p}}(X_{1}, \dots, X_{n}) \land{}\\
-      \texttt{\textup{p}}(X_{1}, \dots, X_{i-1}, Y, X_{i+1}, \dots, X_{n}) \Rightarrow X_{i} = Y) \land{}
+      (\forall X_{1} \in \Delta_{1}\text{. }\dots\,\forall X_{n} \in \Delta_{n}\text{. }\forall Y \in \Delta_{i}\text{. }\predicate(X_{1}, \dots, X_{n}) \land{}\\
+      \predicate(X_{1}, \dots, X_{i-1}, Y, X_{i+1}, \dots, X_{n}) \Rightarrow X_{i} = Y) \land{}
     \end{multlined}\\
     &\begin{multlined}[t][0.9\linewidth]
-      (\forall X_{1} \in \Delta_{1}\text{. }\dots\,\forall X_{n} \in \Delta_{n}\text{. }\forall Y \in \Delta_{j}\text{. }\texttt{\textup{p}}(X_{1}, \dots, X_{n}) \land{}\\
-      \texttt{\textup{p}}(X_{1}, \dots, X_{j-1}, Y, X_{j+1}, \dots, X_{n}) \Rightarrow X_{j} = Y)
+      (\forall X_{1} \in \Delta_{1}\text{. }\dots\,\forall X_{n} \in \Delta_{n}\text{. }\forall Y \in \Delta_{j}\text{. }\predicate(X_{1}, \dots, X_{n}) \land{}\\
+      \predicate(X_{1}, \dots, X_{j-1}, Y, X_{j+1}, \dots, X_{n}) \Rightarrow X_{j} = Y)
     \end{multlined}
   \end{align*}
-  for some predicate $\texttt{\textup{p}}/n$, domains
+  for some predicate $\predicate/n$, domains
   $\Delta_{1}, \dots, \Delta_{n}$, and $i, j \in \{\, 1, \dots, n \,\}$. Then
   \IFO{} is liftable by \textsc{Crane}.
 \end{conjecture}
@@ -1331,10 +1339,8 @@ possibilities such as
 In addition to the potential impact on areas of artificial intelligence (AI)
 such as statistical relational AI~\cite{DBLP:series/synthesis/2016Raedt},
 \textsc{Crane} could be beneficial to research in combinatorics as
-well~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
+well~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
 
-% TODO: The reference list should not include unpublished work. (earnest + OEIS + 3 corr references)
-% TODO: replace all instances of {p} with \predicate (by hand)
 \bibliographystyle{kr}
 \bibliography{paper}
 
