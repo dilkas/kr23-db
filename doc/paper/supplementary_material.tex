@@ -24,7 +24,7 @@
 \usepackage{pifont}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{tikz}
-\usepackage[capitalize]{cleveref}
+\usepackage[capitalize,noabbrev]{cleveref}
 \usepackage{multirow}
 \usepackage{colortbl}
 \usepackage{complexity}
@@ -50,7 +50,6 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{claim}{Claim}[theorem]
-\theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
 
@@ -59,7 +58,7 @@
 }
 
 \crefalias{diagram}{equation}
-\crefname{diagram}{diagram}{diagrams}
+\crefname{diagram}{Diagram}{Diagrams}
 \Crefname{diagram}{Diagram}{Diagrams}
 \creflabelformat{diagram}{#2\textup{(#1)}#3}
 
@@ -79,6 +78,7 @@
 \newcommand{\Uone}{$\mathsf{U}_{1}$}
 \newcommand{\Ctwo}{$\mathsf{C}^{2}$}
 \newcommand{\IFO}{$\mathsf{I}\mathsf{FO}^{2}$}
+\newcommand{\predicate}{\texttt{\textup{p}}}
 
 \DeclareMathOperator{\friends}{\texttt{friends}}
 \DeclareMathOperator{\smokes}{\texttt{smokes}}
@@ -112,50 +112,61 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 \section{Proofs}
 
-TODO: finish arranging the definitions
-
-We begin with a few definitions that formalise the notion of a model.
-
-For any set $S$, let $2^{S}$ denote its power set and
-$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples of any
-finite length of elements of $S$. For example,
-$\{\,a, b\,\}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$.
-
-Let $\Preds$ be the function that maps any clause or formula to the set of
-predicates used within.
-
-For any $n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
-$[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$.
-
-Each formula $\phi$ has a map
+We begin with a few definitions that formalise the notion of a model. For any
+set $S$, let $2^{S}$ denote its power set and
+$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples---of any
+finite length---of elements of $S$. For example,
+${\{\,a, b\,\}}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$. For any
+$n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
+$[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$. Extending the notation for
+substitution introduced in \cref{sec:recprelims}, for a formula $\phi$, constant
+$c$, and set of variables $V$, let $\phi[c/V]$ denote $\phi$ with all
+occurrences of all variables in $V$ replaced with $c$. Let $\Preds$ be the
+function that maps any clause or formula to the set of predicates used within.
+With each formula $\phi$ we associate a map
 $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ s.t., for each
-predicate $\texttt{p}/n \in \Preds(\phi)$, we have that
-$\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.
+predicate $\predicate/n \in \Preds(\phi)$, we have that
+$\pi_{\phi}(\predicate) \in {\Doms(\phi)}^{n}$. This map makes explicit the idea
+that each $n$-ary predicate is associated with an $n$-tuple of domains. In the
+case of formula $\phi$ from \cref{example:first},
+$\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
 
 \begin{definition}\label{def:model}
-  Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
+  Let $\phi$ be a formula and $\sigma$ a domain size function, A \emph{model} of
   $(\phi, \sigma)$ is a map
   $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ s.t.\ the
   following two conditions are satisfied.
   \begin{enumerate}
-    \item Let $\texttt{p}/n \in \Preds(\phi)$ be a predicate and let
-          $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ for some domains
-          $d_{i} \in \Doms(\phi)$. Then
-          \begin{equation}\label{eq:subset}
-            \mathfrak{M}(\texttt{p}) \subseteq \prod_{i=1}^{n}[\sigma(d_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(d_{i})]$ with a set that contains all constants associated with domain $d_{i}$, extended with enough new elements to make its cardinality $\sigma(d_{i})$.}
-          \end{equation}
-    \item As a collection of relations, $\mathfrak{M}$ satisfies $\phi$.
+    \item For all predicates $\predicate/n \in \Preds(\phi)$ with
+          $\pi_{\phi}(\predicate) \coloneqq {(\Delta_{i})}_{i=1}^{n}$ for some
+          domains $\Delta_{i} \in \Doms(\phi)$,
+    \begin{equation}\label{eq:subset}
+      \mathfrak{M}(\predicate) \subseteq \prod_{i=1}^{n}[\sigma(\Delta_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(\Delta_{i})]$ with a set that contains all constants associated with domain $\Delta_{i}$, extended with enough new elements to make its cardinality $\sigma(\Delta_{i})$.}
+    \end{equation}
+    \item $\mathfrak{M} \models \phi$ according to the (non-exhaustive)
+          recursive definition below. Let $\chi$ and $\psi$ be formulas,
+          $\Delta$ a domain, $c \in \Delta$ a constant, $\predicate/n$ a
+          predicate associated with domains $\Delta_{1},\dots,\Delta_{n}$, and
+          $t \in \prod_{i=1}^{n} \Delta_{i}$ a tuple of constants.
     \begin{itemize}
-      \item TODO: introduce the substitution for formulas, moving the definition from elsewhere
-      \item define inductively as...
-      \item (not exhaustive)
-      \item $\mathfrak{M} \models \phi \land \psi$ iff $\mathfrak{M} \models \phi$ and $\mathfrak{M} \models \psi$
-      \item $\mathfrak{M} \models \phi \lor \psi$ iff $\mathfrak{M} \models \phi$ or $\mathfrak{M} \models \psi$
-      \item $\mathfrak{M} \models \neg\phi$ iff $\mathfrak{M} \not\models \phi$
-      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. }\phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta$
-      \item One can then add inequality constraints to the semantics as follows
-      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. } X \ne c \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}]$ for all $x \in \Delta \setminus \{\, c \,\}$
-      \item $\mathfrak{M} \models (\forall X,Y \in \Delta\text{. } X \ne Y \Rightarrow \phi)$ iff $\mathfrak{M} \models \phi[x/\{\, X \,\}][y/\{\, Y \,\}]$ for all $x,y \in \Delta$ s.t. $x \ne y$
+      \item $\mathfrak{M} \models \predicate(t)$ if and only if (iff)
+            $t \in \mathfrak{M}(\predicate)$.
+      \item $\mathfrak{M} \models \neg\chi$ iff $\mathfrak{M} \not\models \chi$.
+      \item $\mathfrak{M} \models \chi \land \psi$ iff
+            $\mathfrak{M} \models \chi$ and $\mathfrak{M} \models \psi$.
+      \item $\mathfrak{M} \models \chi \lor \psi$ iff
+            $\mathfrak{M} \models \chi$ or $\mathfrak{M} \models \psi$.
+      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. }\chi)$ iff
+            $\mathfrak{M} \models \chi[x/\{\, X \,\}]$ for all constants
+            $x \in \Delta$.
+      \item $\mathfrak{M} \models (\forall X \in \Delta\text{.
+            } X \ne c \Rightarrow \chi)$ iff
+            $\mathfrak{M} \models \chi[x/\{\, X \,\}]$ for all
+            $x \in \Delta \setminus \{\, c \,\}$.
+      \item $\mathfrak{M} \models (\forall X,Y \in \Delta\text{.
+            } X \ne Y \Rightarrow \chi)$ iff
+            $\mathfrak{M} \models \chi[x/\{\, X \,\}][y/\{\, Y \,\}]$ for all
+            $x,y \in \Delta$ s.t. $x \ne y$.
     \end{itemize}
   \end{enumerate}
 \end{definition}
@@ -247,19 +258,19 @@ $\pi_{\phi}(\texttt{p}) \in {\Doms(\phi)}^{n}$.
     \end{tikzcd}
   \end{equation}
   commutes by \cref{def:formula} and the definition of $\rho$. In other words,
-  for any predicate $\texttt{p}/n \in \Preds(\psi) = \Preds(\phi)$, function
-  $\rho$ translates the domains associated with $\texttt{p}$ in $\psi$ to the
-  domains associated with $\texttt{p}$ in $\phi$. Let
-  $\pi_{\phi}(\texttt{p}) = {(d_{i})}_{i=1}^{n}$ and
-  $\pi_{\psi}(\texttt{p}) = {(e_{i})}_{i=1}^{n}$ for some domains
-  $d_{i} \in \Doms(\phi)$ and $e_{i} \in \Doms(\psi)$. Since
-  $\rho(e_{i}) = d_{i}$ for all $i = 1, \dots, n$ by the commutativity in
-  \cref{diagram:ref}, we get that
+  for any predicate $\predicate/n \in \Preds(\psi) = \Preds(\phi)$, function
+  $\rho$ translates the domains associated with $\predicate$ in $\psi$ to the
+  domains associated with $\predicate$ in $\phi$. Let
+  $\pi_{\phi}(\predicate) = {(\Delta_{i})}_{i=1}^{n}$ and
+  $\pi_{\psi}(\predicate) = {(\Gamma_{i})}_{i=1}^{n}$ for some domains
+  $\Delta_{i} \in \Doms(\phi)$ and $\Gamma_{i} \in \Doms(\psi)$. Since
+  $\rho(\Gamma_{i}) = \Delta_{i}$ for all $i = 1, \dots, n$ by the commutativity
+  in \cref{diagram:ref}, we get that
   \begin{equation}\label{eq:equality}
-    \prod_{i=1}^{n}[\sigma(d_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(e_{i})]
+    \prod_{i=1}^{n}[\sigma(\Delta_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(\Gamma_{i})]
   \end{equation}
   as required. Certainly, any subset of the left-hand side of \cref{eq:equality}
-  (e.g., $\mathfrak{M}(\texttt{p})$, where $\mathfrak{M}$ is a model of
+  (e.g., $\mathfrak{M}(\predicate)$, where $\mathfrak{M}$ is a model of
   $(\phi, \sigma)$) is a subset of the right-hand side and vice versa. Since
   $\phi$ and $\psi$ semantically only differ in what domains they refer to,
   every model of $\phi$ satisfies $\psi$ and vice versa, completing the proof.
@@ -275,38 +286,40 @@ numerical answers across a range of domain sizes.
 
 \begin{enumerate}
   \item A $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:
-  \[
-    f(m) = {\left(-1 + \sum_{l=0}^{m} \binom{m}{l} [l < 2]\right)}^{m} = m^{m}.
-  \]
+        \[
+        f(m) = {\left(-1 + \sum_{l=0}^{m} \binom{m}{l} [l < 2]\right)}^{m} = m^{m}.
+        \]
   \item A $\Theta(m^3 + n^3)$ solution for counting $\Gamma \to \Delta$
-  surjections:
-  \begin{align*}
-    f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
-               &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
-    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
-  \end{align*}
+        surjections:
+        \begin{align*}
+          f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
+                     &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
+          ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l}\\
+                     &\sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
+        \end{align*}
   \item A $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ surjections:
-  \begin{align*}
-    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
-            &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
-    ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
-  \end{align*}
+        \begin{align*}
+          f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
+                  &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
+          ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l}\\
+                  &\sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
+        \end{align*}
   \item A $\Theta(mn)$ solution for counting $\Gamma \to \Delta$ injections and
         partial injections (with different base cases):
-  \begin{align*}
-    f(m, n) ={}& \sum_{l=0}^m \binom{m}{l} [l<2] f(m-l, n-1)\\
-    ={}& f(m, n-1) + mf(m-1, n-1).
-  \end{align*}
+        \begin{align*}
+          f(m, n) ={}& \sum_{l=0}^m \binom{m}{l} [l<2] f(m-l, n-1)\\
+          ={}& f(m, n-1) + mf(m-1, n-1).
+        \end{align*}
   \item A $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ injections:
-  \begin{align*}
-    f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
-    g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
-    ={}& g(m - 1, l) + lg(m - 1, l - 1).
-  \end{align*}
+        \begin{align*}
+          f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
+          g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
+          ={}& g(m - 1, l) + lg(m - 1, l - 1).
+        \end{align*}
   \item A $\Theta(m)$ solution for counting $\Gamma \to \Delta$ bijections:
-  \[
-    f(m, n) = mf(m-1, n-1).
-  \]
+        \[
+        f(m, n) = mf(m-1, n-1).
+        \]
   \item A $\Theta(l+mn)$ solution for counting $|\Lambda|$ partial injections
         $\Gamma \to \Delta$:
         \begin{align*}

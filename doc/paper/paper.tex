@@ -24,7 +24,7 @@
 \usepackage{pifont}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{tikz}
-\usepackage[capitalize]{cleveref}
+\usepackage[capitalize,noabbrev]{cleveref}
 \usepackage{multirow}
 \usepackage{colortbl}
 \usepackage{complexity}
@@ -50,13 +50,8 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{claim}{Claim}[theorem]
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
-\theoremstyle{remark}
-\newtheorem*{remark}{Remark}
-
-\setlength{\multlinegap}{0pt}
+\newtheorem{definition}{Definition}
 
 \pdfinfo{
 /TemplateVersion (KR.2022.0, KR.2023.0)
@@ -66,10 +61,10 @@
   Challenges, Progress, and Conjectures}
 
 % TODO (at the very end)
-% grammarly the whole thing
-% read the formatting instructions and their LaTeX source (email font?)
-% make sure there are no overflow errors
+% grammarly the whole thing (supplementary material as well)
 % make sure the result table (as well as other floating objects) are on the right pages
+% make sure the abstract, introduction, and conclusion are all in line with each other
+% maybe improve the indentation of equations
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -113,6 +108,7 @@ vbelle@ed.ac.uk
 \newcommand{\Done}{\mathsf{D}_{1}}
 \newcommand{\Dtwo}{\mathsf{D}_{2}}
 \newcommand{\Dthree}{\mathsf{D}_{3}}
+\newcommand{\predicate}{\texttt{\textup{p}}}
 
 \DeclareMathOperator{\friends}{\texttt{friends}}
 \DeclareMathOperator{\smokes}{\texttt{smokes}}
@@ -670,7 +666,7 @@ transformation introduced constants or constraints or both. The aforementioned
 conditions ensure that these parts can be treated independently.
 
 \begin{algorithm}[t]
-  \caption{The compilation rule for $\GDR$ nodes.}\label{alg:domainrecursion}
+  \caption{The compilation rule for $\GDR$ nodes}\label{alg:domainrecursion}
   \KwIn{formula $\phi$, set of all relevant domains $\mathcal{D}$}
   \KwOut{set of chips $S$}
   $S \gets \emptyset$\;
@@ -781,7 +777,7 @@ conditions as \cref{def:replaceable}.
 \end{definition}
 
 \begin{algorithm}[t]
-  \caption{The compilation rule for $\CR$ nodes.}\label{alg:constraintremoval}
+  \caption{The compilation rule for $\CR$ nodes}\label{alg:constraintremoval}
   \KwIn{formula $\phi$, set of all relevant domains $\mathcal{D}$}
   \KwOut{set of chips $S$}
   $S \gets \emptyset$\;
@@ -855,7 +851,7 @@ maps between sets of domains to the arguments of a function call.
 
 \subsection{Identifying Opportunities for Recursion}\label{sec:ref}
 
-\paragraph{Hashing.}
+\subsubsection{Hashing}
 We use (integer-valued) hash functions to discard pairs of formulas that are too
 different for recursion to work. The hash code of a clause
 $c = (L, E, \delta_{c})$ (denoted by $\# c$) combines the hash codes of the sets
@@ -864,7 +860,7 @@ literals, the number of inequality constraints $|E|$, and the number of
 variables $|\Vars(c)|$. The hash code of a formula $\phi$ combines the hash
 codes of all its clauses and is denoted by $\#\phi$.
 
-\paragraph{Caching.}
+\subsubsection{Caching}
 \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} uses a cache to check if
 a formula is identical to one of the formulas that have already been fully
 compiled. To facilitate recursion, we extend the caching scheme to include
@@ -874,7 +870,7 @@ pairs of the form $(\phi, v)$, where $\phi$ is a formula, and $v$ is an FCG
 node.
 
 \begin{algorithm}[t]
-  \caption{The compilation rule for $\Reff$ nodes.}\label{alg:trycache}
+  \caption{The compilation rule for $\Reff$ nodes}\label{alg:trycache}
   \KwIn{formula $\phi$, cache $C$}
   \KwOut{a set of chips}
 
@@ -1251,7 +1247,7 @@ solved by \textsc{ForcLift}. However, \textsc{Crane} can also solve all but one
 of the instances that \textsc{ForcLift} fails on in at most cubic time. See
 supplementary material for the exact solutions produced by \textsc{Crane}.
 
-\paragraph{Miscellaneous other instances.}
+\subsubsection{Miscellaneous Other Instances}
 We also note that standard (W)FOMC benchmarks such as \cref{example:smokers}
 that are already supported by \textsc{ForcLift} remain feasible for
 \textsc{Crane} as well. Moreover, our algorithm can also handle the linear order
@@ -1278,6 +1274,7 @@ of $\texttt{p}(X, Y, z')$ for any $z' \ne z$. \textsc{Crane} instantly returns a
 solution of complexity $\Theta(l+mn)$, where $l = |\Lambda|$.
 
 \section{Conclusion and Future Work}\label{sec:conclusion}
+\setlength{\multlinegap}{0pt}
 
 This paper presents \textsc{Crane}---an extension of
 \textsc{ForcLift}~\cite{DBLP:conf/ijcai/BroeckTMDR11} that benefits from a more
@@ -1336,6 +1333,8 @@ such as statistical relational AI~\cite{DBLP:series/synthesis/2016Raedt},
 \textsc{Crane} could be beneficial to research in combinatorics as
 well~\cite{DBLP:conf/ilp/BarvinekB0ZK21,DBLP:journals/corr/abs-2302-04606}.
 
+% TODO: The reference list should not include unpublished work. (earnest + OEIS + 3 corr references)
+% TODO: replace all instances of {p} with \predicate (by hand)
 \bibliographystyle{kr}
 \bibliography{paper}
 
