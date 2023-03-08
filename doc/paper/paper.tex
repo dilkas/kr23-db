@@ -79,8 +79,7 @@
 % TODO (at the very end)
 % grammarly the whole thing (supplementary material as well)
 % make sure the result table (as well as other floating objects) are on the right pages
-% make sure the abstract, introduction, and conclusion are all in line with each other
-% maybe improve the indentation of equations
+% reread the entire paper
 
 \author{%
 Paulius Dilkas$^1$\and
@@ -126,6 +125,8 @@ vbelle@ed.ac.uk
 \newcommand{\Dthree}{\domainNames_{3}}
 \newcommand{\predicate}{\texttt{\textup{p}}}
 \newcommand{\predicateq}{\texttt{\textup{q}}}
+\newcommand{\predicates}{\texttt{\textup{s}}}
+\newcommand{\predicater}{\texttt{\textup{r}}}
 \newcommand{\nulll}{\texttt{\textup{null}}}
 
 \DeclareMathOperator{\friends}{\texttt{\textup{friends}}}
@@ -1164,14 +1165,6 @@ The set is then sorted according to the fixed ordering of domains.
     maximum allowed depth of the search tree.}\label{tbl:results}
 \end{table*}
 
-% TODO: I think I said this the last time, but along with the complexities as a
-% way of representing the empirical evaluation, I think you should also include
-% a few plots, even if they say nothing more than what the table already says.
-% The point is that the readers can see what this behaviour looks like so even
-% if you include a few plots and say we just give a few representative examples
-% and the rest follow the table of all that will be better [an experiment with
-% non-partial endo injections?]
-
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
 on their ability to count various kinds of functions. This class of instances is
@@ -1257,6 +1250,37 @@ perform equally well on instances that could already be solved by
 \textsc{ForcLift}. However, \textsc{Crane} can also solve all but one of the
 instances that \textsc{ForcLift} fails on in at most cubic time. See
 supplementary material for the exact solutions produced by \textsc{Crane}.
+
+\subsubsection{A Comparison with \textsc{\normalfont FastWFOMC}}
+
+\begin{figure}[t]
+  \includegraphics{plot}
+  \caption{The runtime data of \textsc{FastWFOMC} on the problem of counting
+    permutations together with a quartic regression model fitted on all of the
+    data and a linear model fitted on the first half of the data points.}
+\end{figure}
+
+\begin{itemize}
+  \item permutations of a set (i.e., bijective/injective endofunctions)
+  \item an extension of \textsc{FastWFOMC}~\cite{DBLP:conf/uai/BremenK21} with
+        cardinality constraints as described by
+        Ku\v{z}elka~\shortcite{DBLP:journals/jair/Kuzelka21}, provided by one of
+        the authors of \textsc{FastWFOMC}.
+  \item can be described in \FOtwo{} with cardinality constraints as
+  \begin{align*}
+    &(|\predicate| = |\Delta|) \land{}\\
+    &(\forall X, Y \in \Delta\text{. } \predicater(X) \lor \neg \predicate(X, Y)) \land{}\\
+    &(\forall X, Y \in \Delta\text{. } \predicates(X) \lor \neg\predicate(Y, X)),
+  \end{align*}
+        where $\predicater$ and $\predicates$ are Skolem predicates as described
+        by Van den Broeck et al.~\shortcite{DBLP:conf/kr/BroeckMD14}, and
+        $|\Delta|$ ranges from 1 to 50.
+  \item \textsc{FastWFOMC} was run on an AMD Ryzen~7~5800H processor with
+        \SI{16}{\giga\byte} of memory, running Arch Linux~6.2.2-arch1-1 and
+        Python~3.10.9.
+  \item degrees 4--7 are about equally well-fitting (maybe include the fit
+        numbers?)
+\end{itemize}
 
 \subsubsection{Miscellaneous Other Instances}
 We also note that standard (W)FOMC benchmarks such as \cref{example:smokers}
