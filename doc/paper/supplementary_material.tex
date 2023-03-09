@@ -113,16 +113,16 @@ sn edges/.style={for tree={edge={-Latex}}}
 
 We begin with a few definitions that formalise the notion of a model. For any
 set $S$, let $2^{S}$ denote its power set and
-$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the set of tuples---of any
-finite length---of elements of $S$. For example,
+$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the (infinite) set of
+tuples---of any finite length---of elements of $S$. For example,
 ${\{\,a, b\,\}}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$. For any
 $n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
 $[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$. Extending the notation for
 substitution introduced in \cref{sec:recprelims}, for a formula $\phi$, constant
 $c$, and set of variables $V$, let $\phi[c/V]$ denote $\phi$ with all
 occurrences of all variables in $V$ replaced with $c$. Let $\Preds$ be the
-function that maps any clause or formula to the set of predicates used within.
-With each formula $\phi$ we associate a map
+function that maps any clause or formula to the set of predicates used in it.
+With each formula $\phi$, we associate a map
 $\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ s.t., for each
 predicate $\predicate/n \in \Preds(\phi)$, we have that
 $\pi_{\phi}(\predicate) \in {\Doms(\phi)}^{n}$. This map makes explicit the idea
@@ -131,7 +131,7 @@ case of formula $\phi$ from \cref{example:first},
 $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
 
 \begin{definition}\label{def:model}
-  Let $\phi$ be a formula and $\sigma$ a domain size function, A \emph{model} of
+  Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
   $(\phi, \sigma)$ is a map
   $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ s.t.\ the
   following two conditions are satisfied.
@@ -182,9 +182,9 @@ $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
   $c$ is equivalent to the conjunction of clauses added to $\phi'$ on
   \cref{line:conditions,line:generation}.
 
-  If $c$ has no variables with domain $\Omega$, then
-  \cref{line:conditions,line:generation} simply add a copy of $c$ to $\phi'$. If
-  $c$ has one variable with domain $\Omega$, say, $X$, then
+  If $c$ has no variables with domain $\Omega$,
+  \cref{line:conditions,line:generation} add a copy of $c$ to $\phi'$. If $c$
+  has one variable with domain $\Omega$, say, $X$, then
   $c \equiv \forall X \in \Omega\text{. } \psi$ for some formula $\psi$ with one
   free variable $X$. In this case, \cref{line:conditions,line:generation} create
   two clauses: $\psi[x/\{\, X \,\}]$ and $\forall X \in \Omega\text{.
@@ -193,7 +193,7 @@ $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
   well-defined constant.
 
   Let $V$ be the set of variables introduced on \cref{line:V}. It remains to
-  show that repeating the transformation
+  prove that repeating the transformation
   \[
     \forall X \in \Omega\text{. } \psi \mapsto \{\, \psi[x/\{\, X \,\}], \forall X \in \Omega\text{. } X \ne x \Rightarrow \psi \,\}
   \]
@@ -215,10 +215,10 @@ $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
 
 \begin{theorem}[Correctness of $\CR$]
   Let $\phi$ be the input formula of \cref{alg:constraintremoval}, $(\Omega, x)$
-  a replaceable pair, and $\phi'$ the formula constructed by the algorithm, when
-  $(\Omega, x)$ is selected on \cref{line:crconditions}. Then
-  $\phi \equiv \phi'$, where the domain $\Omega'$ introduced on
-  \cref{line:newdomain} is interpreted as $\Omega \setminus \{\, x \,\}$.
+  a replaceable pair, and $\phi'$ the output formula for when $(\Omega, x)$ is
+  selected on \cref{line:crconditions}. Then $\phi \equiv \phi'$, where the
+  domain $\Omega'$ introduced on \cref{line:newdomain} is interpreted as
+  $\Omega \setminus \{\, x \,\}$.
 \end{theorem}
 \begin{proof}
   Since there is a natural bijection between the clauses of $\phi$ and $\phi'$,
@@ -268,7 +268,7 @@ $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
   \begin{equation}\label{eq:equality}
     \prod_{i=1}^{n}[\sigma(\Delta_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(\Gamma_{i})]
   \end{equation}
-  as required. Certainly, any subset of the left-hand side of \cref{eq:equality}
+  as required. Obviously, any subset of the left-hand side of \cref{eq:equality}
   (e.g., $\mathfrak{M}(\predicate)$, where $\mathfrak{M}$ is a model of
   $(\phi, \sigma)$) is a subset of the right-hand side and vice versa. Since
   $\phi$ and $\psi$ semantically only differ in what domains they refer to,
@@ -278,7 +278,7 @@ $\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
 \section{Solutions Found by \textsc{Crane}}
 
 Here we list the exact function definitions produced by \textsc{Crane} for all
-of the problem instances in Section~6 both before and after algebraic
+of the problem instances in Section~6, both before and after algebraic
 simplification (excluding multiplications by one). The correctness of all of
 them has been checked by identifying suitable base cases and verifying the
 numerical answers across a range of domain sizes.
