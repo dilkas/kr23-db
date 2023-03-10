@@ -270,9 +270,11 @@ WFOMC~\cite{DBLP:journals/pvldb/GatterbauerS15,DBLP:journals/debu/GribkoffSB14}.
 While WFOMC has received more attention in the literature, FOMC is an
 interesting problem in and of itself because of its connections to finite model
 theory~\cite{DBLP:conf/kr/BremenK21} and applications in enumerative
-combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}. Totis et
-al.~\shortcite{DBLP:journals/jair/TotisDRK23} proposed an FOMC-based approach to
-counting solutions to constraint satisfaction problems.
+combinatorics~\cite{DBLP:conf/ilp/BarvinekB0ZK21}.
+
+% Totis et
+% al.~\shortcite{DBLP:journals/jair/TotisDRK23} proposed an FOMC-based approach to
+% counting solutions to constraint satisfaction problems.
 
 % 3. Why is it hard? (E.g., why do naive approaches fail?)
 % complexity/liftability -> murky boundary
@@ -337,9 +339,9 @@ gradually constructing a circuit (in the case of \textsc{ForcLift}) or a graph
 (in the case of \textsc{Crane}). \textsc{ForcLift} applies compilation rules via
 greedy search, whereas \textsc{Crane} also supports a hybrid search algorithm
 that applies some rules greedily and some using breadth-first
-search.\footnote{In the current implementation, the rules applied in a
-  non-greedily are: atom counting, inclusion-exclusion, independent partial
-  groundings, Shannon decomposition, shattering, and two new rules described in
+search.\footnote{In the current implementation, the rules applied non-greedily
+  are: atom counting, inclusion-exclusion, independent partial groundings,
+  Shannon decomposition, shattering, and two new rules described in
   \cref{sec:dr,sec:ref}---see previous work~\cite{DBLP:conf/ijcai/BroeckTMDR11}
   for more information about the rules.} This alternative was introduced because
 there is no reason to expect greedy search to be complete. Another difference is
@@ -396,10 +398,10 @@ equality to this internal format. We use lowercase Latin letters for predicates
 variables (e.g., $X$), and uppercase Greek letters for domains (e.g., $\Delta$).
 Sometimes we write predicate $\predicate$ as $\predicate/n$, where
 $n \in \mathbb{N}^{+}$ is the \emph{arity} of $\predicate$. An \emph{atom} is
-$\predicate(t_1, \dots, t_n)$ for some predicate $\predicate/n$ and terms
-$t_{1}, \dots, t_{n}$. A \emph{term} is either a constant or a variable. A
+$\predicate(x_1, \dots, x_n)$ for some predicate $\predicate/n$ and terms
+$x_{1}, \dots, x_{n}$. A \emph{term} is either a constant or a variable. A
 \emph{literal} is either an atom or the negation thereof (denoted by
-$\neg \predicate(t_1, \dots, t_n)$). Let $\mathcal{D}$ be the set of all
+$\neg \predicate(x_1, \dots, x_n)$). Let $\mathcal{D}$ be the set of all
 relevant (finite) domains. Initially, $\mathcal{D}$ contains all domains
 mentioned by the input formula. During compilation, new domains are added to
 $\mathcal{D}$. Each new domain is interpreted as a subset of another domain in
@@ -410,14 +412,12 @@ and $\mdoubleplus$ for list concatenation. We write $\pfun$ to denote partial
 functions and $\dom(\cdot)$ for the domain of a function. Let $\Doms$
 (respectively, $\Vars$) be the function that maps any expression to the set of
 domains (respectively, variables) used in it. Let $S$ be a set of constraints or
-literals, $V$ a set of variables, and $x$ a variable or a constant. We write
-$S[x/V]$ to denote $S$ with all occurrences of all variables in $V$ replaced
-with $x$.
+literals, $V$ a set of variables, and $x$ a term. We write $S[x/V]$ to denote
+$S$ with all occurrences of all variables in $V$ replaced with $x$.
 
 \begin{definition}[Constraint]\label{def:constraint}
   An \emph{(inequality) constraint} is a pair $(a, b)$, where $a$ is a variable,
-  and $b$ is a variable or a constant. It constrains $a$ and $b$ to be
-  different.
+  and $b$ is a term. It constrains $a$ and $b$ to be different.
 \end{definition}
 
 \begin{definition}[Clause]\label{def:clause}
@@ -484,7 +484,7 @@ constraints of the form $X \not\in \Delta$ for some variable $X$ and domain
 $\Delta$, we exclude these constraints simply because they are inessential. Note
 that if we replace $Y \ne Z$ in \cref{eq:formula} with $Y = Z$, then
 \cref{eq:formula} can be simplified to have one fewer variables. Similarly, if
-the same inequality is replaced by $Y = c$ for some constant $c$, then $Y$ can
+the same inequality is replaced by $Y = x$ for some constant $x$, then $Y$ can
 be eliminated as well. Since constraints are always interpreted as preconditions
 for the disjunction of literals in the clause (as in \cref{eq:formula}),
 equality constraints can be eliminated without any loss in expressivity.
@@ -642,16 +642,16 @@ $X \ne x$.
   Then we can introduce constant $x \in \Gamma$ and rewrite $\phi$ as
   $\phi' = \{\, c_{1}, c_{2} \,\}$, where
   \begin{align*}
-    c_{1} &= \begin{multlined}[t]
+    c_{1} &\coloneqq \begin{multlined}[t]
       (\{\, \neg \predicate(x, Y), \neg \predicate(x, Z) \,\}, \{\, (Y, Z) \,\}, \\
       \{\, Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}\\
-    c_{2} &= \begin{multlined}[t]
+    c_{2} &\coloneqq \begin{multlined}[t]
       (\{\, \neg \predicate(X, Y), \neg \predicate(X, Z) \,\}, \{\, (X, x), (Y, Z) \,\}, \\
       \{\, X \mapsto \Gamma', Y \mapsto \Delta, Z \mapsto \Delta \,\}),
       \end{multlined}
   \end{align*}
-  and $\Gamma' = \Gamma \setminus \{\, x \,\}$.
+  and $\Gamma' \coloneqq \Gamma \setminus \{\, x \,\}$.
 \end{example}
 
 % Original domain recursion
@@ -685,7 +685,7 @@ that these parts can be treated independently.
 \end{algorithm}
 
 % Description of GDR, in contrast to DR
-In contrast, GDR has only one precondition: for GDR to be applicable on domain
+In contrast, GDR has only one precondition: for GDR to be applicable to domain
 $\Omega \in \mathcal{D}$, there must be at least one variable with domain
 $\Omega$ featured in a literal (and not just in constraints). Without such
 variables, GDR would have no effect on the formula. The expanded formula is then
@@ -880,7 +880,7 @@ form $(\phi, v)$, where $\phi$ is a formula, and $v$ is an FCG node.
     \lIf{$\phi = \emptyset$}{\Return{$\rho$}}
     \ForEach{clause $c \in \psi$\label{line:for1}}{
       \ForEach{clause $d \in \phi$ s.t. $\#d=\#c$\label{line:for2}}{
-        \ForAll{$\gamma \in \generateMaps{$c$, $d$, $\rho$}$\label{line:generateMaps}}{
+        \ForEach{$\gamma \in \generateMaps{$c$, $d$, $\rho$}$\label{line:generateMaps}}{
           $\rho' \gets \identifyRecursion{$\phi\setminus\{\, d \,\}$, $\psi\setminus\{\, c \,\}$, $\rho\cup\gamma$}$\;\label{line:recursion}
           \lIf{$\rho' \ne \nulll$}{\Return{$\rho'$}}
         }
@@ -908,34 +908,19 @@ clauses of $\phi$ and $\psi$ with the same hash codes. For every pair of similar
 clauses, \identifyRecursion calls itself on the remaining clauses until the map
 $\rho\colon \Doms(\psi) \pfun \Doms(\phi)$ becomes total.
 
-% TODO: double check the first sentence and if this paragraph still makes sense
 Function \generateMaps checks the compatibility of a pair of clauses. It
 considers every possible bijection $\beta\colon \Vars(c) \to \Vars(d)$ and map
 $\gamma\colon \Doms(c) \to \Doms(d)$ s.t.
-\begin{enumerate*}[label=(\roman*)]
-  \item $\delta_{d} \circ \beta(X) = \rho \circ \delta_{c}(X)$ for all
-  $X \in \Vars(c)$,
-  \item $\gamma(\Omega) = \rho(\Omega)$ for all $\Omega \in \Doms(c)$, and
-  \item $c$ becomes equal to $d$ when its variables are replaced according to
-  $\beta$, and its domains replaced according to $\gamma$.
-\end{enumerate*}
-The function then returns each such $\gamma$ as soon as possible.
-
-% The
-% commutativity check also ensures that $\rho \cup \gamma$ is possible on
-% \cref{line:recursion} of \cref{alg:trycache}. The resulting (partial) function
-% $\rho \cup \gamma$ is the unique function s.t.
-% $\rho \cup \gamma|_{\dom(\rho)} = \rho$, and
-% $\rho \cup \gamma|_{\dom(\gamma)} = \gamma$. The operation is defined when
-% $\rho|_{\dom(\rho)\cap\dom(\gamma)} = \gamma|_{\dom(\rho)\cap\dom(\gamma)}$.
-
-% \[
-%   \begin{tikzcd}
-%     \Vars(c) \ar[r, dashed, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
-%     \Doms(c) \ar[r, dashed, "\gamma"] \ar[d, hookrightarrow] & \Doms(d) \ar[d, hookrightarrow] \\
-%     \Doms(\psi) \ar[r, swap, "\rho", "|" marking, outer sep=5pt] & \Doms(\phi).
-%   \end{tikzcd}
-% \]
+\[
+  \begin{tikzcd}
+    \Vars(c) \ar[r, dashed, "\beta"] \arrow[d, swap, "\delta_c"] & \Vars(d) \ar[d, "\delta_d"] \\
+    \Doms(c) \ar[r, dashed, "\gamma"] \ar[d, hookrightarrow] & \Doms(d) \ar[d, hookrightarrow] \\
+    \Doms(\psi) \ar[r, swap, "\rho", "|" marking, outer sep=5pt] & \Doms(\phi).
+  \end{tikzcd}
+\]
+commutes, and $c$ becomes equal to $d$ when its variables are replaced according
+to $\beta$ and its domains replaced according to $\gamma$. The function then
+returns each such $\gamma$ as soon as possible.
 
 \begin{theorem}[Correctness of $\Reff$]
   Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
@@ -972,7 +957,7 @@ as complex as $f(n-k-2)$.
     }
     $f \gets \newFunctionName{$v$}$\;
     $\newDomainNames \gets \domainNames$\;
-    \For{$\Omega \in \mathfrak{D}(v)$ s.t. $\newDomainNames(\Omega)$ is non-atomic}{\label{line:nonone}
+    \ForEach{$\Omega \in \mathfrak{D}(v)$ s.t. $\newDomainNames(\Omega)$ is non-atomic}{\label{line:nonone}
       $\newDomainNames(\Omega) \gets \newDomainName{}$\;\label{line:nontwo}
     }
     $(\expression, \functions) \gets \actuallyVisit{$v$, \newDomainNames}$\;\label{line:actuallyvisit}
@@ -1146,7 +1131,6 @@ The set is then sorted according to the ordering.
     allowed depth of the search tree.}\label{tbl:results}
 \end{table*}
 
-% TODO: rewrite to include references to the subsections?
 We compare \textsc{Crane} and
 \textsc{ForcLift}\footnote{\url{https://dtaid.cs.kuleuven.be/wfomc}}~\cite{DBLP:conf/ijcai/BroeckTMDR11}
 on their ability to count various classes of functions. We chose this class of
@@ -1248,14 +1232,14 @@ We run \textsc{FastWFOMC} on an AMD Ryzen~7~5800H processor with
 \SI{16}{\giga\byte} of memory, running Arch Linux~6.2.2-arch1-1 and
 Python~3.10.9, with $|\Delta|$ ranging from 1 to 50. The results are in
 \cref{fig:fastwfomc}. We use ten-fold cross-validation to check the degree of
-the polynomial that best fits the data. The best-fitting degree is 6 with a mean
-mean squared error (MMSE) of 16.9, although all degrees above 4 fit the data
-almost equally well. As \cref{fig:fastwfomc} demonstrates, a quartic (i.e.,
-degree 4) polynomial (with an MMSE of 113.5) fits well too. However, the MMSE
+the polynomial that best fits the data. The best-fitting degree is 6 with an
+average mean squared error (aMSE) of 16.9, although all degrees above 4 fit the
+data almost equally well. As \cref{fig:fastwfomc} demonstrates, a quartic (i.e.,
+degree 4) polynomial (with an aMSE of 113.5) fits well too. However, the aMSE
 quickly grows to 949.5 and higher values for degrees less than 4. According to
 \cref{tbl:results}, \textsc{Crane} finds a cubic solution to this problem.
 However, we can also use the linear solution for counting bijections between
-different domains for this task simply by setting $n \coloneqq m$.
+different domains for this task by setting $n \coloneqq m$.
 
 \subsection{Miscellaneous Other Instances}
 
