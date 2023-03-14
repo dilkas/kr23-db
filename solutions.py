@@ -290,14 +290,17 @@ def weird1(n, fun=weird2): # should compute partial injections from [n] to [n]
             2**(n-1) * n * (fun(n-1, n-1) + n * fun(n-1, n-2)) +
             2**(n-2) * (n-1) * (fun(n-2, n-1) + n * fun(n-2, n-2)))
 
-MAX = 10
+def example(m, n):
+    return int(math.factorial(m)/math.factorial(m-n))
 
-# for m in range(1, MAX):
-#     for n in range(1, MAX):
-#         print("f({}, {}) = {}".format(m, n, my_partial_injections(m, n)))
+MAX = 20
 
-for n in range(1, MAX):
-    print("f({}) = {} ({})".format(n, weird1(n), two_dimensional_partial_injections(n, n)))
+for m in range(1, MAX):
+    for n in range(1, m+1):
+        print("f({}, {}) = {}".format(m, n, example(m, n)))
+
+# for n in range(1, MAX):
+#     print("f({}) = {} ({})".format(n, weird1(n), two_dimensional_partial_injections(n, n)))
 
 # for m in range(0, MAX):
 #     for n in range(0, MAX):

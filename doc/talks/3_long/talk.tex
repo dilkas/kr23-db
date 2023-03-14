@@ -11,7 +11,6 @@
 \usepackage{soul}
 \usepackage{csquotes}
 \usepackage{pifont}
-\usepackage{venndiagram}
 
 \usetikzlibrary{shapes}
 \usetikzlibrary{positioning}
@@ -21,6 +20,13 @@
 \usetikzlibrary{calc}
 \usetikzlibrary{backgrounds}
 \usetikzlibrary{fit}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
 
 \renewcommand<>{\hl}[1]{\only#2{\beameroriginal{\hl}}{#1}}
 \makeatletter
@@ -38,8 +44,12 @@
 
 \definecolor{color1}{HTML}{1B9E77}
 \definecolor{color2}{HTML}{7570b3}
-\definecolor{color3}{HTML}{e7298a} % TODO: I don't like pink
+\definecolor{color3}{HTML}{a6761d}
 \definecolor{forestgreen}{HTML}{009B55}
+
+\DeclareMathOperator{\GDR}{\textsc{GDR}}
+\DeclareMathOperator{\CR}{\textsc{CR}}
+\DeclareMathOperator{\Reff}{\textsc{Ref}}
 
 \colorlet{redish}{color2!25}
 \sethlcolor{redish}
@@ -93,17 +103,18 @@ sn edges/.style={for tree={edge={-Latex}}},
 \newcommand{\pbp}{\textup{PBP}}
 \newcommand{\SPPP}{\textup{SP}}
 
-% 15 min (8 slides of content) introduction
-% 25 min presentation
-% 5 min summary
-% 20-25 slides
-% before it was 15 slides and 20 min
+% 15 min (8 slides, currently have 7) introduction
+% 25 min (13 slides, currently have 10) presentation
+% 5 min (3 slides, currently have 1) summary
 % make sure there's a clear and coherent storyline
 
-\author{\textbf{Paulius Dilkas} \inst{1} \and Vaishak Belle \inst{2}}
+\author{Paulius Dilkas \\ \vspace{1cm} \tiny{Joint work with Vaishak Belle (Univeristy of Edinburgh, UK)}}
 \title{Synthesising Recursive Functions for\\ First-Order Model Counting}
-\institute{\inst{1} National University of Singapore, Singapore \and \inst{2} University of Edinburgh, UK}
-\date{TODO: date}
+\institute{National University of Singapore, Singapore}
+\date{\today}
+% TODO: update the date
+% TODO: unify the use of colours
+% TODO: do I want to mention forclift and/or crane?
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -133,10 +144,11 @@ sn edges/.style={for tree={edge={-Latex}}},
     \node<4>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)}] at (stickman.north east) {Describe this picture. \includegraphics[width=0.25\textwidth]{cat.jpg}};
     \node<4>[ellipse callout, draw, below=0.5cm, shift=({-0.5,0.5}), callout relative pointer={(0.5, -0.5)}] at (computer.north west) {It's a cat with its eyes closed.};
     \node<5>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)}, text width=5cm] at (stickman.north east) {If I shuffle a deck of \alert{$n$} cards, how many possible outcomes are there?};
-    \node<5>[left,shift=({-1, -1})] at (current page.east) (computer2) {\includegraphics[height=0.5\textheight]{overheating_computer}};
+    \node<5>[left,shift=({-1, -1})] at (current page.east) (computer2) {\includegraphics[height=0.5\textheight]{overheating_computer}\blfootnote{Terms and conditions apply.}};
     \node[shift=({1.3, 0.1})] at (current page.south west) {\tiny \color{lightgray}{Vector art by Vecteezy.com}};
   \end{tikzpicture}
 \end{frame}
+% TODO: replace the cat thing with a funny DALL-E picture
 
 \begin{frame}{Who Cares About Counting?}
   \begin{columns}
@@ -261,61 +273,49 @@ sn edges/.style={for tree={edge={-Latex}}},
 % maybe mention #CSP and other non-SAT ways of counting (SMT?, counting paths in
 % automata and directed graphs)
 
-% TODO: (maybe) add a slide about other approaches to WFOMC, making it crystal clear what my contributions are
-
-% TODO: it would be good to have a similar compilation walkthrough for an instance with Ref as well
+% TODO: add a slide about other approaches to WFOMC, making it crystal clear
+% what my contributions are. This will finish the introduction
 
 \begin{frame}{(Unweighted) First-Order Model Counting}
-  \begin{columns}[T]
-    \begin{column}{0.5\textwidth}
+  \begin{itemize}
+    \item Example formula: \\
+          \alert{$\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$}
+    \item Let \alert{$\Delta \coloneqq \{\, 1, 2 \,\}$}
+    \item Interpretations: all subsets of\\
+          \alert{$\{\, \pP(1), \qQ(1), \pP(2), \qQ(2) \,\}$}
+    \item<2-> Models:
+    \[
+      \begin{matrix}
+        \{\, \pone, \ptwo \,\}, & \{\, \pone, \qtwo \,\}, & \{\, \pone, \pqtwo \,\},\\
+        \{\, \qone, \ptwo \,\}, & \{\, \qone, \qtwo \,\}, & \{\, \qone, \pqtwo \,\},\\
+        \{\, \pqone, \ptwo \,\}, & \{\, \pqone, \qtwo \,\}, & \{\, \pqone, \pqtwo \,\}\\
+      \end{matrix}
+    \]
+  \end{itemize}
+  \onslide<3->{
+    \begin{block}{Intuition}
       \begin{itemize}
-        \item Example formula: $\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$
-        \item Let $\Delta \coloneqq \{\, 1, 2 \,\}$
-        \item Interpretations: all subsets of $\{\, \pP(1), \qQ(1), \pP(2), \qQ(2) \,\}$
-        \item Models:
-        \[
-          \begin{matrix}
-            \{\, \pone, \ptwo \,\}, & \{\, \pone, \qtwo \,\}, & \{\, \pone, \pqtwo \,\},\\
-            \{\, \qone, \ptwo \,\}, & \{\, \qone, \qtwo \,\}, & \{\, \qone, \pqtwo \,\},\\
-            \{\, \pqone, \ptwo \,\}, & \{\, \pqone, \qtwo \,\}, & \{\, \pqone, \pqtwo \,\}\\
-          \end{matrix}
-        \]
-        \item Each 1-ary predicate...
+        \item Each 1-ary predicate is like a \alert{subset}
+        \item For \alert{$n>1$}, each \alert{$n$}-ary predicate is like a
+              \alert{relation}
+        \item FOMC counts \alert{combinations of relations}
       \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \centering
-      \begin{overlayarea}{\textwidth}{4cm}
-        \only<1>{
-          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
-          \end{venndiagram2sets}
-        }%
-        \only<2>{
-          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
-            \fillOnlyA;
-          \end{venndiagram2sets}
-        }%
-        \only<3>{
-          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
-            \fillOnlyB;
-          \end{venndiagram2sets}
-        }%
-        \only<4>{
-          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
-            \fillACapB;
-          \end{venndiagram2sets}
-        }%
-        \only<5>{
-          \begin{venndiagram2sets}[labelNotAB={$\Delta$},labelA={$\pP$},labelB={$\qQ$}]
-            \fillA;
-            \fillB;
-          \end{venndiagram2sets}
-        }%
-      \end{overlayarea}
-    \end{column}
-  \end{columns}
+    \end{block}
+  }
+  \begin{tikzpicture}[remember picture,overlay,visible on=<2->]
+    \tikzset{shift={(current page.north east)}}
+    \tikzset{shift={(-4, -2.9)}}
+    \node[draw,circle,minimum size=3cm,label={135:$\pP$},fill=color1] (P) at (0,0) {};
+    \node[draw,circle,minimum size=3cm,label={45:$\qQ$},fill=color2] (Q) at (1.8,0) {};
+    \begin{scope}
+      \clip (0,0) circle(1.5cm);
+      \clip (1.8,0) circle(1.5cm);
+      \fill[color3](0,0) circle(1.5cm);
+    \end{scope}
+    \draw (0,0) circle(1.5cm);
+    \draw (1.8,0) circle(1.5cm);
+  \end{tikzpicture}
 \end{frame}
-% TODO: mention that n-ary predicates ~= relations
 
 % \begin{frame}{First-Order Model Counting (in More Detail)}
 %   \begin{itemize}
@@ -427,7 +427,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{minipage}
 \end{frame}
 
-\begin{frame}{An Example Counting Problem}
+\begin{frame}{A (Slightly) More Complicated Example}
   Suppose this room has \alert{$n$} seats, and there are \alert{$m \le n$}
   people in the audience. How many ways are there to seat everyone?
   \vfill
@@ -483,8 +483,10 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{frame}
 }
 
+% TODO: it would be good to have a similar compilation walkthrough for an instance with Ref as well
+
 \begin{frame}{Back to Our Example}
-  For instance, the following function counts injections
+  The following function counts injections:
   \[
   f(m, n) =
   \begin{cases}
@@ -495,54 +497,73 @@ sn edges/.style={for tree={edge={-Latex}}},
   \]
   \pause
   \begin{itemize}
-    \item \alert{$f$} can be computed in \alert{$\Theta(mn)$} time (via dynamic
-          programming).
-    \item Optimal time complexity to compute \alert{$n^{\underline{m}}$} is
-          \alert{$\Theta(m)$}.
+    \item \alert{$f(m, n)$} can be computed in \alert{$\Theta(mn)$} time
+    \begin{itemize}
+      \item using dynamic programming
+    \end{itemize}\pause
+    \item \alert{Optimal} time complexity to compute \alert{$n^{\underline{m}}$}
+          is \alert{$\Theta(m)$}
     \item But \alert{$\Theta(mn)$} is still much better than translating to
-          propositional logic and running a WMC algorithm.
-    \item The rest of this talk is about how such functions can be found
-          automatically.
+          propositional logic and running a WMC algorithm \pause
+    \item The rest of this talk is about how to find such functions automatically
   \end{itemize}
 \end{frame}
 
-\begin{frame}{First-Order Knowledge Compilation with \textsc{ForcLift}}
-  \begin{columns}
-    \begin{column}{0.25\textwidth}
-      \centering
-      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
-        \node[fill=red!50,fill on=<2>] (dr) {}
-        child {node {}
-          child {node[fill=red!50,fill on=<2>] {}
-            child {node {}
-              child {node {}}
-              child {node[fill=red!50,fill on=<2>] (ref) {}}
-            }}};
-        \draw[-latex, bend right,alt=<2>{red}{black}] (ref) to (dr);
-      \end{tikzpicture}
-    \end{column}
-    \begin{column}{0.75\textwidth}
-      \begin{block}{Workflow Before}
-        \begin{enumerate}
-        \item Compile the formula to a \alert{circuit}
-        \item Evaluate to get the answer
-        \end{enumerate}
-      \end{block}
-      \pause
-      \begin{block}{Workflow After}
-        \begin{enumerate}
-        \item Compile the formula to a \alert{graph}
-        \item Extract the definitions of functions
-        \item Simplify
-        \item Supplement with \alert{base cases}
-        \item Evaluate to get the answer
-        \end{enumerate}
-      \end{block}
-    \end{column}
-  \end{columns}
+\begin{frame}{First-Order Knowledge Compilation: Before and After}
+  \centering
+  \begin{tikzpicture}
+    \node (start) {\tiny $\begin{gathered}
+        \forall x \in \Gamma\text{. }\exists y \in \Delta\text{. }\pP(x, y)\\
+        \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }\pP(x, y) \land \pP(x, z) \Rightarrow y=z\\
+        \forall w, x \in \Gamma\text{. }\forall y \in \Delta\text{. }\pP(w, y) \land \pP(x, y) \Rightarrow w=x
+      \end{gathered}$};
+    \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of start] (kc) {Compilation};
+    \node[below=0.09cm of kc] (graph) {
+      \scalebox{.5}{
+      \begin{forest}
+        for tree={sn edges,grow=0,reversed,fill=red!50}
+        [,ellipse,draw,name=gdr
+        [,ellipse,draw
+        [,ellipse,draw
+        [,ellipse,draw
+        [,ellipse,draw]
+        [,ellipse,draw,name=ref]
+        ]
+        ]
+        ]
+        ]
+        \draw[-Latex,bend left=20] (ref) to (gdr);
+      \end{forest}
+      }
+    };
+    \node[draw,rounded rectangle,fill=color2!50,below=0.1cm of graph] (interpretation) {Conversion};
+    \node[below=0.3cm of interpretation] (initial) {\tiny $f(m, n) = \sum_{l=0}^m \binom{m}{l} [l<2] \times f(m-l, n-1)$};
+    \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of initial] (simplification) {Simplification};
+    \node[below=0.3cm of simplification] (simplified) {\tiny $f(m, n) = f(m, n-1) + mf(m-1, n-1)$};
+    \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of simplified] (evaluation) {Evaluation};
+    \node[below=0.3cm of evaluation] (end) {\includegraphics[height=0.4cm]{42.png}};
+    \node[right=0.3cm of evaluation] (sizes) {\tiny $\begin{aligned}
+        f(0,0) = 1&\text{{,} }f(m, 0) = 0\\
+        m = 7&\text{{,} }n=2
+      \end{aligned}$};
+    %\node at (0.5, -0.55) {\textsc{Crane}};
+    %\node[draw,fit={(kc) (interpretation)},inner ysep=6pt,yshift=5pt] {};
+    \draw[-Latex,color=color2] (start) -- (kc);
+    \draw[-Latex,color=color2] (kc) -- ($(graph)+(0,0.2)$);
+    \draw[-Latex,color=color2] ($(graph)+(0,-0.3)$) -- (interpretation);
+    \draw[-Latex,color=color2] (interpretation) -- (initial);
+    \draw[-Latex,color=color2] (initial) -- (simplification);
+    \draw[-Latex,color=color2] (simplification) -- (simplified);
+    \draw[-Latex,color=color2] (simplified) -- (evaluation);
+    \draw[-Latex,color=color2] (evaluation) -- (end);
+    \draw[-Latex,color=color2] (sizes) -- (evaluation);
+  \end{tikzpicture}
 \end{frame}
-% Only Step 1 is fully automated at this point. The other steps are executed by hand.
-% Two parts: compilation and inference/evaluation.
+% TODO: optimize edge lengths
+% TODO: add forclift on the left, with its own example instance
+% TODO: check if the math works out
+
+% TODO: talk #4 might have some useful additions to this section
 
 \begin{frame}{More Formally\ldots}
   \begin{definition}
@@ -741,6 +762,7 @@ sn edges/.style={for tree={edge={-Latex}}},
 % TODO: mention that everything used to be unliftable (by any algorithm with a publicly available implementation)
 % TODO: what font do I want to use for forclift/crane? It's mentioned on a slide title as well
 
+% TODO: maybe replace the zoom picture with some galaxy picture?
 { % all template changes are local to this group.
     \setbeamertemplate{navigation symbols}{}
     \begin{frame}<article:0>[plain]
