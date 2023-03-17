@@ -295,9 +295,12 @@ def example(m, n):
 
 MAX = 20
 
+# for m in range(1, MAX):
+#     for n in range(1, m+1):
+#         print("f({}, {}) = {}".format(m, n, example(m, n)))
+
 for m in range(1, MAX):
-    for n in range(1, m+1):
-        print("f({}, {}) = {}".format(m, n, example(m, n)))
+    print(m, int(3 ** m))
 
 # for n in range(1, MAX):
 #     print("f({}) = {} ({})".format(n, weird1(n), two_dimensional_partial_injections(n, n)))

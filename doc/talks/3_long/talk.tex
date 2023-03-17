@@ -53,6 +53,7 @@
 
 \colorlet{redish}{color2!25}
 \sethlcolor{redish}
+\setstcolor{black}
 
 \tikzset{
   inner/.style={
@@ -115,6 +116,9 @@ sn edges/.style={for tree={edge={-Latex}}},
 % TODO: update the date
 % TODO: unify the use of colours
 % TODO: do I want to mention forclift and/or crane?
+% TODO: maybe replace red!50 with one of the main colours
+% TODO: \color -> \textcolor everywhere
+% TODO: how do we capitalise blocks?
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -510,85 +514,127 @@ sn edges/.style={for tree={edge={-Latex}}},
 \end{frame}
 
 \begin{frame}{First-Order Knowledge Compilation: Before and After}
-  \centering
-  \begin{tikzpicture}
-    \node (start) {\tiny $\begin{gathered}
-        \forall x \in \Gamma\text{. }\exists y \in \Delta\text{. }\pP(x, y)\\
-        \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }\pP(x, y) \land \pP(x, z) \Rightarrow y=z\\
-        \forall w, x \in \Gamma\text{. }\forall y \in \Delta\text{. }\pP(w, y) \land \pP(x, y) \Rightarrow w=x
-      \end{gathered}$};
-    \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of start] (kc) {Compilation};
-    \node[below=0.09cm of kc] (graph) {
-      \scalebox{.5}{
-      \begin{forest}
-        for tree={sn edges,grow=0,reversed,fill=red!50}
-        [,ellipse,draw,name=gdr
-        [,ellipse,draw
-        [,ellipse,draw
-        [,ellipse,draw
-        [,ellipse,draw]
-        [,ellipse,draw,name=ref]
-        ]
-        ]
-        ]
-        ]
-        \draw[-Latex,bend left=20] (ref) to (gdr);
-      \end{forest}
-      }
-    };
-    \node[draw,rounded rectangle,fill=color2!50,below=0.1cm of graph] (interpretation) {Conversion};
-    \node[below=0.3cm of interpretation] (initial) {\tiny $f(m, n) = \sum_{l=0}^m \binom{m}{l} [l<2] \times f(m-l, n-1)$};
-    \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of initial] (simplification) {Simplification};
-    \node[below=0.3cm of simplification] (simplified) {\tiny $f(m, n) = f(m, n-1) + mf(m-1, n-1)$};
-    \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of simplified] (evaluation) {Evaluation};
-    \node[below=0.3cm of evaluation] (end) {\includegraphics[height=0.4cm]{42.png}};
-    \node[right=0.3cm of evaluation] (sizes) {\tiny $\begin{aligned}
-        f(0,0) = 1&\text{{,} }f(m, 0) = 0\\
-        m = 7&\text{{,} }n=2
-      \end{aligned}$};
-    %\node at (0.5, -0.55) {\textsc{Crane}};
-    %\node[draw,fit={(kc) (interpretation)},inner ysep=6pt,yshift=5pt] {};
-    \draw[-Latex,color=color2] (start) -- (kc);
-    \draw[-Latex,color=color2] (kc) -- ($(graph)+(0,0.2)$);
-    \draw[-Latex,color=color2] ($(graph)+(0,-0.3)$) -- (interpretation);
-    \draw[-Latex,color=color2] (interpretation) -- (initial);
-    \draw[-Latex,color=color2] (initial) -- (simplification);
-    \draw[-Latex,color=color2] (simplification) -- (simplified);
-    \draw[-Latex,color=color2] (simplified) -- (evaluation);
-    \draw[-Latex,color=color2] (evaluation) -- (end);
-    \draw[-Latex,color=color2] (sizes) -- (evaluation);
-  \end{tikzpicture}
+  \begin{columns}[b]
+    \begin{column}{0.4\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \node (start) {\tiny $\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$};
+        \node[draw,rounded rectangle,fill=color2!50,below=0.7cm of start] (kc) {Compilation};
+        \node[below=0.7cm of kc] (graph) {
+          \scalebox{.5}{
+            \begin{forest}
+              for tree={sn edges,fill=red!50,ellipse,draw}
+              [[
+              [
+              []
+              []
+              ]
+              [
+              [
+              []
+              []
+              ]
+              []
+              ]
+              ]]
+            \end{forest}
+          }
+        };
+        \node[draw,rounded rectangle,fill=color2!50,below=0.7cm of graph] (evaluation) {Propagation};
+        \node[below=0.7cm of evaluation] (end) {\includegraphics[height=0.4cm]{81.png}};
+        \node[right=0.3cm of evaluation] (sizes) {\tiny $|\Delta| = 4$};
+        \draw[-Latex,color=color2] (start) -- (kc);
+        \draw[-Latex,color=color2] (kc) -- (graph);
+        \draw[-Latex,color=color2] (graph) -- (evaluation);
+        \draw[-Latex,color=color2] (evaluation) -- (end);
+        \draw[-Latex,color=color2] (sizes) -- (evaluation);
+      \end{tikzpicture}
+    \end{column}
+    \pause
+    \begin{column}{0.6\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \node (start) {\tiny $\begin{gathered}
+            \forall x \in \Gamma\text{. }\exists y \in \Delta\text{. }\pP(x, y)\\
+            \forall x \in \Gamma\text{. }\forall y, z \in \Delta\text{. }\pP(x, y) \land \pP(x, z) \Rightarrow y=z\\
+            \forall w, x \in \Gamma\text{. }\forall y \in \Delta\text{. }\pP(w, y) \land \pP(x, y) \Rightarrow w=x
+          \end{gathered}$};
+        \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of start] (kc) {Compilation};
+        \node[below=0.09cm of kc] (graph) {
+          \scalebox{.5}{
+            \begin{forest}
+              for tree={sn edges,grow=0,reversed,fill=red!50}
+              [,ellipse,draw,name=gdr
+              [,ellipse,draw
+              [,ellipse,draw
+              [,ellipse,draw
+              [,ellipse,draw]
+              [,ellipse,draw,name=ref]
+              ]
+              ]
+              ]
+              ]
+              \draw[-Latex,bend left=20] (ref) to (gdr);
+            \end{forest}
+          }
+        };
+        \node[draw,rounded rectangle,fill=color2!50,below=0.1cm of graph] (interpretation) {Conversion};
+        \node[below=0.3cm of interpretation] (initial) {\tiny $f(m, n) = \sum_{l=0}^m \binom{m}{l} [l<2] \times f(m-l, n-1)$};
+        \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of initial] (simplification) {Simplification};
+        \node[below=0.3cm of simplification] (simplified) {\tiny $f(m, n) = f(m, n-1) + mf(m-1, n-1)$};
+        \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of simplified] (evaluation) {Evaluation};
+        \node[below=0.3cm of evaluation] (end) {\includegraphics[height=0.4cm]{42.png}};
+        \node[right=0.3cm of evaluation] (sizes) {\tiny $\begin{aligned}
+                                                           f(0,0) = 1&\text{{,} }f(m, 0) = 0\\
+                                                           m = 2&\text{{,} }n=7
+                                                         \end{aligned}$};
+        \draw[-Latex,color=color2] (start) -- (kc);
+        \draw[-Latex,color=color2] (kc) -- ($(graph)+(0,0.2)$);
+        \draw[-Latex,color=color2] ($(graph)+(0,-0.3)$) -- (interpretation);
+        \draw[-Latex,color=color2] (interpretation) -- (initial);
+        \draw[-Latex,color=color2] (initial) -- (simplification);
+        \draw[-Latex,color=color2] (simplification) -- (simplified);
+        \draw[-Latex,color=color2] (simplified) -- (evaluation);
+        \draw[-Latex,color=color2] (evaluation) -- (end);
+        \draw[-Latex,color=color2] (sizes) -- (evaluation);
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
 \end{frame}
-% TODO: optimize edge lengths
-% TODO: add forclift on the left, with its own example instance
-% TODO: check if the math works out
 
-% TODO: talk #4 might have some useful additions to this section
-
-\begin{frame}{More Formally\ldots}
-  \begin{definition}
-    A \emph{first-order deterministic decomposable negation normal form computational graph} (FCG) is a
+\begin{frame}{Circuits vs Graphs}
+  \begin{block}{Circuits
+      \textcolor{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}\ldots}
     \begin{itemize}
-    \item directed graph
-    \item (which is weakly connected)
-    \item with a single source,
-    \item labelled vertices,
+      \item \ldots extend d-DNNF circuits
+            \textcolor{gray}{\parencite{DBLP:journals/jancl/Darwiche01}} for
+            propositional knowledge compilation with \alert{more node types}
+      \item \ldots are \alert{acyclic}.
+    \end{itemize}
+  \end{block}
+  \pause
+  \begin{block}{First-Order Computational Graphs (FCGs) are\ldots}
+    directed \alert{\st{acyclic}} (weakly connected) graphs with:
+    \begin{itemize}
+    \item a single source,
+    \item labelled nodes,
     \item and ordered outgoing edges.
     \end{itemize}
-  \end{definition}
+  \end{block}
 \end{frame}
 
+% TODO: add arrows that explain the meaning/definition of each node type
 \begin{frame}{How to Interpret an FCG}
   \begin{columns}
     \begin{column}{0.25\textwidth}
       \centering
-      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
-        \node[fill=red!50,fill on=<2>] (dr) {}
-        child {node[fill=red!50,fill on=<3>] {}
-                child {node[fill=red!50, fill on=<4>] {}
-                  child {node[fill=red!50, fill on=<5>] {}
-                    child {node[fill=red!50, fill on=<6>] {}}
-                    child {node[fill=red!50, fill on=<7>] (ref) {}}
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=12mm,level distance=15mm]
+        \node[fill=red!50,fill on=<2>] (dr) {\textsc{GDR}}
+        child {node[fill=red!50,fill on=<3>] {$\bigvee$}
+                child {node[fill=red!50, fill on=<4>] {\textsc{CR}}
+                  child {node[fill=red!50, fill on=<5>] {$\land$}
+                    child {node[fill=red!50, fill on=<6>] {$\bot$}}
+                    child {node[fill=red!50, fill on=<7>] (ref) {\textsc{Ref}}}
         }}};
         \draw[-latex, bend right] (ref) to (dr);
       \end{tikzpicture}
@@ -723,14 +769,13 @@ sn edges/.style={for tree={edge={-Latex}}},
     \end{column}
   \end{columns}
 \end{frame}
-% We're still creating a vertex in a graph with one outgoing edge.
 
 %% \begin{frame}{Compilation as Search}
 %%   \begin{definition}
 %%     A \alert{(search) state} is a tuple \structure{$(G, C, L)$}, where:
 %%     \begin{itemize}
 %%     \item \structure{$G$} is an FCG (or \texttt{null}),
-%%     \item \structure{$C$} is a compilation cache that maps integers to sets of pairs $(\phi, v)$, where $\phi$ is a formula, and $v$ is a vertex of $G$ (which is used to identify opportunities for recursion),
+%%     \item \structure{$C$} is a compilation cache that maps integers to sets of pairs $(\phi, v)$, where $\phi$ is a formula, and $v$ is a node of $G$ (which is used to identify opportunities for recursion),
 %%     \item and \structure{$L$} is a list of formulas (that are yet to be compiled). (Note that the order is crucial!)
 %%     \end{itemize}
 %%   \end{definition}
@@ -800,4 +845,5 @@ sn edges/.style={for tree={edge={-Latex}}},
 \end{frame}
 % TODO: for future work, come back to the 'many ways to count' slide and add
 % more arrows (e.g., beyond FOL)
+% TODO: also incorporate the last slide of the 4th talk
 \end{document}
