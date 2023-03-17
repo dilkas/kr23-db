@@ -119,6 +119,8 @@ sn edges/.style={for tree={edge={-Latex}}},
 % TODO: maybe replace red!50 with one of the main colours
 % TODO: \color -> \textcolor everywhere
 % TODO: how do we capitalise blocks?
+% TODO: make sure I'm using the 'forest' package whenever possible
+% TODO: use Latex and not latex everywhere
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -623,28 +625,44 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{block}
 \end{frame}
 
-% TODO: add arrows that explain the meaning/definition of each node type
 \begin{frame}{How to Interpret an FCG}
   \begin{columns}
     \begin{column}{0.25\textwidth}
       \centering
-      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=12mm,level distance=15mm]
-        \node[fill=red!50,fill on=<2>] (dr) {\textsc{GDR}}
-        child {node[fill=red!50,fill on=<3>] {$\bigvee$}
-                child {node[fill=red!50, fill on=<4>] {\textsc{CR}}
-                  child {node[fill=red!50, fill on=<5>] {$\land$}
-                    child {node[fill=red!50, fill on=<6>] {$\bot$}}
-                    child {node[fill=red!50, fill on=<7>] (ref) {\textsc{Ref}}}
-        }}};
-        \draw[-latex, bend right] (ref) to (dr);
-      \end{tikzpicture}
+      \vspace{1cm}
+      \begin{forest}
+        for tree={sn edges}
+        [$\GDR$,ellipse,draw,name=gdr,fill=red!50,fill on=<4>
+        [$\bigvee$,ellipse,draw,name=bigvee,fill=red!50,fill on=<5>
+        [$\CR$,ellipse,draw,name=cr,fill=red!50,fill on=<6>
+        [$\land$,ellipse,draw,name=conj,fill=red!50,fill on=<7>
+        [$\bot$,rectangle,draw,alt=<8>{fill=red!50}{fill=gray!25},name=contradiction]
+        [$\Reff$,ellipse,draw,name=ref,fill=red!50,fill on=<9>]
+        ]
+        ]
+        ]
+        ]
+        \draw[-Latex,bend right=45] (ref) to (gdr);
+        \draw[visible on=<2-3>] (5, 42 |- gdr) node[text width=5cm,name=gdrtwo,text=color2] {\alert<3>{Generalised domain recursion}};
+        \draw[visible on=<2-3>] (5, 42 |- bigvee) node[text width=5cm,name=bigveetwo,text=color2] {Deterministic set-disjunction};
+        \draw[visible on=<2-3>] (5, 42 |- cr) node[text width=5cm,name=crtwo,text=color2] {\alert<3>{Constraint removal}};
+        \draw[visible on=<2-3>] (5, 42 |- conj) node[text width=5cm,name=conjtwo,text=color2] {Decomposable conjunction};
+        \draw[visible on=<2-3>] (5, 42 |- ref) node[text width=5cm,name=reftwo,text=color2] {\alert<3>{Caching}};
+        \node[visible on=<2-3>,below=0.5cm of contradiction,name=contradictiontwo,text=color2] {Contradiction};
+        \draw[visible on=<2-3>,-Latex,dashed,color=color2] (gdrtwo) -- (gdr);
+        \draw[visible on=<2-3>,-Latex,dashed,color=color2] (bigveetwo) -- (bigvee);
+        \draw[visible on=<2-3>,-Latex,dashed,color=color2] (crtwo) -- (cr);
+        \draw[visible on=<2-3>,-Latex,dashed,color=color2] (conjtwo) -- (conj);
+        \draw[visible on=<2-3>,-Latex,dashed,color=color2] (reftwo) -- (ref);
+        \draw[visible on=<2-3>,-Latex,dashed,color=color2] (contradictiontwo) -- (contradiction);
+      \end{forest}
     \end{column}
     \begin{column}{0.75\textwidth}
       \begin{align*}
-        f(m, n) &= \onslide<3->{\sum_{l=0}^m \binom{m}{l}} \onslide<6->{[l<2]} \onslide<5->{\times} \onslide<7->{f(m-l, n-1)}\\
-        \onslide<8>{&= f(m, n-1) + mf(m-1, n-1)}
+        \onslide<4->{f(m, n) &=} \onslide<5->{\sum_{l=0}^m \binom{m}{l}} \onslide<8->{[l<2]} \onslide<7->{\times} \onslide<9->{f(m-l, n-1)}\\
+        \onslide<10>{&= f(m, n-1) + mf(m-1, n-1)}
       \end{align*}
-      \onslide<6>{
+      \onslide<8>{
         \[
           [\phi] =
           \begin{cases}
