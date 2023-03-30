@@ -115,10 +115,9 @@ sn edges/.style={for tree={edge={-Latex}}},
 \date{\today}
 % TODO: update the date
 % TODO: unify the use of colours
-% TODO: do I want to mention forclift and/or crane?
 % TODO: maybe replace red!50 with one of the main colours
 % TODO: \color -> \textcolor everywhere
-% TODO: how do we capitalise blocks?
+% TODO: how do we capitalise titles of \block?
 % TODO: make sure I'm using the 'forest' package whenever possible
 % TODO: use Latex and not latex everywhere
 
@@ -279,9 +278,6 @@ sn edges/.style={for tree={edge={-Latex}}},
 % maybe mention #CSP and other non-SAT ways of counting (SMT?, counting paths in
 % automata and directed graphs)
 
-% TODO: add a slide about other approaches to WFOMC, making it crystal clear
-% what my contributions are. This will finish the introduction
-
 \begin{frame}{(Unweighted) First-Order Model Counting}
   \begin{itemize}
     \item Example formula: \\
@@ -323,6 +319,39 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{tikzpicture}
 \end{frame}
 
+\begin{frame}{Approaches to FOMC}
+  \begin{itemize}
+    \item \alert{ForcLift}~\textcolor{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}
+    \begin{itemize}
+      \item knowledge compilation to \alert{FO d-DNNF}
+    \end{itemize}
+    \item \alert{L2C}~\textcolor{gray}{\parencite{DBLP:conf/kr/KazemiP16}}
+    \begin{itemize}
+      \item knowledge compilation to \alert{C++} code
+    \end{itemize}
+    \item \alert{Alchemy}~\textcolor{gray}{\parencite{DBLP:journals/cacm/GogateD16}}
+    \begin{itemize}
+      \item \alert{DPLL}-style search
+    \end{itemize}
+    \item \alert{FastWFOMC}~\textcolor{gray}{\parencite{DBLP:conf/uai/BremenK21}}
+    \begin{itemize}
+      \item knowledge compilation to \alert{sd-DNNF}
+    \end{itemize}
+  \end{itemize}
+  \pause
+  \vfill
+  \begin{block}{Our Contribution}
+    \centering
+    \begin{tikzpicture}[align=center,node distance=0.1cm]
+      \node[label=below:{ForcLift}] (forclift) {\includegraphics[width=0.2\paperwidth]{forklift.png}};
+      \node[right=of forclift] (plus) {\Huge$+$};
+      \node[right=of plus,label=below:{Recursion}] (recursion) {\includegraphics[width=0.2\paperwidth]{matryoshka.jpg}};
+      \node[right=of recursion] (equal) {\Huge$=$};
+      \node[right=of equal,label=below:{Crane}] (crane) {\includegraphics[width=0.2\paperwidth]{crane.jpg}};
+    \end{tikzpicture}
+  \end{block}
+\end{frame}
+
 % \begin{frame}{First-Order Model Counting (in More Detail)}
 %   \begin{itemize}
 %     \item \alert{First-order model counting} (FOMC) is the problem of counting
@@ -341,7 +370,7 @@ sn edges/.style={for tree={edge={-Latex}}},
 %   \end{block}
 % \end{frame}
 
-\begin{frame}{First-Order Knowledge Compilation: An Approach to FOMC}
+\begin{frame}{ForcLift and First-Order Knowledge Compilation}
   \begin{minipage}[t][0.81\textheight][t]{\textwidth}
     \centering
     \begin{forest}
@@ -675,7 +704,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{columns}
 \end{frame}
 
-\begin{frame}{Compilation Rules}
+\begin{frame}{How FCGs Are Built}
   \begin{definition}
     A \alert{(compilation) rule} is a function that takes a \alert{formula} and returns a set of \alert{$(G, L)$} pairs, where
     \begin{itemize}
@@ -683,9 +712,12 @@ sn edges/.style={for tree={edge={-Latex}}},
     \item and \alert{$L$} is a list of formulas.
     \end{itemize}
   \end{definition}
+  \vfill The formulas in \alert{$L$} are then \alert{compiled}, and the
+  resulting FCGs are \alert{inserted} into \alert{$G$} according to a \alert{set
+    order}.
 \end{frame}
 
-\begin{frame}{Example Rule: Independence}
+\begin{frame}{Example Compilation Rule: Independence}
   Input formula:
   \begin{gather}
     ({\color{color1} \forall x, y \in \Omega\text{. }x=y}) \land \label{eq:1} \tag{{\color{color1} 1}} \\
@@ -770,10 +802,10 @@ sn edges/.style={for tree={edge={-Latex}}},
           \end{example}
         \onslide<3>
           \begin{block}{Goal}
-            Check if the input formula is isomorphic (up to domains) to a
+            Check if the input formula is equivalent (up to domains) to a
             previously encountered formula.
           \end{block}
-          \begin{block}{Rough Outline}
+          \begin{block}{Outline}
             \begin{enumerate}
               \item Consider pairs of `similar' clauses.
               \item Consider bijections between their sets of variables.
@@ -804,16 +836,16 @@ sn edges/.style={for tree={edge={-Latex}}},
   Let \alert{$\Gamma$} and \alert{$\Delta$} be two sets with
   cardinalities \alert{$|\Gamma| = m$} and \alert{$|\Delta| = n$}.
 
-  Our new rules enable \textsc{ForcLift} to efficiently count
+  Our new rules enable Crane to efficiently count
   \alert{$\Gamma \to \Delta$} functions such as:
   \begin{itemize}
     \item injections in \alert{$\Theta(mn)$} time
           \begin{itemize}
-            \item best: \alert{$\Theta(m)$}
+            \item by hand: \alert{$\Theta(m)$}
           \end{itemize}
     \item partial injections in \alert{$\Theta(mn)$} time
           \begin{itemize}
-            \item best: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}
+            \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}
           \end{itemize}
           \item bijections in \alert{$\Theta(m)$} time
           \begin{itemize}
@@ -821,18 +853,17 @@ sn edges/.style={for tree={edge={-Latex}}},
           \end{itemize}
   \end{itemize}
 \end{frame}
-% TODO: mention Crane, don't forget to introduce forclift
-% TODO: mention that everything used to be unliftable (by any algorithm with a publicly available implementation)
-% TODO: what font do I want to use for forclift/crane? It's mentioned on a slide title as well
 
-% TODO: maybe replace the zoom picture with some galaxy picture?
+% TODO: add a slide with the runtime plot
+
 { % all template changes are local to this group.
     \setbeamertemplate{navigation symbols}{}
     \begin{frame}<article:0>[plain]
         \begin{tikzpicture}[remember picture,overlay]
             \node[at=(current page.center)] {
-                \includegraphics[keepaspectratio, height=\paperheight]{zoom.jpg}
+                \includegraphics[keepaspectratio, width=\paperwidth]{hubble.jpg}
             };
+            \node[shift=({-0.7, 0.1})] at (current page.south east) {\tiny \color{lightgray}{Source: NASA}};
         \end{tikzpicture}
      \end{frame}
 }
