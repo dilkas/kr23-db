@@ -20,6 +20,7 @@
 \usetikzlibrary{calc}
 \usetikzlibrary{backgrounds}
 \usetikzlibrary{fit}
+\usetikzlibrary{decorations.pathreplacing}
 
 \newcommand\blfootnote[1]{%
   \begingroup
@@ -52,6 +53,8 @@
 \DeclareMathOperator{\Reff}{\textsc{Ref}}
 
 \colorlet{redish}{color2!25}
+\colorlet{greenish}{color1!25}
+\colorlet{blueish}{color3!25}
 \sethlcolor{redish}
 \setstcolor{black}
 
@@ -112,14 +115,10 @@ sn edges/.style={for tree={edge={-Latex}}},
 \author{Paulius Dilkas \\ \vspace{1cm} \tiny{Joint work with Vaishak Belle (Univeristy of Edinburgh, UK)}}
 \title{Synthesising Recursive Functions for\\ First-Order Model Counting}
 \institute{National University of Singapore, Singapore}
-\date{\today}
-% TODO: update the date
-% TODO: unify the use of colours
-% TODO: maybe replace red!50 with one of the main colours
-% TODO: \color -> \textcolor everywhere
+\date{18th April 2023}
+% TODO: unify the use of colours, maybe replace red!50 with one of the main colours
 % TODO: how do we capitalise titles of \block?
 % TODO: make sure I'm using the 'forest' package whenever possible
-% TODO: use Latex and not latex everywhere
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -144,16 +143,15 @@ sn edges/.style={for tree={edge={-Latex}}},
     \node<-4>[left,shift=({0, -2})] at (current page.east) (computer) {\includegraphics[height=0.5\textheight]{happy_computer}};
     \node<2>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.5)}] at (stickman.north east) {$\int_{-\infty}^{\infty} e^{-t^{2}}\,\mathrm{d}t$};
     \node<2>[ellipse callout, draw, left=-0.5cm, below=0.5cm] at (computer.north west) {$\sqrt{\pi}$};
-    \node<3>[ellipse callout, draw, right=-1cm, callout relative pointer={(-2.5, -0.5)}] at (stickman.north east) {Produce a schedule for the nurses at NUH.};
+    \node<3>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)},text width=5cm] at (stickman.north east) {Produce a schedule for the nurses at the local hospital.};
     \node<3>[ellipse callout, draw, below=0.5cm, shift=({-0.5,0}), callout relative pointer={(0.5, -0.25)}] at (computer.north west) {\includegraphics[width=0.1\textwidth]{schedule}};
-    \node<4>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)}] at (stickman.north east) {Describe this picture. \includegraphics[width=0.25\textwidth]{cat.jpg}};
-    \node<4>[ellipse callout, draw, below=0.5cm, shift=({-0.5,0.5}), callout relative pointer={(0.5, -0.5)}] at (computer.north west) {It's a cat with its eyes closed.};
+    \node<4>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)},text width=6cm] at (stickman.north east) {Paint a baroque oil painting of a \alert{raccoon queen wearing a crown}.};
+    \node<4>[ellipse callout, draw, below=0cm, shift=({-1.5,1}), callout relative pointer={(0.4, -0.2)}] at (computer.north west) {\includegraphics[width=0.25\textwidth]{dalle.png}};
     \node<5>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)}, text width=5cm] at (stickman.north east) {If I shuffle a deck of \alert{$n$} cards, how many possible outcomes are there?};
     \node<5>[left,shift=({-1, -1})] at (current page.east) (computer2) {\includegraphics[height=0.5\textheight]{overheating_computer}\blfootnote{Terms and conditions apply.}};
-    \node[shift=({1.3, 0.1})] at (current page.south west) {\tiny \color{lightgray}{Vector art by Vecteezy.com}};
+    \node[shift=({1.3, 0.1})] at (current page.south west) {\tiny \textcolor{lightgray}{Vector art by Vecteezy.com}};
   \end{tikzpicture}
 \end{frame}
-% TODO: replace the cat thing with a funny DALL-E picture
 
 \begin{frame}{Who Cares About Counting?}
   \begin{columns}
@@ -204,17 +202,17 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{center}
   \begin{tikzpicture}[overlay,remember picture]
     \begin{scope}[transform canvas={xshift=-3em}]
-      \draw[->,draw=gray] ($(WMC)+(0,0.1)$)--($(WMI)+(0,0.5)$) node[midway,left,visible on=<7->] {\color{gray}{$\sum \to \int$}};
-      \draw[->,draw=gray] ($(WMC)-(0,0.1)$)--($(PBP)-(0,0.5)$) node[midway,left,visible on=<8->] {\color{gray}{Generalising weights}};
+      \draw[->,draw=gray] ($(WMC)+(0,0.1)$)--($(WMI)+(0,0.5)$) node[midway,left,visible on=<7->] {\textcolor{gray}{$\sum \to \int$}};
+      \draw[->,draw=gray] ($(WMC)-(0,0.1)$)--($(PBP)-(0,0.5)$) node[midway,left,visible on=<8->] {\textcolor{gray}{Generalising weights}};
     \end{scope}
     \begin{scope}[transform canvas={yshift=-2em}]
-      \draw[->,draw=gray] ($(PBP)-(1,0)$)--($(SP)+(1,0)$) node[midway,below,visible on=<5->] {\color{gray}{From propositional to first-order logic}};
+      \draw[->,draw=gray] ($(PBP)-(1,0)$)--($(SP)+(1,0)$) node[midway,below,visible on=<5->] {\textcolor{gray}{From propositional to first-order logic}};
     \end{scope}
   \end{tikzpicture}
   \vfill
     \begin{overprint}
       \onslide<1,2>
-      \begin{block}{\#SAT~\color{gray}{\parencite{DBLP:journals/tcs/Valiant79}}}
+      \begin{block}{\#SAT~\textcolor{gray}{\parencite{DBLP:journals/tcs/Valiant79}}}
         \begin{itemize}
           \item Input formula: $\xx \lor \yy$
           \item Interpretations: $\emptyset$, $\{\, \xx \,\}$, $\{\, \yy \,\}$,
@@ -224,7 +222,7 @@ sn edges/.style={for tree={edge={-Latex}}},
         \end{itemize}
       \end{block}
       \onslide<3,4>
-      \begin{block}{Weighted Model Counting~\color{gray}{\parencite{DBLP:journals/ai/ChaviraD08}}}
+      \begin{block}{Weighted Model Counting~\textcolor{gray}{\parencite{DBLP:journals/ai/ChaviraD08}}}
         \begin{itemize}
           \item Input formula: $\xx \lor \yy$
           \item Input weights: $\begin{aligned}[t]
@@ -237,7 +235,7 @@ sn edges/.style={for tree={edge={-Latex}}},
       \end{block}
       \onslide<5,6>
       \begin{block}{(Weighted) (Symmetric) First-Order Model Counting\\
-          \color{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}}
+          \textcolor{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}}
         \begin{itemize}
           \item Input formula: $\forall \xx \in \Delta\text{. }\pP(\xx)$
           \item Input weights: $w^{+}(\pP) = 0.3$, $w^{-}(\pP) = 0.7$
@@ -250,11 +248,11 @@ sn edges/.style={for tree={edge={-Latex}}},
         \begin{itemize}
           \item Weighted model integration
           \begin{itemize}
-            \item \color{gray}{\parencite{DBLP:conf/ijcai/BellePB15}}
+            \item \textcolor{gray}{\parencite{DBLP:conf/ijcai/BellePB15}}
           \end{itemize}
           \item Weighted first-order model integration
           \begin{itemize}
-            \item \color{gray}{\parencite{DBLP:conf/uai/FeldsteinB21}}
+            \item \textcolor{gray}{\parencite{DBLP:conf/uai/FeldsteinB21}}
           \end{itemize}
         \end{itemize}
       \end{block}
@@ -270,7 +268,7 @@ sn edges/.style={for tree={edge={-Latex}}},
           \begin{itemize}
             \item Weights not necessarily on literals
           \end{itemize}
-          \item Semiring programming~\color{gray}{\parencite{DBLP:journals/ijar/BelleR20}}
+          \item Semiring programming~\textcolor{gray}{\parencite{DBLP:journals/ijar/BelleR20}}
         \end{itemize}
       \end{block}
     \end{overprint}
@@ -351,24 +349,6 @@ sn edges/.style={for tree={edge={-Latex}}},
     \end{tikzpicture}
   \end{block}
 \end{frame}
-
-% \begin{frame}{First-Order Model Counting (in More Detail)}
-%   \begin{itemize}
-%     \item \alert{First-order model counting} (FOMC) is the problem of counting
-%           the models of a sentence in first-order logic.
-%     \item The \alert{(symmetric) weighted} variation of the problem adds weights
-%           (e.g., probabilities) to predicates.
-%           \begin{itemize}
-%             \item It is used for efficient \alert{probabilistic inference} in
-%                   relational models such as Markov logic networks.
-%           \end{itemize}
-%     \item None of the (implemented) (W)FOMC algorithms are able to count, e.g.,
-%           \alert{injective} and \alert{bijective} functions.
-%   \end{itemize}
-%   \begin{block}{Claim}
-%     This shortcoming can be addressed via support for \alert{recursive functions}.
-%   \end{block}
-% \end{frame}
 
 \begin{frame}{ForcLift and First-Order Knowledge Compilation}
   \begin{minipage}[t][0.81\textheight][t]{\textwidth}
@@ -518,8 +498,6 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{frame}
 }
 
-% TODO: it would be good to have a similar compilation walkthrough for an instance with Ref as well
-
 \begin{frame}{Back to Our Example}
   The following function counts injections:
   \[
@@ -539,7 +517,7 @@ sn edges/.style={for tree={edge={-Latex}}},
     \item \alert{Optimal} time complexity to compute \alert{$n^{\underline{m}}$}
           is \alert{$\Theta(m)$}
     \item But \alert{$\Theta(mn)$} is still much better than translating to
-          propositional logic and running a WMC algorithm \pause
+          propositional logic and solving a $\#\P$-complete problem \pause
     \item The rest of this talk is about how to find such functions automatically
   \end{itemize}
 \end{frame}
@@ -704,7 +682,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{columns}
 \end{frame}
 
-\begin{frame}{How FCGs Are Built}
+\begin{frame}{Compilation: How FCGs Are Built}
   \begin{definition}
     A \alert{(compilation) rule} is a function that takes a \alert{formula} and returns a set of \alert{$(G, L)$} pairs, where
     \begin{itemize}
@@ -728,7 +706,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   Only one \alert{(G, L)} pair:
   \[
   G =
-  \begin{tikzpicture}[edge from parent/.style={draw,-latex},baseline=(current bounding box.center)]
+  \begin{tikzpicture}[edge from parent/.style={draw,-Latex},baseline=(current bounding box.center)]
     \node[draw,circle] {$\land$}
     child {node {\color{color1} $\star$}}
     child {node {\color{color2} $\star$}}
@@ -741,13 +719,13 @@ sn edges/.style={for tree={edge={-Latex}}},
 % stars mark edges to nowhere and they are associated with the formulas in L via a certain order
 
 \begin{frame}
-  \frametitle<1>{New Rule 1: Generalised Domain Recursion}
-  \frametitle<2>{New Rule 2: Constraint Removal}
-  \frametitle<3>{New Rule 3: Identifying Possibilities for Recursion}
+  \frametitle<1>{New Rule 1/3: Generalised Domain Recursion}
+  \frametitle<2>{New Rule 2/3: Constraint Removal}
+  \frametitle<3>{New Rule 3/3: Identifying Possibilities for Recursion}
   \begin{columns}
     \begin{column}{0.15\textwidth}
       \centering
-      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-latex},sibling distance=10mm,level distance=10mm]
+      \begin{tikzpicture}[every node/.style={draw,ellipse},edge from parent/.style={draw,-Latex},sibling distance=10mm,level distance=10mm]
         \node[fill=red!50, fill on=<1>] (dr) {}
         child {node {}
           child {node[fill=red!50, fill on=<2>] {}
@@ -755,7 +733,7 @@ sn edges/.style={for tree={edge={-Latex}}},
               child {node {}}
               child {node[fill=red!50, fill on=<3>] (ref) {}}
             }}};
-        \draw[-latex, bend right,alt=<3>{red}{black}] (ref) to (dr);
+        \draw[-Latex, bend right,alt=<3>{red}{black}] (ref) to (dr);
       \end{tikzpicture}
     \end{column}
     \begin{column}{0.85\textwidth}
@@ -820,6 +798,111 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{columns}
 \end{frame}
 
+% an example on partial injection (i.e., bipartite matching) counting
+\begin{frame}{How These Rules Fit Together (1/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center,above=0.5cm] at (current page.center) (rules) {Generalised domain recursion};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \Delta\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=of rules] (after) {$\begin{gathered}
+        \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(\alert{c}, z)\\
+        \forall x \in \Gamma\text{. }\forall y,z \in \Delta\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall x \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{x \ne c} \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(x, y)\\
+        \forall w \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(\alert{c}, y)\\
+        \forall w,x \in \Gamma\text{. }\forall y \in \Delta\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \begin{scope}[on background layer]
+      \node[anchor=north,fill=greenish,minimum width=11.1cm,minimum height=0.7cm] at (before.north) {};
+      \node[anchor=south,fill=blueish,minimum width=11.1cm,minimum height=0.7cm] at (before.south) {};
+      \node[anchor=north,fill=greenish,minimum width=11.1cm,minimum height=1.3cm] at (after.north) {};
+      \node[anchor=south,fill=blueish,minimum width=11.1cm,minimum height=2cm] at (after.south) {};
+    \end{scope}
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{How These Rules Fit Together (2/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center,below=1cm] at (current page.center) (rules) {Atom counting and unit propagation};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(\alert{c}, z)\\
+        \forall x \in \Gamma\text{. }\forall y,z \in \Delta\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall x \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{x \ne c} \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(x, y)\\
+        \forall w \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(\alert{c}, y)\\
+        \forall w,x \in \Gamma\text{. }\forall y \in \Delta\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=of rules] (after) {$\begin{gathered}
+        \forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \Gamma\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \land x \ne c \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \Gamma\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \land w \ne c \land x \ne c \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{How These Rules Fit Together (3/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center] at (current page.center) (rules) {Constraint removal};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall y, z \in \Delta^{\top}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta^{\bot}\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma}\text{. }\forall y \in \Delta^{\bot}\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=of rules] (after) {$\begin{gathered}
+        \forall y, z \in \Delta^{\top}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \Delta^{\bot}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \Delta^{\bot}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{How These Rules Fit Together (4/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center] at (current page.center) (rules) {Independence};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below left=of rules,fill=greenish] (after1) {$\forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot$};
+    \node[below right=2cm and -4cm of rules,fill=blueish] (after2) {$\begin{gathered}
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \begin{scope}[on background layer]
+      \node[anchor=north,fill=greenish,minimum width=9cm,minimum height=0.7cm] at (before.north) {};
+      \node[anchor=south,fill=blueish,minimum width=9cm,minimum height=1.3cm] at (before.south) {};
+    \end{scope}
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after1);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after2);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{How These Rules Fit Together (5/5): Recursion}
+  \centering
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[anchor=center,above=0.5cm] at (current page.center) (equal) {\rotatebox{90}{\textcolor{color2}{\Huge$=$}}};
+    \node[below=0.5cm of equal] (after1) {$\begin{gathered}
+        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \alert{\Delta}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \alert{\Delta}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[above=0.5cm of equal] (foo) {$\begin{gathered}
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=0.5cm of after1] (plus) {\textcolor{color2}{\Huge$+$}};
+    \node[below=0.5cm of plus] {$\{\, \alert{\Gamma} \mapsto \alert{\Gamma'}, \alert{\Delta^{\bot}} \mapsto \alert{\Delta} \,\}$};
+  \end{tikzpicture}
+\end{frame}
+
 %% \begin{frame}{Compilation as Search}
 %%   \begin{definition}
 %%     A \alert{(search) state} is a tuple \structure{$(G, C, L)$}, where:
@@ -850,11 +933,12 @@ sn edges/.style={for tree={edge={-Latex}}},
           \item bijections in \alert{$\Theta(m)$} time
           \begin{itemize}
             \item \alert{optimal!}
+            \item FastWFOMC seems to be \alert{$\Omega(m^{4})$}
           \end{itemize}
   \end{itemize}
 \end{frame}
-
-% TODO: add a slide with the runtime plot
+% TODO: add 2 more statements about fastwfomc, showing their plots on the RHS
+% when revealing them
 
 { % all template changes are local to this group.
     \setbeamertemplate{navigation symbols}{}
@@ -863,11 +947,14 @@ sn edges/.style={for tree={edge={-Latex}}},
             \node[at=(current page.center)] {
                 \includegraphics[keepaspectratio, width=\paperwidth]{hubble.jpg}
             };
-            \node[shift=({-0.7, 0.1})] at (current page.south east) {\tiny \color{lightgray}{Source: NASA}};
+            \node[shift=({-0.7, 0.1})] at (current page.south east) {\tiny \textcolor{lightgray}{Source: NASA}};
         \end{tikzpicture}
      \end{frame}
 }
 
+% TODO: need 3 slides in total for the ending
+
+% really focus on the 'so what?'
 \begin{frame}{Summary \& Future Work}
   \begin{block}{Summary}
     The circuits hitherto used for FOMC become more powerful with:
@@ -892,7 +979,27 @@ sn edges/.style={for tree={edge={-Latex}}},
     \end{itemize}
   \end{block}
 \end{frame}
-% TODO: for future work, come back to the 'many ways to count' slide and add
-% more arrows (e.g., beyond FOL)
-% TODO: also incorporate the last slide of the 4th talk
+
+\begin{frame}{Major Directions for Future Work}
+  \begin{itemize}
+    \item An algebraic description of what kind of sequences and functions with
+          domain $\mathbb{N}_{0}^{k}$ are computable in this way
+          \begin{itemize}
+            \item monotonicity, maximal growth rate, etc.
+          \end{itemize}
+    \item A different input format or logic that allows the same approach to
+          capture more computations
+          \begin{itemize} % TODO: come back to the 'many ways to count' slide
+                          % and add more arrows (e.g., beyond FOL)
+            \item fixed-point logic with counting
+            \item `let domain $\Delta \coloneqq \{\, 1, 2, \dots, MC(\phi) \,\}$'
+          \end{itemize}
+    \item parameterised Markov logic networks
+    \begin{itemize}
+      \item `What equations do the domain sizes have to satisfy for the
+            probability of event $E$ to be at least $95\%$?'
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
 \end{document}
