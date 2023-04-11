@@ -119,6 +119,8 @@ sn edges/.style={for tree={edge={-Latex}}},
 % TODO: unify the use of colours, maybe replace red!50 with one of the main colours
 % TODO: how do we capitalise titles of \block?
 % TODO: make sure I'm using the 'forest' package whenever possible
+% TODO: consider adding an outline slide
+% TODO: add periods at the end of sentences
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -517,7 +519,8 @@ sn edges/.style={for tree={edge={-Latex}}},
     \item \alert{Optimal} time complexity to compute \alert{$n^{\underline{m}}$}
           is \alert{$\Theta(m)$}
     \item But \alert{$\Theta(mn)$} is still much better than translating to
-          propositional logic and solving a $\#\P$-complete problem \pause
+          propositional logic and solving a \alert{$\#\P$-complete} problem
+          \pause
     \item The rest of this talk is about how to find such functions automatically
   \end{itemize}
 \end{frame}
@@ -952,54 +955,80 @@ sn edges/.style={for tree={edge={-Latex}}},
      \end{frame}
 }
 
-% TODO: need 3 slides in total for the ending
-
-% really focus on the 'so what?'
-\begin{frame}{Summary \& Future Work}
-  \begin{block}{Summary}
-    The circuits hitherto used for FOMC become more powerful with:
-    \begin{itemize}
-    \item cycles,
-    \item generalised domain recursion,
-    \item and some more new compilation rules that support domain recursion.
-    \end{itemize}
-  \end{block}
-  \begin{block}{Future Work}
-    \begin{itemize}
-    \item Automate:
-      \begin{itemize}
-      \item extracting and simplifying the definitions of functions,
-      \item finding all base cases.
-      \end{itemize}
-    \item Open questions:
-      \begin{itemize}
-      \item What kind of \alert{sequences} are computable in this way?
-      \item Would using a \alert{different logic} extend the capabilities of FOMC further?
-      \end{itemize}
-    \end{itemize}
-  \end{block}
-\end{frame}
-
-\begin{frame}{Major Directions for Future Work}
+\begin{frame}{What Have We Learned?}
   \begin{itemize}
-    \item An algebraic description of what kind of sequences and functions with
-          domain $\mathbb{N}_{0}^{k}$ are computable in this way
-          \begin{itemize}
-            \item monotonicity, maximal growth rate, etc.
-          \end{itemize}
-    \item A different input format or logic that allows the same approach to
-          capture more computations
-          \begin{itemize} % TODO: come back to the 'many ways to count' slide
-                          % and add more arrows (e.g., beyond FOL)
-            \item fixed-point logic with counting
-            \item `let domain $\Delta \coloneqq \{\, 1, 2, \dots, MC(\phi) \,\}$'
-          \end{itemize}
-    \item parameterised Markov logic networks
+    \item Knowledge compilation can build \alert{graphs with cycles}.
+    \item Graphs (as well as circuits) define \alert{functions}.
+    \item Cycles can represent \alert{recursive calls}, including:
     \begin{itemize}
-      \item `What equations do the domain sizes have to satisfy for the
-            probability of event $E$ to be at least $95\%$?'
+      \item mutual recursion
+      \item and function calls as complex as \alert{$f(n-k-2)$}.
     \end{itemize}
+    \item Recursion helps us solve counting problems that were \alert{previously
+          beyond the reach of FOMC}\@.
+    \item In some cases, even if a polynomial-time solution is already known,
+          Crane is able to find \alert{more efficient solutions}, with a lower
+          degree polynomial.
   \end{itemize}
 \end{frame}
+
+% TODO: maybe add a future <-> past picture slide
+
+\begin{frame}[fragile]{Beyond First-Order Logic}
+  \vspace{0.5cm}
+  \hspace*{0.25\linewidth}
+  \begin{tikzcd}[remember picture]
+    |[alias=WMI]|\WMI{} & \WFOMI{} & \\
+    |[alias=WMC]|\#\SAT{}/\WMC{} \arrow[u] \ar[d] \ar[r] & \textup{(W)FOMC} \arrow[u] \ar[d] \ar[r,dashed] & \raisebox{-0.4\height}{\includegraphics[width=0.1\linewidth]{question-mark.jpg}} \\
+    |[alias=PBP]|\AMC{}, \pbp{} & |[alias=SP]|\SPPP{} &
+  \end{tikzcd}
+  \begin{tikzpicture}[overlay,remember picture]
+    \begin{scope}[transform canvas={xshift=-3em}]
+      \draw[->,draw=gray] ($(WMC)+(0,0.1)$)--($(WMI)+(0,0.5)$) node[midway,left] {\textcolor{gray}{$\sum \to \int$}};
+      \draw[->,draw=gray] ($(WMC)-(0,0.1)$)--($(PBP)-(0,0.5)$) node[midway,left] {\textcolor{gray}{Generalising weights}};
+    \end{scope}
+    \begin{scope}[transform canvas={yshift=-2em}]
+      \draw[->,draw=gray] ($(PBP)-(1,0)$)--($(SP)+(1,0)$) node[midway,below] {\textcolor{gray}{From propositional to first-order logic}};
+    \end{scope}
+  \end{tikzpicture}
+  \vfill
+  \vspace{1.5cm}
+  What kind of logic is needed to succinctly describe, e.g.,
+  \begin{itemize}
+    \item $f(n) = f(f(n-1))$
+    \item or the Fibonacci sequence?
+  \end{itemize}
+\end{frame}
+% impossibility results as well (finite model theory)
+
+\begin{frame}{Algebraic Solutions to Parameterised Problems (1/2)}
+  \begin{itemize}
+    \item Suppose we have a Markov logic network that models the probability
+          \alert{$P$} that some system will fail.
+    \item Here:
+    \begin{itemize}
+      \item domain sizes describe the numbers of various components,
+      \item and weights express probabilities that:
+      \begin{itemize}
+        \item some component fails,
+        \item or some combination of failures leads to another failure.
+      \end{itemize}
+    \end{itemize}
+    \item Crane can express \alert{$P$} as a function of the domain sizes and
+          weights.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Algebraic Solutions to Parameterised Problems (2/2)}
+  With the help of a computer algebra system, we can then:
+  \begin{itemize}
+    \item determine how \alert{$P$} scales with the number of users,
+    \item find combinations of domain sizes that keep \alert{$P$} below some
+          threshold,
+    \item find ranges of weights that keep \alert{$P$} sufficiently small across
+          a range of domain size values.
+  \end{itemize}
+\end{frame}
+% TODO: add a concluding diagram: 'reasoning with functions'(in a box) >(big) 'reasoning with numbers'
 
 \end{document}
