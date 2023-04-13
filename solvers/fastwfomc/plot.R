@@ -75,3 +75,15 @@ ggplot(df, aes(x = n, y = time)) +
                    min.segment.length = Inf)
 dev.off()
 
+tikz(file = "../../doc/talks/3_long/plot.tex", width = 2.13, height = 1.32,
+     standAlone = TRUE)
+ggplot(df, aes(x = n, y = time)) +
+  geom_point() +
+  stat_smooth(method = 'lm', se = FALSE, formula = y ~ poly(x, BEST_DEGREE),
+              aes(color = NAME), fill = colours[2]) +
+  xlab('Domain size') +
+  ylab('Runtime (s)') +
+  theme_set(theme_gray(base_size = 9)) +
+  theme_minimal() +
+  scale_color_manual(name = "Model fit", values = colours, guide = FALSE)
+dev.off()

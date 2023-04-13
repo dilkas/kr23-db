@@ -116,11 +116,6 @@ sn edges/.style={for tree={edge={-Latex}}},
 \title{Synthesising Recursive Functions for\\ First-Order Model Counting}
 \institute{National University of Singapore, Singapore}
 \date{18th April 2023}
-% TODO: unify the use of colours, maybe replace red!50 with one of the main colours
-% TODO: how do we capitalise titles of \block?
-% TODO: make sure I'm using the 'forest' package whenever possible
-% TODO: consider adding an outline slide
-% TODO: add periods at the end of sentences
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -259,7 +254,7 @@ sn edges/.style={for tree={edge={-Latex}}},
         \end{itemize}
       \end{block}
       \onslide<8>
-      \begin{block}{Generalisations of the weight function}
+      \begin{block}{Generalisations of the Weight Function}
         \begin{itemize}
           \item Algebraic model counting
           \begin{itemize}
@@ -281,26 +276,26 @@ sn edges/.style={for tree={edge={-Latex}}},
 \begin{frame}{(Unweighted) First-Order Model Counting}
   \begin{itemize}
     \item Example formula: \\
-          \alert{$\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$}
-    \item Let \alert{$\Delta \coloneqq \{\, 1, 2 \,\}$}
+          \alert{$\forall x \in \Delta\text{. } \pP(x) \lor \qQ(x)$}.
+    \item Let \alert{$\Delta \coloneqq \{\, 1, 2 \,\}$}.
     \item Interpretations: all subsets of\\
-          \alert{$\{\, \pP(1), \qQ(1), \pP(2), \qQ(2) \,\}$}
+          \alert{$\{\, \pP(1), \qQ(1), \pP(2), \qQ(2) \,\}$}.
     \item<2-> Models:
     \[
       \begin{matrix}
         \{\, \pone, \ptwo \,\}, & \{\, \pone, \qtwo \,\}, & \{\, \pone, \pqtwo \,\},\\
         \{\, \qone, \ptwo \,\}, & \{\, \qone, \qtwo \,\}, & \{\, \qone, \pqtwo \,\},\\
-        \{\, \pqone, \ptwo \,\}, & \{\, \pqone, \qtwo \,\}, & \{\, \pqone, \pqtwo \,\}\\
+        \{\, \pqone, \ptwo \,\}, & \{\, \pqone, \qtwo \,\}, & \{\, \pqone, \pqtwo \,\}.\\
       \end{matrix}
     \]
   \end{itemize}
   \onslide<3->{
     \begin{block}{Intuition}
       \begin{itemize}
-        \item Each 1-ary predicate is like a \alert{subset}
+        \item Each 1-ary predicate is like a \alert{subset}.
         \item For \alert{$n>1$}, each \alert{$n$}-ary predicate is like a
-              \alert{relation}
-        \item FOMC counts \alert{combinations of relations}
+              \alert{relation}.
+        \item FOMC counts \alert{combinations of relations}.
       \end{itemize}
     \end{block}
   }
@@ -514,14 +509,15 @@ sn edges/.style={for tree={edge={-Latex}}},
   \begin{itemize}
     \item \alert{$f(m, n)$} can be computed in \alert{$\Theta(mn)$} time
     \begin{itemize}
-      \item using dynamic programming
+      \item using dynamic programming.
     \end{itemize}\pause
     \item \alert{Optimal} time complexity to compute \alert{$n^{\underline{m}}$}
-          is \alert{$\Theta(m)$}
+          is \alert{$\Theta(m)$}.
     \item But \alert{$\Theta(mn)$} is still much better than translating to
-          propositional logic and solving a \alert{$\#\P$-complete} problem
+          propositional logic and solving a \alert{$\#\P$-complete} problem.
           \pause
-    \item The rest of this talk is about how to find such functions automatically
+    \item The rest of this talk is about how to find such functions
+          automatically.
   \end{itemize}
 \end{frame}
 
@@ -919,29 +915,30 @@ sn edges/.style={for tree={edge={-Latex}}},
 %% \end{frame}
 
 \begin{frame}{Resulting Improvements to Counting Functions}
-  Let \alert{$\Gamma$} and \alert{$\Delta$} be two sets with
-  cardinalities \alert{$|\Gamma| = m$} and \alert{$|\Delta| = n$}.
+  Let \alert{$\Gamma$} and \alert{$\Delta$} be two sets with cardinalities
+  \alert{$|\Gamma| = m$} and \alert{$|\Delta| = n$}.
 
-  Our new rules enable Crane to efficiently count
-  \alert{$\Gamma \to \Delta$} functions such as:
+  Our new rules enable Crane to efficiently count \alert{$\Gamma \to \Delta$}
+  functions such as:\pause
   \begin{itemize}
     \item injections in \alert{$\Theta(mn)$} time
-          \begin{itemize}
-            \item by hand: \alert{$\Theta(m)$}
-          \end{itemize}
+    \begin{itemize}
+      \item by hand: \alert{$\Theta(m)$}\pause
+    \end{itemize}
     \item partial injections in \alert{$\Theta(mn)$} time
-          \begin{itemize}
-            \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}
-          \end{itemize}
-          \item bijections in \alert{$\Theta(m)$} time
-          \begin{itemize}
-            \item \alert{optimal!}
-            \item FastWFOMC seems to be \alert{$\Omega(m^{4})$}
-          \end{itemize}
+    \begin{itemize}
+      \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}\pause
+    \end{itemize}
+    \item bijections in \alert{$\Theta(m)$} time
+    \begin{itemize}
+      \item \alert{optimal!}\pause
+      \item experimentally, FastWFOMC runtime appears to be \alert{$\Omega(m^{4})$}
+    \end{itemize}
   \end{itemize}
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[draw,rectangle,color=gray] at ([xshift=-3cm]current page.east) {\includegraphics{plot}};
+  \end{tikzpicture}
 \end{frame}
-% TODO: add 2 more statements about fastwfomc, showing their plots on the RHS
-% when revealing them
 
 { % all template changes are local to this group.
     \setbeamertemplate{navigation symbols}{}
@@ -972,7 +969,16 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{itemize}
 \end{frame}
 
-% TODO: maybe add a future <-> past picture slide
+{ % all template changes are local to this group.
+    \setbeamertemplate{navigation symbols}{}
+    \begin{frame}<article:0>[plain]
+        \begin{tikzpicture}[remember picture,overlay]
+            \node[at=(current page.center)] {
+                \includegraphics[keepaspectratio, height=\paperheight]{future.jpg}
+            };
+        \end{tikzpicture}
+     \end{frame}
+}
 
 \begin{frame}[fragile]{Beyond First-Order Logic}
   \vspace{0.5cm}
@@ -1028,7 +1034,14 @@ sn edges/.style={for tree={edge={-Latex}}},
     \item find ranges of weights that keep \alert{$P$} sufficiently small across
           a range of domain size values.
   \end{itemize}
+  \pause
+  \vfill
+  \centering
+  \begin{tikzpicture}
+    \node[draw] (a) {Reasoning with \alert{functions}};
+    \node[right=0.5cm of a] (b) {\Huge\textcolor{color2}{$>$}};
+    \node[draw,right=0.5cm of b] (c) {Reasoning with \alert{numbers}};
+  \end{tikzpicture}
 \end{frame}
-% TODO: add a concluding diagram: 'reasoning with functions'(in a box) >(big) 'reasoning with numbers'
 
 \end{document}
