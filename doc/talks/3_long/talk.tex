@@ -140,7 +140,7 @@ sn edges/.style={for tree={edge={-Latex}}},
     \node<-4>[left,shift=({0, -2})] at (current page.east) (computer) {\includegraphics[height=0.5\textheight]{happy_computer}};
     \node<2>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.5)}] at (stickman.north east) {$\int_{-\infty}^{\infty} e^{-t^{2}}\,\mathrm{d}t$};
     \node<2>[ellipse callout, draw, left=-0.5cm, below=0.5cm] at (computer.north west) {$\sqrt{\pi}$};
-    \node<3>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)},text width=5cm] at (stickman.north east) {Produce a schedule for the nurses at the local hospital.};
+    \node<3>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)},text width=5cm] at (stickman.north east) {Produce a \alert{schedule} for the nurses at the local hospital.};
     \node<3>[ellipse callout, draw, below=0.5cm, shift=({-0.5,0}), callout relative pointer={(0.5, -0.25)}] at (computer.north west) {\includegraphics[width=0.1\textwidth]{schedule}};
     \node<4>[ellipse callout, draw, right=0cm, callout relative pointer={(-1, -0.15)},text width=6cm] at (stickman.north east) {Paint a baroque oil painting of a \alert{raccoon queen wearing a crown}.};
     \node<4>[ellipse callout, draw, below=0cm, shift=({-1.5,1}), callout relative pointer={(0.4, -0.2)}] at (computer.north west) {\includegraphics[width=0.25\textwidth]{dalle.png}};
@@ -289,7 +289,7 @@ sn edges/.style={for tree={edge={-Latex}}},
       \end{matrix}
     \]
   \end{itemize}
-  \onslide<3->{
+  \onslide<2->{
     \begin{block}{Intuition}
       \begin{itemize}
         \item Each 1-ary predicate is like a \alert{subset}.
@@ -314,7 +314,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Approaches to FOMC}
+\begin{frame}{Exact Algorithms for FOMC}
   \begin{itemize}
     \item \alert{ForcLift}~\textcolor{gray}{\parencite{DBLP:conf/ijcai/BroeckTMDR11}}
     \begin{itemize}
@@ -466,7 +466,7 @@ sn edges/.style={for tree={edge={-Latex}}},
     \begin{itemize}
       \item such that \alert{$|\Gamma| = m$}, and \alert{$|\Delta| = n$}.
     \end{itemize}
-    \item Let $\pP \subseteq \Gamma \times \Delta$ be a relation (i.e.,
+    \item Let \alert{$\pP \subseteq \Gamma \times \Delta$} be a relation (i.e.,
           predicate) over \alert{$\Gamma$} and \alert{$\Delta$}.
     \item We can describe all of the constraints in first-order logic:
     \begin{itemize}
@@ -484,8 +484,8 @@ sn edges/.style={for tree={edge={-Latex}}},
       \end{equation}
     \end{itemize}
   \end{itemize}
-  \pause \eqref{eq:a1} and \eqref{eq:a2} constrain $\pP$ to be a function, and
-  \eqref{eq:a3} makes it injective.
+  \pause \alert{\eqref{eq:a1}} and \alert{\eqref{eq:a2}} constrain \alert{$\pP$}
+  to be a function, and \alert{\eqref{eq:a3}} makes it injective.
 \end{frame}
 % one could also add probabilities to these sentences to say that, e.g., there is a 1% probability of somebody taking up two seats, somebody sitting on somebody else's lap, somebody sitting on the floor, etc.
 
@@ -516,7 +516,7 @@ sn edges/.style={for tree={edge={-Latex}}},
     \item But \alert{$\Theta(mn)$} is still much better than translating to
           propositional logic and solving a \alert{$\#\P$-complete} problem.
           \pause
-    \item The rest of this talk is about how to find such functions
+    \item The rest of this talk is about how to construct such functions
           automatically.
   \end{itemize}
 \end{frame}
@@ -685,7 +685,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \begin{definition}
     A \alert{(compilation) rule} is a function that takes a \alert{formula} and returns a set of \alert{$(G, L)$} pairs, where
     \begin{itemize}
-    \item \alert{$G$} is an FCG,
+    \item \alert{$G$} is a (possibly incomplete) FCG,
     \item and \alert{$L$} is a list of formulas.
     \end{itemize}
   \end{definition}
@@ -702,7 +702,7 @@ sn edges/.style={for tree={edge={-Latex}}},
     ({\color{color2} \forall w, x \in \Gamma\text{. }\forall y \in \Delta\text{. }\texttt{P}(w, y) \land \texttt{P}(x, y) \Rightarrow w=x}) \label{eq:3} \tag{{\color{color2} 3}}
   \end{gather}
   \pause
-  Only one \alert{(G, L)} pair:
+  The independence compilation rule returns one \alert{(G, L)} pair:
   \[
   G =
   \begin{tikzpicture}[edge from parent/.style={draw,-Latex},baseline=(current bounding box.center)]
@@ -787,9 +787,9 @@ sn edges/.style={for tree={edge={-Latex}}},
               \item Consider pairs of `similar' clauses.
               \item Consider bijections between their sets of variables.
               \item Extend each such bijection to a map between sets of domains.
-              \item If the bijection makes the clauses equal, and the domain map
-                    is compatible with previous domain maps, move on to another
-                    pair of clauses.
+              \item If the bijection makes the clauses equivalent, and the
+                    domain map is compatible with previous domain maps, move on
+                    to another pair of clauses.
             \end{enumerate}
           \end{block}
       \end{overprint}
@@ -898,7 +898,7 @@ sn edges/.style={for tree={edge={-Latex}}},
         \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
       \end{gathered}$};
     \node[below=0.5cm of after1] (plus) {\textcolor{color2}{\Huge$+$}};
-    \node[below=0.5cm of plus] {$\{\, \alert{\Gamma} \mapsto \alert{\Gamma'}, \alert{\Delta^{\bot}} \mapsto \alert{\Delta} \,\}$};
+    \node[below=0.5cm of plus] {$\{\, \alert{\Gamma} \mapsto \alert{\Gamma'}, \alert{\Delta} \mapsto \alert{\Delta^{\bot}} \,\}$};
   \end{tikzpicture}
 \end{frame}
 
@@ -919,25 +919,25 @@ sn edges/.style={for tree={edge={-Latex}}},
   \alert{$|\Gamma| = m$} and \alert{$|\Delta| = n$}.
 
   Our new rules enable Crane to efficiently count \alert{$\Gamma \to \Delta$}
-  functions such as:\pause
+  functions such as:
   \begin{itemize}
     \item injections in \alert{$\Theta(mn)$} time
     \begin{itemize}
-      \item by hand: \alert{$\Theta(m)$}\pause
+      \item by hand: \alert{$\Theta(m)$}
     \end{itemize}
     \item partial injections in \alert{$\Theta(mn)$} time
     \begin{itemize}
-      \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}\pause
+      \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}
     \end{itemize}
     \item bijections in \alert{$\Theta(m)$} time
     \begin{itemize}
-      \item \alert{optimal!}\pause
-      \item experimentally, FastWFOMC runtime appears to be \alert{$\Omega(m^{4})$}
+      \item \alert{optimal!}%\pause
+      %\item In comparison, FastWFOMC scales as \alert{$\Omega(m^{4})$}.
     \end{itemize}
   \end{itemize}
-  \begin{tikzpicture}[remember picture,overlay]
-    \node[draw,rectangle,color=gray] at ([xshift=-3cm]current page.east) {\includegraphics{plot}};
-  \end{tikzpicture}
+  % \begin{tikzpicture}[remember picture,overlay]
+  %   \node[draw,rectangle,color=gray] at ([xshift=-3cm]current page.east) {\includegraphics{plot}};
+  % \end{tikzpicture}
 \end{frame}
 
 { % all template changes are local to this group.
