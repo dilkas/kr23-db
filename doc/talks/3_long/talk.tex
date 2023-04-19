@@ -115,7 +115,7 @@ sn edges/.style={for tree={edge={-Latex}}},
 \author{Paulius Dilkas \\ \vspace{1cm} \tiny{Joint work with Vaishak Belle (Univeristy of Edinburgh, UK)}}
 \title{Synthesising Recursive Functions for\\ First-Order Model Counting}
 \institute{National University of Singapore, Singapore}
-\date{18th April 2023}
+\date{PLSE Seminar, 21st April 2023}
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -502,7 +502,7 @@ sn edges/.style={for tree={edge={-Latex}}},
   \begin{cases}
     1 & \text{if } m = 0 \text{ and } n = 0 \\
     0 & \text{if } m > 0 \text{ and } n = 0 \\
-    f(m, n-1) + mf(m-1, n-1) & \text{otherwise.}
+    f(m, n-1) + m \times f(m-1, n-1) & \text{otherwise.}
   \end{cases}
   \]
   \pause
@@ -556,6 +556,7 @@ sn edges/.style={for tree={edge={-Latex}}},
         \draw[-Latex,color=color2] (graph) -- (evaluation);
         \draw[-Latex,color=color2] (evaluation) -- (end);
         \draw[-Latex,color=color2] (sizes) -- (evaluation);
+        \node[draw,fit={(kc) (graph) (evaluation)},inner xsep=1pt,inner ysep=2pt] {};
       \end{tikzpicture}
     \end{column}
     \pause
@@ -589,7 +590,7 @@ sn edges/.style={for tree={edge={-Latex}}},
         \node[draw,rounded rectangle,fill=color2!50,below=0.1cm of graph] (interpretation) {Conversion};
         \node[below=0.3cm of interpretation] (initial) {\tiny $f(m, n) = \sum_{l=0}^m \binom{m}{l} [l<2] \times f(m-l, n-1)$};
         \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of initial] (simplification) {Simplification};
-        \node[below=0.3cm of simplification] (simplified) {\tiny $f(m, n) = f(m, n-1) + mf(m-1, n-1)$};
+        \node[below=0.3cm of simplification] (simplified) {\tiny $f(m, n) = f(m, n-1) + m \times f(m-1, n-1)$};
         \node[draw,rounded rectangle,fill=color2!50,below=0.3cm of simplified] (evaluation) {Evaluation};
         \node[below=0.3cm of evaluation] (end) {\includegraphics[height=0.4cm]{42.png}};
         \node[right=0.3cm of evaluation] (sizes) {\tiny $\begin{aligned}
@@ -605,6 +606,7 @@ sn edges/.style={for tree={edge={-Latex}}},
         \draw[-Latex,color=color2] (simplified) -- (evaluation);
         \draw[-Latex,color=color2] (evaluation) -- (end);
         \draw[-Latex,color=color2] (sizes) -- (evaluation);
+        \node[draw,fit={(kc) (graph) (interpretation)},inner xsep=1pt,inner ysep=2pt,visible on=<3->] {};
       \end{tikzpicture}
     \end{column}
   \end{columns}
@@ -666,7 +668,9 @@ sn edges/.style={for tree={edge={-Latex}}},
     \begin{column}{0.75\textwidth}
       \begin{align*}
         \onslide<4->{f(m, n) &=} \onslide<5->{\sum_{l=0}^m \binom{m}{l}} \onslide<8->{[l<2]} \onslide<7->{\times} \onslide<9->{f(m-l, n-1)}\\
-        \onslide<10>{&= f(m, n-1) + mf(m-1, n-1)}
+        \onslide<10->{&= \binom{m}{0} \times f(m-0, n-1)}\\
+        \onslide<10->{&+ \binom{m}{1} \times f(m-1, n-1)}\\
+        \onslide<11->{&= f(m, n-1) + m \times f(m-1, n-1)}
       \end{align*}
       \onslide<8>{
         \[
@@ -843,6 +847,7 @@ sn edges/.style={for tree={edge={-Latex}}},
     \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
   \end{tikzpicture}
 \end{frame}
+% NOTE: need to explain how atom counting splits the domain
 
 \begin{frame}{How These Rules Fit Together (3/5)}
   \begin{tikzpicture}[overlay,remember picture]
