@@ -293,28 +293,28 @@ def weird1(n, fun=weird2): # should compute partial injections from [n] to [n]
 def example(m, n):
     return int(math.factorial(m)/math.factorial(m-n))
 
-MAX = 20
+def two_dimensional_partial_surjections(x, y):
+    return sum(math.comb(x, z) * (-1)**(x-z) * (1+z)**y for z in range(x+1))
 
-# for m in range(1, MAX):
-#     for n in range(1, m+1):
-#         print("f({}, {}) = {}".format(m, n, example(m, n)))
+MAX = 5
 
-for m in range(1, MAX):
-    print(m, int(3 ** m))
+# for m in range(0, MAX+1):
+#     for n in range(0, MAX+1):
+#         print("f({}, {}) = {}".format(m, n, two_dimensional_partial_surjections(n, m)))
 
 # for n in range(1, MAX):
 #     print("f({}) = {} ({})".format(n, weird1(n), two_dimensional_partial_injections(n, n)))
 
-# for m in range(0, MAX):
-#     for n in range(0, MAX):
-#         print(
-#             "f({}, {}) = {} ({})".format(
-#                 m,
-#                 n,
-#                 weird2(m, n),
-#                 two_dimensional_injections(n, m),
-#             )
-#         )
+for m in range(0, MAX+1):
+    for n in range(0, MAX+1):
+        print(
+            "f({}, {}) = {} ({})".format(
+                m,
+                n,
+                two_dimensional_partial_surjections(m, n),
+                my_two_dimensional_surjections(n, m+1),
+            )
+        )
 
 # for n in range(0, MAX):
 #     print(str(weird1(n)) + ", ", end="")
