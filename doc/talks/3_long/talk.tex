@@ -37,6 +37,14 @@
 \makeatother
 \SoulColor
 
+\newcommand\Wider[2][3em]{%
+\makebox[\linewidth][c]{%
+  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+  \raggedright#2
+  \end{minipage}%
+  }%
+}
+
 \beamertemplatenavigationsymbolsempty
 \usetheme{metropolis}
 \setbeamercolor{background canvas}{bg=white}
@@ -110,7 +118,7 @@ sn edges/.style={for tree={edge={-Latex}}},
 \author{Paulius Dilkas \\ \vspace{1cm} \tiny{Joint work with Vaishak Belle (Univeristy of Edinburgh, UK)}}
 \title{Synthesising Recursive Functions for\\ First-Order Model Counting}
 \institute{National University of Singapore, Singapore}
-\date{CRIL Seminar, 25th May 2023}
+\date{DTAI Seminar, 26th May 2023}
 
 \begin{document}
 \addtobeamertemplate{block begin}{\setlength\abovedisplayskip{0pt}}
@@ -265,8 +273,6 @@ sn edges/.style={for tree={edge={-Latex}}},
       \end{block}
     \end{overprint}
 \end{frame}
-% maybe mention #CSP and other non-SAT ways of counting (SMT?, counting paths in
-% automata and directed graphs)
 
 \begin{frame}{(Unweighted) First-Order Model Counting}
   \begin{itemize}
@@ -824,30 +830,137 @@ sn edges/.style={for tree={edge={-Latex}}},
 %%   The search algorithm combines greedy and breadth-first search:
 %% \end{frame}
 
-\begin{frame}{Resulting Improvements to Counting Functions}
-  Let \alert{$\Gamma$} and \alert{$\Delta$} be two sets with cardinalities
-  \alert{$|\Gamma| = m$} and \alert{$|\Delta| = n$}.
+\begin{frame}{How These Rules Fit Together (1/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center,above=0.5cm] at (current page.center) (rules) {Generalised domain recursion};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \Delta\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=of rules] (after) {$\begin{gathered}
+        \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(\alert{c}, z)\\
+        \forall x \in \Gamma\text{. }\forall y,z \in \Delta\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall x \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{x \ne c} \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(x, y)\\
+        \forall w \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(\alert{c}, y)\\
+        \forall w,x \in \Gamma\text{. }\forall y \in \Delta\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \begin{scope}[on background layer]
+      \node[anchor=north,fill=greenish,minimum width=11.1cm,minimum height=0.7cm] at (before.north) {};
+      \node[anchor=south,fill=blueish,minimum width=11.1cm,minimum height=0.7cm] at (before.south) {};
+      \node[anchor=north,fill=greenish,minimum width=11.1cm,minimum height=1.3cm] at (after.north) {};
+      \node[anchor=south,fill=blueish,minimum width=11.1cm,minimum height=2cm] at (after.south) {};
+    \end{scope}
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+  \end{tikzpicture}
+\end{frame}
 
-  Our new rules enable Crane to efficiently count \alert{$\Gamma \to \Delta$}
-  functions such as:
-  \begin{itemize}
-    \item injections in \alert{$\Theta(mn)$} time
+\begin{frame}{How These Rules Fit Together (2/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center,below=1cm] at (current page.center) (rules) {Atom counting and unit propagation};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(\alert{c}, z)\\
+        \forall x \in \Gamma\text{. }\forall y,z \in \Delta\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall x \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{x \ne c} \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(x, y)\\
+        \forall w \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(\alert{c}, y)\\
+        \forall w,x \in \Gamma\text{. }\forall y \in \Delta\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=of rules] (after) {$\begin{gathered}
+        \forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \Gamma\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \land x \ne c \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \Gamma\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \land w \ne c \land x \ne c \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+  \end{tikzpicture}
+\end{frame}
+% NOTE: need to explain how atom counting splits the domain
+
+\begin{frame}{How These Rules Fit Together (3/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center] at (current page.center) (rules) {Constraint removal};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall y, z \in \Delta^{\top}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta^{\bot}\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma}\text{. }\forall y \in \Delta^{\bot}\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=of rules] (after) {$\begin{gathered}
+        \forall y, z \in \Delta^{\top}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \Delta^{\bot}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \Delta^{\bot}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{How These Rules Fit Together (4/5)}
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[draw,rounded rectangle,fill=color2!50,anchor=center] at (current page.center) (rules) {Independence};
+    \node[above=of rules] (before) {$\begin{gathered}
+        \forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot\\
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below left=of rules,fill=greenish] (after1) {$\forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot$};
+    \node[below right=2cm and -4cm of rules,fill=blueish] (after2) {$\begin{gathered}
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \begin{scope}[on background layer]
+      \node[anchor=north,fill=greenish,minimum width=9cm,minimum height=0.7cm] at (before.north) {};
+      \node[anchor=south,fill=blueish,minimum width=9cm,minimum height=1.3cm] at (before.south) {};
+    \end{scope}
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after1);
+    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after2);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{How These Rules Fit Together (5/5): Recursion}
+  \centering
+  \begin{tikzpicture}[overlay,remember picture]
+    \node[anchor=center,above=0.5cm] at (current page.center) (equal) {\rotatebox{90}{\textcolor{color2}{\Huge$=$}}};
+    \node[below=0.5cm of equal] (after1) {$\begin{gathered}
+        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \alert{\Delta}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
+        \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \alert{\Delta}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[above=0.5cm of equal] (foo) {$\begin{gathered}
+        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
+        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
+      \end{gathered}$};
+    \node[below=0.5cm of after1] (plus) {\textcolor{color2}{\Huge$+$}};
+    \node[below=0.5cm of plus] {$\{\, \alert{\Gamma} \mapsto \alert{\Gamma'}, \alert{\Delta} \mapsto \alert{\Delta^{\bot}} \,\}$};
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Resulting Improvements to Counting Functions}
+  \Wider[3em]{ Let \alert{$\Gamma$} and \alert{$\Delta$} be two sets with
+    cardinalities \alert{$|\Gamma| = m$} and \alert{$|\Delta| = n$}.
+
+    Our new rules enable Crane to efficiently count \alert{$\Gamma \to \Delta$}
+    functions such as: \vspace{1em}
     \begin{itemize}
-      \item by hand: \alert{$\Theta(m)$}
+            \setlength\itemsep{1em}
+      \item injections in \alert{$\Theta(mn)$} time
+            \begin{itemize}
+              \item by hand: \alert{$\Theta(m)$}
+            \end{itemize}
+      \item partial injections in \alert{$\Theta(mn)$} time
+            \begin{itemize}
+              \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}
+            \end{itemize}
+      \item bijections in \alert{$\Theta(m)$} time
+            \begin{itemize}
+              \item \alert{optimal!}\pause
+              \item In comparison, FastWFOMC scales as \alert{$\Omega(m^{4})$}.
+            \end{itemize}
     \end{itemize}
-    \item partial injections in \alert{$\Theta(mn)$} time
-    \begin{itemize}
-      \item by hand: \alert{$\Theta({\min\{\, m, n \,\}}^2)$}
-    \end{itemize}
-    \item bijections in \alert{$\Theta(m)$} time
-    \begin{itemize}
-      \item \alert{optimal!}%\pause
-      %\item In comparison, FastWFOMC scales as \alert{$\Omega(m^{4})$}.
-    \end{itemize}
-  \end{itemize}
-  % \begin{tikzpicture}[remember picture,overlay]
-  %   \node[draw,rectangle,color=gray] at ([xshift=-3cm]current page.east) {\includegraphics{plot}};
-  % \end{tikzpicture}
+  }
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[draw,rectangle,color=gray] at ([xshift=-3.3cm,yshift=-0.2cm]current page.east) {\includegraphics{plot}};
+  \end{tikzpicture}
 \end{frame}
 
 { % all template changes are local to this group.
@@ -951,112 +1064,6 @@ sn edges/.style={for tree={edge={-Latex}}},
     \node[draw] (a) {Reasoning with \alert{functions}};
     \node[right=0.5cm of a] (b) {\Huge\textcolor{color2}{$>$}};
     \node[draw,right=0.5cm of b] (c) {Reasoning with \alert{numbers}};
-  \end{tikzpicture}
-\end{frame}
-
-% an example on partial injection (i.e., bipartite matching) counting
-\begin{frame}{How These Rules Fit Together (1/5)}
-  \begin{tikzpicture}[overlay,remember picture]
-    \node[draw,rounded rectangle,fill=color2!50,anchor=center,above=0.5cm] at (current page.center) (rules) {Generalised domain recursion};
-    \node[above=of rules] (before) {$\begin{gathered}
-        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
-        \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \Delta\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \node[below=of rules] (after) {$\begin{gathered}
-        \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(\alert{c}, z)\\
-        \forall x \in \Gamma\text{. }\forall y,z \in \Delta\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
-        \forall x \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{x \ne c} \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(x, y)\\
-        \forall w \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(\alert{c}, y)\\
-        \forall w,x \in \Gamma\text{. }\forall y \in \Delta\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \begin{scope}[on background layer]
-      \node[anchor=north,fill=greenish,minimum width=11.1cm,minimum height=0.7cm] at (before.north) {};
-      \node[anchor=south,fill=blueish,minimum width=11.1cm,minimum height=0.7cm] at (before.south) {};
-      \node[anchor=north,fill=greenish,minimum width=11.1cm,minimum height=1.3cm] at (after.north) {};
-      \node[anchor=south,fill=blueish,minimum width=11.1cm,minimum height=2cm] at (after.south) {};
-    \end{scope}
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{How These Rules Fit Together (2/5)}
-  \begin{tikzpicture}[overlay,remember picture]
-    \node[draw,rounded rectangle,fill=color2!50,anchor=center,below=1cm] at (current page.center) (rules) {Atom counting and unit propagation};
-    \node[above=of rules] (before) {$\begin{gathered}
-        \forall y, z \in \Delta\text{. }y \ne z \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(\alert{c}, z)\\
-        \forall x \in \Gamma\text{. }\forall y,z \in \Delta\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
-        \forall x \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{x \ne c} \Rightarrow \neg\pP(\alert{c}, y) \lor \neg\pP(x, y)\\
-        \forall w \in \Gamma\text{. }\forall y \in \Delta\text{. }\alert{w \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(\alert{c}, y)\\
-        \forall w,x \in \Gamma\text{. }\forall y \in \Delta\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \node[below=of rules] (after) {$\begin{gathered}
-        \forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot\\
-        \forall x \in \Gamma\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \land x \ne c \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
-        \forall w, x \in \Gamma\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \land w \ne c \land x \ne c \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
-  \end{tikzpicture}
-\end{frame}
-% NOTE: need to explain how atom counting splits the domain
-
-\begin{frame}{How These Rules Fit Together (3/5)}
-  \begin{tikzpicture}[overlay,remember picture]
-    \node[draw,rounded rectangle,fill=color2!50,anchor=center] at (current page.center) (rules) {Constraint removal};
-    \node[above=of rules] (before) {$\begin{gathered}
-        \forall y, z \in \Delta^{\top}\text{. }y \ne z \Rightarrow \bot\\
-        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \Delta^{\bot}\text{. }y \ne z \land \alert{x \ne c} \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
-        \forall w, x \in \alert{\Gamma}\text{. }\forall y \in \Delta^{\bot}\text{. }w \ne x \land \alert{w \ne c} \land \alert{x \ne c} \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \node[below=of rules] (after) {$\begin{gathered}
-        \forall y, z \in \Delta^{\top}\text{. }y \ne z \Rightarrow \bot\\
-        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \Delta^{\bot}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
-        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \Delta^{\bot}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after);
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{How These Rules Fit Together (4/5)}
-  \begin{tikzpicture}[overlay,remember picture]
-    \node[draw,rounded rectangle,fill=color2!50,anchor=center] at (current page.center) (rules) {Independence};
-    \node[above=of rules] (before) {$\begin{gathered}
-        \forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot\\
-        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
-        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \node[below left=of rules,fill=greenish] (after1) {$\forall y, z \in \alert{\Delta^{\top}}\text{. }y \ne z \Rightarrow \bot$};
-    \node[below right=2cm and -4cm of rules,fill=blueish] (after2) {$\begin{gathered}
-        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
-        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \begin{scope}[on background layer]
-      \node[anchor=north,fill=greenish,minimum width=9cm,minimum height=0.7cm] at (before.north) {};
-      \node[anchor=south,fill=blueish,minimum width=9cm,minimum height=1.3cm] at (before.south) {};
-    \end{scope}
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (before) -- (rules);
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after1);
-    \draw[-Latex,color=color2,ultra thick,shorten <=0.1cm,shorten >=0.1cm] (rules) -- (after2);
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{How These Rules Fit Together (5/5): Recursion}
-  \centering
-  \begin{tikzpicture}[overlay,remember picture]
-    \node[anchor=center,above=0.5cm] at (current page.center) (equal) {\rotatebox{90}{\textcolor{color2}{\Huge$=$}}};
-    \node[below=0.5cm of equal] (after1) {$\begin{gathered}
-        \forall x \in \alert{\Gamma}\text{. }\forall y, z \in \alert{\Delta}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z)\\
-        \forall w,x \in \alert{\Gamma}\text{. }\forall y \in \alert{\Delta}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \node[above=0.5cm of equal] (foo) {$\begin{gathered}
-        \forall x \in \alert{\Gamma'}\text{. }\forall y, z \in \alert{\Delta^{\bot}}\text{. }y \ne z \Rightarrow \neg\pP(x, y) \lor \neg\pP(x, z) \\
-        \forall w, x \in \alert{\Gamma'}\text{. }\forall y \in \alert{\Delta^{\bot}}\text{. }w \ne x \Rightarrow \neg\pP(w, y) \lor \neg\pP(x, y)
-      \end{gathered}$};
-    \node[below=0.5cm of after1] (plus) {\textcolor{color2}{\Huge$+$}};
-    \node[below=0.5cm of plus] {$\{\, \alert{\Gamma} \mapsto \alert{\Gamma'}, \alert{\Delta} \mapsto \alert{\Delta^{\bot}} \,\}$};
   \end{tikzpicture}
 \end{frame}
 
