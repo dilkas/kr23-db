@@ -748,7 +748,8 @@ recursive function. The GDR compilation rule is summarised as
 
 \Cref{thm:correctness1} is equivalent to Proposition~3 by Van den
 Broeck~\shortcite{DBLP:conf/nips/Broeck11}. For the proofs of this and other
-theorems, see \cref{sec:proofs}.
+theorems, see the full version of this
+paper\footnote{\url{https://arxiv.org/abs/2306.04189}}.
 
 \subsection{Constraint Removal}\label{sec:cr}
 
@@ -1208,8 +1209,9 @@ proposed before.\footnote{\url{https://oeis.org},
 columns of the table, we see that the two algorithms perform equally well on
 instances that could already be solved by \textsc{ForcLift}. However,
 \textsc{Crane} can also solve all but one of the instances that
-\textsc{ForcLift} fails on in at most cubic time. See \cref{sec:solutions} for
-the exact solutions produced by \textsc{Crane}.
+\textsc{ForcLift} fails on in at most cubic time. See the full version of this
+paper\footnote{\url{https://arxiv.org/abs/2306.04189}} for the exact solutions
+produced by \textsc{Crane}.
 
 \subsection{A Comparison with \textsc{\normalfont FastWFOMC}}
 
@@ -1365,226 +1367,6 @@ Autonomous Systems Governance and Regulation (EP/ V026607/1, 2020–2024). For t
 purpose of open access, the authors have applied a Creative Commons Attribution
 (CC BY) licence to any Author Accepted Manuscript version arising from this
 submission.
-
-\appendix
-\section{Proofs}\label{sec:proofs}
-
-We begin with a few definitions that formalise the notion of a model. For any
-set $S$, let $2^{S}$ denote its power set and
-$S^{\ast} \coloneqq \bigcup_{i=0}^{\infty} S^{i}$ the (infinite) set of
-tuples---of any finite length---of elements of $S$. For example,
-${\{\,a, b\,\}}^{\ast} = \{\, (), (a), (b), (a, a), \dots \,\}$. For any
-$n \in \mathbb{N}_{0}$, let $[n] \coloneqq \{\, 1, \dots, n \,\}$, e.g.,
-$[0] = \emptyset$, and $[2] = \{\, 1, 2 \,\}$. Extending the notation for
-substitution introduced in \cref{sec:recprelims}, for a formula $\phi$, constant
-$c$, and set of variables $V$, let $\phi[c/V]$ denote $\phi$ with all
-occurrences of all variables in $V$ replaced with $c$. Let $\Preds$ be the
-function that maps any clause or formula to the set of predicates used in it.
-With each formula $\phi$, we associate a map
-$\pi_{\phi}\colon \Preds(\phi) \to {\Doms(\phi)}^{\ast}$ s.t., for each
-predicate $\predicate/n \in \Preds(\phi)$, we have that
-$\pi_{\phi}(\predicate) \in {\Doms(\phi)}^{n}$. This map makes explicit the idea
-that each $n$-ary predicate is associated with an $n$-tuple of domains. In the
-case of formula $\phi$ from \cref{example:first},
-$\pi_{\phi} = \{\, \predicate \mapsto (\Gamma, \Delta) \,\}$.
-
-\begin{definition}\label{def:model}
-  Let $\phi$ be a formula and $\sigma$ a domain size function. A \emph{model} of
-  $(\phi, \sigma)$ is a map
-  $\mathfrak{M}\colon \Preds(\phi) \to 2^{\mathbb{N}_{0}^{\ast}}$ s.t.\ the
-  following two conditions are satisfied.
-  \begin{enumerate}
-    \item For all predicates $\predicate/n \in \Preds(\phi)$ with
-          $\pi_{\phi}(\predicate) \coloneqq {(\Delta_{i})}_{i=1}^{n}$ for some
-          domains $\Delta_{i} \in \Doms(\phi)$,
-    \begin{equation}\label{eq:subset}
-      \mathfrak{M}(\predicate) \subseteq \prod_{i=1}^{n}[\sigma(\Delta_{i})].\footnote{For simplicity, \cref{def:model} ignores constants. To include constants, one would replace $[\sigma(\Delta_{i})]$ with a set that contains all constants associated with domain $\Delta_{i}$, extended with enough new elements to make its cardinality $\sigma(\Delta_{i})$.}
-    \end{equation}
-    \item $\mathfrak{M} \models \phi$ according to the (non-exhaustive)
-          recursive definition below. Let $\chi$ and $\psi$ be formulas,
-          $\Delta$ a domain, $c \in \Delta$ a constant, $\predicate/n$ a
-          predicate associated with domains $\Delta_{1},\dots,\Delta_{n}$, and
-          $t \in \prod_{i=1}^{n} \Delta_{i}$ a tuple of constants.
-    \begin{itemize}
-      \item $\mathfrak{M} \models \predicate(t)$ if and only if (iff)
-            $t \in \mathfrak{M}(\predicate)$.
-      \item $\mathfrak{M} \models \neg\chi$ iff $\mathfrak{M} \not\models \chi$.
-      \item $\mathfrak{M} \models \chi \land \psi$ iff
-            $\mathfrak{M} \models \chi$ and $\mathfrak{M} \models \psi$.
-      \item $\mathfrak{M} \models \chi \lor \psi$ iff
-            $\mathfrak{M} \models \chi$ or $\mathfrak{M} \models \psi$.
-      \item $\mathfrak{M} \models (\forall X \in \Delta\text{. }\chi)$ iff
-            $\mathfrak{M} \models \chi[x/\{\, X \,\}]$ for all constants
-            $x \in \Delta$.
-      \item $\mathfrak{M} \models (\forall X \in \Delta\text{.
-            } X \ne c \Rightarrow \chi)$ iff
-            $\mathfrak{M} \models \chi[x/\{\, X \,\}]$ for all
-            $x \in \Delta \setminus \{\, c \,\}$.
-      \item $\mathfrak{M} \models (\forall X,Y \in \Delta\text{.
-            } X \ne Y \Rightarrow \chi)$ iff
-            $\mathfrak{M} \models \chi[x/\{\, X \,\}][y/\{\, Y \,\}]$ for all
-            $x,y \in \Delta$ s.t. $x \ne y$.
-    \end{itemize}
-  \end{enumerate}
-\end{definition}
-
-\begin{theorem}[Correctness of $\GDR$]
-  Let $\phi$ be the formula used as input to \cref{alg:domainrecursion},
-  $\Omega \in \mathcal{D}$ the domain selected on \cref{line:condition}, and
-  $\phi'$ the formula constructed by the algorithm for $\Omega$. Suppose that
-  $\Omega \ne \emptyset$. Then $\phi \equiv \phi'$.
-\end{theorem}
-\begin{proof}
-  Let $x$ be the constant introduced on \cref{line:constant} and $c$ a clause of
-  $\phi$ selected on \cref{line:forclause} of the algorithm. We will show that
-  $c$ is equivalent to the conjunction of clauses added to $\phi'$ on
-  \cref{line:conditions,line:generation}.
-
-  If $c$ has no variables with domain $\Omega$,
-  \cref{line:conditions,line:generation} add a copy of $c$ to $\phi'$. If $c$
-  has one variable with domain $\Omega$, say, $X$, then
-  $c \equiv \forall X \in \Omega\text{. } \psi$ for some formula $\psi$ with one
-  free variable $X$. In this case, \cref{line:conditions,line:generation} create
-  two clauses: $\psi[x/\{\, X \,\}]$ and $\forall X \in \Omega\text{.
-  } X \ne x \Rightarrow \psi$. It is easy to see that their conjunction is
-  equivalent to $c$ provided that $\Omega \ne \emptyset$ and so $x$ is a
-  well-defined constant.
-
-  Let $V$ be the set of variables introduced on \cref{line:V}. It remains to
-  prove that repeating the transformation
-  \[
-    \forall X \in \Omega\text{. } \psi \mapsto \{\, \psi[x/\{\, X \,\}], \forall X \in \Omega\text{. } X \ne x \Rightarrow \psi \,\}
-  \]
-  for all variables $X \in V$ produces the same clauses as
-  \cref{line:conditions,line:generation} (except for some tautologies that the
-  latter method skips). Note that the order in which these operations are
-  applied is immaterial. In other words, if we add inequality constraints for
-  variables ${\{\, X_{i} \,\}}_{i=1}^{n}$, and apply substitution for variables
-  $V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$, then---regardless of the order of
-  operations---we get
-  \[
-    \forall X_{1}, \dots, X_{n} \in \Omega\text{.} \bigwedge_{i=1}^{n} X_{i} \ne x \Rightarrow \psi\left[x / \left(V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}\right)\right].
-  \]
-  This formula is equivalent to the clause generated on \cref{line:generation}
-  with $W = V \setminus {\{\, X_{i} \,\}}_{i=1}^{n}$. Thus, for every clause $c$
-  of $\phi$, the new formula $\phi'$ gets a set of clauses whose conjunction is
-  equivalent to $c$. Hence, the two formulas are equivalent.
-\end{proof}
-
-\begin{theorem}[Correctness of $\CR$]
-  Let $\phi$ be the input formula of \cref{alg:constraintremoval}, $(\Omega, x)$
-  a replaceable pair, and $\phi'$ the output formula for when $(\Omega, x)$ is
-  selected on \cref{line:crconditions}. Then $\phi \equiv \phi'$, where the
-  domain $\Omega'$ introduced on \cref{line:newdomain} is interpreted as
-  $\Omega \setminus \{\, x \,\}$.
-\end{theorem}
-\begin{proof}
-  Since there is a natural bijection between the clauses of $\phi$ and $\phi'$,
-  we shall argue about the equivalence of each pair of clauses. Let $c$ be an
-  arbitrary clause of $\phi$ and $c'$ its corresponding clause of $\phi'$.
-
-  If $c$ has no variables with domain $\Omega$, then it cannot have any
-  constraints involving $x$, so $c' = c$. Otherwise, for notational simplicity,
-  let us assume that $X$ is the only variable in $c$ with domain $\Omega$ (the
-  proof for an arbitrary number of variables is virtually the same). By
-  \cref{def:replaceable}, we can rewrite $c$ as $\forall X \in \Omega\text{.
-  } X \ne x \Rightarrow \psi$, where $\psi$ is a formula with $X$ as the only free
-  variable and with no mention of either $x$ or $\Omega$. Then
-  $c' \equiv \forall X \in \Omega'\text{. } \psi$. Since
-  $\Omega' \coloneqq \Omega \setminus \{\, x \,\}$, we have that $c \equiv c'$.
-  Since $c$ was an arbitrary clause of $\phi$, this completes the proof that
-  $\phi \equiv \phi'$.
-\end{proof}
-
-\begin{theorem}[Correctness of $\Reff$]
-  Let $\phi$ be the formula used as input to \cref{alg:trycache}. Let $\psi$ be
-  any formula selected on \cref{line:selectformula} of the algorithm s.t.\
-  $\rho \ne \nulll$ on \cref{line:rho}. Let $\sigma$ be a domain size function.
-  Then the set of models of $(\psi, \sigma \circ \rho)$ is equal to the set of
-  models of $(\phi, \sigma)$.
-\end{theorem}
-\begin{proof}
-  We first show that the right-hand side of \cref{eq:subset} is the same for
-  models of both $(\phi, \sigma)$ and $(\psi, \sigma \circ \rho)$.
-  \Cref{alg:trycache} ensures that $\psi \equiv \phi$ up to domains. In
-  particular, this means that $\Preds(\psi) = \Preds(\phi)$. The square in
-  \begin{equation}\label[diagram]{diagram:ref}
-    \begin{tikzcd}
-      \Preds(\psi) \ar[equal]{r} \ar[d, swap, "\pi_{\psi}"] & \Preds(\phi) \ar[d, "\pi_{\phi}"] \\
-      {\Doms(\psi)}^{\ast} \ar[r, "\rho"] & {\Doms(\phi)}^{\ast} \ar[r, "\sigma"] & \mathbb{N}_{0}^{\ast}
-    \end{tikzcd}
-  \end{equation}
-  commutes by \cref{def:formula} and the definition of $\rho$. In other words,
-  for any predicate $\predicate/n \in \Preds(\psi) = \Preds(\phi)$, function
-  $\rho$ translates the domains associated with $\predicate$ in $\psi$ to the
-  domains associated with $\predicate$ in $\phi$. Let
-  $\pi_{\phi}(\predicate) = {(\Delta_{i})}_{i=1}^{n}$ and
-  $\pi_{\psi}(\predicate) = {(\Gamma_{i})}_{i=1}^{n}$ for some domains
-  $\Delta_{i} \in \Doms(\phi)$ and $\Gamma_{i} \in \Doms(\psi)$. Since
-  $\rho(\Gamma_{i}) = \Delta_{i}$ for all $i = 1, \dots, n$ by the commutativity
-  in \cref{diagram:ref}, we get that
-  \begin{equation}\label{eq:equality}
-    \prod_{i=1}^{n}[\sigma(\Delta_{i})] = \prod_{i=1}^{n}[\sigma \circ \rho(\Gamma_{i})]
-  \end{equation}
-  as required. Obviously, any subset of the left-hand side of \cref{eq:equality}
-  (e.g., $\mathfrak{M}(\predicate)$, where $\mathfrak{M}$ is a model of
-  $(\phi, \sigma)$) is a subset of the right-hand side and vice versa. Since
-  $\phi$ and $\psi$ semantically only differ in what domains they refer to,
-  every model of $\phi$ satisfies $\psi$ and vice versa, completing the proof.
-\end{proof}
-
-\section{Solutions Found by \textsc{Crane}}\label{sec:solutions}
-
-Here we list the exact function definitions produced by \textsc{Crane} for all
-of the problem instances in Section~6, both before and after algebraic
-simplification (excluding multiplications by one). The correctness of all of
-them has been checked by identifying suitable base cases and verifying the
-numerical answers across a range of domain sizes.
-
-\begin{enumerate}
-  \item A $\Theta(m)$ solution for counting $\Gamma \to \Gamma$ functions:
-        \[
-        f(m) = {\left(-1 + \sum_{l=0}^{m} \binom{m}{l} [l < 2]\right)}^{m} = m^{m}.
-        \]
-  \item A $\Theta(m^3 + n^3)$ solution for counting $\Gamma \to \Delta$
-        surjections:
-        \begin{align*}
-          f(m, n) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k}\\
-                     &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
-          ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l}\\
-                     &\sum_{k=0}^{n} \binom{n}{k} {(-1)}^{n-k} {(k+1)}^{l}.
-        \end{align*}
-  \item A $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ surjections:
-        \begin{align*}
-          f(m) ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l} \sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k}\\
-                  &{\left( \sum_{j=0}^{k} \binom{k}{j} [j < 2] \right)}^{l} \\
-          ={}& \sum_{l=0}^{m} \binom{m}{l}{(-1)}^{m-l}\\
-                  &\sum_{k=0}^{m} \binom{m}{k} {(-1)}^{m-k} {(k+1)}^{l}.
-        \end{align*}
-  \item A $\Theta(mn)$ solution for counting $\Gamma \to \Delta$ injections and
-        partial injections (with different base cases):
-        \begin{align*}
-          f(m, n) ={}& \sum_{l=0}^m \binom{m}{l} [l<2] f(m-l, n-1)\\
-          ={}& f(m, n-1) + mf(m-1, n-1).
-        \end{align*}
-  \item A $\Theta(m^{3})$ solution for counting $\Gamma \to \Gamma$ injections:
-        \begin{align*}
-          f(m) ={}& \sum_{l=0}^{m} \binom{m}{l} {(-1)}^{m-l} g(m, l); \\
-          g(m, l) ={}& \sum_{k=0}^{l} \binom{l}{k} [k < 2] g(m - 1, l - k)\\
-          ={}& g(m - 1, l) + lg(m - 1, l - 1).
-        \end{align*}
-  \item A $\Theta(m)$ solution for counting $\Gamma \to \Delta$ bijections:
-        \[
-        f(m, n) = mf(m-1, n-1).
-        \]
-  \item A $\Theta(l+mn)$ solution for counting $|\Lambda|$ partial injections
-        $\Gamma \to \Delta$:
-        \begin{align*}
-          f(l, m, n) ={}& {g(m, n)}^{l}\\
-          g(m, n) ={}& \sum_{k=0}^{n}\binom{n}{k} [k < 2] g(m-1, n-k)\\
-          ={}& g(m-1, n) + ng(m-1, n-1).
-        \end{align*}
-\end{enumerate}
 
 \bibliographystyle{kr}
 \bibliography{paper}
